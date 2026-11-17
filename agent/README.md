@@ -83,10 +83,12 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   right-most public address of the `X-Forwarded-For` list logged after it (the one your proxy
   appended; the left-most entries are written by the client). A 2xx under a route that answers
   any sub-path with a page (`/app/`, `/wolf/`, `/api/`...) is not counted as a served file.
-  Two Frappe rules count only in bursts from one client in one minute: 10 calls to the guest
-  endpoints that check an account or take a credential (password reset, login link, sign-up,
-  data deletion confirmation, OAuth2 token, LDAP, key or token login: `frappe_auth_abuse`), and 20
-  `/api/method` or `/api/resource` calls answered 401/403 (`frappe_api_forbidden`).
+  Appliance paths are matched on the path only, from its root. Two Frappe rules count only in
+  bursts from one client over two minutes: 10 calls to the guest endpoints that check an account
+  or take a credential (password reset, login link, sign-up, data deletion confirmation, OAuth2
+  token except a refresh in the URL, LDAP, key or token login, also under `/api/v2/method`:
+  `frappe_auth_abuse`), and 20 `/api/method`, `/api/resource` or `/api/v2` calls answered 403 on
+  at least 5 methods (`frappe_api_forbidden`; 401 also means an expired session).
 - **Auth log** (`/var/log/auth.log`, `/var/log/secure`, or `journalctl -o short-iso -t sshd
   -t sshd-session -t sudo -t useradd -t usermod -t gpasswd`): failed SSH logins aggregated per
   source IP, root logins, a successful login from an address that failed 5+ times in the hour

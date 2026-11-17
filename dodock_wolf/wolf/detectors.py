@@ -46,7 +46,7 @@ _HTTP_KEY = re.compile(r"^http_")
 
 
 # techniques of the web probe rules (agent/wolf_agent/parsers/web_attacks.py), beyond the category's
-WEB_RULE_TECHNIQUES = {"T1190", "T1189", "T1552"}
+WEB_RULE_TECHNIQUES = {"T1190", "T1189", "T1552", "T1110"}
 
 
 def own_techniques(detector):
