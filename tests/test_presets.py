@@ -1,6 +1,6 @@
 import unittest
 
-from dodock_wolf.wolf import conditions
+from dodock_wolf.wolf import conditions, sequences
 from dodock_wolf.wolf.presets import PRESETS
 
 EVENT_TYPES = {"error", "cron_failure", "worker_failure", "security", "host_metric_alert", "deployment"}
@@ -21,6 +21,10 @@ class TestPresets(unittest.TestCase):
 				if p["signal_type"] == "metric":
 					self.assertIn(p["aggregation"], conditions.AGGREGATIONS)
 					self.assertTrue(p["metric_name"])
+				elif p["signal_type"] == "sequence":
+					self.assertIn(p["sequence_entity"], sequences.KINDS)
+					self.assertGreaterEqual(p["sequence_minutes"], 1)
+					self.assertTrue(sequences.categories(p["first_categories"]) and sequences.categories(p["then_categories"]))
 				else:
 					self.assertIn(p["event_type"], EVENT_TYPES)
 
@@ -50,6 +54,16 @@ class TestPresets(unittest.TestCase):
 		                 "console_execution", "security_settings_weakened", "permission_change",
 		                 "api_key_generated", "webhook_external", "data_exfiltration"):  # fmt: skip
 			self.assertTrue(any(p.get("event_category") == category for p in security), category)
+
+	def test_sequence_presets_name_known_categories(self):
+		from dodock_wolf.wolf import attack
+
+		seq = [p for p in PRESETS if p["signal_type"] == "sequence"]
+		self.assertEqual(sorted(p["sequence_entity"] for p in seq), ["host", "ip", "user"])
+		for p in seq:
+			with self.subTest(p["rule_name"]):
+				for category in sequences.categories(p["first_categories"]) + sequences.categories(p["then_categories"]):
+					self.assertIn(category, attack.CATEGORIES)
 
 	def test_low_is_bad_presets_breach_when_value_drops(self):
 		workers = next(p for p in PRESETS if p.get("metric_name") == "rq_workers")

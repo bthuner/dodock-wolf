@@ -22,6 +22,13 @@
   "event_category",
   "cb_event",
   "min_severity",
+  "sequence_section",
+  "first_categories",
+  "first_min_severity",
+  "cb_sequence",
+  "then_categories",
+  "sequence_entity",
+  "sequence_minutes",
   "condition_section",
   "operator",
   "threshold",
@@ -84,7 +91,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Signal Type",
-   "options": "metric\nevent",
+   "options": "metric\nevent\nsequence",
    "reqd": 1
   },
   {
@@ -173,6 +180,53 @@
    "options": "\ninfo\nwarning\ncritical"
   },
   {
+   "depends_on": "eval:doc.signal_type=='sequence'",
+   "fieldname": "sequence_section",
+   "fieldtype": "Section Break",
+   "label": "Sequence condition",
+   "description": "Fires when an event of the second list follows one of the first list on the same IP, user or host. Threshold counts those second events in the window."
+  },
+  {
+   "description": "Categories of the first event, one per line, e.g. web_attack_probe.",
+   "fieldname": "first_categories",
+   "fieldtype": "Small Text",
+   "label": "First Event Categories",
+   "mandatory_depends_on": "eval:doc.signal_type=='sequence'"
+  },
+  {
+   "description": "Only first events at or above this severity.",
+   "fieldname": "first_min_severity",
+   "fieldtype": "Select",
+   "label": "First Event Min Severity",
+   "options": "\ninfo\nwarning\ncritical"
+  },
+  {
+   "fieldname": "cb_sequence",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Categories of the event that must follow, one per line.",
+   "fieldname": "then_categories",
+   "fieldtype": "Small Text",
+   "label": "Then Event Categories",
+   "mandatory_depends_on": "eval:doc.signal_type=='sequence'"
+  },
+  {
+   "default": "ip",
+   "description": "ip: the remote address, public only. user: the same user on the same site. host: the same host under any of its names.",
+   "fieldname": "sequence_entity",
+   "fieldtype": "Select",
+   "label": "Same",
+   "options": "ip\nuser\nhost"
+  },
+  {
+   "default": "60",
+   "description": "The second event at most this long after the first.",
+   "fieldname": "sequence_minutes",
+   "fieldtype": "Int",
+   "label": "Within Minutes"
+  },
+  {
    "fieldname": "condition_section",
    "fieldtype": "Section Break",
    "label": "Threshold"
@@ -209,7 +263,8 @@
    "fieldname": "group_by",
    "fieldtype": "Select",
    "label": "Group By",
-   "options": "none\nhost\nbench\nsite\nhost_label"
+   "options": "none\nhost\nbench\nsite\nhost_label",
+   "depends_on": "eval:doc.signal_type!='sequence'"
   },
   {
    "collapsible": 1,
@@ -403,7 +458,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-30 12:00:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Alert Rule",

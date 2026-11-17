@@ -118,7 +118,7 @@ def open_incident(rule, key, scope, summary, started_at=None, newest_at=None):
 	doc = frappe.get_doc(
 		{
 			"doctype": "Wolf Incident",
-			"title": f"{rule.rule_name}: {describe_group(rule.group_by, scope)}"[:255],
+			"title": f"{rule.rule_name}: {scope.get('label') or describe_group(rule.group_by, scope)}"[:255],
 			"status": "Open",
 			"severity": rule.severity,
 			"alert_rule": rule.name,

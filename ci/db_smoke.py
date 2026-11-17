@@ -1952,6 +1952,7 @@ def main():
 		# an open incident of the event's own site comes first
 		own = incident("corr own site", site="corr-d.localhost")
 		assert attach(ids("corr own", ip, site="corr-d.localhost")) == own.name, "own site's incident not preferred"
+		frappe.db.set_value("Wolf Incident", own.name, "status", "Resolved")  # it holds an event of the IP now
 		# a rule's evidence is its own: its events come back from the incident that took them by IP
 		taken, taken_event = ev(ids("corr taken", ip, host="corr-e"))
 		assert incidents.attach_to_open_incident(taken, taken_event) == inc.name
@@ -1991,12 +1992,92 @@ def main():
 			access.clear_cache()
 		assert desk == spa == {"corr probe"}, (desk, spa)
 
-		for name in (inc.name, own.name, host_inc.name):  # own and host_inc hold events of the IP too
+		for name in (inc.name, host_inc.name):  # host_inc holds an event of the IP too
 			frappe.db.set_value("Wolf Incident", name, "status", "Resolved")
 		assert attach(ids("corr after", ip)) is None, "attached to a resolved incident"
 		return (f"{inc.name}: probe + Suricata on another host + e-mail user; other attacker, private IP, login name, "
 		        "failed login, late IP, setting off, resolved kept out; own site first; rule evidence returned; "
 		        "scoped user sees its site only")  # fmt: skip
+
+	def sequence_rules():
+		"""A then B on the same IP, user or host, from the three presets (#72 step 5)."""
+		from dodock_wolf.wolf.presets import PRESETS
+
+		tz, at = events.system_tz(), now_datetime()
+		names = {}
+
+		def ev(key, minutes, raw):
+			e = schema.normalize_event({"type": "security", "severity": "warning", "bench": "seqb", **raw}, tz,
+			                           at + timedelta(minutes=minutes))  # fmt: skip
+			names[key] = events.insert_event(e)
+
+		web = {"host": "seq-web", "site": "seq.localhost"}
+		# ip: a probe, then a privileged login from the same address 28 min later
+		ev("probe", -30, {**web, "category": "web_attack_probe", "source": "nginx", "title": "seq probe",
+		                  "payload": {"ip": "45.33.32.210"}})  # fmt: skip
+		ev("login", -2, {**web, "category": "new_admin_ip", "source": "frappe", "title": "seq login",
+		                 "payload": {"ip": "45.33.32.210", "user": "Boss@Seq.example"}})  # fmt: skip
+		for m in range(31, 60):  # a burst of older probes from the same address: the newest first event is linked
+			ev(f"burst {m}", -m, {**web, "category": "web_attack_probe", "title": "seq burst", "payload": {"ip": "45.33.32.210"}})
+		ev("alone", -2, {**web, "category": "new_admin_ip", "title": "seq no probe", "payload": {"ip": "45.33.32.211"}})
+		ev("old probe", -90, {**web, "category": "web_attack_probe", "title": "seq old", "payload": {"ip": "45.33.32.212"}})
+		ev("late login", -1, {**web, "category": "new_admin_ip", "title": "seq late", "payload": {"ip": "45.33.32.212"}})
+		ev("login first", -5, {**web, "category": "new_admin_ip", "title": "seq before", "payload": {"ip": "45.33.32.213"}})
+		ev("probe after", -1, {**web, "category": "web_attack_probe", "title": "seq after", "payload": {"ip": "45.33.32.213"}})
+		# user: that login, then an export by the same user on the same site (not on another site)
+		ev("export", -1, {**web, "category": "data_exfiltration", "title": "seq export", "payload": {"user": "boss@seq.example"}})
+		ev("key", -1, {**web, "category": "api_key_generated", "title": "seq key",
+		               "payload": {"user": "someone@seq.example", "by": "boss@seq.example"}})  # fmt: skip
+		ev("other site", -1, {"host": "seq-web", "site": "seq2.localhost", "category": "data_exfiltration",
+		                      "title": "seq export elsewhere", "payload": {"user": "boss@seq.example"}})  # fmt: skip
+		# host: a Suricata alert on the host, then a Server Script change on a site of that host
+		ev("ids", -20, {"host": "seq-web", "bench": None, "severity": "critical", "category": "network_ids_alert", "source": "suricata", "title": "seq ids",
+		                "payload": {"ip": "45.33.32.220"}})  # fmt: skip
+		ev("script", -2, {**web, "category": "server_script_change", "title": "seq script", "payload": {"user": "boss@seq.example"}})
+		ev("quiet ids", -20, {"host": "seq-quiet", "severity": "warning", "category": "network_ids_alert", "title": "seq info ids"})
+		ev("quiet script", -2, {"host": "seq-quiet", "site": "seq3.localhost", "category": "server_script_change",
+		                        "title": "seq script after info"})  # fmt: skip
+
+		expected = {
+			"Scan then login from the same IP": ("ip=45.33.32.210", {"probe", "login"}),
+			# the login stays in the IP sequence's incident: an event has one incident (timeline below)
+			"New-IP login then export or new key": ("user=boss@seq.example", {"export", "key"}),
+			"IDS alert then risky change on the host": ("host=seq-web", {"ids", "script"}),
+		}
+		out = []
+		for preset in (p for p in PRESETS if p["rule_name"] in expected):
+			key, linked = expected[preset["rule_name"]]
+			name = f"smoke seq {preset['sequence_entity']}"
+			doc = frappe.get_doc("Wolf Alert Rule", name) if frappe.db.exists("Wolf Alert Rule", name) else frappe.new_doc("Wolf Alert Rule")
+			doc.update({**preset, "rule_name": name, "enabled": 1, "is_preset": 0, "channels": [], "filter_bench": "seqb"})
+			doc.save()
+			res = rules.evaluate(doc)
+			fired = frappe.get_all("Wolf Incident", filters={"alert_rule": name, "status": "Open"}, fields=["name", "group_key", "title", "site"])
+			assert [i.group_key for i in fired] == [key], (name, res, fired)
+			got = set(frappe.get_all("Wolf Event", filters={"incident": fired[0].name}, pluck="name"))
+			assert got == {names[k] for k in linked}, (name, got)
+			# the incident starts at the first event: its timeline shows both, linked or not
+			first, then = {"ip": ("probe", "login"), "user": ("login", "export"), "host": ("ids", "script")}[preset["sequence_entity"]]
+			shown = {r.name for r in incidents.get_timeline(fired[0].name)}
+			assert {names[first], names[then]} <= shown, (name, first, then, shown)
+			assert fired[0].title == f"{name}: {key.replace('=', ' ')}", fired[0].title
+			assert not rules.evaluate(doc)["fired"], "fired twice"
+			# the host-level Suricata alert is another scope than the site's incident: not named
+			named = {"ip": "web_attack_probe then", "user": "new_admin_ip then", "host": "an earlier event then"}
+			summary = frappe.db.get_value("Wolf Incident", fired[0].name, "summary")
+			assert summary.startswith(named[preset["sequence_entity"]]), summary
+			assert [g["group"] for g in doc.preview()["groups"]] == [key.replace("=", " ")]
+			incidents.resolve(fired[0].name, "smoke")
+			out.append(f"{preset['sequence_entity']}: {fired[0].name}")
+		try:
+			bad = frappe.get_doc({**next(p for p in PRESETS if p["rule_name"] in expected), "doctype": "Wolf Alert Rule",
+			                      "rule_name": "smoke seq bad", "then_categories": " "})  # fmt: skip
+			bad.insert()
+			raise AssertionError("a sequence without then categories was saved")
+		except frappe.ValidationError:
+			frappe.clear_messages()
+		frappe.db.set_value("Wolf Alert Rule", {"rule_name": ("like", "smoke seq %")}, "enabled", 0)  # incidents link them
+		return ", ".join(out) + "; probe burst, key by the user; no probe, 88 min apart, wrong order, other site, warning IDS kept out"
 
 	def crowdsec_check():
 		"""CrowdSec LAPI (a local stand-in): decisions tag events, detections and approved blocks go out."""
@@ -2679,6 +2760,7 @@ def main():
 	                 ("wazuh integration", wazuh_integration),
 	                 ("entities", entities_check),
 	                 ("entity correlation", entity_correlation),
+	                 ("sequence rules", sequence_rules),
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
 	                 ("response actions", response_actions), ("response links", response_links), ("journal", journal_chain),
