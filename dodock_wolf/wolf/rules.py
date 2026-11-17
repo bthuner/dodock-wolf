@@ -1,9 +1,11 @@
 """Alert rule evaluation, run every minute by the scheduler."""
 
+import json
+
 import frappe
 from frappe.utils import add_to_date, cint, flt, get_datetime, now_datetime
 
-from dodock_wolf.wolf import conditions, events, incidents, notify, rollups, sequences
+from dodock_wolf.wolf import conditions, entities, events, incidents, notify, rollups, sequences
 
 SCOPE_FIELDS = ("host", "bench", "site")
 
@@ -180,36 +182,40 @@ def query(rule, since):
 	return query_events(rule, since)
 
 
-MAX_PAIRS = 2000
+MAX_PAIRS = 2000  # (second event, entity value) candidates per evaluation
+MAX_LOOKUPS = 50  # first events looked up to link, newest pairs first
+FIRST_LOOKBACK_HOURS = 24  # a deduplicated first event indexed this long before the gap still counts
 
 
 def query_sequence(rule, since):
 	"""Second events seen in [since, now], each with a first event naming the same entity before
-	it, at most Sequence Minutes earlier (wolf/sequences.py). The scope filters apply to the
+	it, at most Sequence Minutes before the second's latest occurrence (wolf/sequences.py). One
+	candidate per (second event, entity value), with the newest first event's last occurrence:
+	a brute force of thousands of first events stays one row. The scope filters apply to the
 	second event."""
 	kind = rule.sequence_entity
 	first, then = sequences.categories(rule.first_categories), sequences.categories(rule.then_categories)
 	if kind not in sequences.KINDS or not first or not then:
 		return []
 	gap = max(cint(rule.sequence_minutes), 1)
+	first_since = add_to_date(since, minutes=-gap)
 	params = {"kind": kind, "first": tuple(first), "then": tuple(then), "since": since, "until": _until(),
-	          "first_since": add_to_date(since, minutes=-gap)}  # fmt: skip
-	where = _scope_filters(rule, params, prefix="b.")
-	if rule.get("first_min_severity"):
-		where.append("a.severity in %(severities)s")
-		params["severities"] = tuple(conditions.severities_at_least(rule.first_min_severity))
+	          "first_since": first_since, "indexed_since": add_to_date(first_since, hours=-FIRST_LOOKBACK_HOURS)}  # fmt: skip
+	where = _scope_filters(rule, params, prefix="b.") + _first_where(rule, kind, params)
+	payload = kind == "ip"  # the second event's remote address (sequences.keep)
 	pairs = frappe.db.sql(
-		f"""select xb.value, a.name as a_name, a.`timestamp` as a_at, a.last_seen as a_last, a.category as a_category,
-			a.site as a_site, a.payload as a_payload, b.name as b_name, b.`timestamp` as b_at,
+		f"""select xb.value, b.name as b_name, b.`timestamp` as b_at, b.last_seen as b_last,
 			greatest(b.last_seen, b.creation) as b_seen, b.category as b_category, b.host as b_host,
-			b.bench as b_bench, b.site as b_site, b.payload as b_payload
+			b.bench as b_bench, b.site as b_site{", b.payload as b_payload" if payload else ""},
+			max(a.last_seen) as a_last, min(a.`timestamp`) as a_at
 		from `tabWolf Event` b
 		join `tabWolf Event Entity` xb on xb.event = b.name and xb.kind = %(kind)s
 		join `tabWolf Event Entity` xa on xa.kind = xb.kind and xa.value = xb.value and xa.event != b.name
+			and xa.`at` >= %(indexed_since)s
 		join `tabWolf Event` a on a.name = xa.event
 		where b.category in %(then)s and b.last_seen between %(since)s and %(until)s
-			and a.category in %(first)s and a.last_seen >= %(first_since)s and a.`timestamp` <= b.last_seen
-			{"".join(f" and {w}" for w in where)}
+			and a.`timestamp` <= b.last_seen{"".join(f" and {w}" for w in where)}
+		group by xb.value, b.name, b.`timestamp`, b.last_seen, b.creation, b.category, b.host, b.bench, b.site{", b.payload" if payload else ""}
 		order by b.last_seen desc
 		limit {MAX_PAIRS}""",
 		params,
@@ -217,25 +223,51 @@ def query_sequence(rule, since):
 	)
 	kept = []
 	for p in pairs:
-		# first seen at most `gap` minutes before the second (date arithmetic stays out of SQL)
-		if get_datetime(p.a_last) < add_to_date(get_datetime(p.b_at), minutes=-gap):
-			continue
-		if kind == "ip":
-			p.a_ip, p.b_ip = (_remote_ip(p.pop(k)) for k in ("a_payload", "b_payload"))
-		kept.append(p)
+		p.a_last, p.b_last = get_datetime(p.a_last), get_datetime(p.b_last)
+		if payload:
+			p.b_ip = _remote_ip(p.pop("b_payload"))
+		if sequences.keep(p, kind, gap):
+			kept.append(p)
+	for p in kept[:MAX_LOOKUPS]:
+		_first_event(rule, kind, p, gap)
 	return sequences.group(kept, kind)
 
 
+def _first_where(rule, kind, params):
+	"""Conditions on the first event `a` (joined to the second `b`)."""
+	where = ["a.category in %(first)s", "a.last_seen >= %(first_since)s"]
+	if kind == "user":
+		where.append("coalesce(a.site, '') = coalesce(b.site, '')")  # a user is per site
+	if rule.get("first_min_severity"):
+		where.append("a.severity in %(severities)s")
+		params["severities"] = tuple(conditions.severities_at_least(rule.first_min_severity))
+	return where
+
+
+def _first_event(rule, kind, pair, gap):
+	"""The newest first event of a kept pair, to link it and name its category."""
+	params = {"kind": kind, "value": pair.value, "b": pair.b_name, "b_site": pair.b_site or "", "b_last": pair.b_last,
+	          "first": tuple(sequences.categories(rule.first_categories)), "first_since": add_to_date(pair.b_last, minutes=-gap),
+	          "indexed_since": add_to_date(pair.b_last, minutes=-gap, hours=-FIRST_LOOKBACK_HOURS)}  # fmt: skip
+	where = [w.replace("coalesce(b.site, '')", "%(b_site)s") for w in _first_where(rule, kind, params)]
+	rows = frappe.db.sql(
+		f"""select a.name, a.category from `tabWolf Event Entity` xa join `tabWolf Event` a on a.name = xa.event
+		where xa.kind = %(kind)s and xa.value = %(value)s and xa.event != %(b)s and xa.`at` >= %(indexed_since)s
+			and a.`timestamp` <= %(b_last)s and {" and ".join(where)}
+		order by a.last_seen desc
+		limit 1""",
+		params,
+	)
+	if rows:
+		pair.a_name, pair.a_category = rows[0]
+
+
 def _remote_ip(payload):
-	import json
-
-	from dodock_wolf.wolf.entities import normal_ip
-
 	try:
 		data = json.loads(payload or "{}")
 	except ValueError:
 		return None
-	return normal_ip(data.get("ip")) if isinstance(data, dict) and data.get("ip") else None
+	return entities.normal_ip(data.get("ip")) if isinstance(data, dict) and data.get("ip") else None
 
 
 def query_metric(rule, since):

@@ -2017,6 +2017,8 @@ def main():
 		                  "payload": {"ip": "45.33.32.210"}})  # fmt: skip
 		ev("login", -2, {**web, "category": "new_admin_ip", "source": "frappe", "title": "seq login",
 		                 "payload": {"ip": "45.33.32.210", "user": "Boss@Seq.example"}})  # fmt: skip
+		for m in range(31, 60):  # a burst of older probes from the same address: the newest first event is linked
+			ev(f"burst {m}", -m, {**web, "category": "web_attack_probe", "title": "seq burst", "payload": {"ip": "45.33.32.210"}})
 		ev("alone", -2, {**web, "category": "new_admin_ip", "title": "seq no probe", "payload": {"ip": "45.33.32.211"}})
 		ev("old probe", -90, {**web, "category": "web_attack_probe", "title": "seq old", "payload": {"ip": "45.33.32.212"}})
 		ev("late login", -1, {**web, "category": "new_admin_ip", "title": "seq late", "payload": {"ip": "45.33.32.212"}})
@@ -2024,20 +2026,22 @@ def main():
 		ev("probe after", -1, {**web, "category": "web_attack_probe", "title": "seq after", "payload": {"ip": "45.33.32.213"}})
 		# user: that login, then an export by the same user on the same site (not on another site)
 		ev("export", -1, {**web, "category": "data_exfiltration", "title": "seq export", "payload": {"user": "boss@seq.example"}})
+		ev("key", -1, {**web, "category": "api_key_generated", "title": "seq key",
+		               "payload": {"user": "someone@seq.example", "by": "boss@seq.example"}})  # fmt: skip
 		ev("other site", -1, {"host": "seq-web", "site": "seq2.localhost", "category": "data_exfiltration",
 		                      "title": "seq export elsewhere", "payload": {"user": "boss@seq.example"}})  # fmt: skip
 		# host: a Suricata alert on the host, then a Server Script change on a site of that host
-		ev("ids", -20, {"host": "seq-web", "bench": None, "category": "network_ids_alert", "source": "suricata", "title": "seq ids",
+		ev("ids", -20, {"host": "seq-web", "bench": None, "severity": "critical", "category": "network_ids_alert", "source": "suricata", "title": "seq ids",
 		                "payload": {"ip": "45.33.32.220"}})  # fmt: skip
 		ev("script", -2, {**web, "category": "server_script_change", "title": "seq script", "payload": {"user": "boss@seq.example"}})
-		ev("quiet ids", -20, {"host": "seq-quiet", "severity": "info", "category": "network_ids_alert", "title": "seq info ids"})
+		ev("quiet ids", -20, {"host": "seq-quiet", "severity": "warning", "category": "network_ids_alert", "title": "seq info ids"})
 		ev("quiet script", -2, {"host": "seq-quiet", "site": "seq3.localhost", "category": "server_script_change",
 		                        "title": "seq script after info"})  # fmt: skip
 
 		expected = {
 			"Scan then login from the same IP": ("ip=45.33.32.210", {"probe", "login"}),
 			# the login stays in the IP sequence's incident: an event has one incident (timeline below)
-			"New-IP login then export or new key": ("user=boss@seq.example", {"export"}),
+			"New-IP login then export or new key": ("user=boss@seq.example", {"export", "key"}),
 			"IDS alert then risky change on the host": ("host=seq-web", {"ids", "script"}),
 		}
 		out = []
@@ -2070,7 +2074,7 @@ def main():
 		except frappe.ValidationError:
 			frappe.clear_messages()
 		frappe.db.set_value("Wolf Alert Rule", {"rule_name": ("like", "smoke seq %")}, "enabled", 0)  # incidents link them
-		return ", ".join(out) + "; no probe, 88 min apart, wrong order, other site, info IDS kept out"
+		return ", ".join(out) + "; probe burst, key by the user; no probe, 88 min apart, wrong order, other site, warning IDS kept out"
 
 	def crowdsec_check():
 		"""CrowdSec LAPI (a local stand-in): decisions tag events, detections and approved blocks go out."""

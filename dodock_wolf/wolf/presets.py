@@ -393,12 +393,11 @@ PRESETS = [
 	# --- cyber: sequences across sources (#72 step 5, wolf/sequences.py) ---
 	{
 		"rule_name": "Scan then login from the same IP",
-		"description": "An address that probed a site, set off Suricata or failed Frappe logins then logged "
-		"in within the hour: SSH after failures or as root, a privileged Frappe login from a new IP, or an "
-		"API key used from a new IP (MITRE T1595 then T1078). Frappe reports successful logins of "
-		"privileged users only.",
+		"description": "An address that probed a site or set off Suricata then logged in within the hour: "
+		"SSH after failures or as root, a privileged Frappe login from a new IP, or an API key used from "
+		"a new IP (MITRE T1595 then T1078). Frappe reports successful logins of privileged users only.",
 		"signal_type": "sequence", "sequence_entity": "ip", "sequence_minutes": 60,
-		"first_categories": "web_attack_probe\nnetwork_ids_alert\nfrappe_failed_login",
+		"first_categories": "web_attack_probe\nnetwork_ids_alert",
 		"then_categories": "ssh_login_after_failures\nssh_root_login\nnew_admin_ip\nadmin_login_new_country\napi_key_new_ip",
 		"operator": ">=", "threshold": 1, "window_minutes": 10, "group_by": "none",
 		"severity": "critical", "auto_resolve": 0, "cooldown_minutes": 60,
@@ -416,10 +415,10 @@ PRESETS = [
 	},
 	{
 		"rule_name": "IDS alert then risky change on the host",
-		"description": "Suricata or Wazuh alerted on a host (warning or above), then within the hour a "
+		"description": "Suricata or Wazuh raised a critical alert on a host, then within the hour a "
 		"site on that host got new code or more access: a Server or Client Script, a System Console run, "
 		"permission rules, weaker security settings, a privileged user, an API key or an outside Webhook.",
-		"signal_type": "sequence", "sequence_entity": "host", "sequence_minutes": 60, "first_min_severity": "warning",
+		"signal_type": "sequence", "sequence_entity": "host", "sequence_minutes": 60, "first_min_severity": "critical",
 		"first_categories": "network_ids_alert\nhids_alert",
 		"then_categories": "server_script_change\nclient_script_change\nconsole_execution\npermission_change\n"
 		"security_settings_weakened\nprivileged_user\napi_key_generated\nwebhook_external",

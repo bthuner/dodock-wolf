@@ -75,11 +75,13 @@ same entity: **First / Then Event Categories**, **Same** (`ip`, `user` or `host`
 Minutes**, the longest gap between them. The threshold counts the second events seen in the window,
 and there is one incident per entity value (`ip 203.0.113.5`), scoped like its newest second event.
 
-- `ip` is the remote address of both events (`payload.ip`), public only, whatever the source: a
-  Suricata alert, a web probe, a Frappe login.
+- `ip` is the second event's remote address (`payload.ip`), public only, named by a first event
+  of any source: a Suricata alert, a web probe, a Frappe login.
 - `user` is the same user on the same site; `host` the same host under any of its names (Wolf
   Entity Alias).
 - **First Event Min Severity** filters the first events only. The scope filters apply to the second.
+- The gap runs from the first event's last occurrence to the second's latest, so repeats folded
+  into one record count. A brute force of thousands of first events is one candidate.
 - The incident links both events. An event already in another incident stays there, and the
   incident's timeline, which starts at the first event, shows it anyway.
 
@@ -139,9 +141,9 @@ Development settings in production.
 | API key generated | `security` / `api_key_generated` (site) | a new API secret written for a user (the event is critical for privileged users) |
 | Webhook to a new host | `security` / `webhook_external` (site) | a Webhook created, enabled or pointed at another host |
 | Unusual data export | `security` / `data_exfiltration` (site) | a user's exports and list reads this hour above 50 MB and 5x their largest hour of the last 14 days (critical at 20x, or without any history) |
-| Scan then login from the same IP | sequence, same `ip` | a web probe, Suricata alert or failed Frappe login, then within 60 min an SSH login after failures or as root, a privileged Frappe login from a new IP, or an API key used from a new IP, from that address (critical) |
+| Scan then login from the same IP | sequence, same `ip` | a web probe or Suricata alert, then within 60 min an SSH login after failures or as root, a privileged Frappe login from a new IP, or an API key used from a new IP, from that address (critical) |
 | New-IP login then export or new key | sequence, same `user` | a privileged login from a new IP or country, or an API key used from a new IP, then within 2 h an unusual export, a new API key or an outside Webhook by that user on that site (critical) |
-| IDS alert then risky change on the host | sequence, same `host` | a Suricata or Wazuh alert (warning or above) on a host, then within 60 min a Server/Client Script, System Console run, permission change, weaker security settings, privileged user, API key or outside Webhook on a site of that host (critical) |
+| IDS alert then risky change on the host | sequence, same `host` | a critical Suricata or Wazuh alert on a host, then within 60 min a Server/Client Script, System Console run, permission change, weaker security settings, privileged user, API key or outside Webhook on a site of that host (critical) |
 | Security score low | `security_score` (app, hourly) | a site's score below 60 (see **Wolf → Security**) |
 | Bench service exposed | `exposed_services` (agent) | MariaDB, a bench Redis, socket.io or gunicorn listening beyond loopback (critical) |
 | Development settings in production | `site_config_risks` (agent) | `developer_mode`, `allow_tests`, plain-HTTP `host_name` or `allow_cors: "*"` |

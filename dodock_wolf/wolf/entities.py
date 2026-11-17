@@ -21,7 +21,7 @@ import ipaddress
 KINDS = ("ip", "host", "site", "user")
 MAX_PER_KIND = 10
 _IP_KEYS = ("ip", "src_ip", "dest_ip")
-_USER_KEYS = ("user", "suser", "username", "srcuser", "dstuser")
+_USER_KEYS = ("user", "by", "suser", "username", "srcuser", "dstuser")  # by: who acted (site signals)
 _SITE_KEYS = ("http_hostname", "tls_sni")
 _NO_USER = {"", "-", "unknown", "none", "null", "guest", "(none)"}
 
