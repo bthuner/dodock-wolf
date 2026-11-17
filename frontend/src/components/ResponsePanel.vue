@@ -61,10 +61,10 @@ defineExpose({ load })
 <template>
   <section v-if="data && (data.proposals.length || data.actions.length)" class="wolf-card space-y-3" aria-label="Response">
     <div class="flex flex-wrap items-baseline justify-between gap-2">
-      <h2 class="text-base font-semibold text-ink-gray-9">Response</h2>
+      <h2 class="wolf-h2">Response</h2>
       <span class="text-sm text-ink-gray-6">proposed from the incident's security events; each one needs your confirmation</span>
     </div>
-    <p v-if="error" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ error }}</p>
+    <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>
 
     <ul v-if="data.proposals.length" class="space-y-2">
       <li v-for="p in data.proposals" :key="key(p)" class="flex flex-wrap items-center gap-2 text-sm">

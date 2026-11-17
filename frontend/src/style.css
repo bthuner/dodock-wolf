@@ -20,6 +20,9 @@
   --wolf-warning: #8a5200;
   --wolf-critical: #b0281c;
   --wolf-ok: #2e6b4a;
+  /* a sunken well (code, fixes) and the lift of a card: derived, not new brand colours */
+  --wolf-well: #f8f6f1;
+  --wolf-shadow: 0 1px 2px rgb(18 23 37 / 0.04), 0 1px 1px rgb(18 23 37 / 0.03);
 
   /* frappe-ui surfaces on the Os / Nuit neutrals */
   --surface-base: var(--wolf-surface);
@@ -38,6 +41,8 @@
   --wolf-warning: #f0b04a;
   --wolf-critical: #ff7466;
   --wolf-ok: #7cc79e;
+  --wolf-well: #0e1524;
+  --wolf-shadow: none;
 }
 
 /* frappe-ui's Tailwind plugin puts InterVar first on <html>; brand.md sets Inter Tight */
@@ -56,7 +61,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-a.wolf-link {
+.wolf-link {
   color: var(--wolf-brand-text);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -76,12 +81,48 @@ a.wolf-link {
   }
 }
 
-/* incident page */
+/* surfaces and type shared by every page */
+.wolf-page {
+  margin: 0 auto;
+  max-width: 72rem;
+  padding: 20px;
+}
 .wolf-card {
   background: var(--wolf-surface);
   border: 1px solid var(--wolf-line);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 16px 20px;
+  box-shadow: var(--wolf-shadow);
+}
+.wolf-h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--wolf-ink);
+}
+/* the small label over a figure or a block */
+.wolf-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--wolf-muted);
+}
+/* a failure, said where it happened: the glyph repeats the colour (never colour alone) */
+.wolf-alert {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  border: 1px solid color-mix(in srgb, var(--wolf-critical) 35%, var(--wolf-line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--wolf-critical) 7%, var(--wolf-surface));
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  color: var(--wolf-critical);
+}
+.wolf-alert::before {
+  content: '✕';
+  font-weight: 600;
 }
 
 .wolf-badge {
@@ -102,20 +143,34 @@ a.wolf-link {
   color: var(--wolf-muted);
 }
 
-/* the rail: readable spacing per row, not proportional to time */
+/* the rail: readable spacing per row, not proportional to time. The line runs through the
+   icons' column: 12px padding + the time column + 12px gap + half a node */
 .wolf-rail {
-  border-left: 2px solid var(--wolf-line);
-  margin-left: 4px;
+  --wolf-rail-x: calc(12px + 3.5rem + 12px + 0.75rem);
+  position: relative;
+}
+.wolf-rail::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: var(--wolf-rail-x);
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--wolf-line);
 }
 .wolf-row {
+  position: relative;
   display: flex;
   gap: 12px;
   align-items: flex-start;
+  border-radius: 8px;
   padding: 8px 12px;
 }
 .wolf-row:target,
 .wolf-row-targeted {
-  background: var(--wolf-surface);
+  background: var(--wolf-well);
   outline: 2px solid var(--wolf-brand-text);
 }
 /* context rows are told apart by their relation badge and a dimmed icon; their time keeps the
@@ -124,13 +179,27 @@ a.wolf-link {
   opacity: 0.65;
 }
 .wolf-row-time {
-  min-width: 3.2rem;
+  width: 3.5rem;
+  flex-shrink: 0;
+  padding-top: 2px;
+  text-align: right;
+  font-size: 0.85rem;
   color: var(--wolf-muted);
 }
-.wolf-row-icon {
-  margin-top: 3px;
-  color: var(--wolf-muted);
+.wolf-row-node {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
   flex-shrink: 0;
+  border: 1px solid var(--wolf-line);
+  border-radius: 999px;
+  background: var(--wolf-surface);
+  color: var(--wolf-muted);
+}
+.wolf-row[data-kind='deployment'] .wolf-row-node {
+  border-color: var(--wolf-brand-text);
+  color: var(--wolf-brand-text);
 }
 .wolf-row-anchor {
   color: var(--wolf-muted);
@@ -140,26 +209,56 @@ a.wolf-link {
 .wolf-row-anchor:focus-visible {
   opacity: 1;
 }
+.wolf-day,
+.wolf-gap {
+  position: relative;
+  display: flex;
+  padding: 10px 12px 6px calc(var(--wolf-rail-x) + 0.75rem + 12px);
+}
 .wolf-day {
-  padding: 12px 12px 4px;
+  font-size: 0.72rem;
   font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   color: var(--wolf-ink);
 }
+/* a day starts on the rail with a filled stop; a gap breaks the line */
+.wolf-day::before,
+.wolf-gap::before {
+  content: '';
+  position: absolute;
+  left: var(--wolf-rail-x);
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.wolf-day::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--wolf-ink);
+  box-shadow: 0 0 0 3px var(--wolf-surface);
+}
 .wolf-gap {
-  padding: 4px 12px;
+  padding-top: 4px;
+  padding-bottom: 4px;
   font-size: 0.85rem;
   font-style: italic;
   color: var(--wolf-muted);
+}
+.wolf-gap::before {
+  width: 6px;
+  height: 100%;
+  background: repeating-linear-gradient(var(--wolf-surface) 0 3px, transparent 3px 6px);
 }
 .wolf-details {
   white-space: pre-wrap;
   word-break: break-word;
   font-size: 0.8rem;
-  background: var(--wolf-bg);
+  background: var(--wolf-well);
   border: 1px solid var(--wolf-line);
-  border-radius: 6px;
-  padding: 8px;
-  margin-top: 4px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 6px;
   max-height: 24rem;
   overflow: auto;
 }
@@ -186,4 +285,695 @@ a.wolf-link {
    themes; remapped on the sidebar, it fixes every --ink-gray-5 text there at once. */
 [data-slot='sidebar'] {
   --ink-gray-5: var(--wolf-muted);
+}
+
+/* count tiles: one strip, hairlines between the figures */
+.wolf-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--wolf-line);
+  border-radius: 12px;
+  background: var(--wolf-line);
+  box-shadow: var(--wolf-shadow);
+}
+@media (min-width: 640px) {
+  .wolf-tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.wolf-tile {
+  background: var(--wolf-surface);
+  padding: 16px 20px;
+}
+.wolf-tile dt {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--wolf-muted);
+}
+.wolf-tile-figure {
+  margin-top: 6px;
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--wolf-ink);
+}
+.wolf-tile-figure small {
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--wolf-muted);
+}
+.wolf-tile-note {
+  margin-top: 4px;
+  font-size: 0.875rem;
+  color: var(--wolf-muted);
+}
+
+/* a list of incidents in columns: severity, what, where, since, status */
+.wolf-incidents {
+  font-size: 0.875rem;
+}
+.wolf-incidents li {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 2px 12px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-top: 1px solid var(--wolf-line);
+}
+.wolf-incidents li:first-child {
+  border-top: 0;
+}
+.wolf-incidents-meta {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  color: var(--wolf-muted);
+}
+@media (min-width: 900px) {
+  .wolf-incidents li {
+    grid-template-columns: 5.5rem minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+  .wolf-incidents-meta {
+    grid-column: 3;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+  .wolf-incidents-meta > :first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* security page */
+.wolf-security {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+@media (min-width: 1100px) {
+  .wolf-security-rail {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+  }
+  .wolf-security-rail .wolf-security-top {
+    grid-column: 1 / -1;
+  }
+  .wolf-security-side {
+    position: sticky;
+    top: 20px;
+  }
+}
+
+.wolf-score {
+  display: grid;
+  gap: 20px 40px;
+  padding: 24px 28px;
+}
+@media (min-width: 720px) {
+  .wolf-score {
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+  }
+  .wolf-score-facts,
+  .wolf-score-note {
+    grid-column: 1 / -1;
+  }
+}
+.wolf-score-number {
+  margin-top: 4px;
+  font-size: 3.5rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--wolf-ink);
+}
+.wolf-score-of {
+  font-size: 1.1rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--wolf-muted);
+}
+.wolf-score-site {
+  margin-top: 8px;
+  font-size: 0.875rem;
+  color: var(--wolf-muted);
+}
+
+/* one segment per check, as wide as its weight. Each state has its own texture as well as its
+   colour: failed is solid, unknown is hatched and hollow, passed is solid */
+.wolf-weightbar {
+  display: flex;
+  gap: 3px;
+  height: 20px;
+  margin-top: 10px;
+}
+.wolf-weightbar-seg {
+  flex: 1 1 0;
+  min-width: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+.wolf-weightbar-seg[data-status='fail'],
+.wolf-legend-key[data-status='fail'] {
+  background: var(--wolf-critical);
+}
+.wolf-weightbar-seg[data-status='pass'],
+.wolf-legend-key[data-status='pass'] {
+  background: var(--wolf-ok);
+}
+.wolf-weightbar-seg[data-status='unknown'],
+.wolf-legend-key[data-status='unknown'] {
+  border: 1px solid var(--wolf-muted);
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--wolf-muted) 55%, transparent) 0 1.5px,
+    transparent 1.5px 5px
+  );
+}
+.wolf-weightbar[data-hot] .wolf-weightbar-seg:not([data-on]) {
+  opacity: 0.3;
+}
+.wolf-weightbar-seg[data-on] {
+  transform: scaleY(1.25);
+}
+.wolf-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 28px;
+  margin-top: 12px;
+  font-size: 0.875rem;
+}
+.wolf-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wolf-legend-key {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.wolf-legend-word {
+  color: var(--wolf-ink);
+}
+.wolf-legend-n {
+  color: var(--wolf-ink);
+  font-weight: 500;
+}
+.wolf-legend-of {
+  color: var(--wolf-muted);
+  font-weight: 400;
+}
+.wolf-score-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 40px;
+  border-top: 1px solid var(--wolf-line);
+  padding-top: 16px;
+  font-size: 0.875rem;
+}
+.wolf-score-facts dt {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--wolf-muted);
+}
+.wolf-score-facts dd {
+  margin-top: 2px;
+  color: var(--wolf-ink);
+}
+.wolf-score-note {
+  max-width: 76ch;
+  font-size: 0.875rem;
+  color: var(--wolf-muted);
+}
+
+/* the status mark: glyph in a ring, the word always next to it or in the group's title */
+.wolf-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.wolf-mark[data-status='fail'] {
+  color: var(--wolf-critical);
+}
+.wolf-mark[data-status='unknown'] {
+  color: var(--wolf-muted);
+  border-style: dashed;
+}
+.wolf-mark[data-status='pass'] {
+  color: var(--wolf-ok);
+}
+
+.wolf-checks-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+.wolf-checks-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--wolf-ink);
+}
+.wolf-checks-count {
+  font-weight: 400;
+  color: var(--wolf-muted);
+}
+.wolf-checks-head p {
+  font-size: 0.875rem;
+  color: var(--wolf-muted);
+}
+.wolf-checks-list {
+  padding: 0;
+  overflow: hidden;
+}
+.wolf-check {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 4px 24px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--wolf-line);
+  border-left: 3px solid transparent;
+  scroll-margin: 96px;
+  transition: background-color 120ms ease;
+}
+.wolf-check:first-child {
+  border-top: 0;
+}
+.wolf-check[data-status='fail'] {
+  border-left-color: var(--wolf-critical);
+}
+.wolf-check[data-on],
+.wolf-check:target {
+  background: var(--wolf-well);
+}
+.wolf-check h3 {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--wolf-ink);
+}
+.wolf-check-evidence {
+  margin-top: 2px;
+  font-size: 0.875rem;
+  color: var(--wolf-muted);
+  overflow-wrap: anywhere;
+}
+.wolf-checks[data-status='fail'] .wolf-check-evidence {
+  color: var(--wolf-critical);
+}
+.wolf-fix {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  margin-top: 10px;
+  border-radius: 8px;
+  background: var(--wolf-well);
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  color: var(--wolf-ink);
+}
+.wolf-check[data-on] .wolf-fix {
+  background: var(--wolf-surface);
+}
+.wolf-fix code,
+.wolf-anchor code {
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.wolf-fix code {
+  border: 1px solid var(--wolf-line);
+  border-radius: 4px;
+  background: var(--wolf-surface);
+  padding: 1px 5px;
+}
+.wolf-check-weight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: var(--wolf-muted);
+  white-space: nowrap;
+}
+.wolf-check-gain {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--wolf-ink);
+}
+
+.wolf-journal {
+  display: grid;
+  gap: 12px;
+  font-size: 0.875rem;
+  color: var(--wolf-muted);
+}
+.wolf-verdict {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 500;
+}
+.wolf-verdict[data-ok='yes'] {
+  color: var(--wolf-ok);
+  background: color-mix(in srgb, var(--wolf-ok) 9%, var(--wolf-surface));
+}
+.wolf-verdict[data-ok='no'] {
+  color: var(--wolf-critical);
+  background: color-mix(in srgb, var(--wolf-critical) 8%, var(--wolf-surface));
+}
+.wolf-anchor {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--wolf-line);
+  border-radius: 8px;
+  background: var(--wolf-well);
+  padding: 8px 12px;
+}
+.wolf-anchor code {
+  color: var(--wolf-ink);
+}
+
+/* lists of records (incidents, events): one card, a row per record, columns that line up */
+.wolf-list {
+  padding: 0;
+  overflow: hidden;
+}
+.wolf-list > li {
+  border-top: 1px solid var(--wolf-line);
+  border-left: 3px solid transparent;
+}
+.wolf-list > li:first-child {
+  border-top: 0;
+}
+.wolf-list > li[data-severity='critical'] {
+  border-left-color: var(--wolf-critical);
+}
+.wolf-list > li[data-open] {
+  background: var(--wolf-well);
+}
+.wolf-list-row {
+  display: grid;
+  gap: 4px 16px;
+  align-items: baseline;
+  padding: 12px 20px 12px 17px;
+  font-size: 0.875rem;
+  transition: background-color 120ms ease;
+}
+a.wolf-list-row:hover {
+  background: var(--wolf-well);
+}
+a.wolf-list-row:focus-visible {
+  outline-offset: -2px;
+}
+.wolf-list-incident {
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+}
+.wolf-list-event {
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+}
+.wolf-list-event .wolf-list-time {
+  grid-column: 1 / -1;
+}
+.wolf-list-end {
+  grid-column: 2;
+}
+@media (min-width: 860px) {
+  .wolf-list-incident {
+    grid-template-columns: 5.5rem minmax(0, 1fr) max-content;
+  }
+  .wolf-list-end {
+    grid-column: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    text-align: right;
+  }
+  .wolf-list-event {
+    grid-template-columns: 12.5rem 5.5rem minmax(0, 1fr);
+  }
+  .wolf-list-event .wolf-list-time {
+    grid-column: auto;
+  }
+}
+.wolf-list-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--wolf-ink);
+  overflow-wrap: anywhere;
+}
+.wolf-list-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  margin-top: 2px;
+  color: var(--wolf-muted);
+}
+.wolf-list-end .wolf-list-sub {
+  display: block;
+  margin-top: 0;
+}
+.wolf-list-time {
+  color: var(--wolf-muted);
+  white-space: nowrap;
+}
+
+/* incident page */
+.wolf-incident {
+  max-width: 64rem;
+}
+.wolf-incident-head {
+  display: grid;
+  gap: 12px;
+  padding: 20px 24px;
+  border-left-width: 3px;
+}
+.wolf-incident-head[data-severity='critical'] {
+  border-left-color: var(--wolf-critical);
+}
+.wolf-incident-head[data-severity='warning'] {
+  border-left-color: var(--wolf-warning);
+}
+.wolf-incident-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--wolf-ink);
+}
+.wolf-factgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 14px 32px;
+  border-top: 1px solid var(--wolf-line);
+  padding-top: 14px;
+  font-size: 0.875rem;
+}
+.wolf-factgrid dt {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--wolf-muted);
+}
+.wolf-factgrid dd {
+  margin-top: 2px;
+  color: var(--wolf-ink);
+}
+.wolf-incident-part {
+  border-top: 1px solid var(--wolf-line);
+  padding-top: 14px;
+}
+.wolf-timeline {
+  padding: 16px 12px 12px;
+}
+.wolf-timeline > :not(.wolf-rail) {
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+/* tables of figures: small labels as headers, numbers right-aligned in mono */
+.wolf-tablecard {
+  padding: 0;
+  overflow-x: auto;
+}
+.wolf-tablecard > .wolf-h2 {
+  padding: 16px 20px 4px;
+}
+.wolf-table {
+  width: 100%;
+  text-align: left;
+  font-size: 0.875rem;
+}
+.wolf-table thead th {
+  padding: 12px 12px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--wolf-muted);
+}
+.wolf-table tbody th,
+.wolf-table td {
+  padding: 10px 12px;
+  border-top: 1px solid var(--wolf-line);
+  vertical-align: top;
+  font-weight: 400;
+  color: var(--wolf-ink);
+}
+.wolf-table tr > :first-child {
+  padding-left: 20px;
+}
+.wolf-table tr > :last-child {
+  padding-right: 20px;
+}
+.wolf-table tbody tr {
+  transition: background-color 120ms ease;
+}
+.wolf-table tbody tr:hover {
+  background: var(--wolf-well);
+}
+.wolf-table tr[data-severity='critical'] > :first-child {
+  box-shadow: inset 3px 0 0 var(--wolf-critical);
+}
+.wolf-table .wolf-num {
+  text-align: right;
+}
+.wolf-table td.wolf-data,
+.wolf-table tbody th.wolf-data {
+  white-space: nowrap;
+}
+/* a header that is data (a series name), not a label: written as it is */
+.wolf-table thead th.wolf-th-data {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.wolf-table-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--wolf-ink);
+  overflow-wrap: anywhere;
+}
+.wolf-table-sub {
+  color: var(--wolf-muted);
+}
+div.wolf-table-sub {
+  margin-top: 2px;
+}
+/* a remark under a figure, on its own line */
+.wolf-table-under {
+  display: block;
+  font-size: 0.8rem;
+}
+.wolf-table thead th.wolf-th-wrap {
+  white-space: normal;
+  width: 7.5rem;
+}
+.wolf-table thead th.wolf-th-main {
+  width: 38%;
+}
+/* a table inside a card that already has its padding */
+.wolf-tablewell {
+  max-height: 24rem;
+  overflow: auto;
+  border: 1px solid var(--wolf-line);
+  border-radius: 8px;
+}
+.wolf-tablewell thead th {
+  position: sticky;
+  top: 0;
+  background: var(--wolf-well);
+}
+.wolf-tablewell tbody tr:first-child > * {
+  border-top: 0;
+}
+
+/* plain rows inside a card: what, its figure, the rest muted */
+.wolf-rows {
+  font-size: 0.875rem;
+}
+.wolf-rows > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 16px;
+  padding: 8px 0;
+  border-top: 1px solid var(--wolf-line);
+}
+.wolf-rows > li:first-child {
+  border-top: 0;
+}
+.wolf-rows-main {
+  font-weight: 500;
+  color: var(--wolf-ink);
+}
+.wolf-rows-figure {
+  color: var(--wolf-ink);
+}
+
+.wolf-factgrid-wide {
+  grid-column: 1 / -1;
+}
+
+/* filters of a view, kept together */
+.wolf-toolbar {
+  display: grid;
+  gap: 10px;
+  padding: 12px 16px;
+}
+
+/* a remark about what is shown: a glyph says its tone, never the colour alone */
+.wolf-note {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+}
+.wolf-note::before {
+  font-weight: 600;
+}
+.wolf-note[data-tone='warning'] {
+  color: var(--wolf-warning);
+  background: color-mix(in srgb, var(--wolf-warning) 9%, var(--wolf-surface));
+}
+.wolf-note[data-tone='warning']::before {
+  content: '◐';
+}
+.wolf-note[data-tone='brand'] {
+  color: var(--wolf-brand-text);
+  background: color-mix(in srgb, var(--wolf-brand-text) 8%, var(--wolf-surface));
+}
+.wolf-note[data-tone='brand']::before {
+  content: '→';
 }

@@ -32,9 +32,9 @@ const detailText = computed(() => (details.value ? JSON.stringify(details.value,
 </script>
 
 <template>
-  <li :id="anchor" tabindex="-1" class="wolf-row" :class="{ 'wolf-row-context': row.family === 'context', 'wolf-row-targeted': targeted }">
+  <li :id="anchor" tabindex="-1" class="wolf-row" :data-kind="row.kind" :class="{ 'wolf-row-context': row.family === 'context', 'wolf-row-targeted': targeted }">
     <time class="wolf-data wolf-row-time" :datetime="row.at" :title="full(row.at, timeZone)">{{ clock(row.at, timeZone) }}</time>
-    <span class="wolf-row-icon size-4" :class="ICONS[row.kind]" aria-hidden="true" />
+    <span class="wolf-row-node" aria-hidden="true"><span class="wolf-row-icon size-3.5" :class="ICONS[row.kind]" /></span>
     <div class="min-w-0 flex-1">
       <div class="flex flex-wrap items-baseline gap-x-2">
         <SeverityGlyph v-if="row.severity" :severity="row.severity" :show-label="false" />

@@ -115,7 +115,7 @@ async function split() {
       <TextInput v-model="title" placeholder="Title of the new incident (optional)" aria-label="Title of the new incident" />
 
       <div v-if="preview" class="wolf-card space-y-2" aria-live="polite" data-testid="split-preview">
-        <p v-if="preview.error" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ preview.error }}</p>
+        <p v-if="preview.error" role="alert" class="wolf-alert">{{ preview.error }}</p>
         <template v-else>
           <p><b>Moves</b> {{ plural(preview.moved, 'event') }} to a new incident; {{ plural(preview.kept, 'event') }} {{ preview.kept === 1 ? 'stays' : 'stay' }} in {{ incident }}.</p>
           <p class="flex flex-wrap items-baseline gap-x-2">
@@ -126,7 +126,7 @@ async function split() {
           </p>
         </template>
       </div>
-      <p v-if="error" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ error }}</p>
+      <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>
     </div>
     <template #actions>
       <div class="flex justify-end gap-2">

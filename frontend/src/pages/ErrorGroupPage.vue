@@ -40,39 +40,39 @@ const where = (s) => [s.site, s.bench, s.host].filter(Boolean).join(' · ')
   <PageHeader>
     <PageTitle title="Error group" />
   </PageHeader>
-  <section v-if="error" class="max-w-2xl p-5 text-base text-ink-gray-8">
-    <p role="alert">{{ error }}</p>
+  <section v-if="error" class="max-w-2xl space-y-3 p-5 text-base text-ink-gray-8">
+    <p role="alert" class="wolf-alert">{{ error }}</p>
     <RouterLink class="wolf-link" :to="{ name: 'errors' }">Back to errors</RouterLink>
   </section>
   <div v-else-if="!group" class="p-5"><LoadingNote what="the error group" /></div>
-  <div v-else class="mx-auto max-w-6xl space-y-5 p-5">
-    <header class="wolf-card space-y-2">
+  <div v-else class="wolf-page space-y-5">
+    <header class="wolf-card wolf-incident-head" :data-severity="group.severity">
       <SeverityGlyph :severity="group.severity" />
-      <h1 class="text-xl font-semibold text-ink-gray-9">{{ group.title }}</h1>
-      <dl class="wolf-facts text-sm">
-        <dt>Records</dt><dd class="wolf-data">{{ group.records }}</dd>
-        <dt>Reported occurrences</dt><dd class="wolf-data">{{ group.occurrences }}</dd>
-        <dt>First seen</dt><dd class="wolf-data">{{ full(group.first_seen, tz) }}</dd>
-        <dt>Last seen</dt><dd class="wolf-data">{{ full(group.last_seen, tz) }}</dd>
-        <dt>Fingerprint</dt><dd class="wolf-data break-all">{{ group.fingerprint }}</dd>
+      <h1 class="wolf-incident-title">{{ group.title }}</h1>
+      <dl class="wolf-factgrid">
+        <div><dt>Records</dt><dd class="wolf-data">{{ group.records }}</dd></div>
+        <div><dt>Reported occurrences</dt><dd class="wolf-data">{{ group.occurrences }}</dd></div>
+        <div><dt>First seen</dt><dd class="wolf-data">{{ full(group.first_seen, tz) }}</dd></div>
+        <div><dt>Last seen</dt><dd class="wolf-data">{{ full(group.last_seen, tz) }}</dd></div>
+        <div class="wolf-factgrid-wide"><dt>Fingerprint</dt><dd class="wolf-data break-all">{{ group.fingerprint }}</dd></div>
       </dl>
       <p class="text-sm text-ink-gray-6">Every record of this group you may see, whatever its age.</p>
     </header>
 
-    <section class="wolf-card space-y-2" aria-label="Where">
-      <h2 class="text-base font-semibold text-ink-gray-9">Where it happened</h2>
-      <table class="w-full text-left text-sm">
-        <thead class="text-ink-gray-6">
-          <tr><th class="py-1 font-normal">Site · bench · host</th><th class="font-normal">Records</th><th class="font-normal">Reported</th><th class="font-normal">First seen</th><th class="font-normal">Last seen</th></tr>
+    <section class="wolf-card wolf-tablecard" aria-label="Where">
+      <h2 class="wolf-h2">Where it happened</h2>
+      <table class="wolf-table">
+        <thead>
+          <tr><th>Site · bench · host</th><th class="wolf-num">Records</th><th class="wolf-num">Reported</th><th>First seen</th><th>Last seen</th></tr>
         </thead>
         <tbody>
-          <tr v-for="s in group.scopes" :key="where(s)" class="border-t border-[var(--wolf-line)]">
-            <td class="py-1">
+          <tr v-for="s in group.scopes" :key="where(s)">
+            <td>
               <RouterLink v-if="s.site" class="wolf-link" :to="{ name: 'site', params: { site: s.site } }">{{ s.site }}</RouterLink>
               <span class="text-ink-gray-6">{{ s.site ? ' · ' : '' }}{{ [s.bench, s.host].filter(Boolean).join(' · ') }}</span>
             </td>
-            <td class="wolf-data">{{ s.records }}</td>
-            <td class="wolf-data">{{ s.occurrences }}</td>
+            <td class="wolf-data wolf-num">{{ s.records }}</td>
+            <td class="wolf-data wolf-num">{{ s.occurrences }}</td>
             <td class="wolf-data">{{ day(s.first_seen, tz) }} {{ clock(s.first_seen, tz) }}</td>
             <td class="wolf-data">{{ day(s.last_seen, tz) }} {{ clock(s.last_seen, tz) }}</td>
           </tr>
@@ -80,18 +80,18 @@ const where = (s) => [s.site, s.bench, s.host].filter(Boolean).join(' · ')
       </table>
     </section>
 
-    <section v-if="group.incidents.length || group.incidents_not_visible" class="wolf-card space-y-1" aria-label="Incidents">
-      <h2 class="text-base font-semibold text-ink-gray-9">Incidents with these errors</h2>
-      <p v-for="i in group.incidents" :key="i.name" class="text-sm">
+    <section v-if="group.incidents.length || group.incidents_not_visible" class="wolf-card space-y-2" aria-label="Incidents">
+      <h2 class="wolf-h2">Incidents with these errors</h2>
+      <p v-for="i in group.incidents" :key="i.name" class="flex flex-wrap items-baseline gap-x-2 text-sm">
         <SeverityGlyph :severity="i.severity" :show-label="false" />
-        <RouterLink class="wolf-link" :to="{ name: 'incident', params: { incident: i.name } }">{{ i.name }}</RouterLink>
-        {{ i.title }} <span class="text-ink-gray-6">({{ i.status }})</span>
+        <RouterLink class="wolf-link wolf-data" :to="{ name: 'incident', params: { incident: i.name } }">{{ i.name }}</RouterLink>
+        <span class="font-medium text-ink-gray-9">{{ i.title }}</span> <span class="text-ink-gray-6">({{ i.status }})</span>
       </p>
       <p v-if="group.incidents_not_visible" class="text-sm text-ink-gray-6">and {{ group.incidents_not_visible }} you may not see</p>
     </section>
 
     <section class="wolf-card space-y-2" aria-label="Newest record">
-      <h2 class="text-base font-semibold text-ink-gray-9">Newest record</h2>
+      <h2 class="wolf-h2">Newest record</h2>
       <p class="text-sm text-ink-gray-6">
         {{ where(group.representative) }} · last seen {{ full(group.representative.last_seen, tz) }}
       </p>
@@ -100,10 +100,10 @@ const where = (s) => [s.site, s.bench, s.host].filter(Boolean).join(' · ')
       <p v-if="!traceback && !rest" class="text-sm text-ink-gray-6">This record carries no details.</p>
     </section>
 
-    <section class="wolf-card space-y-1" aria-label="Records">
-      <h2 class="text-base font-semibold text-ink-gray-9">Records, most recently seen first</h2>
-      <ul class="text-sm">
-        <li v-for="r in group.recent_records" :key="r.name" class="flex flex-wrap gap-x-3 py-0.5">
+    <section class="wolf-card space-y-2" aria-label="Records">
+      <h2 class="wolf-h2">Records, most recently seen first</h2>
+      <ul class="wolf-rows">
+        <li v-for="r in group.recent_records" :key="r.name">
           <time class="wolf-data text-ink-gray-6" :title="`last seen ${full(r.last_seen, tz)}`">{{ day(r.last_seen, tz) }} {{ clock(r.last_seen, tz) }}</time>
           <span>{{ where(r) }}</span>
           <span v-if="r.count > 1" class="wolf-data text-ink-gray-6">{{ r.count }} reported</span>
