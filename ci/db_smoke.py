@@ -1902,6 +1902,42 @@ def main():
 		alias.delete(ignore_permissions=True)
 		return f"{sources_of(by_ip)} by IP, {sources_of(by_host)} by host under 3 names, site by domain, purge"
 
+	def entity_correlation():
+		"""Events of other scopes and sources join the incident naming the same IP (#72 step 5)."""
+		ip, site, tz = "45.33.32.202", "corr.localhost", events.system_tz()
+		at = now_datetime()
+
+		def ev(raw, minutes=0):
+			e = schema.normalize_event({"type": "security", "severity": "warning", **raw}, tz, at + timedelta(minutes=minutes))
+			return events.insert_event(e), e
+
+		probe, _ = ev({"category": "web_attack_probe", "source": "nginx", "host": "corr-web", "site": site,
+		               "title": "corr probe", "payload": {"ip": ip, "users": ["Jane@Corr.example"]}}, -20)  # fmt: skip
+		inc = frappe.get_doc({"doctype": "Wolf Incident", "title": "corr incident", "site": site, "severity": "warning",
+		                      "status": "Open", "started_at": at - timedelta(minutes=20)}).insert(ignore_permissions=True)  # fmt: skip
+		incidents.link_events(inc.name, [probe])
+		ids = incidents.attach_to_open_incident(*ev({"category": "network_ids_alert", "source": "suricata", "host": "corr-ids",
+		                                              "title": "corr ids", "payload": {"src_ip": ip, "dest_ip": "10.77.0.1"}}))  # fmt: skip
+		assert ids == inc.name, f"Suricata alert from the same IP on another host not grouped: {ids}"
+		user = incidents.attach_to_open_incident(*ev({"category": "failed_login", "source": "frappe", "host": "corr-other",
+		                                               "title": "corr login", "payload": {"user": "jane@corr.example"}}))  # fmt: skip
+		assert user == inc.name, f"same e-mail user not grouped: {user}"
+		root = incidents.attach_to_open_incident(*ev({"category": "ssh_failed_login", "source": "auth", "host": "corr-hids",
+		                                               "title": "corr root", "payload": {"user": "root"}}))  # fmt: skip
+		assert root is None, f"a login name grouped across hosts: {root}"
+		stale = incidents.attach_to_open_incident(*ev({"category": "network_ids_alert", "source": "suricata", "host": "corr-ids",
+		                                                "title": "corr late", "payload": {"src_ip": ip}}, 200))  # fmt: skip
+		assert stale is None, f"an IP seen 3 hours later grouped: {stale}"
+		frappe.db.set_value("Wolf Incident", inc.name, "status", "Resolved")
+		closed = incidents.attach_to_open_incident(*ev({"category": "network_ids_alert", "source": "suricata", "host": "corr-ids",
+		                                                 "title": "corr after", "payload": {"src_ip": ip}}))  # fmt: skip
+		assert closed is None, f"attached to a resolved incident: {closed}"
+		count = frappe.db.get_value("Wolf Incident", inc.name, "event_count")
+		assert count == 3, count
+		timeline = {r.title for r in incidents.get_timeline(inc.name)}
+		assert {"corr probe", "corr ids", "corr login"} <= timeline, timeline
+		return f"{inc.name}: web probe + Suricata on another host + same e-mail user; login name, late IP, resolved kept out"
+
 	def crowdsec_check():
 		"""CrowdSec LAPI (a local stand-in): decisions tag events, detections and approved blocks go out."""
 		from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -2582,6 +2618,7 @@ def main():
 	                 ("wazuh events", wazuh_events),
 	                 ("wazuh integration", wazuh_integration),
 	                 ("entities", entities_check),
+	                 ("entity correlation", entity_correlation),
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
 	                 ("response actions", response_actions), ("response links", response_links), ("journal", journal_chain),

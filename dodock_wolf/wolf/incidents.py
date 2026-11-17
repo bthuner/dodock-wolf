@@ -166,10 +166,57 @@ def refresh_event_count(incident):
 	live.incident_changed(incident)
 
 
+ENTITY_MINUTES = 60  # Wolf Settings.entity_correlation_minutes when unset
+
+
+def entity_incident(event_name, event):
+	"""The open incident holding an event that names one of this event's IPs or e-mail users,
+	seen within Entity Correlation Minutes before it, whatever its source, host, bench or site
+	(#72 step 5): a Suricata scan, a Wazuh SSH alert and a Frappe login from one IP read as one
+	incident.
+
+	An IP is the same party wherever it is seen; a user only when it is an e-mail address ("root"
+	on two hosts, "Administrator" on two sites are not one person). Hosts and sites are left to
+	the scope match."""
+	if event.get("event_type") != "security":
+		return None
+	mine = [
+		(kind, value)
+		for kind, value in frappe.db.sql(
+			"select kind, value from `tabWolf Event Entity` where event = %s and kind in ('ip', 'user')", event_name
+		)
+		if kind == "ip" or "@" in value
+	]
+	if not mine:
+		return None
+	minutes = cint(frappe.db.get_single_value("Wolf Settings", "entity_correlation_minutes")) or ENTITY_MINUTES
+	at = get_datetime(event.get("timestamp") or now_datetime())
+	params = {"event": event_name, "since": add_to_date(at, minutes=-minutes), "until": add_to_date(at, minutes=5)}
+	match = []
+	for i, (kind, value) in enumerate(mine):
+		params[f"k{i}"], params[f"v{i}"] = kind, value
+		match.append(f"(x.kind = %(k{i})s and x.value = %(v{i})s)")
+	rows = frappe.db.sql(
+		f"""select i.name from `tabWolf Event Entity` x
+		join `tabWolf Event` e on e.name = x.event
+		join `tabWolf Incident` i on i.name = e.incident
+		where ({" or ".join(match)}) and x.event != %(event)s and x.`at` between %(since)s and %(until)s
+			and i.status in ('Open', 'Acknowledged') and coalesce(i.merged_into, '') = ''
+		order by x.`at` desc
+		limit 1""",
+		params,
+	)
+	return rows[0][0] if rows else None
+
+
 def attach_to_open_incident(event_name, event):
-	"""Correlate a freshly ingested event with an open incident in the same scope."""
+	"""Correlate a freshly ingested event with an open incident: one sharing an IP or e-mail user
+	with it (security events), else one in the same scope."""
 	if event["severity"] == "info" and event["event_type"] != "deployment":
 		return None
+	incident = entity_incident(event_name, event)
+	if incident:
+		return _attach(event_name, event, incident)
 	rows = frappe.db.sql(
 		"""select name from `tabWolf Incident`
 		where status in ('Open', 'Acknowledged') and (
@@ -192,7 +239,10 @@ def attach_to_open_incident(event_name, event):
 	)
 	if not rows:
 		return None
-	incident = rows[0][0]
+	return _attach(event_name, event, rows[0][0])
+
+
+def _attach(event_name, event, incident):
 	frappe.db.set_value("Wolf Event", event_name, "incident", incident, update_modified=False)
 	frappe.db.set_value("Wolf Incident", incident, "last_event_at", event["timestamp"], update_modified=False)
 	refresh_event_count(incident)

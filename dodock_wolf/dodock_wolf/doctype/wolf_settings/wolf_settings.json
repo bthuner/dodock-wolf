@@ -29,6 +29,7 @@
   "correlation_section",
   "deployment_window_minutes",
   "timeline_padding_minutes",
+  "entity_correlation_minutes",
   "local_section",
   "capture_scheduler_failures",
   "capture_error_logs",
@@ -257,6 +258,13 @@
    "fieldname": "timeline_padding_minutes",
    "fieldtype": "Int",
    "label": "Timeline Padding Minutes"
+  },
+  {
+   "default": "60",
+   "description": "A security event joins the open incident holding an event that names the same IP or e-mail user this recently, whatever its source, host or site.",
+   "fieldname": "entity_correlation_minutes",
+   "fieldtype": "Int",
+   "label": "Entity Correlation Minutes"
   },
   {
    "fieldname": "local_section",
@@ -671,7 +679,7 @@
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-02 23:45:00.000000",
+ "modified": "2026-11-17 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Settings",
