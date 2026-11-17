@@ -312,7 +312,7 @@ class InfraChecks:
 		self.outbound_watcher = OutboundWatcher(
 			host, os.path.join(state_dir, OUTBOUND_STATE) if state_dir else None, self.outbound.get("learn_days", 7),
 			bool(self.outbound.get("include_private")), usual_ports=self.outbound.get("usual_ports"),
-			report_usual_ports=bool(self.outbound.get("report_usual_ports")),
+			report_usual_ports=bool(self.outbound.get("report_usual_ports")), proxy_logs=self.outbound.get("proxy_logs"),
 		) if self.outbound.get("enabled", True) else None  # fmt: skip
 		self.redis = {}  # (bench, url) -> RedisProbe, kept so counters survive rediscovery
 		self.db_probes = None

@@ -183,7 +183,11 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   a `bench_new_outbound` event (warning), naming it in `remote_ip`/`remote_port`; new ones on usual
   ports (web, mail, DNS, NTP, SSH and git, LDAP, plus `outbound.usual_ports`) are counted in
   `bench_new_outbound_usual`, or reported at info with `outbound.report_usual_ports`. A bench owned
-  by root is skipped. `outbound.include_private` adds LAN peers. Sampled, not every connection.
+  by root is skipped. `outbound.include_private` adds LAN peers. Benches in containers (Docker,
+  Press) are found without root through `/proc/<pid>/cgroup` and `mountinfo` and read through
+  `/proc/<pid>/net/tcp`. Behind an outbound proxy, the proxy's access log gives every destination
+  by host name (`outbound.proxy_logs`, `/var/log/squid/access.log` by default when it exists).
+  Read from `/proc`, a connection that opens and closes between two samples is missed.
 - **TLS**: `tls_days_left` for every public site name and custom domain (`site_config.json`
   `domains`), every `tls.interval` (1 h), in a background thread. The agent connects to
   `<domain>:443` with SNI (or to `tls.connect_host`, e.g. `127.0.0.1`, to check the local nginx),
