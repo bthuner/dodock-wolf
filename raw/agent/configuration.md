@@ -454,6 +454,22 @@ others) turns a check off.
         [{"path", "format": "squid"}]
       </code>
       
+      ), <code>
+        kernel_log
+      </code>
+      
+       (<code>
+        "auto"
+      </code>
+      
+      : every new connection when <code>
+        wolf-outbound-log
+      </code>
+      
+       is installed; <code>
+        false
+      </code>
+      
       )
     </td>
   </tr>

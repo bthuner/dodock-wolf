@@ -1289,20 +1289,20 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
 Every key is optional; the defaults are those of the example. `"tls": false` (and the same for the
 others) turns a check off.
 
-| Key             | Settings                                                                                                                                                                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `rq`            | `long_job_minutes` (30)                                                                                                                                                                                                                                            |
-| `backups`       | `enabled`, `interval` (600 s), `press` (skip Press benches), `dirs` (backup directory per site)                                                                                                                                                                    |
-| `tls`           | `interval` (3600 s), `port` (443), `timeout` (5 s), `connect_host` (for example `127.0.0.1` to check the local nginx), `domains` (add), `exclude` (drop)                                                                                                           |
-| `mariadb`       | `cli` (else `mariadb` / `mysql`), `host`, `port`, `user`, `password`, `defaults_file`: a monitoring user for replication status                                                                                                                                    |
-| `processes`     | `manager`: `auto`, `supervisor` or `systemd`                                                                                                                                                                                                                       |
-| `versions`      | `interval` (3600 s)                                                                                                                                                                                                                                                |
-| `site_settings` | `interval` (3600 s)                                                                                                                                                                                                                                                |
-| `exposure`      | `interval` (600 s), `ports` (more ports to count)                                                                                                                                                                                                                  |
-| `integrity`     | `interval` (900 s), `full_scan_interval` (86400 s), `server_paths` (`null`: `/etc/nginx` and `/etc/supervisor`)                                                                                                                                                    |
-| `outbound`      | `interval` (60 s), `learn_days` (7), `include_private` (`false`), `usual_ports` (ports only counted, added to the defaults), `report_usual_ports` (`false`), `proxy_logs` (`null`: `/var/log/squid/access.log` when it exists; or `[{"path", "format": "squid"}]`) |
-| `suricata`      | `eve_log`, `max_priority` (3)                                                                                                                                                                                                                                      |
-| `wazuh`         | `alerts_log`, `min_level` (7), `exclude_groups` (`["sca"]`)                                                                                                                                                                                                        |
+| Key             | Settings                                                                                                                                                                                                                                                                                                                                                         |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rq`            | `long_job_minutes` (30)                                                                                                                                                                                                                                                                                                                                          |
+| `backups`       | `enabled`, `interval` (600 s), `press` (skip Press benches), `dirs` (backup directory per site)                                                                                                                                                                                                                                                                  |
+| `tls`           | `interval` (3600 s), `port` (443), `timeout` (5 s), `connect_host` (for example `127.0.0.1` to check the local nginx), `domains` (add), `exclude` (drop)                                                                                                                                                                                                         |
+| `mariadb`       | `cli` (else `mariadb` / `mysql`), `host`, `port`, `user`, `password`, `defaults_file`: a monitoring user for replication status                                                                                                                                                                                                                                  |
+| `processes`     | `manager`: `auto`, `supervisor` or `systemd`                                                                                                                                                                                                                                                                                                                     |
+| `versions`      | `interval` (3600 s)                                                                                                                                                                                                                                                                                                                                              |
+| `site_settings` | `interval` (3600 s)                                                                                                                                                                                                                                                                                                                                              |
+| `exposure`      | `interval` (600 s), `ports` (more ports to count)                                                                                                                                                                                                                                                                                                                |
+| `integrity`     | `interval` (900 s), `full_scan_interval` (86400 s), `server_paths` (`null`: `/etc/nginx` and `/etc/supervisor`)                                                                                                                                                                                                                                                  |
+| `outbound`      | `interval` (60 s), `learn_days` (7), `include_private` (`false`), `usual_ports` (ports only counted, added to the defaults), `report_usual_ports` (`false`), `proxy_logs` (`null`: `/var/log/squid/access.log` when it exists; or `[{"path", "format": "squid"}]`), `kernel_log` (`"auto"`: every new connection when `wolf-outbound-log` is installed; `false`) |
+| `suricata`      | `eve_log`, `max_priority` (3)                                                                                                                                                                                                                                                                                                                                    |
+| `wazuh`         | `alerts_log`, `min_level` (7), `exclude_groups` (`["sca"]`)                                                                                                                                                                                                                                                                                                      |
 
 ## Privacy and safety
 
@@ -2708,9 +2708,34 @@ the agent's user to it; on a host set up by hand, run `sudo usermod -aG proxy wo
 restart the agent. Until then the agent logs that it cannot read the log.
 ::
 
-::note
-Read from `/proc`, a connection that opened and closed between two samples is missed.
-::
+**Every new connection, not a sample.** Read from `/proc`, a connection that opened and closed
+between two samples is missed: most webhook or API calls last under a second. No kernel interface
+lists past connections without root, so this one step is privileged and optional. The helper
+`wolf-outbound-log` adds an nftables table that logs every **new** outbound TCP connection of the
+bench users (`output`, with their uid) and of the containers behind a Docker, Podman or CNI bridge
+(`docker0`, `br-*`, `podman*`, `cni*`; `forward`, with their address). The agent reads those lines
+from the kernel log (`journalctl -t kernel`, resuming after a restart, else `/var/log/kern.log`),
+runs the helper again when the bench users change, and marks those events `seen_by: kernel`.
+
+```bash [as root]
+install -m 0755 -o root -g root agent/wolf-outbound-log.sh /usr/local/sbin/wolf-outbound-log
+echo 'wolf-agent ALL=(root) NOPASSWD: /usr/local/sbin/wolf-outbound-log' > /etc/sudoers.d/wolf-outbound-log
+chmod 0440 /etc/sudoers.d/wolf-outbound-log
+systemctl restart wolf-agent
+```
+
+The agent uses it once it is there (`outbound.kernel_log`, `"auto"`). It refuses uid 0.
+
+- Every rule shares one limit: 50 new connections a second for the whole host, so the journal
+  cannot be flooded; past it, only what a `/proc` sample sees is counted. UDP (DNS, NTP) is not
+  logged, nor are private, loopback and link-local destinations (`outbound.include_private` does
+  not apply here).
+- Matching new connections turns connection tracking on for the host's traffic.
+- Destinations only this log sees get a learning week of their own, from when the helper is first
+  applied: installing it on a host learned long ago does not raise a burst of alerts.
+- `nft list table inet wolf_outbound` shows the rules and their counters. `"kernel_log": false`
+  makes the agent remove the table; to uninstall, run `wolf-outbound-log --off`. Without the
+  helper, or when sudo refuses, the agent says so once and keeps sampling `/proc`.
 
 | Preset                         | Fires when                                                                    |
 | ------------------------------ | ----------------------------------------------------------------------------- |
