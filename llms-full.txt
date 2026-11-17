@@ -1320,15 +1320,15 @@ Run commands as the `wolf-agent` user, which owns the config:
 
 Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
 
-| Command                                                                      | What it does                                                                                                                               |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `register --url URL --token TOKEN [--bench PATH]...`                         | Register the host, discover benches, write the config.                                                                                     |
-| `run`                                                                        | The daemon loop. This is what systemd runs.                                                                                                |
-| `discover [--bench PATH] [--platform auto|press|generic]`                    | Show what bench discovery finds.                                                                                                           |
-| `check [--from-start] [--status] [--platform …]`                             | Collect once and print the JSON payload. Nothing is sent. The watchdog state goes to stderr. `--status` also asks the site for its health. |
-| `mark-deployment --bench NAME [--site S] [--note TEXT] [--silence 15m]`      | Put a deployment marker on the Wolf timeline. `--silence` also opens a maintenance window that mutes notifications for that bench or site. |
-| `test-fallback`                                                              | Send a test message through the [watchdog](https://bthuner.github.io/dodock-wolf/agent/watchdog) fallback channels.                        |
-| `demo press [--root DIR] [--days N] [--no-live] [--cycle MIN] [--configure]` | Write a simulated Press app server for this agent to read: days of history, then live traffic and incidents. For demos and tests only.     |
+| Command                                                                                   | What it does                                                                                                                               |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `register --url URL --token TOKEN [--bench PATH]...`                                      | Register the host, discover benches, write the config.                                                                                     |
+| `run`                                                                                     | The daemon loop. This is what systemd runs.                                                                                                |
+| `discover [--bench PATH] [--platform auto|press|generic]`                                 | Show what bench discovery finds.                                                                                                           |
+| `check [--from-start] [--status] [--platform …]`                                          | Collect once and print the JSON payload. Nothing is sent. The watchdog state goes to stderr. `--status` also asks the site for its health. |
+| `mark-deployment --bench NAME [--site S] [--note TEXT] [--silence 15m]`                   | Put a deployment marker on the Wolf timeline. `--silence` also opens a maintenance window that mutes notifications for that bench or site. |
+| `test-fallback`                                                                           | Send a test message through the [watchdog](https://bthuner.github.io/dodock-wolf/agent/watchdog) fallback channels.                        |
+| `demo press|multi|single [--root DIR] [--days N] [--no-live] [--cycle MIN] [--configure]` | Write a simulated server for this agent to read: days of history, then live traffic and incidents. For demos and tests only.               |
 
 ## Mark a deployment
 
@@ -1345,28 +1345,38 @@ Press and Pilot tasks, and `bench migrate` on sites running the Wolf App, are ma
 
 ## Run a demo
 
-`demo press` lays out a Press app server under `--root` (default `/home/frappe/demo-press`):
-3 benches, 8 sites with two custom domains, the Press agent's `jobs.sqlite3`, an nginx access log in
-Press's format and an auth.log. Sites are names only: nothing runs behind them. Use a host or
-container of its own, registered under a name of its own.
+`demo KIND` lays out a simulated server under `--root` (default `/home/frappe/demo-KIND`). Sites are
+names only: nothing runs behind them.
+
+| Kind     | Server                                                                                                                       | Deployments                                                       |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `press`  | a Press app server: 3 benches, 8 sites (two with a custom domain), the Press agent's `jobs.sqlite3`, nginx in Press's format | Press jobs, read by the agent                                     |
+| `multi`  | plain benches: 2 benches, 6 sites (two with a custom domain), one nginx log with `$host` first                               | marked through the deployment endpoint, as `mark-deployment` does |
+| `single` | one bench, one site                                                                                                          | same as `multi`                                                   |
+
+Every kind has an auth.log too. Use a host or container of its own, registered under a name of its own:
 
 ```bash [demo host]
-wolf-agent register --url https://wolf.example.com --token TOKEN --hostname f1-demo-press --platform press
-wolf-agent demo press --configure   # Press mode on the demo layout; checks with nothing behind them off
+wolf-agent register --url https://wolf.example.com --token TOKEN --hostname dokos-multi-1 --bench /home/frappe/demo-multi
+wolf-agent demo multi --configure   # points the agent at the demo; checks with nothing behind them off
 wolf-agent run &                    # the agent runs first: it must open the files while they are empty
-wolf-agent demo press               # 7 days of history, then an incident cycle every 30 minutes
+wolf-agent demo multi               # 7 days of history, then an incident cycle every 30 minutes
 ```
 
-It waits until the agent tracks every file, then writes the history, which reaches Wolf through the
-agent's own discovery, tailers and parsers. Past host metrics, which the agent samples live, go
-through its spool. Each cycle has a Press migrate followed by 4 minutes of 502s, a request
+`--bench` names a directory that is not a bench yet, so the host registers without benches; the
+demo's benches reach Wolf with its telemetry. For `press`, also pass `--platform press`.
+
+The demo waits until the agent tracks every file, then writes the history, which reaches Wolf
+through the agent's own discovery, tailers and parsers. Past host metrics, which the agent samples
+live, go through its spool. Each cycle has a deployment followed by 4 minutes of 502s, a request
 traceback, a failed scheduled job, a killed worker, an SSH brute force (every third one succeeds),
-a web attack scan and, every other cycle, a failed Patch App job.
+a web attack scan and, every other cycle, a failed bench operation (a Press Patch App job, or a
+`bench update` traceback).
 
 Rules look at the last minutes, so incidents open for the live cycles, not for the history.
-`bench --site SITE generate-demo-press --agent-config PATH` does the same from a bench that has
-the agent installed, and `--webhook URL` also sends the demo's alerts there. The
-[development page](https://bthuner.github.io/dodock-wolf/reference/development) runs it all in Docker.
+`bench --site SITE generate-demo-press` (or `-multi`, `-single`) with `--agent-config PATH` does the
+same from a bench that has the agent installed, and `--webhook URL` also sends the demo's alerts
+there. The [development page](https://bthuner.github.io/dodock-wolf/reference/development) runs it all in Docker.
 
 ## See the payload
 
@@ -5288,17 +5298,22 @@ MVP, tested on a Dokos (Dodock 5.18) bench, on MariaDB 10.6 and on Postgres 17 (
 ## Live demos
 
 The demo stack in [`dev/demo`](https://github.com/bthuner/dodock-wolf/tree/main/dev/demo){rel="&#x22;nofollow&#x22;"} runs one
-Dokos bench with the Wolf App and its agent. The `press` profile adds a simulated Press app server,
-watched by a second agent:
+Dokos bench with the Wolf App and its agent. Three profiles add simulated servers, each watched by
+an agent of its own; they can run together:
 
 ```bash [dev/demo]
-WOLF_DEMO_BASE=registry.gitlab.com/dokos/dokos:latest docker compose --profile press up -d --build
-docker compose logs -f press-demo   # "history written up to ...", then live
+WOLF_DEMO_BASE=registry.gitlab.com/dokos/dokos:latest docker compose --profile press --profile multi --profile single up -d --build
+docker compose --profile multi logs -f multi-demo   # "history written up to ...", then live
 ```
 
-`press-agent` registers as `f1-demo-press` in Press mode. `press-demo` runs
-`bench generate-demo-press`: 7 days of history for 3 benches and 8 sites, then an incident cycle
-every 30 minutes, with alerts sent to the stack's webhook sink (`docker compose logs catcher`).
+| Profile  | Host             | Server                                 |
+| -------- | ---------------- | -------------------------------------- |
+| `press`  | `f1-demo-press`  | a Press app server, 3 benches, 8 sites |
+| `multi`  | `dokos-multi-1`  | plain benches, 2 benches, 6 sites      |
+| `single` | `dokos-single-1` | one bench, one site                    |
+
+Each `<kind>-demo` service runs `bench generate-demo-<kind>`: 7 days of history, then an incident
+cycle every 30 minutes, with alerts sent to the stack's webhook sink (`docker compose logs catcher`).
 [Commands](https://bthuner.github.io/dodock-wolf/agent/commands) lists what a cycle contains.
 
 ## Python tests

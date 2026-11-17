@@ -108,12 +108,12 @@ Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
   <tr>
     <td>
       <code>
-        demo press [--root DIR] [--days N] [--no-live] [--cycle MIN] [--configure]
+        demo press|multi|single [--root DIR] [--days N] [--no-live] [--cycle MIN] [--configure]
       </code>
     </td>
     
     <td>
-      Write a simulated Press app server for this agent to read: days of history, then live traffic and incidents. For demos and tests only.
+      Write a simulated server for this agent to read: days of history, then live traffic and incidents. For demos and tests only.
     </td>
   </tr>
 </tbody>
@@ -134,28 +134,114 @@ Press and Pilot tasks, and `bench migrate` on sites running the Wolf App, are ma
 
 ## Run a demo
 
-`demo press` lays out a Press app server under `--root` (default `/home/frappe/demo-press`):
-3 benches, 8 sites with two custom domains, the Press agent's `jobs.sqlite3`, an nginx access log in
-Press's format and an auth.log. Sites are names only: nothing runs behind them. Use a host or
-container of its own, registered under a name of its own.
+`demo KIND` lays out a simulated server under `--root` (default `/home/frappe/demo-KIND`). Sites are
+names only: nothing runs behind them.
+
+<table>
+<thead>
+  <tr>
+    <th>
+      Kind
+    </th>
+    
+    <th>
+      Server
+    </th>
+    
+    <th>
+      Deployments
+    </th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr>
+    <td>
+      <code>
+        press
+      </code>
+    </td>
+    
+    <td>
+      a Press app server: 3 benches, 8 sites (two with a custom domain), the Press agent's <code>
+        jobs.sqlite3
+      </code>
+      
+      , nginx in Press's format
+    </td>
+    
+    <td>
+      Press jobs, read by the agent
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        multi
+      </code>
+    </td>
+    
+    <td>
+      plain benches: 2 benches, 6 sites (two with a custom domain), one nginx log with <code>
+        $host
+      </code>
+      
+       first
+    </td>
+    
+    <td>
+      marked through the deployment endpoint, as <code>
+        mark-deployment
+      </code>
+      
+       does
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        single
+      </code>
+    </td>
+    
+    <td>
+      one bench, one site
+    </td>
+    
+    <td>
+      same as <code>
+        multi
+      </code>
+    </td>
+  </tr>
+</tbody>
+</table>
+
+Every kind has an auth.log too. Use a host or container of its own, registered under a name of its own:
 
 ```bash [demo host]
-wolf-agent register --url https://wolf.example.com --token TOKEN --hostname f1-demo-press --platform press
-wolf-agent demo press --configure   # Press mode on the demo layout; checks with nothing behind them off
+wolf-agent register --url https://wolf.example.com --token TOKEN --hostname dokos-multi-1 --bench /home/frappe/demo-multi
+wolf-agent demo multi --configure   # points the agent at the demo; checks with nothing behind them off
 wolf-agent run &                    # the agent runs first: it must open the files while they are empty
-wolf-agent demo press               # 7 days of history, then an incident cycle every 30 minutes
+wolf-agent demo multi               # 7 days of history, then an incident cycle every 30 minutes
 ```
 
-It waits until the agent tracks every file, then writes the history, which reaches Wolf through the
-agent's own discovery, tailers and parsers. Past host metrics, which the agent samples live, go
-through its spool. Each cycle has a Press migrate followed by 4 minutes of 502s, a request
+`--bench` names a directory that is not a bench yet, so the host registers without benches; the
+demo's benches reach Wolf with its telemetry. For `press`, also pass `--platform press`.
+
+The demo waits until the agent tracks every file, then writes the history, which reaches Wolf
+through the agent's own discovery, tailers and parsers. Past host metrics, which the agent samples
+live, go through its spool. Each cycle has a deployment followed by 4 minutes of 502s, a request
 traceback, a failed scheduled job, a killed worker, an SSH brute force (every third one succeeds),
-a web attack scan and, every other cycle, a failed Patch App job.
+a web attack scan and, every other cycle, a failed bench operation (a Press Patch App job, or a
+`bench update` traceback).
 
 Rules look at the last minutes, so incidents open for the live cycles, not for the history.
-`bench --site SITE generate-demo-press --agent-config PATH` does the same from a bench that has
-the agent installed, and `--webhook URL` also sends the demo's alerts there. The
-[development page](/reference/development) runs it all in Docker.
+`bench --site SITE generate-demo-press` (or `-multi`, `-single`) with `--agent-config PATH` does the
+same from a bench that has the agent installed, and `--webhook URL` also sends the demo's alerts
+there. The [development page](/reference/development) runs it all in Docker.
 
 ## See the payload
 
