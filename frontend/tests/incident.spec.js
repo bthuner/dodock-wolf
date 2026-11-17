@@ -325,9 +325,38 @@ describe('IncidentPage response actions', () => {
     await page.findAll('button').find((b) => b.text() === 'Confirm').trigger('click')
     await flushPromises()
     const [, init] = approvals()[0]
-    expect(JSON.parse(init.body)).toMatchObject({ action: 'block_ip', target: '45.33.32.156', agent: 'AG-1', duration_hours: 48 })
+    expect(JSON.parse(init.body)).toMatchObject({ action: 'block_ip', target: '45.33.32.156', agent: 'AG-1', host: 'bench-01', duration_hours: 48 })
     expect(page.text()).toContain('Approved, waiting for the agent')
     expect(page.text()).not.toContain('Approve…')
+  })
+
+  it('sends a Wazuh-only block without a duration field, and says Wazuh applied it', async () => {
+    let actions = []
+    const proposal = { action: 'block_ip', target: '45.33.32.159', agent: null, host: 'web-02', executors: ['wazuh'],
+      reason: 'hids_alert: sshd brute force', label: 'Block 45.33.32.159 for 24 h on web-02 with Wazuh' }  // prettier-ignore
+    const fetchFn = server({
+      'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.response.get_response': () => ({
+        proposals: actions.length ? [] : [proposal], actions, can_approve: true, default_hours: 24, max_hours: 168,
+      }),
+      'dodock_wolf.api.response.approve': () => {
+        actions = [{ name: 'WRA-00002', action: 'block_ip', target: '45.33.32.159', host: 'web-02', executor: 'wazuh',
+          status: 'Applied', approved_by: 'ops@example.com', approved_at: '2026-11-01T10:00:00Z',
+          expires_at: '2026-11-02T10:00:00Z', result: 'sent to Wazuh agent 001 (firewall-drop86400)' }]  // prettier-ignore
+        return actions[0]
+      },
+    })
+    const { page } = await open()
+    expect(page.text()).toContain('on web-02 with Wazuh')
+    await page.findAll('button').find((b) => b.text() === 'Approve…').trigger('click')
+    expect(page.find('input[aria-label=Hours]').exists()).toBe(false) // Wazuh's command sets the duration
+    await page.findAll('button').find((b) => b.text() === 'Confirm').trigger('click')
+    await flushPromises()
+    const [, init] = fetchFn.mock.calls.filter(([u]) => u.includes('response.approve'))[0]
+    expect(JSON.parse(init.body)).toMatchObject({ target: '45.33.32.159', host: 'web-02' })
+    expect(page.text()).toContain('sent to Wazuh agent 001')
+    expect(page.text()).toContain('with Wazuh')
   })
 
   it('tells a Wolf User that only a manager can approve', async () => {

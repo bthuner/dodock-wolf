@@ -62,6 +62,14 @@
   "honeytoken_users",
   "honeytoken_api_keys",
   "honeytoken_paths",
+  "blocking_section",
+  "block_with",
+  "wazuh_ar_command",
+  "cb_blocking",
+  "wazuh_api_url",
+  "wazuh_api_user",
+  "wazuh_api_password",
+  "wazuh_verify_tls",
   "crowdsec_section",
   "crowdsec_enabled",
   "crowdsec_url",
@@ -478,6 +486,59 @@
    "label": "Decoy paths"
   },
   {
+   "fieldname": "blocking_section",
+   "fieldtype": "Section Break",
+   "label": "Blocking",
+   "description": "Who applies a block_ip a Wolf Manager approved. wolf_agent: the Wolf Agent on the attacked host (nftables or fail2ban). wazuh: Wazuh active response on that host's Wazuh agent, through the manager's API. both: each of them. Approval, signed links and the journal are the same whichever applies it."
+  },
+  {
+   "default": "wolf_agent",
+   "fieldname": "block_with",
+   "fieldtype": "Select",
+   "label": "Block With",
+   "options": "wolf_agent\nwazuh\nboth"
+  },
+  {
+   "default": "firewall-drop86400",
+   "depends_on": "eval:['wazuh','both'].includes(doc.block_with)",
+   "description": "A named command with its timeout, as Wazuh lists it in shared/ar.conf: an <active-response> block for firewall-drop with <timeout>86400</timeout> gives firewall-drop86400. Wazuh removes the block when the timeout runs out; that is the block's duration.",
+   "fieldname": "wazuh_ar_command",
+   "fieldtype": "Data",
+   "label": "Wazuh Active Response Command"
+  },
+  {
+   "fieldname": "cb_blocking",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:['wazuh','both'].includes(doc.block_with)",
+   "description": "The Wazuh manager's API, for example https://wazuh-manager:55000.",
+   "fieldname": "wazuh_api_url",
+   "fieldtype": "Data",
+   "label": "Wazuh API URL"
+  },
+  {
+   "depends_on": "eval:['wazuh','both'].includes(doc.block_with)",
+   "description": "A Wazuh API user allowed to read agents and run active response commands.",
+   "fieldname": "wazuh_api_user",
+   "fieldtype": "Data",
+   "label": "Wazuh API User"
+  },
+  {
+   "depends_on": "eval:['wazuh','both'].includes(doc.block_with)",
+   "fieldname": "wazuh_api_password",
+   "fieldtype": "Password",
+   "label": "Wazuh API Password"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:['wazuh','both'].includes(doc.block_with)",
+   "description": "Off only for a self-signed certificate on a trusted network.",
+   "fieldname": "wazuh_verify_tls",
+   "fieldtype": "Check",
+   "label": "Verify Wazuh TLS Certificate"
+  },
+  {
    "collapsible": 1,
    "fieldname": "crowdsec_section",
    "fieldtype": "Section Break",
@@ -726,7 +787,7 @@
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-17 12:30:00.000000",
+ "modified": "2026-11-17 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Settings",

@@ -1807,7 +1807,9 @@ def main():
 		assert [t["id"] for t in payload["mitre_attack"]] == ["T1190"], payload  # from the rule's metadata
 		assert payload["mitre_attack"][0]["name"], "known technique named"
 		# (a documentation address such as 198.51.100.x would rightly not be proposed: not global)
-		proposals = response.suggest([{**ev.as_dict(), "payload": payload, "agent": "smoke-agent"}])
+		# api/response.py resolves the attacked host and the Wolf Agent on it
+		proposals = response.suggest([{**ev.as_dict(), "payload": payload, "agent": "smoke-agent", "block_host": HOST,
+		                                "block_agent": "smoke-agent"}])  # fmt: skip
 		assert any(p["action"] == "block_ip" and p["target"] == "45.33.32.157" for p in proposals), proposals
 		rule = frappe.get_doc("Wolf Alert Rule", "Network IDS alert (critical)")
 		assert (rule.event_category, rule.min_severity, rule.severity) == ("network_ids_alert", "critical", "critical"), rule.as_dict()
@@ -2236,6 +2238,115 @@ def main():
 			frappe.clear_messages()
 		frappe.db.set_value("Wolf Alert Rule", {"rule_name": ("like", "smoke seq %")}, "enabled", 0)  # incidents link them
 		return ", ".join(out) + "; probe burst, key by the user; no probe, 88 min apart, wrong order, other site, warning IDS kept out"
+
+	def wazuh_blocking():
+		"""Approved blocks for the attacked host, by its Wolf Agent and/or Wazuh active response (#72 step 6)."""
+		import base64
+		from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+		from urllib.parse import parse_qs, urlparse
+
+		from dodock_wolf.api import response as response_api
+
+		seen = []
+		agents = [{"id": "000", "name": "wazuh-manager", "ip": "127.0.0.1"}, {"id": "001", "name": "web-02", "ip": "10.8.0.2"},
+		          {"id": "002", "name": "bench-blk", "ip": "10.8.0.3"}]  # fmt: skip
+
+		class API(BaseHTTPRequestHandler):  # the answers a Wazuh 4.9.2 manager gave
+			def log_message(self, *args):
+				pass
+
+			def reply(self, code, body):
+				data = json.dumps(body).encode()
+				self.send_response(code)
+				self.send_header("Content-Type", "application/json")
+				self.send_header("Content-Length", str(len(data)))
+				self.end_headers()
+				self.wfile.write(data)
+
+			def authed(self):
+				return self.headers.get("Authorization") == "Bearer smoke-jwt"
+
+			def do_POST(self):
+				ok = self.headers.get("Authorization") == "Basic " + base64.b64encode(b"wolf:smoke-pw").decode()
+				return self.reply(200, {"data": {"token": "smoke-jwt"}, "error": 0}) if ok else self.reply(401, {"detail": "bad"})
+
+			def do_GET(self):
+				if not self.authed():
+					return self.reply(401, {})
+				return self.reply(200, {"data": {"affected_items": agents, "total_affected_items": 3}, "error": 0})
+
+			def do_PUT(self):
+				if not self.authed():
+					return self.reply(401, {})
+				body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+				agent = parse_qs(urlparse(self.path).query)["agents_list"][0]
+				seen.append((agent, body))
+				return self.reply(200, {"data": {"affected_items": [agent], "total_affected_items": 1, "failed_items": []},
+				                        "message": "AR command was sent to all agents", "error": 0})  # fmt: skip
+
+		server = ThreadingHTTPServer(("127.0.0.1", 0), API)
+		threading.Thread(target=server.serve_forever, daemon=True).start()
+		settings = frappe.get_single("Wolf Settings")
+		saved = {f: settings.get(f) for f in ("block_with", "wazuh_api_url", "wazuh_api_user", "wazuh_ar_command", "wazuh_verify_tls")}
+		tz, at = events.system_tz(), now_datetime()
+		blk = frappe.get_doc({"doctype": "Wolf Agent", "hostname": "bench-blk", "kind": "agent"}).insert(ignore_permissions=True)
+		integ = frappe.get_doc({"doctype": "Wolf Agent", "hostname": "wazuh-mgr", "kind": "integration"}).insert(ignore_permissions=True)
+		inc = frappe.get_doc({"doctype": "Wolf Incident", "title": "blk incident", "severity": "critical", "status": "Open",
+		                      "started_at": at}).insert(ignore_permissions=True)  # fmt: skip
+
+		def ev(category, host, ip, agent):
+			e = schema.normalize_event({"type": "security", "severity": "critical", "category": category, "host": host,
+			                            "title": f"blk {category} {ip}", "payload": {"ip": ip}}, tz, at)  # fmt: skip
+			name = events.insert_event(e, agent=agent)
+			frappe.db.set_value("Wolf Event", name, "incident", inc.name)
+
+		def proposals():
+			return {(p["target"], p["host"]): p for p in response_api.get_response(inc.name)["proposals"] if p["action"] == "block_ip"}
+
+		try:
+			# a Wazuh alert about web-02 (sent by the integration), an SSH brute force seen by bench-blk's own agent
+			ev("hids_alert", "web-02", "45.33.32.250", integ.name)
+			ev("ssh_failed_login", "bench-blk", "45.33.32.251", blk.name)
+			ev("hids_alert", "nowhere-host", "45.33.32.252", integ.name)
+			got = proposals()
+			assert set(got) == {("45.33.32.251", "bench-blk")}, f"wolf_agent: only where a Wolf Agent runs: {got}"
+			assert got[("45.33.32.251", "bench-blk")]["agent"] == blk.name
+
+			settings.update({"block_with": "both", "wazuh_api_url": f"http://127.0.0.1:{server.server_address[1]}",
+			                 "wazuh_api_user": "wolf", "wazuh_api_password": "smoke-pw", "wazuh_ar_command": "firewall-drop7200",
+			                 "wazuh_verify_tls": 0})  # fmt: skip
+			settings.save(ignore_permissions=True)
+			got = proposals()
+			assert {k: p["executors"] for k, p in got.items()} == {
+				("45.33.32.250", "web-02"): ["wazuh"], ("45.33.32.251", "bench-blk"): ["wolf_agent", "wazuh"],
+				("45.33.32.252", "nowhere-host"): ["wazuh"]}, got  # fmt: skip
+			assert got[("45.33.32.250", "web-02")]["label"] == "Block 45.33.32.250 for 2 h on web-02 with Wazuh"
+
+			only = response_api.approve(inc.name, "block_ip", "45.33.32.250", host="web-02", duration_hours=48)
+			assert (only["executor"], only["status"], only["wazuh_agent_id"], only["duration_hours"]) == ("wazuh", "Applied", "001", 2), only
+			assert seen[-1] == ("001", {"command": "firewall-drop7200", "alert": {"data": {"srcip": "45.33.32.250"}}}), seen
+			# from an older link or page: the Wolf Agent named, no host
+			both = response_api.approve(inc.name, "block_ip", "45.33.32.251", agent=blk.name, duration_hours=6)
+			assert (both["executor"], both["status"], both["duration_hours"]) == ("wolf_agent", "Approved", 6), both
+			assert [(a["executor"], a["status"], a["wazuh_agent_id"]) for a in both["also"]] == [("wazuh", "Applied", "002")]
+			assert [a["ip"] for a in response_api.pending_for_agent(blk.name)] == ["45.33.32.251"], "the agent's half"
+			failed = response_api.approve(inc.name, "block_ip", "45.33.32.252", host="nowhere-host")
+			assert failed["status"] == "Failed" and "no Wazuh agent is nowhere-host" in failed["result"], failed
+			# applied or waiting blocks are not proposed again; a failed one is, to retry once the alias is fixed
+			assert set(proposals()) == {("45.33.32.252", "nowhere-host")}, proposals()
+			journal = frappe.get_all("Wolf Journal Entry", filters={"ref_name": only["name"]}, pluck="content")
+			assert any("wazuh" in (c or "") for c in journal), f"the Wazuh block is not journaled: {journal}"
+		finally:
+			server.shutdown()
+			settings.update(saved)
+			settings.save(ignore_permissions=True)
+		frappe.db.delete("Wolf Response Action", {"incident": inc.name})
+		frappe.db.delete("Wolf Event", {"incident": inc.name})
+		frappe.delete_doc("Wolf Incident", inc.name, force=True, ignore_permissions=True)
+		for name in (blk.name, integ.name):
+			frappe.delete_doc("Wolf Agent", name, force=True, ignore_permissions=True)
+		return ("Wazuh alert from the integration blocked on web-02 by Wazuh (2 h, its command's timeout); bench-blk by "
+		        "its Wolf Agent and Wazuh; an unknown host fails with why; journaled; Wolf Agent only by default")
 
 	def crowdsec_check():
 		"""CrowdSec LAPI (a local stand-in): decisions tag events, detections and approved blocks go out."""
@@ -2921,6 +3032,7 @@ def main():
 	                 ("sequence rules", sequence_rules),
 	                 ("timeline related scopes", timeline_related),
 	                 ("detector modes", detector_modes),
+	                 ("wazuh blocking", wazuh_blocking),
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
 	                 ("response actions", response_actions), ("response links", response_links), ("journal", journal_chain),

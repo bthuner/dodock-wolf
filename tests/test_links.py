@@ -87,6 +87,18 @@ class TestResponseLinks(unittest.TestCase):
 			with self.subTest(field):
 				self.assertEqual(links.verify_response(self.SECRET, {**p, field: value}, now=2000), (False, "invalid"))
 
+	def test_host_is_signed_and_old_links_still_verify(self):
+		p = self.params(host="web-02")
+		self.assertEqual(links.verify_response(self.SECRET, p, now=2000), (True, None))
+		for value in ("web-03", ""):
+			with self.subTest(value):
+				self.assertEqual(links.verify_response(self.SECRET, {**p, "host": value}, now=2000), (False, "invalid"))
+		# a link sent before blocks named their host: the same signature as then
+		old = self.params()
+		self.assertNotIn("host", old)
+		self.assertEqual(links.verify_response(self.SECRET, old, now=2000), (True, None))
+		self.assertFalse(links.verify_response(self.SECRET, {**old, "host": "web-02"}, now=2000)[0])  # no host added after
+
 	def test_not_interchangeable_with_ack_links(self):
 		ack = links.build_params(self.SECRET, "WINC-1", "ack", 3600, now=1000)
 		self.assertFalse(links.verify_response(self.SECRET, {**ack, "target": "x"}, now=2000)[0])

@@ -1,15 +1,2 @@
-[pre_model_sync]
 
-[post_model_sync]
-dodock_wolf.patches.default_action_link_hours
-dodock_wolf.patches.default_max_clock_skew
-dodock_wolf.patches.default_signal_settings
-dodock_wolf.patches.hash_agent_secrets
-dodock_wolf.patches.default_max_pushes_per_minute
-dodock_wolf.patches.default_storage_settings
-dodock_wolf.patches.event_last_seen
-dodock_wolf.patches.default_app_security_setting
-dodock_wolf.patches.default_advisory_check
-dodock_wolf.patches.default_crowdsec_settings
-dodock_wolf.patches.default_entity_correlation
-dodock_wolf.patches.default_detector_modes
+dodock_wolf.patches.default_blocking

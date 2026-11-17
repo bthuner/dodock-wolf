@@ -3,9 +3,11 @@ import unittest
 from dodock_wolf.wolf import response
 
 
-def ev(category, payload, agent="agent-1", event_type="security", host="bench-01"):
+def ev(category, payload, agent="agent-1", event_type="security", host="bench-01", block_agent="same"):
+	# block_host / block_agent: the attacked host and the Wolf Agent on it (api/response.py resolves them)
 	return {"event_type": event_type, "category": category, "title": category, "agent": agent, "host": host,
-	        "bench": None, "site": "erp.example.com", "payload": payload}  # fmt: skip
+	        "bench": None, "site": "erp.example.com", "payload": payload, "block_host": host,
+	        "block_agent": agent if block_agent == "same" else block_agent}  # fmt: skip
 
 
 class TestChecks(unittest.TestCase):
@@ -28,7 +30,7 @@ class TestChecks(unittest.TestCase):
 
 
 class TestSuggest(unittest.TestCase):
-	def test_ip_blocks_need_the_agent_that_saw_them(self):
+	def test_ip_blocks_need_someone_on_the_host(self):
 		events = [
 			ev("ssh_failed_login", {"ip": "45.33.32.156"}),
 			ev("ssh_failed_login", {"ip": "45.33.32.156"}),  # same address, same agent: once
@@ -39,6 +41,27 @@ class TestSuggest(unittest.TestCase):
 		]
 		blocks = [(p["target"], p["agent"]) for p in response.suggest(events) if p["action"] == "block_ip"]
 		self.assertEqual(blocks, [("45.33.32.156", "agent-1"), ("45.33.32.156", "agent-2")])
+
+	def test_wazuh_blocks_where_no_wolf_agent_runs(self):
+		# a Wazuh alert about web-02, sent by the integration: no Wolf Agent on web-02
+		events = [ev("hids_alert", {"ip": "45.33.32.159"}, agent="wazuh-integration", host="web-02", block_agent=None),
+		          ev("ssh_failed_login", {"ip": "45.33.32.156"})]  # fmt: skip
+		def blocks(**kw):
+			return [(p["target"], p["host"], p["agent"], p["executors"]) for p in response.suggest(events, **kw)
+			        if p["action"] == "block_ip"]  # fmt: skip
+		self.assertEqual(blocks(), [("45.33.32.156", "bench-01", "agent-1", ["wolf_agent"])])
+		self.assertEqual(blocks(block_with="wazuh", wazuh=True),
+		                 [("45.33.32.159", "web-02", None, ["wazuh"]), ("45.33.32.156", "bench-01", None, ["wazuh"])])  # fmt: skip
+		self.assertEqual(blocks(block_with="both", wazuh=True),
+		                 [("45.33.32.159", "web-02", None, ["wazuh"]),
+		                  ("45.33.32.156", "bench-01", "agent-1", ["wolf_agent", "wazuh"])])  # fmt: skip
+		self.assertEqual(blocks(block_with="wazuh", wazuh=False), [])  # Wazuh not set up: nobody can block
+
+	def test_executors(self):
+		self.assertEqual(response.executors("wolf_agent", "a", True), ["wolf_agent"])
+		self.assertEqual(response.executors("both", None, True), ["wazuh"])
+		self.assertEqual(response.executors(None, "a", False), ["wolf_agent"])
+		self.assertEqual(response.executors("wazuh", "a", False), [])
 
 	def test_user_actions_for_site_events(self):
 		events = [
@@ -56,6 +79,8 @@ class TestSuggest(unittest.TestCase):
 
 	def test_label(self):
 		self.assertEqual(response.label("block_ip", "45.33.32.156", 24, "bench-01"), "Block 45.33.32.156 for 24 h on bench-01")
+		self.assertEqual(response.label("block_ip", "45.33.32.156", 24, "web-02", ["wazuh"]),
+		                 "Block 45.33.32.156 for 24 h on web-02 with Wazuh")  # fmt: skip
 
 
 if __name__ == "__main__":

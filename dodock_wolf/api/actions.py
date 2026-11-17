@@ -81,11 +81,12 @@ def _form(method, fields, label):
 
 @frappe.whitelist(allow_guest=True, methods=["GET", "POST"])
 @rate_limit(limit=60, seconds=10 * 60)
-def response_action(incident=None, action=None, target=None, agent=None, hours=None, expires=None, sig=None, actor=None):
+def response_action(incident=None, action=None, target=None, agent=None, hours=None, expires=None, sig=None, actor=None,
+                    host=None):  # fmt: skip
 	from dodock_wolf.api import response as response_api
 	from dodock_wolf.wolf import response
 
-	params = {"incident": incident, "action": action, "target": target, "agent": agent, "hours": hours,
+	params = {"incident": incident, "action": action, "target": target, "agent": agent, "host": host, "hours": hours,
 	          "expires": expires, "actor": actor}  # fmt: skip
 	params = {k: v for k, v in params.items() if v not in (None, "")}
 	ok, reason = links.verify_response(link_secret(), {**params, "sig": sig})
@@ -98,7 +99,7 @@ def response_action(incident=None, action=None, target=None, agent=None, hours=N
 		return _page(_("Not found"), _("This incident no longer exists."), "red", 404)
 
 	what = response.label(action, target, cint(hours) or None, inc.host if action != "block_ip" else
-	                      (frappe.db.get_value("Wolf Agent", agent, "hostname") if agent else inc.host))  # fmt: skip
+	                      (host or (frappe.db.get_value("Wolf Agent", agent, "hostname") if agent else inc.host)))  # fmt: skip
 	summary = (f"<p><strong>{escape_html(inc.name)}</strong> · {escape_html(inc.severity)} · {escape_html(inc.title)}</p>"
 	           f"<p>{escape_html(_('Proposed response'))}: <strong>{escape_html(what)}</strong></p>")  # fmt: skip
 	taken = frappe.db.get_value("Wolf Response Action", {"incident": incident, "action": action, "target": target,
@@ -118,7 +119,7 @@ def response_action(incident=None, action=None, target=None, agent=None, hours=N
 
 	sent_to = f" sent to {actor}" if actor else ""
 	try:
-		row = response_api.approve(incident, action, target, agent=agent, duration_hours=hours,
+		row = response_api.approve(incident, action, target, agent=agent, host=host, duration_hours=hours,
 		                           reason=f"confirmed from an alert link{sent_to}")  # fmt: skip
 	except (frappe.ValidationError, frappe.PermissionError) as e:
 		frappe.db.rollback()
