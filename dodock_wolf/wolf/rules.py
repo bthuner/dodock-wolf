@@ -116,8 +116,10 @@ def evaluate(rule, now=None):
 			incidents.link_events(name, row["events"])
 		elif rule.signal_type == "event":
 			incidents.link_events(name, matching_event_names(rule, since, row))
-		elif kind:
-			record_metric_alert(rule, name, scope, summary)
+		else:
+			if kind:
+				record_metric_alert(rule, name, scope, summary)
+			incidents.link_events(name, metric_event_names(rule, since, scope))
 		if kind:
 			result["fired"].append(name)
 			notify.enqueue(name, kind)
@@ -329,6 +331,32 @@ def matching_event_names(rule, since, row):
 		f"select name from `tabWolf Event` where {' and '.join(where)} limit 500",
 		params,
 	)
+
+
+# The events the agent reports next to a metric, when their category is not the metric's name.
+# http_5xx counts 502 responses too; their events are http_502.
+METRIC_EVENT_CATEGORIES = {"http_5xx": ("http_5xx", "http_502")}
+
+
+def metric_event_names(rule, since, scope):
+	"""The events behind a metric rule's breach: those of the metric's categories (the nginx events of
+	http_502 or http_5xx), in its window and its incident's scope. They are its evidence, as an event
+	rule's matching events are; the rest of the scope is context. Only events no incident holds yet:
+	an evaluation with nothing new does not touch the incident, and the 5xx and 502 rules of one
+	outage do not take the same responses back and forth."""
+	params = {"categories": METRIC_EVENT_CATEGORIES.get(rule.metric_name, (rule.metric_name,)), "since": since,
+	          "until": _until()}  # fmt: skip
+	where = [
+		"category in %(categories)s",
+		"last_seen between %(since)s and %(until)s",
+		"coalesce(incident, '') = ''",
+		*_scope_filters(rule, params),
+	]
+	for field in SCOPE_FIELDS:
+		if scope.get(field):
+			where.append(f"`{field}` = %(scope_{field})s")
+			params[f"scope_{field}"] = scope[field]
+	return frappe.db.sql_list(f"select name from `tabWolf Event` where {' and '.join(where)} limit 500", params)
 
 
 def record_metric_alert(rule, incident, scope, summary):
