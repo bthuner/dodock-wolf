@@ -10,7 +10,7 @@ import os
 import re
 from datetime import datetime
 
-from ..util import event, fingerprint, metric, utc_iso
+from ..util import event, fingerprint, log_minute, metric, utc_iso
 from . import web_attacks
 
 # combined / common, optionally prefixed by `$host` (vhost_combined style) and
@@ -62,11 +62,6 @@ def parse_line(line):
 		"user_agent": m.groupdict().get("agent"),
 		"extra": _QUOTED_RE.findall(m.group("rest") or ""),
 	}
-
-
-def _minute(ts):
-	"""`YYYY-MM-DDTHH:MM` of a UTC ISO timestamp; None (read time) when the line had none."""
-	return ts[:16] if ts else None
 
 
 def _ip(value):
@@ -157,7 +152,7 @@ class NginxParser:
 		if not parsed:
 			return
 		site = self.resolve_site(parsed)
-		minute = _minute(parsed["timestamp"])
+		minute = log_minute(parsed["timestamp"])
 		counts = self.counts.setdefault((minute, site), [0, 0, 0, None])
 		counts[0] += 1
 		if parsed["timestamp"] and (counts[3] is None or parsed["timestamp"] > counts[3]):

@@ -26,9 +26,9 @@ import ipaddress
 import json
 from datetime import datetime
 
-from ..util import event, fingerprint, utc_iso
+from ..util import event, fingerprint, log_minute, utc_iso
 
-MAX_GROUPS = 500  # per push interval: past that, alerts are only counted
+MAX_GROUPS = 500  # per push interval: past that, alerts are only counted (groups are per minute of log time)
 MAX_TARGETS = 10
 SEVERITY = {1: "critical", 2: "warning"}
 
@@ -154,7 +154,7 @@ class SuricataParser:
 		if priority > self.max_priority:
 			return
 		ip = remote_address(record, self.local)
-		key = (alert.get("signature_id"), ip)
+		key = (log_minute(timestamp(record.get("timestamp"))), alert.get("signature_id"), ip)
 		g = self.groups.get(key)
 		if g is None:
 			if len(self.groups) >= MAX_GROUPS:
@@ -182,7 +182,7 @@ class SuricataParser:
 	def drain(self, now=None):
 		ts = utc_iso(now)
 		events = []
-		for (sid, ip), g in self.groups.items():
+		for (_, sid, ip), g in self.groups.items():
 			severity = SEVERITY.get(g["priority"], "info")
 			blocked = " (blocked)" if g["action"] == "blocked" else ""
 			title = f"Suricata: {g['signature'] or f'rule {sid}'}" + (f" from {ip}" if ip else "") + (f", {g['count']} alerts" if g["count"] > 1 else "") + blocked

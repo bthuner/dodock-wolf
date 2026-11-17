@@ -11,7 +11,7 @@ shadow-utils: new accounts (`account_created`) and users added to an admin group
 import re
 import time
 
-from ..util import event, fingerprint, parse_log_timestamp, utc_iso
+from ..util import event, fingerprint, log_minute, parse_log_timestamp, utc_iso
 
 _IP = r"(?P<ip>[0-9a-fA-F:.]+)"
 _FAILED_RE = re.compile(
@@ -150,7 +150,7 @@ class AuthParser:
 
 	def _group(self, kind, ip, parsed, line, failures=None):
 		# per-user kinds group by user, the network ones by address
-		key = (kind, ip if ip else parsed["user"])
+		key = (log_minute(parsed["timestamp"]), kind, ip if ip else parsed["user"])
 		g = self.groups.get(key)
 		if not g:
 			g = self.groups[key] = {"count": 0, "users": [], "timestamp": parsed["timestamp"], "samples": []}
@@ -185,7 +185,7 @@ class AuthParser:
 		ts = utc_iso(now)
 		events = []
 		self._prune(self.clock())
-		for (kind, subject), g in self.groups.items():
+		for (_, kind, subject), g in self.groups.items():
 			title, severity = self._describe(kind, subject, g)
 			payload = {
 				"count": g["count"],

@@ -2,7 +2,7 @@
 
 import re
 
-from ..util import event, fingerprint, parse_log_timestamp, utc_iso
+from ..util import event, fingerprint, log_minute, parse_log_timestamp, utc_iso
 
 _RULES = [
 	# (category, severity, regex)
@@ -51,7 +51,7 @@ class WorkerParser:
 		parsed = parse_line(line)
 		if not parsed:
 			return
-		key = (parsed["category"], parsed["method"])
+		key = (log_minute(parsed["timestamp"]), parsed["category"], parsed["method"])
 		g = self.groups.get(key)
 		if not g:
 			g = self.groups[key] = {"count": 0, "parsed": parsed, "samples": [], "job_ids": []}
@@ -69,7 +69,7 @@ class WorkerParser:
 			"worker_killed": "Worker process killed",
 			"job_failed": "Background job failed",
 		}
-		for (category, method), g in self.groups.items():
+		for (_, category, method), g in self.groups.items():
 			p = g["parsed"]
 			title = titles[category] + (f": {method}" if method else "")
 			events.append(

@@ -8,7 +8,7 @@ Handles the plain logger format used by Frappe v14/v15
 import json
 import re
 
-from ..util import event, fingerprint, parse_log_timestamp, utc_iso
+from ..util import event, fingerprint, log_minute, parse_log_timestamp, utc_iso
 
 _SCHEDULED_FAILED_RE = re.compile(
 	r"Scheduled Job (?:Failed|failed|FAILED)\s*:?\s*(?P<method>[\w.]+)(?: for (?P<site>\S+))?"
@@ -86,7 +86,7 @@ class SchedulerParser:
 		if not parsed:
 			return
 		site = parsed["site"] or self.site
-		key = (site, parsed["method"])
+		key = (log_minute(parsed["timestamp"]), site, parsed["method"])
 		f = self.failures.get(key)
 		if not f:
 			f = self.failures[key] = {"count": 0, "timestamp": parsed["timestamp"], "samples": [], "error": parsed["error"]}
@@ -97,7 +97,7 @@ class SchedulerParser:
 	def drain(self, now=None):
 		ts = utc_iso(now)
 		events = []
-		for (site, method), f in self.failures.items():
+		for (_, site, method), f in self.failures.items():
 			payload = {
 				"method": method,
 				"job": method.rsplit(".", 1)[-1],

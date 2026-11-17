@@ -273,17 +273,50 @@ class TestScheduler(unittest.TestCase):
 		parser.feed("2026-10-29 02:00:13,123 INFO scheduler Scheduled Job Failed: erpnext.x.nightly for a.example.com")
 		parser.feed("2026-10-29 02:05:13,123 INFO scheduler Scheduled Job Failed: erpnext.x.nightly for a.example.com")
 		parser.feed("2026-10-29 02:05:13,123 INFO scheduler Scheduled Job Failed: erpnext.y.other")
+		parser.feed("2026-10-29 02:05:40,123 INFO scheduler Scheduled Job Failed: erpnext.x.nightly for a.example.com")
 		_, events = parser.drain(NOW)
-		self.assertEqual(len(events), 2)
+		self.assertEqual(len(events), 3)
+		# grouped per minute of log time: 02:00 and 02:05 stay two failures, each at its own time
+		nightly = sorted((e["timestamp"], e["payload"]["count"]) for e in events if e["payload"]["method"] == "erpnext.x.nightly")
+		utc = lambda h, m: datetime(2026, 10, 29, h, m, 13).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")  # noqa: E731
+		self.assertEqual(nightly, [(utc(2, 0), 1), (utc(2, 5), 2)])  # naive log times are local
 		e = next(e for e in events if e["payload"]["method"] == "erpnext.x.nightly")
 		self.assertEqual((e["type"], e["category"], e["severity"]), ("cron_failure", "scheduled_job", "critical"))
-		self.assertEqual(e["payload"]["count"], 2)
 		self.assertEqual(e["payload"]["job"], "nightly")
 		self.assertEqual(e["bench"], "main")
 		# site falls back to the per-site log's site
 		other = next(e for e in events if e["payload"]["method"] == "erpnext.y.other")
 		self.assertEqual(other["site"], "a.example.com")
 		self.assertEqual(parser.drain(NOW)[1], [])
+
+
+class TestBacklog(unittest.TestCase):
+	"""A backlog read at once keeps when things happened: one group per minute of log time."""
+
+	def test_auth(self):
+		parser = auth.AuthParser("h1")
+		for t in ("02:00:01", "02:00:30", "05:10:00"):
+			parser.feed(f"Oct 29 {t} bench-01 sshd[1]: Failed password for root from 198.51.100.7 port 1 ssh2")
+		_, events = parser.drain(NOW)
+		got = sorted((e["timestamp"][11:16], e["payload"]["count"]) for e in events)
+		local = lambda hm: datetime(2026, 10, 29, *hm).astimezone(timezone.utc).strftime("%H:%M")  # noqa: E731
+		self.assertEqual(got, sorted([(local((2, 0)), 2), (local((5, 10)), 1)]))
+
+	def test_worker(self):
+		parser = worker.WorkerParser("h1", bench="main")
+		for t in ("02:00:13", "03:30:13"):
+			parser.feed(f"2026-10-29 {t},001 WARNING rq.worker Moving job to FailedJobRegistry (Work-horse terminated unexpectedly; waitpid returned 9 (signal 9); )")
+		_, events = parser.drain(NOW)
+		self.assertEqual(len(events), 2)
+		self.assertEqual(len({e["timestamp"] for e in events}), 2)
+
+	def test_traceback(self):
+		parser = traceback.TracebackParser("h1", bench="main")
+		for line in (TRACEBACK_WEB + "\n" + TRACEBACK_WEB.replace("02:00:1", "04:00:1")).splitlines():
+			parser.feed(line)
+		_, events = parser.drain(NOW)
+		self.assertEqual(len(events), 2)
+		self.assertEqual({e["payload"]["count"] for e in events}, {1})
 
 
 class TestWorker(unittest.TestCase):

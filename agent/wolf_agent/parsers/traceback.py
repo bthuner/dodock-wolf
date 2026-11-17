@@ -2,7 +2,7 @@
 
 import re
 
-from ..util import event, fingerprint, parse_log_timestamp, utc_iso
+from ..util import event, fingerprint, log_minute, parse_log_timestamp, utc_iso
 
 TRACEBACK_START = "Traceback (most recent call last):"
 CHAIN_MARKERS = (
@@ -114,19 +114,19 @@ class TracebackParser:
 			self._add(block)
 
 	def _add(self, block):
-		fp = fingerprint(block["exception"], block["last_frame"])
-		group = self.groups.get(fp)
+		key = (log_minute(block["timestamp"]), fingerprint(block["exception"], block["last_frame"]))
+		group = self.groups.get(key)
 		if group:
 			group["count"] += 1
 			return
-		self.groups[fp] = {"count": 1, "block": block}
+		self.groups[key] = {"count": 1, "block": block}
 
 	def drain(self, now=None):
 		for block in self.collector.flush():
 			self._add(block)
 		now_iso = utc_iso(now)
 		events = []
-		for fp, group in self.groups.items():
+		for (_, fp), group in self.groups.items():
 			b = group["block"]
 			title = f"{b['exception']}: {b['message']}" if b["message"] else b["exception"]
 			payload = {
