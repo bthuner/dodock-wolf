@@ -182,6 +182,28 @@ def cmd_mark_deployment(args):
 			log.warning("the Wolf App did not create a silence (older version?): notifications are not muted")
 
 
+def cmd_demo(args):
+	"""Lay out a demo server for this agent, backfill its history, then keep it alive."""
+	from .demo.press import PressDemo
+
+	path, cfg = _load(args)
+	demo = PressDemo(args.root, host=cfg["hostname"], spool_dir=cfg["spool_dir"])
+	if args.configure:
+		with open(path) as f:
+			raw = json.load(f)
+		raw.update(demo.agent_overrides())
+		save_config(path, raw)
+		print(f"{path}: Press mode on {demo.root}; restart the agent")
+		return
+	stop = threading.Event()
+	for sig in (signal.SIGTERM, signal.SIGINT):
+		signal.signal(sig, lambda *_: stop.set())
+	try:
+		demo.run(days=args.days, live=not args.no_live, cycle=args.cycle, timeout=args.timeout, stop=stop)
+	except TimeoutError as e:
+		sys.exit(f"{e}. Is it running with `wolf-agent demo {args.kind} --configure` applied?")
+
+
 def cmd_run(args):
 	_, cfg = _load(args)
 	if not (cfg.get("url") and cfg.get("agent_id") and cfg.get("agent_secret")):
@@ -257,6 +279,16 @@ def build_parser():
 	sub.add_parser(
 		"test-fallback", help="send a test message through the watchdog fallback channel(s)"
 	).set_defaults(func=cmd_test_fallback)
+	dm = sub.add_parser("demo", help="write live demo data where this agent reads it (dev/demo/README.md)")
+	dm.add_argument("kind", choices=["press"], help="press: a Press app server with 3 benches and 8 sites")
+	dm.add_argument("--root", default="/home/frappe/demo-press", help="where to lay out the demo server")
+	dm.add_argument("--days", type=float, default=7, help="history to write before going live (default 7)")
+	dm.add_argument("--no-live", action="store_true", help="write the history and exit")
+	dm.add_argument("--cycle", type=int, default=30, help="minutes between live incident cycles (default 30)")
+	dm.add_argument("--timeout", type=int, default=300, help="seconds to wait for the agent to track the files")
+	dm.add_argument("--configure", action="store_true", help="point this agent's config at the demo and exit")
+	dm.set_defaults(func=cmd_demo)
+
 	return p
 
 

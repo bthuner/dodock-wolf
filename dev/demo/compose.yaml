@@ -136,6 +136,37 @@ services:
     entrypoint: [bash, /etc/wolf/agent-init.sh]
     depends_on: [frontend]
 
+  # Press demo (README "Press demo"): docker compose --profile press up -d
+  # A second agent reads a simulated Press app server that `bench generate-demo-press` writes
+  # into the demo-press volume: history first, then live traffic and incidents.
+  press-agent:
+    image: wolf-demo:local
+    profiles: [press]
+    hostname: f1-demo-press
+    restart: on-failure
+    user: frappe
+    environment:
+      WOLF_AGENT_CONFIG: /home/frappe/demo-press/agent-config.json
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites:ro
+      - demo-press:/home/frappe/demo-press
+      - ./press-agent-init.sh:/etc/wolf/press-agent-init.sh:ro
+    entrypoint: [bash, /etc/wolf/press-agent-init.sh]
+    depends_on: [frontend]
+  press-demo:
+    <<: *bench
+    profiles: [press]
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+      - demo-press:/home/frappe/demo-press
+    entrypoint: [bash, -c]
+    command:
+      - |
+        until [ -f /home/frappe/demo-press/agent-config.json ]; do echo "waiting for press-agent"; sleep 3; done
+        exec bench --site wolf.localhost generate-demo-press --webhook http://catcher:9999/
+    depends_on: [press-agent]
+
   # Optional Postgres for portability checks: docker compose --profile postgres up -d pgdb
   pgdb:
     image: ${WOLF_DEMO_PG_IMAGE:-postgres:16}
@@ -166,3 +197,4 @@ volumes:
   logs:
   nginx-logs:
   agent-state:
+  demo-press:
