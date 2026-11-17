@@ -59,6 +59,31 @@ in the old time zone, so the agent looks hours stale for one check.
 
 ![Incident timeline after the scenario](incident-timeline.jpg)
 
+## Press demo
+
+A simulated Press app server, watched by a second agent through the real Press code path
+(discovery, `jobs.sqlite3`, nginx `main` format, custom domains):
+
+```bash
+WOLF_DEMO_BASE=registry.gitlab.com/dokos/dokos:latest docker compose --profile press up -d --build
+docker compose logs -f press-demo     # "history written up to ...", then live
+docker compose logs catcher           # the alerts
+```
+
+- `press-agent` registers as `f1-demo-press`, then `wolf-agent demo press --configure` points it at
+  the `demo-press` volume, in Press mode, with the checks that have nothing behind them off (TLS,
+  MariaDB, backups...).
+- `press-demo` runs `bench --site wolf.localhost generate-demo-press --webhook http://catcher:9999/`.
+  It lays out 3 benches and 8 sites with empty logs, waits until the agent tracks them, writes
+  7 days of history (the agent reads it from the start; past host metrics go through its spool),
+  then live traffic with an incident cycle every 30 minutes: a Press migrate and 4 minutes of 502s,
+  a traceback, a failed scheduled job, a killed worker, an SSH brute force, a web attack scan and,
+  every other cycle, a failed Patch App job. The code is in `agent/wolf_agent/demo/`.
+- Incidents open for live cycles only: rules look at the last minutes. Restarting `press-demo`
+  fills the gap since it stopped, then goes live again.
+- Reset just the Press demo: `docker compose --profile press rm -sf press-agent press-demo &&
+  docker volume rm wolfdemo_demo-press`. Its host and data stay on the site until the full reset.
+
 ## Setup wizard
 
 `create-site` marks setup as complete, so Desk opens directly. To go through Dodock's wizard
