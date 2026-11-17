@@ -113,6 +113,27 @@ jobs:
             frontend/test-results
           retention-days: 7
 
+  docs:
+    name: Docs site (generate + links)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: docs-site
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: yarn
+          cache-dependency-path: docs-site/yarn.lock
+      - run: yarn install --frozen-lockfile --non-interactive
+      - run: yarn lint
+      # every page in both languages; a page that 404s or a link to a missing page fails here
+      - run: yarn generate
+      # every internal link and #anchor of the generated HTML
+      - run: yarn check:links
+
   integration:
     name: Bench integration (${{ matrix.db }})
     runs-on: ubuntu-latest
