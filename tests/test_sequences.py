@@ -13,7 +13,7 @@ def pair(value, b, a=None, a_min=0, b_min=12, **kw):
 	       "b_seen": T + timedelta(minutes=b_min), "b_category": "new_admin_ip", "b_host": "web-1", "b_bench": "b",
 	       "b_site": "erp.example.com", "b_ip": value, **kw}  # fmt: skip
 	if a:
-		row.update(a_name=a, a_category="web_attack_probe")
+		row.update(a_name=a, a_category="web_attack_probe", a_site=kw.get("b_site", "erp.example.com"))
 	return row
 
 
@@ -51,7 +51,14 @@ class TestSequences(unittest.TestCase):
 		self.assertEqual(s.summary(row, 10),
 		                 "web_attack_probe then new_admin_ip 15 min later, same ip 45.33.32.1 (3 times in 10 min)")  # fmt: skip
 		(lone,) = s.group([pair("45.33.32.1", "B")], "ip")
-		self.assertTrue(s.summary(lone, 10).startswith("first event then new_admin_ip"))
+		self.assertTrue(s.summary(lone, 10).startswith("an earlier event then new_admin_ip"))
+
+	def test_another_scopes_first_event_is_not_named(self):
+		host_level = pair("web-1", "B", "A")
+		host_level["a_site"] = None  # a Suricata alert on the host: a site's users cannot read it
+		(row,) = s.group([host_level], "host")
+		self.assertEqual(row["first_category"], "an earlier event")
+		self.assertEqual(row["events"], ["A", "B"])  # still linked: the timeline filters by access
 
 	def test_linked_events_are_capped(self):
 		pairs = [pair("45.33.32.1", f"B{i}", f"A{i}") for i in range(s.MAX_EVENTS)]

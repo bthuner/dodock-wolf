@@ -245,13 +245,13 @@ def _first_where(rule, kind, params):
 
 
 def _first_event(rule, kind, pair, gap):
-	"""The newest first event of a kept pair, to link it and name its category."""
+	"""The newest first event of a kept pair, to link it and name its category (sequences.group)."""
 	params = {"kind": kind, "value": pair.value, "b": pair.b_name, "b_site": pair.b_site or "", "b_last": pair.b_last,
 	          "first": tuple(sequences.categories(rule.first_categories)), "first_since": add_to_date(pair.b_last, minutes=-gap),
 	          "indexed_since": add_to_date(pair.b_last, minutes=-gap, hours=-FIRST_LOOKBACK_HOURS)}  # fmt: skip
 	where = [w.replace("coalesce(b.site, '')", "%(b_site)s") for w in _first_where(rule, kind, params)]
 	rows = frappe.db.sql(
-		f"""select a.name, a.category from `tabWolf Event Entity` xa join `tabWolf Event` a on a.name = xa.event
+		f"""select a.name, a.category, a.site from `tabWolf Event Entity` xa join `tabWolf Event` a on a.name = xa.event
 		where xa.kind = %(kind)s and xa.value = %(value)s and xa.event != %(b)s and xa.`at` >= %(indexed_since)s
 			and a.`timestamp` <= %(b_last)s and {" and ".join(where)}
 		order by a.last_seen desc
@@ -259,7 +259,7 @@ def _first_event(rule, kind, pair, gap):
 		params,
 	)
 	if rows:
-		pair.a_name, pair.a_category = rows[0]
+		pair.a_name, pair.a_category, pair.a_site = rows[0]
 
 
 def _remote_ip(payload):

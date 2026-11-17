@@ -44,8 +44,8 @@ def keep(pair, kind, gap_minutes):
 
 
 def group(pairs, kind):
-	"""One row per entity value from kept pairs; `a_name` / `a_category` may be missing (not
-	looked up for every pair)."""
+	"""One row per entity value from kept pairs; `a_name` / `a_category` / `a_site` may be missing
+	(not looked up for every pair)."""
 	rows = {}
 	for p in pairs:
 		key = f"{kind}={p['value']}"
@@ -65,7 +65,9 @@ def group(pairs, kind):
 		newest = row.pop("newest")
 		row["value"] = row["samples"] = len(row.pop("seconds"))
 		row.update(host=newest.get("b_host"), bench=newest.get("b_bench"), site=newest.get("b_site"))
-		row["first_category"] = newest.get("a_category") or "first event"
+		# the summary is read by whoever may read the incident: another scope's event stays unnamed
+		same_site = newest.get("a_category") and (newest.get("a_site") or "") == (newest.get("b_site") or "")
+		row["first_category"] = newest["a_category"] if same_site else "an earlier event"
 		row["second_category"] = newest["b_category"]
 		row["gap_minutes"] = max(int((newest["b_last"] - newest["a_last"]).total_seconds() // 60), 0)
 		out.append(row)

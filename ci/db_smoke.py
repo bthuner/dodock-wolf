@@ -2062,7 +2062,10 @@ def main():
 			assert {names[first], names[then]} <= shown, (name, first, then, shown)
 			assert fired[0].title == f"{name}: {key.replace('=', ' ')}", fired[0].title
 			assert not rules.evaluate(doc)["fired"], "fired twice"
-			assert "then" in frappe.db.get_value("Wolf Incident", fired[0].name, "summary")
+			# the host-level Suricata alert is another scope than the site's incident: not named
+			named = {"ip": "web_attack_probe then", "user": "new_admin_ip then", "host": "an earlier event then"}
+			summary = frappe.db.get_value("Wolf Incident", fired[0].name, "summary")
+			assert summary.startswith(named[preset["sequence_entity"]]), summary
 			assert [g["group"] for g in doc.preview()["groups"]] == [key.replace("=", " ")]
 			incidents.resolve(fired[0].name, "smoke")
 			out.append(f"{preset['sequence_entity']}: {fired[0].name}")
