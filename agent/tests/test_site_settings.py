@@ -111,7 +111,7 @@ class TestSiteSettings(unittest.TestCase):
 
 	def test_infra_interval(self):
 		ticks = [0.0]
-		cfg = {"mariadb": False, "processes": False, "backups": False, "tls": False, "exposure": False, "versions": False}
+		cfg = {"mariadb": False, "processes": False, "backups": False, "tls": False, "exposure": False, "integrity": False, "versions": False}
 		infra = collector.InfraChecks({**cfg, "site_settings": {"interval": 3600}}, "h1", clock=lambda: ticks[0])
 		calls = []
 		infra.settings_reader = SimpleNamespace(collect=lambda benches, now: calls.append(now) or [{"metric_name": "site_setting"}])

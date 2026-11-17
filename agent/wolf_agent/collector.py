@@ -13,6 +13,7 @@ from .discovery import discover_benches, read_bench_toml, resolve_platform
 from .metrics import HostMetrics
 from .parsers import PARSERS, NginxParser
 from .exposure import ExposureWatcher
+from .integrity import STATE_FILE as INTEGRITY_STATE, IntegrityWatcher
 from .processes import ProcessWatcher
 from .redis_queue import RedisError, RedisProbe
 from .scrub import Scrubber
@@ -67,7 +68,9 @@ class Collector:
 		self.press_fs = None
 		self.benches = list(cfg.get("benches") or [])
 		# slow or periodic infrastructure checks (see InfraChecks)
-		self.infra = InfraChecks(cfg, self.host, clock=clock, sync=sync_checks)
+		# `wolf-agent check` keeps no state: it must not move the integrity baseline the daemon reports from
+		self.infra = InfraChecks(cfg, self.host, clock=clock, sync=sync_checks,
+		                         state_dir=os.path.dirname(state_path) if state_path else None)  # fmt: skip
 		self.scrubber = Scrubber.from_config(cfg)
 
 		press_cfg = press_settings(cfg)
@@ -274,7 +277,8 @@ class Collector:
 
 
 class InfraChecks:
-	"""Redis/RQ, backups, TLS expiry, MariaDB, process states, exposure, app versions and site settings, each on its own interval.
+	"""Redis/RQ, backups, TLS expiry, MariaDB, process states, exposure, file integrity, app versions and site settings, each
+	on its own interval.
 
 	Redis, MariaDB and process states run every cycle. Backups run every
 	`backups.interval` seconds. TLS handshakes can take seconds per domain, so they run
@@ -282,7 +286,7 @@ class InfraChecks:
 	next cycle (`sync=True`, used by `wolf-agent check`, runs them inline).
 	"""
 
-	def __init__(self, cfg, host, clock=time.monotonic, sync=False):
+	def __init__(self, cfg, host, clock=time.monotonic, sync=False, state_dir=None):
 		self.host = host
 		self.clock = clock
 		self.sync = sync
@@ -298,6 +302,11 @@ class InfraChecks:
 		self.exposure_watcher = (
 			ExposureWatcher(host, self.exposure.get("ports")) if self.exposure.get("enabled", True) else None
 		)
+		self.integrity = section(cfg, "integrity")
+		self.integrity_watcher = IntegrityWatcher(
+			host, os.path.join(state_dir, INTEGRITY_STATE) if state_dir else None, self.integrity.get("server_paths"),
+			float(self.integrity.get("full_scan_interval") or 86400),
+		) if self.integrity.get("enabled", True) else None  # fmt: skip
 		self.redis = {}  # (bench, url) -> RedisProbe, kept so counters survive rediscovery
 		self.db_probes = None
 		self.db_key = None
@@ -318,7 +327,7 @@ class InfraChecks:
 		metrics, events = [], []
 		for name, fn in (
 			("redis", self._redis), ("backups", self._backups), ("tls", self._tls),
-			("mariadb", self._mariadb), ("processes", self._processes), ("exposure", self._exposure),
+			("mariadb", self._mariadb), ("processes", self._processes), ("exposure", self._exposure), ("integrity", self._integrity),
 			("versions", self._versions), ("site_settings", self._site_settings),
 		):
 			try:
@@ -402,6 +411,11 @@ class InfraChecks:
 		if not self.watcher:
 			return [], []
 		return self.watcher.collect(benches, now)
+
+	def _integrity(self, benches, now):
+		if not self.integrity_watcher or not self._due("integrity", self.integrity.get("interval")):
+			return [], []
+		return self.integrity_watcher.collect(benches, now)
 
 	def _exposure(self, benches, now):
 		if not self.exposure_watcher or not self._due("exposure", self.exposure.get("interval")):

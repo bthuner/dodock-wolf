@@ -109,7 +109,8 @@ job · No background workers · Queue Redis memory high · Queue Redis evicting 
 days · Database connections high · Slow queries · Replication lag · Replication stopped · Bench
 process down · Email queue backlog · Email sending errors · Admin login from new country ·
 SSH login after brute force · Repeated sudo failures · New system account · User added to admin
-group · Web attack scan · Sensitive file served · Server Script can run new code · Client Script can
+group · Web attack scan · Sensitive file served · Bench code changed outside a deployment · Bench or
+server config changed · Server Script can run new code · Client Script can
 run new code · System Console used · Security settings weakened · Permission rules changed · API key
 generated · Webhook to a new host · Scan then login from the same IP · New-IP login then export or
 new key · IDS alert then risky change on the host · Security score low · Bench service exposed ·
@@ -149,6 +150,8 @@ Development settings in production.
 | Security score low | `security_score` (app, hourly) | a site's score below 60 (see **Wolf → Security**) |
 | Bench service exposed | `exposed_services` (agent) | MariaDB, a bench Redis, socket.io or gunicorn listening beyond loopback (critical) |
 | Development settings in production | `site_config_risks` (agent) | `developer_mode`, `allow_tests`, plain-HTTP `host_name` or `allow_cors: "*"` |
+| Bench code changed outside a deployment | `security` / `bench_code_changed` (agent, file integrity) | files of an app under `apps/` changed while its git commit stayed the same, per bench (critical) |
+| Bench or server config changed | `security` / `bench_config_changed` (agent, file integrity) | a `site_config.json`, `common_site_config.json`, or the nginx or supervisor config changed, per host (warning; key names only) |
 
 Presets have no channels: they open incidents but notify nobody until you add a channel.
 

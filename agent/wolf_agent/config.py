@@ -70,6 +70,10 @@ DEFAULTS = {
 	# services listening beyond loopback and risky site_config settings (exposure.py);
 	# `ports` adds {port: "service name"} to watch
 	"exposure": {"enabled": True, "interval": 600, "ports": {}},
+	# file integrity on the bench (integrity.py): app code, site configs, nginx and supervisor
+	# config. `server_paths` null watches /etc/nginx and /etc/supervisor; a full re-hash runs
+	# every `full_scan_interval` seconds, otherwise only what changed size or time is hashed
+	"integrity": {"enabled": True, "interval": 900, "full_scan_interval": 86400, "server_paths": None},
 	# response actions a Wolf Manager approved (responder.py): off unless you turn it on
 	"response": {"enabled": False, "command": ["sudo", "-n", "/usr/local/sbin/wolf-block", "{ip}", "{seconds}"]},
 	# alerts when the Wolf site itself stops working, sent without going through it
