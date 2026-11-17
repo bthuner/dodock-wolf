@@ -51,6 +51,8 @@ _SPEC = [
 	("swap_used_percent", "host", "Swap used", "gauge", "%", "host", PUSH_SECONDS),
 	("exposed_services", "security", "Bench services listening beyond loopback", "gauge", "services", "host", 600),
 	("site_config_risks", "security", "Risky site_config settings", "gauge", "settings", "site", 600),
+	("integrity_files", "security", "Files under integrity watch", "gauge", "files", "bench", 900),
+	("integrity_unreadable", "security", "Files the integrity check cannot read", "gauge", "files", "bench", 900),
 	("security_score", "security", "Security score", "gauge", "/ 100", "site", 3600),
 	("site_setting", "security", "System Settings value", "gauge", "", "site", 3600),
 	# major * 1e6 + minor * 1e3 + patch: a step on the chart is an upgrade
@@ -70,6 +72,7 @@ CAVEATS = {
 	"hsts_max_age_days": "Strict-Transport-Security max-age of the first response to HEAD / (0: no header); redirects are not followed.",
 	"site_setting": "A System Settings value as stored in the site's database (unset: 0); system_manager_2fa is the System Manager role's two-factor flag.",
 	"exposed_services": "A listening socket, not proof of reachability: a firewall may still block it.",
+	"integrity_files": "Files whose content the agent checks: app code, site configs, nginx and supervisor config.",
 	"security_score": "Share of the checks Wolf could prove passed; a check it cannot read counts as not passed.",
 }
 

@@ -163,6 +163,19 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   counted, and a firewall may still block what is counted. `site_config_risks` per site counts
   `developer_mode`, `allow_tests`, a plain-HTTP `host_name` and `allow_cors: "*"`. Events
   `service_exposed` and `insecure_site_config` are sent only when the set changes.
+- **File integrity** (every `integrity.interval`, 15 min; integrity.py): each app's files under
+  `apps/<app>/` (not `.git`, `node_modules`, `public/dist`, `dist`/`build`, `*.egg-info`, caches,
+  `.pyc`/`.mo`), while git holds no lock, `common_site_config.json` and each
+  `site_config.json`, the bench's `config/`, and `/etc/nginx` and `/etc/supervisor`
+  (`integrity.server_paths`). Only what changed size or time is hashed; everything is hashed again
+  every `integrity.full_scan_interval` (24 h). The first scan is the baseline, kept in
+  `integrity-state.json` in the spool directory. `bench_code_changed` is critical when the app's
+  git commit did not change (code changed outside a deployment), info for a deployment, and
+  warning for an app without a git checkout (Wolf cannot tell which);
+  `bench_config_changed` (warning) names the keys of a site config that changed, never their
+  values. `integrity_files` counts what is watched, `integrity_unreadable` what it could not read
+  (kept at its baseline). Files over 32 MB are compared by size and time; a removed app or site is
+  reported once.
 - **TLS**: `tls_days_left` for every public site name and custom domain (`site_config.json`
   `domains`), every `tls.interval` (1 h), in a background thread. The agent connects to
   `<domain>:443` with SNI (or to `tls.connect_host`, e.g. `127.0.0.1`, to check the local nginx),

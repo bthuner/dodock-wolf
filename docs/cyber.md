@@ -76,7 +76,7 @@ What Wolf takes from UniSOC, adapted to a Frappe app:
 |---|---|
 | MITRE ATT&CK everywhere | every security event carries ATT&CK technique IDs (**built**) |
 | WAF / web attack detection | probes and injections read from nginx access logs, alert when a secret file is served (**built**) |
-| EDR "suspicious behaviour" | auth-log signals: login after brute force, sudo abuse, new accounts, admin groups (**built**); then file integrity on the bench |
+| EDR "suspicious behaviour" | auth-log signals: login after brute force, sudo abuse, new accounts, admin groups, file integrity on the bench (**built**) |
 | HoneyPot | Frappe honeytokens: decoy user, API key and route (a single touch is critical) |
 | Attack surface | bench-specific exposure: Redis/MariaDB listening publicly, `developer_mode` in production, open `/api` to guests, SPF/DMARC of the site's mail domain |
 | Cyber score | a security posture score per site, from checks Wolf can prove |
@@ -102,7 +102,7 @@ Wolf alone is covered.
 |---|---|---|---|
 | Web attacks | nginx access logs: probes, injections, secret files served | signatures on the HTTP traffic (after TLS termination), with packet context | — |
 | Network | exposed bench services; outbound connections of bench processes (planned, #72) | **read by the agent** (`network_ids_alert`, #72 step 1): C2, scans, exploits, DNS, TLS, with the rules' ATT&CK techniques | — |
-| Host | `auth.log`/journal: SSH brute force then login, sudo, new accounts, admin groups; file integrity on the bench (planned) | — | **read by the agent on the manager's host** (`hids_alert`, #72 step 2): full HIDS, more log sources, rootkits, integrity, Windows/macOS endpoints |
+| Host | `auth.log`/journal: SSH brute force then login, sudo, new accounts, admin groups; file integrity on the bench (code, site configs, nginx and supervisor) | — | **read by the agent on the manager's host** (`hids_alert`, #72 step 2): full HIDS, more log sources, rootkits, integrity, Windows/macOS endpoints |
 | Frappe application | permissions, scripts, settings, API keys, exfiltration, honeytokens | — (HTTPS, and no notion of DocTypes or users) | — (log lines, no Frappe semantics) |
 | Posture | Frappe settings per site, versions vs advisories, bench exposure, TLS/HSTS, SPF/DMARC | — | OS configuration assessment |
 | Health | 5xx, crons, workers, backups, certificates, database | — | — |
@@ -574,8 +574,20 @@ host-wide events and its benches' deployments and failed crons and workers, not 
 every site it serves. An attack on one host and an
 outage on another read as one story, for the users allowed to see both.
 
-Planned: standalone parity for benches without Suricata or Wazuh: file integrity and outbound
-connections of bench processes. Wolf alone stays fully supported.
+Built: file integrity on the bench, for benches without Wazuh (`agent/wolf_agent/integrity.py`,
+#72 step 7). Every 15 minutes the agent compares each app's code, the site configs and the nginx
+and supervisor config with its baseline, hashing only what changed size or time, and everything
+daily. Code that changed while the app's git commit stayed the same is `bench_code_changed` at
+critical (a web shell, a patched file); with a new commit it is a deployment, at info; an app
+without a git checkout gives a warning, since Wolf cannot tell. Build output (`public/dist`,
+`*.egg-info`, `.mo`) and runtime files (`config/pids`) are not watched, and an app is judged after
+a pull finishes. Measured on a bench of six apps (14,800 files): 2.2 s for the baseline, 0.3 s per
+scan, 0.8 s for the daily full scan. A config
+change is `bench_config_changed` (warning), with only the names of the keys that changed. Presets:
+*Bench code changed outside a deployment*, *Bench or server config changed*.
+
+Planned: outbound connections of bench processes, for benches without Suricata. Wolf alone stays
+fully supported.
 
 ## 5. Mapping reference
 
@@ -589,6 +601,8 @@ connections of bench processes. Wolf alone stays fully supported.
 | `admin_group_change` | agent (auth) | T1098 Account Manipulation |
 | `web_attack_probe` | agent (nginx) | T1595.003, plus the technique of each rule hit (T1190, T1189, T1552, T1595.002…) |
 | `web_sensitive_file_exposed` | agent (nginx) | T1552.001 Credentials In Files |
+| `bench_code_changed` | agent (file integrity) | T1505.003 Web Shell, T1565.001 Stored Data Manipulation; none for a deployment |
+| `bench_config_changed` | agent (file integrity) | T1565.001 Stored Data Manipulation |
 | `frappe_failed_login` | site | T1110 |
 | `new_admin_ip`, `admin_login_new_country` | site | T1078 Valid Accounts |
 | `privileged_user` | site | T1098 |

@@ -317,6 +317,24 @@ PRESETS = [
 		"operator": ">=", "threshold": 1, "window_minutes": 10, "group_by": "site",
 		"severity": "critical", "auto_resolve": 0, "cooldown_minutes": 0,
 	},
+	{
+		"rule_name": "Bench code changed outside a deployment",
+		"description": "Files of an app under apps/ were added, changed or removed while its git commit stayed the "
+		"same: a web shell or a patched file, not an update (MITRE T1505.003, T1565.001). The agent's file "
+		"integrity check (#72) lists the paths.",
+		"signal_type": "event", "event_type": "security", "event_category": "bench_code_changed", "min_severity": "critical",
+		"operator": ">=", "threshold": 1, "window_minutes": 30, "group_by": "bench",
+		"severity": "critical", "auto_resolve": 0, "cooldown_minutes": 0,
+	},
+	{
+		"rule_name": "Bench or server config changed",
+		"description": "A site_config.json, common_site_config.json, or the nginx or supervisor config of the host or "
+		"the bench changed (MITRE T1565.001). Expected after a deployment or a bench setup command; otherwise "
+		"someone redirected traffic, started a process or changed a secret. Only key names are sent.",
+		"signal_type": "event", "event_type": "security", "event_category": "bench_config_changed", "min_severity": "warning",
+		"operator": ">=", "threshold": 1, "window_minutes": 30, "group_by": "host",
+		"severity": "warning", "auto_resolve": 0, "cooldown_minutes": 60,
+	},
 	# --- cyber: Frappe application security (site signals, Wolf Settings → Flag risky application changes) ---
 	{
 		"rule_name": "Server Script can run new code",

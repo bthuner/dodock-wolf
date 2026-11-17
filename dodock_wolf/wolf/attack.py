@@ -26,10 +26,12 @@ TECHNIQUES = {
 	"T1213": ("Data from Information Repositories", "collection"),
 	"T1530": ("Data from Cloud Storage", "collection"),
 	"T1548.003": ("Abuse Elevation Control Mechanism: Sudo and Sudo Caching", "privilege-escalation"),
+	"T1505.003": ("Server Software Component: Web Shell", "persistence"),
 	"T1552": ("Unsecured Credentials", "credential-access"),
 	"T1552.001": ("Unsecured Credentials: Credentials In Files", "credential-access"),
 	"T1552.004": ("Unsecured Credentials: Private Keys", "credential-access"),
 	"T1562.001": ("Impair Defenses: Disable or Modify Tools", "defense-evasion"),
+	"T1565.001": ("Data Manipulation: Stored Data Manipulation", "impact"),
 	"T1567": ("Exfiltration Over Web Service", "exfiltration"),
 	"T1030": ("Data Transfer Size Limits", "exfiltration"),
 	"T1595.002": ("Active Scanning: Vulnerability Scanning", "reconnaissance"),
@@ -70,6 +72,10 @@ CATEGORIES = {
 	# exposure (agent): weaknesses, mapped to what they open the door to
 	"service_exposed": ["T1190"],
 	"insecure_site_config": ["T1190"],
+	# file integrity on the bench (agent, #72 step 7): the agent sends the techniques of each
+	# change (none for a deployment)
+	"bench_code_changed": [],
+	"bench_config_changed": [],
 	# deception (api/threat.py): the payload adds the technique of the decoy kind
 	"honeytoken_triggered": [],
 	# compliance reminders (api/compliance.py): no attack technique

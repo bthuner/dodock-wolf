@@ -24,7 +24,8 @@ GROUPS = [
 	("Attacks and intrusion", [
 		"Web attack scan", "Sensitive file served", "Network IDS alert (critical)",
 		"Host intrusion alert (critical)", "Honeytoken touched", "Bench service exposed",
-		"Development settings in production"]),
+		"Development settings in production", "Bench code changed outside a deployment",
+		"Bench or server config changed"]),
 	("Application changes and posture", [
 		"Server Script can run new code", "Client Script can run new code", "System Console used",
 		"Security settings weakened", "Permission rules changed", "API key generated",

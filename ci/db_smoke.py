@@ -2239,6 +2239,45 @@ def main():
 		frappe.db.set_value("Wolf Alert Rule", {"rule_name": ("like", "smoke seq %")}, "enabled", 0)  # incidents link them
 		return ", ".join(out) + "; probe burst, key by the user; no probe, 88 min apart, wrong order, other site, warning IDS kept out"
 
+	def file_integrity():
+		"""The agent's file integrity events and their presets (#72 step 7)."""
+		from dodock_wolf.wolf.presets import PRESETS
+
+		tz, at = events.system_tz(), now_datetime()
+
+		def ev(category, severity, title, **payload):
+			e = schema.normalize_event({"type": "security", "category": category, "severity": severity, "host": "fim-host",
+			                            "bench": "fim-bench", "source": "integrity", "title": title,
+			                            "payload": {"kind": "code", **payload}}, tz, at)  # fmt: skip
+			return events.insert_event(e)
+
+		def rule(name, preset_name):
+			preset = next(p for p in PRESETS if p["rule_name"] == preset_name)
+			doc = frappe.get_doc("Wolf Alert Rule", name) if frappe.db.exists("Wolf Alert Rule", name) else frappe.new_doc("Wolf Alert Rule")
+			doc.update({**preset, "rule_name": name, "enabled": 1, "is_preset": 0, "channels": [], "filter_host": "fim-host"})
+			doc.save()
+			return doc
+
+		deploy = ev("bench_code_changed", "info", "fim erpnext updated", deploy=True, attack_techniques=[])
+		code_rule = rule("smoke fim code", "Bench code changed outside a deployment")
+		assert not rules.evaluate(code_rule)["fired"], "a deployment fired the tamper rule"
+		tamper = ev("bench_code_changed", "critical", "fim erpnext: 2 files changed outside a deployment", deploy=False,
+		            attack_techniques=["T1505.003", "T1565.001"], added=["erpnext/www/shell.py"])  # fmt: skip
+		(fired,) = rules.evaluate(code_rule)["fired"]
+		linked = set(frappe.get_all("Wolf Event", filters={"incident": fired}, pluck="name"))
+		assert tamper in linked and deploy not in linked, linked
+		techniques = [t["id"] for t in json.loads(frappe.db.get_value("Wolf Event", tamper, "payload"))["mitre_attack"]]
+		assert techniques == ["T1505.003", "T1565.001"], techniques
+		config_rule = rule("smoke fim config", "Bench or server config changed")
+		ev("bench_config_changed", "warning", "fim site_config.json changed: developer_mode", kind="site_config",
+		   keys_added=["developer_mode"])  # fmt: skip
+		assert rules.evaluate(config_rule)["fired"], "the config rule did not fire"
+		for doc in (code_rule, config_rule):
+			for name in frappe.get_all("Wolf Incident", filters={"alert_rule": doc.name, "status": "Open"}, pluck="name"):
+				incidents.resolve(name, "smoke")
+			frappe.db.set_value("Wolf Alert Rule", doc.name, "enabled", 0)
+		return f"{fired}: code changed outside a deployment fires, a deployment does not; a config change fires its rule"
+
 	def wazuh_blocking():
 		"""Approved blocks for the attacked host, by its Wolf Agent and/or Wazuh active response (#72 step 6)."""
 		import base64
@@ -3060,6 +3099,7 @@ def main():
 	                 ("timeline related scopes", timeline_related),
 	                 ("detector modes", detector_modes),
 	                 ("wazuh blocking", wazuh_blocking),
+	                 ("file integrity", file_integrity),
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
 	                 ("response actions", response_actions), ("response links", response_links), ("journal", journal_chain),

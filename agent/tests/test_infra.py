@@ -445,7 +445,7 @@ class TestAppVersions(unittest.TestCase):
 	def test_infra_runs_it_on_its_interval(self):
 		write_app(self.path, "frappe", '__version__ = "15.100.0"\n')
 		ticks = [0.0]
-		cfg = {"mariadb": False, "processes": False, "backups": False, "tls": False, "exposure": False}
+		cfg = {"mariadb": False, "processes": False, "backups": False, "tls": False, "exposure": False, "integrity": False}
 		infra = collector.InfraChecks({**cfg, "versions": {"interval": 3600}}, "h1", clock=lambda: ticks[0])
 		self.assertEqual([m["metric_name"] for m in infra.collect(self.benches, NOW)[0]], ["app_version"])
 		ticks[0] = 600
@@ -468,7 +468,7 @@ class TestInfraChecks(unittest.TestCase):
 		self.tmp.cleanup()
 
 	def infra(self, sync, **cfg):
-		base = {"mariadb": False, "processes": False, "exposure": False, "backups": {"interval": 600}, "tls": {"interval": 3600}}
+		base = {"mariadb": False, "processes": False, "exposure": False, "integrity": False, "backups": {"interval": 600}, "tls": {"interval": 3600}}
 		base.update(cfg)
 		return collector.InfraChecks(base, "h1", clock=lambda: self.ticks[0], sync=sync)
 
