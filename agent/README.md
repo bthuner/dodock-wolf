@@ -64,8 +64,9 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   `bench.log`; failed scheduled jobs from `scheduler.log`; worker crashes, OOM kills
   and failed jobs from `worker.log` / `worker.error.log`. Site-scoped
   `sites/<site>/logs/frappe.web.log` and `scheduler.log` are tailed too.
-- **nginx** access log: `http_requests`, `http_5xx`, `http_502` per site per push
-  interval, plus one aggregated event per (site, status, route). The site comes
+- **nginx** access log: `http_requests`, `http_5xx`, `http_502` per site per minute
+  of the log line's own time (a backlog lands in the minutes it happened), plus one
+  aggregated event per (site, status, route) and minute. The site comes
   from `$host` when the log format includes it (leading vhost field or a trailing
   quoted field), else from a per-site log file name, else the bench's only site.
   The same lines feed **web attack detection**: requests probing for `.env`, `.git/`,

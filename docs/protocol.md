@@ -175,9 +175,9 @@ the Wolf Entity Alias rows (#72 step 3). Agents do not send it: the site compute
 | `disk_used_percent`  | %        | host, `labels.mount`              |
 | `load_1m` / `load_5m` / `load_15m` | — | host                        |
 | `load_per_core`      | —        | host (load_1m / cpu count)        |
-| `http_requests`      | count per push interval | host, bench, site  |
-| `http_5xx`           | count per push interval | host, bench, site  |
-| `http_502`           | count per push interval | host, bench, site  |
+| `http_requests`      | count per minute of log time | host, bench, site  |
+| `http_5xx`           | count per minute of log time | host, bench, site  |
+| `http_502`           | count per minute of log time | host, bench, site  |
 | `queue_length`       | jobs     | host, bench, `labels.queue`       |
 | `rq_failed_jobs`     | jobs     | host, bench, `labels.queue`: size of RQ's failed-job registry (`rq:failed:<queue>`) |
 | `rq_failed_jobs_added` | jobs per push interval | host, bench, `labels.queue`: increase of that registry since the previous push (never negative; none on the agent's first cycle) |

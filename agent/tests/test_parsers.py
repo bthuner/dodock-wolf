@@ -81,7 +81,8 @@ class TestNginx(unittest.TestCase):
 		self.assertEqual(by_name["http_502"]["value"], 14)
 		self.assertEqual(by_name["http_502"]["site"], "a.example.com")
 		self.assertEqual(by_name["http_502"]["bench"], "main")
-		self.assertEqual(by_name["http_502"]["timestamp"], "2026-10-29T02:01:00Z")
+		# stamped with the newest line of the minute, not with the drain time
+		self.assertEqual(by_name["http_502"]["timestamp"], "2026-10-29T02:00:17Z")
 
 		self.assertEqual(len(events), 3)
 		e502 = next(e for e in events if e["category"] == "http_502")
@@ -101,6 +102,33 @@ class TestNginx(unittest.TestCase):
 		metrics, events = parser.drain(NOW)
 		self.assertEqual(events, [])
 		self.assertEqual({m["value"] for m in metrics}, {0})
+
+	def test_backlog_lands_in_its_own_minutes(self):
+		# a backlog read at once (restart, rotation): each minute keeps its own counts and time
+		parser = nginx.NginxParser("h1", site_benches={"a.example.com": "main"}, default_site="a.example.com", default_bench="main")
+		line = '10.0.0.5 - - [29/Oct/2026:{t} +0000] "GET /app HTTP/1.1" {status} 1 "-" "x"'
+		for t, status, n in (("01:10:05", 200, 3), ("01:10:50", 502, 2), ("01:42:00", 502, 4), ("01:42:30", 500, 1)):
+			for _ in range(n):
+				parser.feed(line.format(t=t, status=status))
+		metrics, events = parser.drain(NOW)
+		series = {
+			(m["metric_name"], m["timestamp"]): m["value"] for m in metrics if m["metric_name"] != "http_requests"
+		}
+		self.assertEqual(series, {
+			("http_5xx", "2026-10-29T01:10:50Z"): 2, ("http_502", "2026-10-29T01:10:50Z"): 2,
+			("http_5xx", "2026-10-29T01:42:30Z"): 5, ("http_502", "2026-10-29T01:42:30Z"): 4,
+		})  # fmt: skip
+		self.assertNotIn("2026-10-29T02:01:00Z", {m["timestamp"] for m in metrics})  # not the read time
+		e502 = sorted((e["timestamp"], e["payload"]["count"]) for e in events if e["category"] == "http_502")
+		self.assertEqual(e502, [("2026-10-29T01:10:50Z", 2), ("2026-10-29T01:42:00Z", 4)])
+
+	def test_line_without_time_and_quiet_site(self):
+		parser = nginx.NginxParser("h1", site_benches={"a.example.com": "main", "b.example.com": "main"})
+		parser.feed('a.example.com 10.0.0.5 - - [not a time] "GET / HTTP/1.1" 200 1 "-" "x"')
+		metrics, _ = parser.drain(NOW)
+		req = {(m["site"], m["timestamp"]): m["value"] for m in metrics if m["metric_name"] == "http_requests"}
+		# no parsable time: counted at read time; a quiet known site reports zero at read time
+		self.assertEqual(req, {("a.example.com", "2026-10-29T02:01:00Z"): 1, ("b.example.com", "2026-10-29T02:01:00Z"): 0})
 
 	def test_site_resolution_multi_site(self):
 		benches = {"a.example.com": "main", "b.example.com": "other"}
