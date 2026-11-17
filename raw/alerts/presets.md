@@ -1298,6 +1298,62 @@ Presets have no channels. They open incidents but notify nobody until you add a
       ◐ warning
     </td>
   </tr>
+  
+  <tr>
+    <td>
+      Bench code changed outside a deployment
+    </td>
+    
+    <td>
+      <code>
+        security
+      </code>
+      
+       / <code>
+        bench_code_changed
+      </code>
+      
+       events (critical) >= 1 in 30 min
+    </td>
+    
+    <td>
+      <code>
+        bench
+      </code>
+    </td>
+    
+    <td>
+      ● critical
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Bench or server config changed
+    </td>
+    
+    <td>
+      <code>
+        security
+      </code>
+      
+       / <code>
+        bench_config_changed
+      </code>
+      
+       events (warning) >= 1 in 30 min
+    </td>
+    
+    <td>
+      <code>
+        host
+      </code>
+    </td>
+    
+    <td>
+      ◐ warning
+    </td>
+  </tr>
 </tbody>
 </table>
 

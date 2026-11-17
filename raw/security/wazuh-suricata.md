@@ -844,7 +844,8 @@ them: a scan, then a login from the same IP.
 
 These are planned, not built:
 
-- For benches without Wazuh or Suricata: file integrity on the bench, and outbound connections of
-bench processes.
+- For benches without Suricata: outbound connections of bench processes.
 
 </note>
+
+Without Wazuh, the agent already watches [file integrity on the bench](/security/detection#file-integrity).

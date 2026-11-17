@@ -369,6 +369,42 @@ others) turns a check off.
   <tr>
     <td>
       <code>
+        integrity
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        interval
+      </code>
+      
+       (900 s), <code>
+        full_scan_interval
+      </code>
+      
+       (86400 s), <code>
+        server_paths
+      </code>
+      
+       (<code>
+        null
+      </code>
+      
+      : <code>
+        /etc/nginx
+      </code>
+      
+       and <code>
+        /etc/supervisor
+      </code>
+      
+      )
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
         suricata
       </code>
     </td>

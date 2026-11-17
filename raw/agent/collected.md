@@ -604,6 +604,38 @@ and are skipped.
       .
     </td>
   </tr>
+  
+  <tr>
+    <td>
+      <strong>
+        File integrity
+      </strong>
+    </td>
+    
+    <td>
+      15 min
+    </td>
+    
+    <td>
+      <code>
+        integrity_files
+      </code>
+      
+       per bench; <code>
+        bench_code_changed
+      </code>
+      
+       and <code>
+        bench_config_changed
+      </code>
+      
+       events when an app's code, a site config or the nginx and supervisor config changes, telling a deployment from a change outside one. See <a href="/security/detection#file-integrity">
+        Detection
+      </a>
+      
+      .
+    </td>
+  </tr>
 </tbody>
 </table>
 

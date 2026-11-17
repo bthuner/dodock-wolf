@@ -1132,11 +1132,12 @@ and are skipped.
 
 ## Security posture
 
-| Check             | Every  | Sends                                                                                                                                                                                                                                                                                  |
-| ----------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **App versions**  | 1 h    | `app_version` per bench and app, from `apps/<app>/<app>/__init__.py`. The Wolf site compares them with the GitHub Security Advisories of Frappe and ERPNext. Development versions are not sent.                                                                                        |
-| **Site settings** | 1 h    | `site_setting` per site: two-factor authentication, password policy and minimum score, lockout, guest uploads, and the System Manager role's two-factor flag. Feeds the [security score](https://bthuner.github.io/dodock-wolf/security/compliance) of sites other than the Wolf site. |
-| **Exposure**      | 10 min | `exposed_services` per host: bench ports listening beyond loopback (MariaDB 3306, Postgres 5432, Redis, socket.io 9000, gunicorn). `site_config_risks` per site: `developer_mode`, `allow_tests`, a plain-HTTP `host_name`, `allow_cors: "*"`.                                         |
+| Check              | Every  | Sends                                                                                                                                                                                                                                                                                                       |
+| ------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **App versions**   | 1 h    | `app_version` per bench and app, from `apps/<app>/<app>/__init__.py`. The Wolf site compares them with the GitHub Security Advisories of Frappe and ERPNext. Development versions are not sent.                                                                                                             |
+| **Site settings**  | 1 h    | `site_setting` per site: two-factor authentication, password policy and minimum score, lockout, guest uploads, and the System Manager role's two-factor flag. Feeds the [security score](https://bthuner.github.io/dodock-wolf/security/compliance) of sites other than the Wolf site.                      |
+| **Exposure**       | 10 min | `exposed_services` per host: bench ports listening beyond loopback (MariaDB 3306, Postgres 5432, Redis, socket.io 9000, gunicorn). `site_config_risks` per site: `developer_mode`, `allow_tests`, a plain-HTTP `host_name`, `allow_cors: "*"`.                                                              |
+| **File integrity** | 15 min | `integrity_files` per bench; `bench_code_changed` and `bench_config_changed` events when an app's code, a site config or the nginx and supervisor config changes, telling a deployment from a change outside one. See [Detection](https://bthuner.github.io/dodock-wolf/security/detection#file-integrity). |
 
 See [Detection](https://bthuner.github.io/dodock-wolf/security/detection).
 
@@ -1291,6 +1292,7 @@ others) turns a check off.
 | `versions`      | `interval` (3600 s)                                                                                                                                      |
 | `site_settings` | `interval` (3600 s)                                                                                                                                      |
 | `exposure`      | `interval` (600 s), `ports` (more ports to count)                                                                                                        |
+| `integrity`     | `interval` (900 s), `full_scan_interval` (86400 s), `server_paths` (`null`: `/etc/nginx` and `/etc/supervisor`)                                          |
 | `suricata`      | `eve_log`, `max_priority` (3)                                                                                                                            |
 | `wazuh`         | `alerts_log`, `min_level` (7), `exclude_groups` (`["sca"]`)                                                                                              |
 
@@ -1872,15 +1874,17 @@ Presets have no channels. They open incidents but notify nobody until you add a
 
 ## Attacks and intrusion
 
-| Preset                             | Fires when                                                        | Per    | Severity   |
-| ---------------------------------- | ----------------------------------------------------------------- | ------ | ---------- |
-| Web attack scan                    | `security` / `web_attack_probe` events >= 100 in 10 min           | `site` | ◐ warning  |
-| Sensitive file served              | `security` / `web_sensitive_file_exposed` events >= 1 in 10 min   | `site` | ● critical |
-| Network IDS alert (critical)       | `security` / `network_ids_alert` events (critical) >= 1 in 10 min | `host` | ● critical |
-| Host intrusion alert (critical)    | `security` / `hids_alert` events (critical) >= 1 in 10 min        | `host` | ● critical |
-| Honeytoken touched                 | `security` / `honeytoken_triggered` events >= 1 in 10 min         | `site` | ● critical |
-| Bench service exposed              | `last(exposed_services)` > 0 in 30 min                            | `host` | ● critical |
-| Development settings in production | `last(site_config_risks)` > 0 in 30 min                           | `site` | ◐ warning  |
+| Preset                                  | Fires when                                                          | Per     | Severity   |
+| --------------------------------------- | ------------------------------------------------------------------- | ------- | ---------- |
+| Web attack scan                         | `security` / `web_attack_probe` events >= 100 in 10 min             | `site`  | ◐ warning  |
+| Sensitive file served                   | `security` / `web_sensitive_file_exposed` events >= 1 in 10 min     | `site`  | ● critical |
+| Network IDS alert (critical)            | `security` / `network_ids_alert` events (critical) >= 1 in 10 min   | `host`  | ● critical |
+| Host intrusion alert (critical)         | `security` / `hids_alert` events (critical) >= 1 in 10 min          | `host`  | ● critical |
+| Honeytoken touched                      | `security` / `honeytoken_triggered` events >= 1 in 10 min           | `site`  | ● critical |
+| Bench service exposed                   | `last(exposed_services)` > 0 in 30 min                              | `host`  | ● critical |
+| Development settings in production      | `last(site_config_risks)` > 0 in 30 min                             | `site`  | ◐ warning  |
+| Bench code changed outside a deployment | `security` / `bench_code_changed` events (critical) >= 1 in 30 min  | `bench` | ● critical |
+| Bench or server config changed          | `security` / `bench_config_changed` events (warning) >= 1 in 30 min | `host`  | ◐ warning  |
 
 ## Application changes and posture
 
@@ -2575,12 +2579,52 @@ changes. Both are tagged T1190.
 
 Both metrics also feed the [security score](https://bthuner.github.io/dodock-wolf/security/compliance#security-score).
 
+## File integrity
+
+Every `integrity.interval` (default 900 s), the agent compares what a bench is made of with its
+baseline:
+
+| Watched                                                                                                                                                         | What a change means                                                                                                                                                                                                                                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| each app under `apps/<app>/` (not `.git`, `node_modules`, `public/dist` and other `dist`/`build` output, `*.egg-info`, caches, compiled `.pyc` and `.mo` files) | with the app's git commit unchanged: code changed outside a deployment (a web shell, a patched file), **critical**. With a new commit: a deployment, **info**, with both commits, or **warning** when it added Python under a `www/` folder. Without a git checkout (an archive install, an image without `.git`), Wolf cannot tell: **warning**, saying so |
+| `sites/common_site_config.json`, each `sites/<site>/site_config.json`                                                                                           | **warning**. Only the names of the keys added, changed or removed are sent, never their values                                                                                                                                                                                                                                                              |
+| the bench's `config/` (the nginx and supervisor files it generates, not `pids/`), `/etc/nginx` and `/etc/supervisor`                                            | **warning**: someone may have redirected traffic or started a process                                                                                                                                                                                                                                                                                       |
+
+- Each scan hashes only what changed size or modification time; every `integrity.full_scan_interval`
+  (24 h) it hashes everything again, so a file whose size and time were put back is still caught.
+- While git holds a lock in an app (a pull or a checkout in progress), the app is judged at the
+  next scan, so a deployment is not read as tampering halfway through.
+- Files over 32 MB are compared by size and time only, and a pass stops after 200,000 files; what
+  is left keeps its baseline until the next pass.
+- The first scan of a path is its baseline and raises nothing. The baseline is kept in the spool
+  directory (`integrity-state.json`, mode 0600): a restart does not hide what changed meanwhile.
+  `wolf-agent check` never moves it. Site config values are kept as HMACs under a key of this
+  install (`integrity.key`, 0600).
+- A bench or site discovery misses for a while keeps its baseline for 7 days. An app removed from
+  `apps/`, a site or a config path that is gone is reported once, as removed (warning).
+- A file or folder the agent cannot read keeps its baseline instead of reading as deleted:
+  `integrity_unreadable` counts them.
+- A site config rewritten with the same keys and values raises nothing.
+- Events: `bench_code_changed` (per app) and `bench_config_changed` (per file or server path), with
+  up to 20 paths of each kind (added, modified, deleted). Tagged T1505.003 and T1565.001; a
+  deployment has no technique. `integrity_files` counts what is watched, per bench and for the
+  host's own paths.
+- `integrity.server_paths` replaces `/etc/nginx` and `/etc/supervisor`, for example on a host
+  whose web server lives elsewhere. The agent's user must be able to read what it watches;
+  unreadable files are skipped.
+
+| Preset                                    | Fires when                                                     |
+| ----------------------------------------- | -------------------------------------------------------------- |
+| *Bench code changed outside a deployment* | a `bench_code_changed` event at critical, per bench (critical) |
+| *Bench or server config changed*          | a `bench_config_changed` event, per host (warning)             |
+
 ## Turning detection off
 
 | To turn off      | Set in the agent config |
 | ---------------- | ----------------------- |
 | Auth log signals | `"auth_log": false`     |
 | Exposure checks  | `"exposure": false`     |
+| File integrity   | `"integrity": false`    |
 
 Web attack detection follows the nginx logs: it stops for a bench whose nginx log the agent does
 not tail.
@@ -2723,7 +2767,7 @@ Deleting the newest entries leaves a valid, shorter chain. To catch that, keep a
 ::steps{level="4"}
 #### Copy the anchor
 
-**Wolf → Security** shows the newest `seq:mac`.
+**Wolf → Security** shows the newest `seq:mac`. **Copy** puts it on the clipboard.
 
 #### Store it where Wolf cannot write
 
@@ -2914,6 +2958,10 @@ Wolf read and the fix.
 
 - A check Wolf cannot read is **unknown** and counts as not passed. `coverage` says how much of
   the weight Wolf could read.
+- The page lists the failed checks first, then the unknown ones, then the passed ones, the
+  heaviest on top in each group. The bar next to the score has one segment per check, as wide as
+  its weight: solid for failed and passed, hatched for unknown.
+- **+N** on a failed or unknown check is what the score gains if that check alone passes.
 - Agent samples older than 3 h are not used.
 - The score is stored hourly as the `security_score` metric. The **Security score low** preset
   fires when a site's score is below 60.
@@ -3381,9 +3429,10 @@ them: a scan, then a login from the same IP.
 ::note
 These are planned, not built:
 
-- For benches without Wazuh or Suricata: file integrity on the bench, and outbound connections of
-  bench processes.
+- For benches without Suricata: outbound connections of bench processes.
 ::
+
+Without Wazuh, the agent already watches [file integrity on the bench](https://bthuner.github.io/dodock-wolf/security/detection#file-integrity).
 
 
 # Agent protocol
@@ -3708,6 +3757,8 @@ Metrics emitted by the agent, unless noted.
 | `app_version`                      | version number            | host, bench, `labels.app`: `__version__` of `apps/<app>/<app>/__init__.py` as major × 10⁶ + minor × 10³ + patch (15.100.0 → 15100000); development versions (`16.0.0-dev`) are not sent; hourly (`versions.interval`)                                                                                                                                              |
 | `site_setting`                     | value                     | host, bench, site, `labels.setting`: a System Settings value read from the site's database (`enable_two_factor_auth`, `enable_password_policy`, `minimum_password_score`, `allow_consecutive_login_attempts`, `allow_guests_to_upload_files`; unset → 0) and `system_manager_2fa` (the System Manager role's `two_factor_auth`); hourly (`site_settings.interval`) |
 | `exposed_services`                 | count                     | host: bench ports (MariaDB/Postgres, bench Redis, socket.io, gunicorn) listening on all interfaces or a public address, from `/proc/net/tcp{,6}`; every 10 min                                                                                                                                                                                                     |
+| `integrity_files`                  | count                     | bench (or host, for `/etc` paths): files under [file integrity](https://bthuner.github.io/dodock-wolf/security/detection#file-integrity) watch (app code, site configs, nginx and supervisor config); every 15 min                                                                                                                                                 |
+| `integrity_unreadable`             | count                     | bench (or host): watched files or folders the agent could not read, kept at their baseline; every 15 min                                                                                                                                                                                                                                                           |
 | `site_config_risks`                | count                     | host, bench, site: `developer_mode`, `allow_tests`, a plain-HTTP `host_name`, `allow_cors: "*"` in the merged site config; every 10 min                                                                                                                                                                                                                            |
 | `security_score`                   | 0–100                     | site: written by the app (hourly), not the agent; see [Security](https://bthuner.github.io/dodock-wolf/security)                                                                                                                                                                                                                                                   |
 | `user_export_bytes`                | bytes per hour            | site, `labels.user`: response bytes of a user's exports and list reads over the past hour, written by the app (hourly); see [Security](https://bthuner.github.io/dodock-wolf/security)                                                                                                                                                                             |

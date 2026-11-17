@@ -485,6 +485,10 @@ Wolf read and the fix.
 
 - A check Wolf cannot read is **unknown** and counts as not passed. `coverage` says how much of
 the weight Wolf could read.
+- The page lists the failed checks first, then the unknown ones, then the passed ones, the
+heaviest on top in each group. The bar next to the score has one segment per check, as wide as
+its weight: solid for failed and passed, hatched for unknown.
+- **+N** on a failed or unknown check is what the score gains if that check alone passes.
 - Agent samples older than 3 h are not used.
 - The score is stored hourly as the `security_score` metric. The **Security score low** preset
 fires when a site's score is below 60.

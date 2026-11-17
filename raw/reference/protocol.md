@@ -3267,6 +3267,46 @@ Metrics emitted by the agent, unless noted.
   <tr>
     <td>
       <code>
+        integrity_files
+      </code>
+    </td>
+    
+    <td>
+      count
+    </td>
+    
+    <td>
+      bench (or host, for <code>
+        /etc
+      </code>
+      
+       paths): files under <a href="/security/detection#file-integrity">
+        file integrity
+      </a>
+      
+       watch (app code, site configs, nginx and supervisor config); every 15 min
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        integrity_unreadable
+      </code>
+    </td>
+    
+    <td>
+      count
+    </td>
+    
+    <td>
+      bench (or host): watched files or folders the agent could not read, kept at their baseline; every 15 min
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
         site_config_risks
       </code>
     </td>

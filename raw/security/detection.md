@@ -502,6 +502,216 @@ changes. Both are tagged T1190.
 
 Both metrics also feed the [security score](/security/compliance#security-score).
 
+## File integrity
+
+Every `integrity.interval` (default 900 s), the agent compares what a bench is made of with its
+baseline:
+
+<table>
+<thead>
+  <tr>
+    <th>
+      Watched
+    </th>
+    
+    <th>
+      What a change means
+    </th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr>
+    <td>
+      each app under <code>
+        apps/<app>/
+      </code>
+      
+       (not <code>
+        .git
+      </code>
+      
+      , <code>
+        node_modules
+      </code>
+      
+      , <code>
+        public/dist
+      </code>
+      
+       and other <code>
+        dist
+      </code>
+      
+      /<code>
+        build
+      </code>
+      
+       output, <code>
+        *.egg-info
+      </code>
+      
+      , caches, compiled <code>
+        .pyc
+      </code>
+      
+       and <code>
+        .mo
+      </code>
+      
+       files)
+    </td>
+    
+    <td>
+      with the app's git commit unchanged: code changed outside a deployment (a web shell, a patched file), <strong>
+        critical
+      </strong>
+      
+      . With a new commit: a deployment, <strong>
+        info
+      </strong>
+      
+      , with both commits, or <strong>
+        warning
+      </strong>
+      
+       when it added Python under a <code>
+        www/
+      </code>
+      
+       folder. Without a git checkout (an archive install, an image without <code>
+        .git
+      </code>
+      
+      ), Wolf cannot tell: <strong>
+        warning
+      </strong>
+      
+      , saying so
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        sites/common_site_config.json
+      </code>
+      
+      , each <code>
+        sites/<site>/site_config.json
+      </code>
+    </td>
+    
+    <td>
+      <strong>
+        warning
+      </strong>
+      
+      . Only the names of the keys added, changed or removed are sent, never their values
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      the bench's <code>
+        config/
+      </code>
+      
+       (the nginx and supervisor files it generates, not <code>
+        pids/
+      </code>
+      
+      ), <code>
+        /etc/nginx
+      </code>
+      
+       and <code>
+        /etc/supervisor
+      </code>
+    </td>
+    
+    <td>
+      <strong>
+        warning
+      </strong>
+      
+      : someone may have redirected traffic or started a process
+    </td>
+  </tr>
+</tbody>
+</table>
+
+- Each scan hashes only what changed size or modification time; every `integrity.full_scan_interval`
+(24 h) it hashes everything again, so a file whose size and time were put back is still caught.
+- While git holds a lock in an app (a pull or a checkout in progress), the app is judged at the
+next scan, so a deployment is not read as tampering halfway through.
+- Files over 32 MB are compared by size and time only, and a pass stops after 200,000 files; what
+is left keeps its baseline until the next pass.
+- The first scan of a path is its baseline and raises nothing. The baseline is kept in the spool
+directory (`integrity-state.json`, mode 0600): a restart does not hide what changed meanwhile.
+`wolf-agent check` never moves it. Site config values are kept as HMACs under a key of this
+install (`integrity.key`, 0600).
+- A bench or site discovery misses for a while keeps its baseline for 7 days. An app removed from
+`apps/`, a site or a config path that is gone is reported once, as removed (warning).
+- A file or folder the agent cannot read keeps its baseline instead of reading as deleted:
+`integrity_unreadable` counts them.
+- A site config rewritten with the same keys and values raises nothing.
+- Events: `bench_code_changed` (per app) and `bench_config_changed` (per file or server path), with
+up to 20 paths of each kind (added, modified, deleted). Tagged T1505.003 and T1565.001; a
+deployment has no technique. `integrity_files` counts what is watched, per bench and for the
+host's own paths.
+- `integrity.server_paths` replaces `/etc/nginx` and `/etc/supervisor`, for example on a host
+whose web server lives elsewhere. The agent's user must be able to read what it watches;
+unreadable files are skipped.
+
+<table>
+<thead>
+  <tr>
+    <th>
+      Preset
+    </th>
+    
+    <th>
+      Fires when
+    </th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr>
+    <td>
+      <em>
+        Bench code changed outside a deployment
+      </em>
+    </td>
+    
+    <td>
+      a <code>
+        bench_code_changed
+      </code>
+      
+       event at critical, per bench (critical)
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <em>
+        Bench or server config changed
+      </em>
+    </td>
+    
+    <td>
+      a <code>
+        bench_config_changed
+      </code>
+      
+       event, per host (warning)
+    </td>
+  </tr>
+</tbody>
+</table>
+
 ## Turning detection off
 
 <table>
@@ -538,6 +748,18 @@ Both metrics also feed the [security score](/security/compliance#security-score)
     <td>
       <code>
         "exposure": false
+      </code>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      File integrity
+    </td>
+    
+    <td>
+      <code>
+        "integrity": false
       </code>
     </td>
   </tr>
