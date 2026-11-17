@@ -39,7 +39,7 @@ def presets(path):
 	for node in ast.walk(ast.parse(open(path).read())):
 		if isinstance(node, ast.Dict):
 			d = {}
-			for k, v in zip(node.keys, node.values):
+			for k, v in zip(node.keys, node.values, strict=True):
 				if isinstance(k, ast.Constant):
 					try:
 						d[k.value] = ast.literal_eval(v)
