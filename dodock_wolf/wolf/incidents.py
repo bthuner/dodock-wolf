@@ -180,6 +180,8 @@ def entity_incident(event_name, event):
 	the scope match."""
 	if event.get("event_type") != "security":
 		return None
+	if not cint(frappe.db.get_single_value("Wolf Settings", "correlate_by_entity")):
+		return None
 	mine = [
 		(kind, value)
 		for kind, value in frappe.db.sql(

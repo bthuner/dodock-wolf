@@ -1928,6 +1928,14 @@ def main():
 		stale = incidents.attach_to_open_incident(*ev({"category": "network_ids_alert", "source": "suricata", "host": "corr-ids",
 		                                                "title": "corr late", "payload": {"src_ip": ip}}, 200))  # fmt: skip
 		assert stale is None, f"an IP seen 3 hours later grouped: {stale}"
+		assert frappe.db.get_single_value("Wolf Settings", "correlate_by_entity") == 1, "not on by default"
+		frappe.db.set_single_value("Wolf Settings", "correlate_by_entity", 0)
+		try:
+			off = incidents.attach_to_open_incident(*ev({"category": "network_ids_alert", "source": "suricata", "host": "corr-ids",
+			                                             "title": "corr off", "payload": {"src_ip": ip}}))  # fmt: skip
+		finally:
+			frappe.db.set_single_value("Wolf Settings", "correlate_by_entity", 1)
+		assert off is None, f"grouped by IP with the setting off: {off}"
 		frappe.db.set_value("Wolf Incident", inc.name, "status", "Resolved")
 		closed = incidents.attach_to_open_incident(*ev({"category": "network_ids_alert", "source": "suricata", "host": "corr-ids",
 		                                                 "title": "corr after", "payload": {"src_ip": ip}}))  # fmt: skip
@@ -1936,7 +1944,7 @@ def main():
 		assert count == 3, count
 		timeline = {r.title for r in incidents.get_timeline(inc.name)}
 		assert {"corr probe", "corr ids", "corr login"} <= timeline, timeline
-		return f"{inc.name}: web probe + Suricata on another host + same e-mail user; login name, late IP, resolved kept out"
+		return f"{inc.name}: web probe + Suricata on another host + same e-mail user; login name, late IP, setting off, resolved kept out"
 
 	def crowdsec_check():
 		"""CrowdSec LAPI (a local stand-in): decisions tag events, detections and approved blocks go out."""

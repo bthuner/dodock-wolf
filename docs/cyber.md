@@ -509,7 +509,8 @@ Built: entities shared by every source (`wolf/entities.py`, `api/entities.py`).
 Built: incidents grouped by entity across sources (`wolf/incidents.py`, `entity_incident`).
 - A security event joins the open incident holding an event that names the same IP, whatever
   its source, host, bench or site, if that event was seen within **Entity Correlation Minutes**
-  (Wolf Settings → Correlation, 60 by default). A Suricata scan on one host, a Wazuh SSH alert
+  (Wolf Settings → Correlation, 60 by default). **Group Incidents by IP or User** (on by
+  default) turns it off. A Suricata scan on one host, a Wazuh SSH alert
   on another and a web probe on a site, all from one address, read as one incident.
 - A user ties events together only when it is an e-mail address: `root` on two hosts or
   `Administrator` on two sites are not one person.

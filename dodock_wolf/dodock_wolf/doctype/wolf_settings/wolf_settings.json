@@ -29,6 +29,7 @@
   "correlation_section",
   "deployment_window_minutes",
   "timeline_padding_minutes",
+  "correlate_by_entity",
   "entity_correlation_minutes",
   "local_section",
   "capture_scheduler_failures",
@@ -260,8 +261,16 @@
    "label": "Timeline Padding Minutes"
   },
   {
+   "default": "1",
+   "description": "A security event joins the open incident holding an event that names the same IP or e-mail user, whatever its source, host or site. Off: events are attached by site, bench or host only.",
+   "fieldname": "correlate_by_entity",
+   "fieldtype": "Check",
+   "label": "Group Incidents by IP or User"
+  },
+  {
    "default": "60",
-   "description": "A security event joins the open incident holding an event that names the same IP or e-mail user this recently, whatever its source, host or site.",
+   "depends_on": "correlate_by_entity",
+   "description": "How recent that event must be.",
    "fieldname": "entity_correlation_minutes",
    "fieldtype": "Int",
    "label": "Entity Correlation Minutes"
