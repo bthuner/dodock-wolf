@@ -612,7 +612,7 @@ Wolf alone stays fully supported.
 | `sudo_failure` | agent (auth) | T1548.003 Sudo and Sudo Caching |
 | `account_created` | agent (auth) | T1136.001 Create Local Account |
 | `admin_group_change` | agent (auth) | T1098 Account Manipulation |
-| `web_attack_probe` | agent (nginx) | T1595.003, plus the technique of each rule hit (T1190, T1189, T1552, T1595.002…) |
+| `web_attack_probe` | agent (nginx) | T1595.003, plus the technique of each rule hit (T1190, T1189, T1552, T1595.002 for scanners and edge appliances, T1110 for bursts on Frappe's account endpoints…) |
 | `web_sensitive_file_exposed` | agent (nginx) | T1552.001 Credentials In Files |
 | `bench_code_changed` | agent (file integrity) | T1505.003 Web Shell, T1565.001 Stored Data Manipulation; none for a deployment |
 | `bench_config_changed` | agent (file integrity) | T1565.001 Stored Data Manipulation |

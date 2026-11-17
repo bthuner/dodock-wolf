@@ -8,7 +8,7 @@ minutes it happened, not as one spike at read time.
 import ipaddress
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from ..util import event, fingerprint, log_minute, metric, utc_iso
 from . import web_attacks
@@ -30,6 +30,7 @@ CRITICAL_STATUSES = {502, 503, 504}
 MAX_SAMPLES = 3
 # distinct (site, client) probe groups kept per interval: a distributed scan cannot grow memory
 MAX_PROBE_GROUPS = 500
+MAX_RATE_CLIENTS = 5000  # (site, client) pairs whose Frappe rate counters are kept
 
 
 def parse_line(line):
@@ -113,6 +114,7 @@ class NginxParser:
 		self.default_bench = default_bench
 		self.log_file = log_file
 		self.file_site = self._site_from_path(log_file)
+		self.rates = {}  # (site, client) -> {minute: {rate rule: [requests, paths]}}, kept across drains
 		self._reset()
 
 	def _reset(self):
@@ -172,13 +174,43 @@ class NginxParser:
 		if len(err["samples"]) < MAX_SAMPLES:
 			err["samples"].append(line.strip()[:1000])
 
+	def _rate(self, minute, site, client, rules, target):
+		"""{rate rule: requests} for the rate rules this client crossed over the last
+		RATE_WINDOW minutes, counting this request. Lone requests never make a probe group."""
+		buckets = self.rates.pop((site, client), {})
+		self.rates[(site, client)] = buckets  # most recent last: the oldest client is dropped first
+		path = (target or "").split("?", 1)[0]
+		bucket = buckets.setdefault(minute, {})
+		for rule in rules:
+			count = bucket.setdefault(rule, [0, set()])
+			count[0] += 1
+			if len(count[1]) < 50:
+				count[1].add(path)
+		window = _window(minute)
+		for old in [m for m in buckets if m not in window and (m or "") < (minute or "")]:
+			del buckets[old]
+		while len(self.rates) > MAX_RATE_CLIENTS:
+			del self.rates[next(iter(self.rates))]
+		crossed = {}
+		for rule in rules:
+			requests = sum(buckets[m][rule][0] for m in window if m in buckets and rule in buckets[m])
+			paths = set().union(*(buckets[m][rule][1] for m in window if m in buckets and rule in buckets[m]))
+			need, distinct = web_attacks.RATE_RULES[rule]
+			if requests >= need and len(paths) >= distinct:
+				crossed[rule] = requests
+		return crossed
+
 	def _probe(self, minute, site, parsed, line):
 		rules = web_attacks.classify(parsed["method"], parsed["target"], parsed["status"], parsed["user_agent"])
 		if not rules:
 			return
 		client = client_address(parsed)
+		rate = [r for r in rules if r in web_attacks.RATE_RULES]
+		crossed = self._rate(minute, site, client, rate, parsed["target"]) if rate else {}
 		key = (minute, site, client, web_attacks.exposed(rules, parsed["status"], parsed["target"]))
 		g = self.probes.get(key)
+		if len(rate) == len(rules) and not crossed and g is None:
+			return  # a password reset, one forbidden call: not a probe until the client keeps at it
 		if g is None:
 			if len(self.probes) >= MAX_PROBE_GROUPS:
 				return
@@ -186,6 +218,10 @@ class NginxParser:
 				"count": 0, "timestamp": parsed["timestamp"], "rules": {}, "statuses": {},
 				"targets": [], "user_agents": [], "samples": [],
 			}  # fmt: skip
+			if crossed:  # the requests of the window that led here
+				for rule, requests in crossed.items():
+					g["rules"][rule] = requests - 1
+				g["count"] = max(crossed.values()) - 1
 		g["count"] += 1
 		for rule in rules:
 			g["rules"][rule] = g["rules"].get(rule, 0) + 1
@@ -285,3 +321,14 @@ class NginxParser:
 		events.extend(self._probe_events(ts))
 		self._reset()
 		return metrics, events
+
+
+def _window(minute):
+	"""The minutes a rate counts over: this one and the RATE_WINDOW - 1 before it."""
+	if not minute:
+		return [minute]
+	try:
+		at = datetime.strptime(minute, "%Y-%m-%dT%H:%M")
+	except ValueError:
+		return [minute]
+	return [(at - timedelta(minutes=i)).strftime("%Y-%m-%dT%H:%M") for i in range(web_attacks.RATE_WINDOW)]
