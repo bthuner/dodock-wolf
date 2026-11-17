@@ -589,10 +589,11 @@ change is `bench_config_changed` (warning), with only the names of the keys that
 Built: outbound connections, for benches without Suricata (`agent/wolf_agent/outbound.py`). Every
 minute the agent reads `/proc/net/tcp{,6}` and keeps the established client connections of each
 bench folder's user to public addresses. After a 7-day learning period, each new destination
-(remote /24 or /48 and port) is a `bench_new_outbound` event, info on web, mail, DNS and NTP
-ports and warning otherwise; the preset *Bench connects somewhere new* fires on the warnings. The
-remote address goes through the IP reputation lists and CrowdSec like any other. It samples, so a
-short connection between two reads is missed.
+(remote /24 or /48 and port) on an unusual port is a `bench_new_outbound` event (warning), which
+the preset *Bench connects somewhere new* fires on; new ones on usual ports are counted. The event
+names the destination in `remote_ip`, not `ip`: the IP reputation lists check it, but it never
+groups incidents by IP, feeds sequence rules, goes to CrowdSec as an attacker or gets a block
+proposal. It samples, so a short connection between two reads is missed.
 
 Wolf alone stays fully supported.
 

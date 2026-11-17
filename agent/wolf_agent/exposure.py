@@ -19,6 +19,7 @@ import ipaddress
 import json
 import logging
 import os
+import sys
 from urllib.parse import urlsplit
 
 from .util import event, fingerprint, metric, utc_iso
@@ -42,12 +43,12 @@ ATTACK = {"service_exposed": ["T1190"], "insecure_site_config": ["T1190"]}
 
 
 def _ipv4(hexaddr):
-	return str(ipaddress.IPv4Address(int(hexaddr, 16).to_bytes(4, "little")))
+	return str(ipaddress.IPv4Address(int(hexaddr, 16).to_bytes(4, sys.byteorder)))
 
 
 def _ipv6(hexaddr):
 	# four 32-bit words, each in host (little-endian) order
-	raw = b"".join(int(hexaddr[i : i + 8], 16).to_bytes(4, "little") for i in range(0, 32, 8))
+	raw = b"".join(int(hexaddr[i : i + 8], 16).to_bytes(4, sys.byteorder) for i in range(0, 32, 8))
 	return str(ipaddress.IPv6Address(raw))
 
 

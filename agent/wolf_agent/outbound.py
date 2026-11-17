@@ -5,16 +5,26 @@ inspection. Every `outbound.interval` (60 s) the agent reads `/proc/net/tcp` and
 (no root needed, no external tool) and keeps the established connections that:
 
 - belong to a bench's user (the owner of the bench folder): `/proc/net/tcp` names each socket's
-  uid, while which process holds it would need root. Benches sharing one user share one record;
+  uid, while which process holds it would need root. Benches sharing one user share one record,
+  and anything else that user runs (an SSH session, a `git push`) counts as the bench's. A bench
+  owned by root is skipped: everything root does would count. A bench in Docker (another network
+  namespace) is not seen, and an outbound proxy on a private address hides the real destinations;
 - leave from a local port nothing listens on: the bench is the client, not answering a visitor;
 - go to a public address: private, loopback and link-local peers (MariaDB, Redis, a LAN API)
   are left out unless `outbound.include_private`.
 
 A destination is the remote network (/24 for IPv4, /48 for IPv6) and port. For `learn_days`
-(7) after the agent first sees a bench's user, every destination is learned silently; after that,
-each new one is reported once as `bench_new_outbound`: info on the usual ports (web, mail, DNS,
-NTP), warning on any other. A destination unseen for FORGET_DAYS is forgotten. The record is kept
-in the spool directory (`outbound-state.json`, 0600).
+(7) after the agent first sees a bench's user, every destination is learned silently. After that,
+each new destination on an unusual port is reported once as `bench_new_outbound` (warning); on a
+usual port (web, mail, DNS, NTP, SSH and git, LDAP; `outbound.usual_ports` adds more) it is only
+counted (`bench_new_outbound_usual`), since clouds rotate their addresses all day, unless
+`outbound.report_usual_ports` sends those too, at info. At most MAX_PER_SCAN events per scan; the
+rest stay new and come out at the next scans. A destination unseen for FORGET_DAYS is forgotten.
+The record is kept in the spool directory (`outbound-state.json`, 0600).
+
+The event names the destination in `remote_ip` / `remote_port`, never in `ip`: on the Wolf site
+`ip` is the remote party of an attack (incident grouping, sequence rules, CrowdSec, block
+proposals), while `remote_ip` is searchable and checked against the IP reputation lists.
 
 A snapshot every interval misses a connection that opened and closed in between: this samples,
 it does not record every connection.
@@ -24,6 +34,7 @@ import ipaddress
 import json
 import logging
 import os
+import sys
 import time
 
 from .util import event, fingerprint, metric, utc_iso
@@ -35,17 +46,19 @@ ESTABLISHED, LISTEN = "01", "0A"
 FORGET_DAYS = 30
 MAX_PER_SCAN = 20  # events per scan: a burst of new destinations is one alert, not hundreds
 MAX_SEEN = 5000  # destinations kept per user
-USUAL_PORTS = {80, 443, 25, 465, 587, 993, 995, 53, 123, 853}
+USUAL_PORTS = {80, 443, 25, 465, 587, 2525, 110, 143, 993, 995, 53, 123, 853, 22, 9418, 389, 636}
 ATTACK = ["T1071", "T1041"]
 
 
+# /proc/net prints each 32-bit word of an address in the host's byte order
 def _ipv4(hexaddr):
-	return str(ipaddress.IPv4Address(int(hexaddr, 16).to_bytes(4, "little")))
+	return str(ipaddress.IPv4Address(int(hexaddr, 16).to_bytes(4, sys.byteorder)))
 
 
 def _ipv6(hexaddr):
-	raw = b"".join(int(hexaddr[i : i + 8], 16).to_bytes(4, "little") for i in range(0, 32, 8))
-	return str(ipaddress.IPv6Address(raw))
+	raw = b"".join(int(hexaddr[i : i + 8], 16).to_bytes(4, sys.byteorder) for i in range(0, 32, 8))
+	ip = ipaddress.IPv6Address(raw)
+	return str(ip.ipv4_mapped or ip)  # a dual-stack socket's IPv4 peer, written as IPv4
 
 
 def parse(text, ipv6=False):
@@ -110,23 +123,30 @@ def outbound(sockets, uids, include_private=False):
 
 
 def bench_users(benches):
-	"""{uid: [bench names]}: the owner of each bench folder."""
+	"""{uid: [bench names]}: the owner of each bench folder; root is skipped (everything it runs
+	would count as the bench's)."""
 	users = {}
 	for bench in benches:
 		try:
 			uid = os.stat(bench.get("path") or "").st_uid
 		except OSError:
 			continue
+		if uid == 0:
+			log.warning("outbound: bench %s belongs to root, its connections are not watched", bench.get("name"))
+			continue
 		users.setdefault(uid, []).append(bench.get("name"))
 	return users
 
 
 class OutboundWatcher:
-	def __init__(self, host, state_path=None, learn_days=7, include_private=False, proc_root="/proc/net"):
+	def __init__(self, host, state_path=None, learn_days=7, include_private=False, proc_root="/proc/net", usual_ports=None,
+	             report_usual_ports=False):  # fmt: skip
 		self.host = host
 		self.state_path = state_path
 		self.learn_seconds = float(learn_days) * 86400
 		self.include_private = include_private
+		self.usual_ports = USUAL_PORTS | {int(p) for p in (usual_ports or [])}
+		self.report_usual_ports = report_usual_ports
 		self.proc_root = proc_root
 		self.state = self._load()
 
@@ -149,44 +169,52 @@ class OutboundWatcher:
 			with os.fdopen(fd, "w") as f:
 				json.dump(self.state, f)
 			os.replace(tmp, self.state_path)
-		except OSError:
-			log.exception("could not save the outbound record")
+		except OSError as e:
+			log.warning("could not save the outbound record: %s", e)
 
 	def collect(self, benches, now=None, epoch=None, sockets=None):
 		ts = utc_iso(now)
 		epoch = (now.timestamp() if now else time.time()) if epoch is None else epoch
 		users = bench_users(benches)
 		current = outbound(self.read() if sockets is None else sockets, set(users), self.include_private)
+		cutoff = epoch - FORGET_DAYS * 86400
 		metrics, events = [], []
 		for uid, names in sorted(users.items()):
 			record = self.state["users"].setdefault(str(uid), {"since": epoch, "seen": {}})
+			record["last"] = epoch
 			seen = record["seen"]
 			since = record.get("since")
 			learning = epoch - float(epoch if since is None else since) < self.learn_seconds
 			bench = names[0] if len(names) == 1 else None
 			conns = current.get(uid, {})
-			metrics.append(metric("bench_outbound_destinations", len(conns), ts, self.host, bench))
 			new = sorted(d for d in conns if d not in seen)
+			unusual = [d for d in new if conns[d][1] not in self.usual_ports]
+			usual = [d for d in new if conns[d][1] in self.usual_ports]
 			for dest in conns:
-				seen[dest] = epoch
-			if learning:
-				continue
-			for dest in new[:MAX_PER_SCAN]:
+				if dest not in new or learning:
+					seen[dest] = epoch
+			report = [] if learning else (unusual + (usual if self.report_usual_ports else []))[:MAX_PER_SCAN]
+			if not learning and not self.report_usual_ports:
+				for dest in usual:  # counted, not reported: learned at once
+					seen[dest] = epoch
+			for dest in report:
+				seen[dest] = epoch  # the rest stays new and comes out at the next scans
 				ip, port = conns[dest]
-				usual = port in USUAL_PORTS
+				is_usual = port in self.usual_ports
 				events.append(event(
-					"security", "bench_new_outbound", "info" if usual else "warning", ts, self.host,
+					"security", "bench_new_outbound", "info" if is_usual else "warning", ts, self.host,
 					f"{', '.join(names)}: new outbound connection to {ip}:{port}"[:255],
 					fingerprint(self.host, "bench_new_outbound", uid, dest),
-					{"ip": ip, "port": port, "destination": dest, "benches": names, "usual_port": usual,
+					{"remote_ip": ip, "remote_port": port, "destination": dest, "benches": names, "usual_port": is_usual,
 					 "attack_techniques": ATTACK, "note": "sampled every interval; the process is the bench's user, not one pid"},
 					source="outbound", bench=bench,
 				))  # fmt: skip
-			if len(new) > MAX_PER_SCAN:
-				log.warning("outbound: %d new destinations for %s, %d reported", len(new), names, MAX_PER_SCAN)
-			cutoff = epoch - FORGET_DAYS * 86400
+			metrics.append(metric("bench_outbound_destinations", len(conns), ts, self.host, bench))
+			metrics.append(metric("bench_new_outbound_usual", 0 if learning else len(usual), ts, self.host, bench))
 			kept = sorted(((d, t) for d, t in seen.items() if t >= cutoff), key=lambda kv: kv[1], reverse=True)
 			record["seen"] = dict(kept[:MAX_SEEN])
+		for uid in [u for u, r in self.state["users"].items() if int(u) not in users and float(r.get("last") or 0) < cutoff]:
+			del self.state["users"][uid]  # a bench user gone for a month
 		self._save()
 		return metrics, events
 

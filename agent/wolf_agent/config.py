@@ -75,8 +75,10 @@ DEFAULTS = {
 	# every `full_scan_interval` seconds, otherwise only what changed size or time is hashed
 	"integrity": {"enabled": True, "interval": 900, "full_scan_interval": 86400, "server_paths": None},
 	# outbound connections of the bench users to destinations never seen for them (outbound.py):
-	# learned silently for `learn_days`, then each new one is reported once; private peers left out
-	"outbound": {"enabled": True, "interval": 60, "learn_days": 7, "include_private": False},
+	# learned silently for `learn_days`, then each new one on an unusual port is reported once;
+	# `usual_ports` adds ports that are only counted, `report_usual_ports` reports those too (info)
+	"outbound": {"enabled": True, "interval": 60, "learn_days": 7, "include_private": False, "usual_ports": [],
+	             "report_usual_ports": False},
 	# response actions a Wolf Manager approved (responder.py): off unless you turn it on
 	"response": {"enabled": False, "command": ["sudo", "-n", "/usr/local/sbin/wolf-block", "{ip}", "{seconds}"]},
 	# alerts when the Wolf site itself stops working, sent without going through it

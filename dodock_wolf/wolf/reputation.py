@@ -92,10 +92,13 @@ class Index:
 
 
 def tag(payload, severity, index):
-	"""(payload, severity) with the reputation of `payload["ip"]`; unchanged when not listed."""
-	if not isinstance(payload, dict) or not payload.get("ip") or index is None:
+	"""(payload, severity) with the reputation of `payload["ip"]` (the remote party), or of
+	`payload["remote_ip"]` (a destination the host connected to, agent outbound.py); unchanged when
+	not listed."""
+	address = payload.get("ip") or payload.get("remote_ip") if isinstance(payload, dict) else None
+	if not address or index is None:
 		return payload, severity
-	lists = index.lookup(payload["ip"])
+	lists = index.lookup(address)
 	if not lists:
 		return payload, severity
 	return {**payload, "reputation": {"listed": True, "lists": lists}}, RAISE.get(severity, severity)

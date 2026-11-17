@@ -235,8 +235,8 @@ class IntegrityWatcher:
 		key = os.urandom(32)
 		try:
 			_write_private(path, key)
-		except OSError:
-			log.exception("could not save the integrity key")
+		except OSError as e:
+			log.warning("could not save the integrity key: %s", e)
 		return key
 
 	def _load(self):
@@ -256,8 +256,8 @@ class IntegrityWatcher:
 			return
 		try:
 			_write_private(self.state_path, json.dumps(self.state).encode())
-		except OSError:
-			log.exception("could not save the integrity baseline")
+		except OSError as e:
+			log.warning("could not save the integrity baseline: %s", e)
 
 	def scan(self, root, previous, full, budget):
 		"""({path: [size, mtime_ns, digest]}, unreadable): hashes only what changed since `previous`,

@@ -2287,7 +2287,8 @@ def main():
 		def ev(severity, ip, port):
 			e = schema.normalize_event({"type": "security", "category": "bench_new_outbound", "severity": severity, "host": "ob-host",
 			                            "bench": "ob-bench", "source": "outbound", "title": f"ob new outbound {ip}:{port}",
-			                            "payload": {"ip": ip, "port": port, "attack_techniques": ["T1071", "T1041"]}}, tz, at)  # fmt: skip
+			                            "payload": {"remote_ip": ip, "remote_port": port, "attack_techniques": ["T1071", "T1041"]}},
+			                           tz, at)  # fmt: skip
 			return events.insert_event(e)
 
 		preset = next(p for p in PRESETS if p["rule_name"] == "Bench connects somewhere new")
@@ -2301,11 +2302,17 @@ def main():
 		(fired,) = rules.evaluate(doc)["fired"]
 		linked = set(frappe.get_all("Wolf Event", filters={"incident": fired}, pluck="name"))
 		assert odd in linked and usual not in linked, linked
-		payload = json.loads(frappe.db.get_value("Wolf Event", odd, "payload"))
+		row = frappe.db.get_value("Wolf Event", odd, ["event_type", "category", "severity", "payload"], as_dict=True)
+		payload = json.loads(row.payload)
 		assert [t["id"] for t in payload["mitre_attack"]] == ["T1071", "T1041"] and payload["entities"]["ip"] == ["185.199.110.66"], payload
+		# the destination is searchable, but it is not the remote party of an attack: no CrowdSec alert, no block
+		from dodock_wolf.wolf import crowdsec, response
+
+		assert not crowdsec.wanted({**row, "payload": payload}), "a partner sent to CrowdSec as an attacker"
+		assert not response.suggest([{**row, "payload": payload, "agent": "x", "block_host": "ob-host", "block_agent": "x"}])
 		incidents.resolve(fired, "smoke")
 		frappe.db.set_value("Wolf Alert Rule", doc.name, "enabled", 0)
-		return f"{fired}: an unusual port fires, a usual one does not; the remote address is an entity"
+		return f"{fired}: an unusual port fires, a usual one does not; the destination is searchable, not blocked nor sent to CrowdSec"
 
 	def wazuh_blocking():
 		"""Approved blocks for the attacked host, by its Wolf Agent and/or Wazuh active response (#72 step 6)."""
