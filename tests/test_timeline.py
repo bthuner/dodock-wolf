@@ -115,6 +115,30 @@ class TestPaging(unittest.TestCase):
 		self.assertEqual(at_one_minute, ["evidence"] * 3 + ["activity", "delivery", "delivery"])
 
 
+
+class TestRelatedScopes(unittest.TestCase):
+	def test_own_scope_is_not_related(self):
+		bench = ("web-1", "b1", None)
+		linked = [("web-1", "b1", f"s{i}.example.com") for i in range(12)] + [("db-1", None, None)]
+		# a bench incident's own sites take no slot: the foreign host is always kept
+		self.assertEqual(timeline.related_scopes(bench, linked, 10), [("db-1", None, None)])
+		site = (None, None, "a.example.com")
+		self.assertEqual(timeline.related_scopes(site, [("web-1", "b1", "a.example.com"), ("web-1", "b1", None)], 10),
+		                 [("web-1", "b1", None)])  # fmt: skip
+		host = ("web-1", None, None)
+		self.assertEqual(timeline.related_scopes(host, [("web-1", None, None), ("web-1", "b1", "a.example.com")], 10),
+		                 [("web-1", "b1", "a.example.com")])  # fmt: skip
+
+	def test_stable_and_capped(self):
+		linked = [(f"h{i}", None, None) for i in (3, 1, 2)]
+		self.assertEqual(timeline.related_scopes(("x", None, None), linked, 2), [("h1", None, None), ("h2", None, None)])
+		self.assertEqual(timeline.related_scopes(("x", None, None), list(reversed(linked)), 2),
+		                 timeline.related_scopes(("x", None, None), linked, 2))  # fmt: skip
+
+	def test_scopeless_incident_relates_every_scoped_event(self):
+		self.assertEqual(timeline.related_scopes((None, None, None), [("h1", None, None), (None, "b9", None), (None, None, None)], 10),
+		                 [(None, "b9", None), ("h1", None, None)])  # fmt: skip
+
 if __name__ == "__main__":
 	unittest.main()
 

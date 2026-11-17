@@ -228,8 +228,9 @@ On a **Wolf Incident** (Wolf Manager):
 - **The timeline** shows the incident's events, every event of its scope (site, bench, host) in its
   window, whatever the source, and, when it took events from other scopes (by IP or user, or a
   sequence rule), the deployments and health events of those scopes too: a Suricata alert on the
-  database host comes with that host's deployment and failed crons. Each user sees only the
-  scopes they may read.
+  database host comes with that host's deployment and failed crons (not the Error Logs of every
+  site it serves). Each user sees only the scopes they may read. An incident with no site, bench
+  or host shows only that.
 - **Manual incidents**: create one in Desk, or **Open incident from this event** on a Wolf Event.
   They have no rule, so the rules engine never auto-resolves them.
 - **Merge into…** (Desk: **Actions**; Wolf UI: **Merge…**) moves events and comments to the target,

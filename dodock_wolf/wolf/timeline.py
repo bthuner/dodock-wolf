@@ -33,6 +33,29 @@ def families(value):
 	return chosen or set(FAMILIES)
 
 
+# --- related scopes -----------------------------------------------------------------------
+
+
+def in_scope(own, ev):
+	"""Whether an event's (host, bench, site) is in the incident's own scope, as
+	events.scope_clause matches it: its site, its bench on its host, or its host-wide events."""
+	host, bench, site = own
+	e_host, e_bench, e_site = ev
+	return bool(
+		(site and e_site == site)
+		or (bench and e_bench == bench and (not host or e_host == host))
+		or (host and e_host == host and not e_bench and not e_site)
+	)
+
+
+def related_scopes(own, linked, limit):
+	"""The scopes of the linked events the incident's own scope does not cover, at most `limit`, in
+	a stable order (every page of a timeline reads the same ones). An incident without a scope has
+	none of its own: every scoped linked event is related."""
+	out = {tuple(s) for s in linked if any(s) and not (any(own) and in_scope(own, s))}
+	return sorted(out, key=lambda s: tuple(v or "" for v in s))[:limit]
+
+
 # --- cursor -------------------------------------------------------------------------------
 
 

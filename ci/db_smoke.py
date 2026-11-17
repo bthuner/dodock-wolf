@@ -1064,6 +1064,11 @@ def main():
 		assert [r["id"] for r in bare_rows if r["relation"] == "linked"] == [f"event:{linked[0]}"], bare_rows
 		assert {r["scope"]["site"] for r in bare_rows} == {site}, [r["scope"] for r in bare_rows]  # not `other`
 		assert {r["event_type"] for r in bare_rows} <= set(incidents.HEALTH_TYPES), [r["event_type"] for r in bare_rows]
+		empty = frappe.get_doc({"doctype": "Wolf Incident", "title": "tl empty", "severity": "warning", "status": "Open",
+		                        "started_at": at}).insert()  # fmt: skip
+		assert not view.get_timeline(empty.name, families="evidence,context")["rows"], "context from every site"
+		assert not incidents.get_timeline(empty.name), "Desk context from every site"
+		frappe.delete_doc("Wolf Incident", empty.name, force=True)
 		frappe.delete_doc("Wolf Incident", bare.name, force=True)
 		frappe.db.delete("Wolf Event", {"name": ("in", linked + context + [hidden])})
 		frappe.db.commit()
@@ -2023,6 +2028,7 @@ def main():
 		assert ids == inc.name, ids
 		ev("story deploy", -12, {"type": "deployment", "severity": "info", "host": "story-db", "bench": "db-bench"})
 		ev("story cron", -5, {"type": "cron_failure", "host": "story-db", "bench": "db-bench", "site": "db.localhost"})
+		ev("story site error", -5, {"type": "error", "host": "story-db", "bench": "db-bench", "site": "db.localhost"})
 		ev("story noise", -5, {"type": "security", "category": "web_attack_probe", "host": "story-db", "payload": {"ip": "45.33.32.231"}})
 		ev("story elsewhere", -5, {"type": "cron_failure", "host": "story-other", "bench": "x"})
 		ev("story old deploy", -200, {"type": "deployment", "severity": "info", "host": "story-db", "bench": "db-bench"})
@@ -2030,6 +2036,14 @@ def main():
 		spa = {r["summary"] for r in incident_view.get_timeline(inc.name)["rows"] if r["kind"] in ("event", "deployment")}
 		want = {"story probe", "story ids", "story deploy", "story cron"}
 		assert desk == spa == want, (desk, spa)
+		one_by_one, cursor = [], None
+		while True:  # the same rows whatever the page size
+			page = incident_view.get_timeline(inc.name, limit=1, cursor=cursor, families="evidence,context")
+			one_by_one += [r["id"] for r in page["rows"]]
+			cursor = page["paging"].get("next_cursor")
+			if not cursor:
+				break
+		assert one_by_one == [r["id"] for r in incident_view.get_timeline(inc.name, families="evidence,context")["rows"]]
 		# a user of the incident's site sees neither the other host's events nor its changes
 		user = "smoke-story@example.com"
 		if not frappe.db.exists("User", user):
@@ -2041,13 +2055,15 @@ def main():
 		frappe.set_user(user)
 		try:
 			scoped = {r["summary"] for r in incident_view.get_timeline(inc.name)["rows"] if r["kind"] in ("event", "deployment")}
+			scoped_desk = {r.title for r in ui.get_incident_timeline(inc.name)["events"]}
 		finally:
 			frappe.set_user("Administrator")
 			frappe.db.delete("Wolf User Scope", {"user": user})
 			access.clear_cache()
-		assert scoped == {"story probe"}, scoped
-		frappe.db.set_value("Wolf Incident", inc.name, "status", "Resolved")
-		return f"{inc.name}: story-db's deployment and failed cron beside the attack; its probes, other hosts, older events and a site user's view left out"
+		assert scoped == scoped_desk == {"story probe"}, (scoped, scoped_desk)
+		frappe.db.delete("Wolf Event", {"title": ("like", "story %")})
+		frappe.delete_doc("Wolf Incident", inc.name, force=True, ignore_permissions=True)
+		return f"{inc.name}: story-db's deployment and failed cron beside the attack; its probes, its sites' errors, other hosts, older events left out; paged alike; a site user sees its site in Desk and the Wolf UI"
 
 	def sequence_rules():
 		"""A then B on the same IP, user or host, from the three presets (#72 step 5)."""
