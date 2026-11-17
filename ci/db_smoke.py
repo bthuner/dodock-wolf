@@ -2009,6 +2009,8 @@ def main():
 
 	def detector_modes():
 		"""Wolf's own detectors next to Suricata and Wazuh: own, both (one finding), external (#72 step 4)."""
+		from dodock_wolf.api import detectors as detectors_api
+		from dodock_wolf.api import entities as entities_api
 		from dodock_wolf.api import ingest as ingest_api
 		from dodock_wolf.api import siem as siem_api
 
@@ -2019,15 +2021,17 @@ def main():
 				frappe.db.set_single_value("Wolf Settings", field, value)
 			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
 
-		def ev(category, source, ip, minutes=0, technique="T1190", host="dm-web", **kw):
-			payload = {"ip": ip, "mitre_attack": [{"id": technique}]} if ip else {}
+		def ev(category, source, ip, minutes=0, technique="T1190", host="dm-web", payload=None, **kw):
+			# as the agent sends them: techniques in attack_techniques, normalize turns them into mitre_attack
+			data = {"ip": ip, **({"attack_techniques": [technique]} if technique else {}), **(payload or {})} if ip else payload or {}
 			return schema.normalize_event({"type": "security", "severity": "warning", "category": category, "source": source,
-			                               "host": host, "title": f"dm {category} {ip}", "payload": payload, **kw}, tz,
+			                               "host": host, "title": f"dm {category} {ip}", "payload": data, **kw}, tz,
 			                              at + timedelta(minutes=minutes))  # fmt: skip
 
 		def dup(name):
 			return frappe.db.get_value("Wolf Event", name, "duplicate_of")
 
+		agent = frappe.get_doc({"doctype": "Wolf Agent", "hostname": "dm-agent", "kind": "agent"}).insert(ignore_permissions=True)
 		try:
 			mode(web_detection_mode="both", host_detection_mode="own")
 			ids = events.insert_event(ev("network_ids_alert", "suricata", "45.33.32.240", -3))
@@ -2038,26 +2042,43 @@ def main():
 			other_ip = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.241"))
 			late = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.240", 30))
 			assert not any(map(dup, (other_technique, other_ip, late))), "linked across techniques, IPs or time"
-			_scanned, kept = siem_api._event_rows({"event_creation": str(at - timedelta(minutes=1))}, ["security"], 0,
-			                                      now_datetime() + timedelta(minutes=1))  # fmt: skip
+			# a critical alert linked to a warning one still reaches a collector that takes critical only
+			critical = events.insert_event(ev("network_ids_alert", "suricata", "45.33.32.241", 1, severity="critical"))
+			assert dup(critical) == other_ip, "the critical alert is not linked"
+			since = {"event_creation": str(at - timedelta(minutes=1))}
+			_scanned, kept = siem_api._event_rows(since, ["security"], 0, now_datetime() + timedelta(minutes=1))
 			assert ids in {r.name for r in kept} and probe not in {r.name for r in kept}, "the same finding sent twice"
+			_scanned, kept = siem_api._event_rows(since, ["security"], 2, now_datetime() + timedelta(minutes=1))
+			assert critical in {r.name for r in kept}, "a critical duplicate of a warning event lost"
 			mode(web_detection_mode="own")
 			again = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.240", 1))
 			assert not dup(again), "linked in own mode"
 
-			# external: Wolf's auth.log signals give way to Wazuh while it reports from the host, not otherwise
+			# external: auth.log signals give way to Wazuh alerts about the host, under its Wazuh name too,
+			# when they watch logins; a file-integrity alert does not stand in for SSH detection
 			mode(host_detection_mode="external")
-			ssh = ev("ssh_failed_login", "sshd", "45.33.32.242", host="dm-host")
-			got = ingest_api.store_batch(None, [], [ssh], correlate=False)
-			assert got["dropped"] == 0, f"dropped while Wazuh is quiet: {got}"
-			events.insert_event(ev("hids_alert", "wazuh", "45.33.32.243", host="dm-host"))
-			got = ingest_api.store_batch(None, [], [ssh, ev("ssh_failed_login", "sshd", "45.33.32.242", host="dm-other")], correlate=False)
-			assert (got["events"], got["dropped"]) == (1, 1), f"Wazuh reports from dm-host only: {got}"
+			entities_api.learn("host", "dm-wazuh-name", "dm-host.example.com", "smoke")
+			ssh = ev("ssh_failed_login", "sshd", "45.33.32.242", technique=None, host="dm-host.example.com")
+			assert ingest_api.store_batch(agent.name, [], [ssh], correlate=False)["dropped"] == 0, "dropped while Wazuh is quiet"
+			events.insert_event(ev("hids_alert", "wazuh", None, host="dm-wazuh-name",
+			                       payload={"groups": ["ossec", "syscheck"], "attack_techniques": ["T1565.001"]}))  # fmt: skip
+			assert ingest_api.store_batch(agent.name, [], [ssh], correlate=False)["dropped"] == 0, "a FIM alert stood in"
+			events.insert_event(ev("hids_alert", "wazuh", "45.33.32.243", technique=None, host="dm-wazuh-name",
+			                       payload={"groups": ["syslog", "sshd", "authentication_failed"]}))  # fmt: skip
+			got = ingest_api.store_batch(agent.name, [], [ssh, ev("ssh_failed_login", "sshd", "45.33.32.242", host="dm-other")],
+			                             correlate=False)  # fmt: skip
+			assert (got["events"], got["dropped"]) == (1, 1), f"Wazuh covers dm-host only: {got}"
+			assert frappe.db.get_value("Wolf Agent", agent.name, "own_events_dropped") == 1, "the drop is not counted"
 		finally:
 			mode(web_detection_mode="own", host_detection_mode="own")
+			frappe.db.delete("Wolf Entity Alias", {"seen_from": "smoke", "alias": "dm-wazuh-name"})
+			frappe.cache.delete_value(entities_api.CACHE_KEY)
 		frappe.db.delete("Wolf Event", {"title": ("like", "dm %")})
-		return "both: probe and Suricata alert one finding, sent to the SIEM once; other technique, IP, time and own mode apart; " \
-		       "external: auth.log kept while Wazuh is quiet, dropped on the host it reports from"
+		frappe.delete_doc("Wolf Agent", agent.name, ignore_permissions=True, force=True)
+		assert detectors_api.original_severities([]) == {}
+		return ("both: probe and Suricata alert one finding, sent to the SIEM once, a critical duplicate still sent; other "
+		        "technique, IP, time and own mode apart; external: auth.log kept while Wazuh is quiet or only checks files, "
+		        "dropped under the host's Wazuh name, counted on the agent")  # fmt: skip
 
 	def timeline_related():
 		"""An incident's timeline shows the changes and health of the scopes its events came from."""

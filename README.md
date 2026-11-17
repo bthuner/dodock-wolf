@@ -280,9 +280,15 @@ vs Suricata) and **Host Logins and Accounts** (auth.log signals vs Wazuh):
 - `both`: a Wolf event and the other source's alert about the same remote IP, with an ATT&CK
   technique in common when both name some, within **Detector Match Minutes** (10), are one
   finding. The later one is stored as **Same Finding As** the first: it stays on the timeline
-  ("same finding as …") and in its own rules, and is not sent again to CrowdSec or the SIEM.
+  ("same finding as …") and in its own rules, and is not sent again to CrowdSec or the SIEM
+  when the first was (a critical alert linked to a warning one still goes to a collector that
+  takes critical only).
 - `external`: Wolf's own events of that detector are dropped at ingest while Suricata or Wazuh
-  has reported from the same host in the last hour. When it goes quiet, Wolf's come back.
+  has sent, in the last hour, an alert about the same host (under any of its names) that watches
+  the same thing: for Wazuh an authentication, SSH, sudo or account rule, or an ATT&CK technique
+  of the auth signals; for Suricata an alert with HTTP context or a web technique. A Wazuh
+  file-integrity alert does not stand in for SSH detection. When it goes quiet, Wolf's come back.
+  Each Wolf Agent counts the events it sent that gave way (**Own Events Given Way**).
 
 Every timeline row says who raised the event: the Wolf agent, the Wolf site, Suricata or Wazuh.
 

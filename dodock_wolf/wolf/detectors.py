@@ -15,9 +15,14 @@ Modes:
   sources. The later one is stored as `duplicate_of` the first: still on the timeline and in
   its own rules, not sent again to CrowdSec or the SIEM.
 - `external`: Wolf's own events of that detector are dropped at ingest, but only while the
-  external source has reported from the same host in the last FALLBACK_MINUTES: when Suricata
-  or Wazuh goes quiet, Wolf's detection comes back by itself.
+  external source has sent, about the same host (any of its names), an alert that `covers` the
+  detector in the last FALLBACK_MINUTES: a Wazuh file-integrity alert does not stand in for SSH
+  detection. When Suricata or Wazuh goes quiet, Wolf's detection comes back by itself.
 """
+
+import re
+
+from dodock_wolf.wolf import attack
 
 MODES = ("own", "both", "external")
 FALLBACK_MINUTES = 60
@@ -32,6 +37,34 @@ DETECTORS = {
 }
 SOURCE_LABELS = {"suricata": "Suricata", "wazuh": "Wazuh", "frappe": "Wolf site", "wolf": "Wolf site", "api": "Wolf site",
                  "scheduler": "Wolf site", "deployment": "Wolf site"}  # fmt: skip
+
+
+# Wazuh groups of the rules that see what auth.log signals see (SSH, sudo, PAM, accounts)
+HOST_GROUPS = {"authentication_failed", "authentication_failures", "authentication_success", "sshd", "sudo",
+               "pam", "adduser", "addgroup", "account_changed", "invalid_login"}  # fmt: skip
+_HTTP_KEY = re.compile(r"^http_")
+
+
+# techniques of the web probe rules (agent/wolf_agent/parsers/web_attacks.py), beyond the category's
+WEB_RULE_TECHNIQUES = {"T1190", "T1189", "T1552"}
+
+
+def own_techniques(detector):
+	"""Base ATT&CK techniques Wolf's own detector names (attack.CATEGORIES, plus its web rules')."""
+	ids = {t.split(".")[0] for c in DETECTORS[detector]["own"] for t in attack.CATEGORIES.get(c, [])}
+	return ids | WEB_RULE_TECHNIQUES if detector == "web" else ids
+
+
+def covers(detector, payload):
+	"""Whether an external alert shows its source watches what Wolf's detector watches: a web alert
+	with HTTP context or a web technique; a host alert of an authentication, sudo or account rule,
+	or with one of the auth signals' techniques."""
+	payload = payload if isinstance(payload, dict) else {}
+	if techniques(payload) & own_techniques(detector):
+		return True
+	if detector == "web":
+		return payload.get("app_proto") == "http" or any(_HTTP_KEY.match(k) for k in payload)
+	return bool(HOST_GROUPS.intersection(g.lower() for g in payload.get("groups") or [] if isinstance(g, str)))
 
 
 def detector_of(category):

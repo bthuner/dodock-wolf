@@ -10,6 +10,7 @@ const props = defineProps({
   expanded: { type: Boolean, default: false },
   anchor: { type: String, required: true },
   targeted: { type: Boolean, default: false }, // the row the URL points at (#row-...)
+  duplicateAnchor: { type: String, default: '' }, // the first source's row, when it is on the page
 })
 defineEmits(['toggle'])
 
@@ -45,7 +46,8 @@ const detailText = computed(() => (details.value ? JSON.stringify(details.value,
         <span v-if="scope">{{ scope }}</span>
         <span v-if="row.source_label && row.kind !== 'activity' && row.kind !== 'delivery'"> · by {{ row.source_label }}</span>
         <span v-if="row.duplicate_of">
-          · same finding as <a class="wolf-link" :href="`#row-event-${row.duplicate_of.replace(/[^A-Za-z0-9_-]/g, '-')}`">{{ row.duplicate_of }}</a>
+          · same finding as <a v-if="duplicateAnchor" class="wolf-link" :href="`#${duplicateAnchor}`">{{ row.duplicate_of }}</a>
+          <span v-else class="wolf-data">{{ row.duplicate_of }}</span>
         </span>
         <span v-if="row.kind === 'activity' && row.user_name"> {{ row.user_name }}</span>
         <span v-if="repeated" class="wolf-data">

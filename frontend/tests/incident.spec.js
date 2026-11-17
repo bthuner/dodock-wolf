@@ -121,6 +121,21 @@ describe('IncidentPage', () => {
     expect(page.find('#row-event-S1').exists()).toBe(true) // the link lands on the first source's row
   })
 
+  it('names the first source plainly when its row is not on the page', async () => {
+    const rows = [
+      { id: 'event:W2', kind: 'event', family: 'evidence', relation: 'linked', at: '2026-10-30T00:49:00Z', severity: 'warning',
+        summary: 'Web probes', scope: { site: 'a.example.com' }, count: 1, source: 'nginx', source_label: 'Wolf agent',
+        duplicate_of: 'GONE1', details: {} },
+    ]
+    server({
+      'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows, paging: { has_more: false }, totals: {}, truncated: {} }),
+    })
+    const { page } = await open()
+    expect(page.text()).toContain('same finding as GONE1')
+    expect(page.find('a[href="#row-event-GONE1"]').exists()).toBe(false)
+  })
+
   it('counts one linked record in the singular', async () => {
     server({
       'dodock_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, event_records: 1, event_count: 1, event_occurrences: 1 }),

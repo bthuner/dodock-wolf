@@ -23,6 +23,7 @@ import frappe
 from frappe.utils import add_to_date, cint, now_datetime
 
 from dodock_wolf import __version__
+from dodock_wolf.api import detectors
 from dodock_wolf.wolf import events, siem
 from dodock_wolf.wolf.schema import SEVERITY_RANK
 from dodock_wolf.wolf.spa import MANAGER_ROLES
@@ -79,9 +80,13 @@ def _event_rows(cursor, types, min_rank, until):
 		as_dict=True,
 	)
 	keep = []
+	originals = detectors.original_severities(rows)
 	for r in rows:
 		# the same finding as an event already sent (overlapping detectors in both mode): sent once
-		if SEVERITY_RANK.get(r.severity, 0) >= min_rank and not r.pop("duplicate_of", None):
+		original = r.pop("duplicate_of", None)
+		if original and SEVERITY_RANK.get(originals.get(original), -1) >= min_rank:
+			continue
+		if SEVERITY_RANK.get(r.severity, 0) >= min_rank:
 			try:
 				r["payload"] = json.loads(r.payload) if r.payload else {}
 			except ValueError:

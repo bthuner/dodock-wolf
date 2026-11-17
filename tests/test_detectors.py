@@ -29,6 +29,16 @@ class TestDetectors(unittest.TestCase):
 		self.assertTrue(d.same_finding(probe, {}))  # an alert without techniques: the IP and the time decide
 		self.assertTrue(d.same_finding(None, None))
 
+	def test_only_alerts_that_watch_the_same_thing_stand_in(self):
+		self.assertTrue(d.covers("host", {"groups": ["syslog", "sshd", "authentication_failed"]}))
+		self.assertTrue(d.covers("host", {"mitre_attack": [{"id": "T1110.001"}]}))
+		self.assertFalse(d.covers("host", {"groups": ["ossec", "syscheck"], "mitre_attack": [{"id": "T1565"}]}))  # file integrity
+		self.assertTrue(d.covers("web", {"app_proto": "http"}))
+		self.assertTrue(d.covers("web", {"http_hostname": "erp.example.com"}))
+		self.assertTrue(d.covers("web", {"mitre_attack": [{"id": "T1190"}]}))
+		self.assertFalse(d.covers("web", {"app_proto": "tls", "mitre_attack": [{"id": "T1071"}]}))  # a C2 alert
+		self.assertFalse(d.covers("web", None))
+
 	def test_source_labels(self):
 		self.assertEqual([d.source_label(s) for s in ("suricata", "Wazuh", "frappe", "nginx", "sshd", None)],
 		                 ["Suricata", "Wazuh", "Wolf site", "Wolf agent", "Wolf agent", "Wolf agent"])  # fmt: skip

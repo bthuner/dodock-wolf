@@ -551,8 +551,10 @@ mode for the agent's nginx web probes against Suricata, and one for its auth.log
 Wazuh: `own` (default, as alone), `both` (an event and the other source's alert about the same
 remote IP, sharing an ATT&CK technique when both name some, within 10 minutes, are one finding:
 the later is marked **Same Finding As** the first and not sent again to CrowdSec or the SIEM) or
-`external` (Wolf's own events of that detector are dropped while the other source reports from
-the host, and come back when it has been quiet for an hour). sudo, account and group events carry
+`external` (Wolf's own events of that detector are dropped while the other source sends alerts
+about that host, under any of its names, that watch the same thing: Wazuh authentication, SSH,
+sudo or account rules, Suricata alerts with HTTP context or a web technique. They come back when
+it has been quiet for an hour, and each Wolf Agent counts what gave way). sudo, account and group events carry
 no IP, so in `both` mode they are never linked. Each timeline row names its source. Blocking
 (nftables against Wazuh active response) is left to step 6, where an approved block can be
 handed to Wazuh.

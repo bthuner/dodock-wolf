@@ -160,6 +160,7 @@ def store_batch(agent, metrics, events_in, correlate=None, attempt=None):
 			name = events.insert_event(event, agent=agent)
 			if correlate:
 				attach_to_open_incident(name, event)
+		detectors.record_dropped(agent, dropper.dropped)
 		frappe.db.commit()
 	except Exception:
 		if attempt is None:

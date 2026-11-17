@@ -23,6 +23,7 @@ import frappe
 from frappe.utils import add_to_date, cint, get_datetime, now_datetime
 
 from dodock_wolf import __version__, satellite
+from dodock_wolf.api import detectors
 from dodock_wolf.wolf import crowdsec, events, window
 from dodock_wolf.wolf.spa import MANAGER_ROLES
 
@@ -166,8 +167,10 @@ def push_detections(api, settings, now=None):
 		if not rows:
 			break
 		alerts = []
+		originals = detectors.original_severities(rows)
 		for r in rows:
-			if r.pop("duplicate_of", None):
+			original = r.pop("duplicate_of", None)
+			if original and crowdsec.SEVERITY_RANK.get(originals.get(original), -1) >= crowdsec.SEVERITY_RANK.get(min_severity, 1):
 				continue  # the same finding as an event already sent (overlapping detectors in both mode)
 			try:
 				r["payload"] = json.loads(r.payload) if r.payload else {}
