@@ -33,7 +33,7 @@ All runs used synthetic data and a demo bench, not production observations.
    - Before, metric samples got a random name and rollups a hash of their key. One metric's
      day was spread over the whole table, and each row of a read was a page read of its own.
    - Now names start with the resolution, a 6-character hash of the metric and the time, then
-     end with a hash of the key ([`storage.rollup_name`](../frappe_wolf/wolf/storage.py),
+     end with a hash of the key ([`storage.rollup_name`](../dodock_wolf/wolf/storage.py),
      `sample_name`). A time range of one metric is read from neighbouring pages.
    - Rows are inserted in name order, so InnoDB fills its pages instead of splitting them in
      the middle.
@@ -67,7 +67,7 @@ The names are now 33 characters for rollups and 28 for samples, against 32 and 1
 ### SQL reads (#57)
 
 1. **Name ranges.** A read of known metrics scans one primary key range per metric
-   ([`rollups.name_passes`](../frappe_wolf/wolf/rollups.py)): rows of one metric and resolution
+   ([`rollups.name_passes`](../dodock_wolf/wolf/rollups.py)): rows of one metric and resolution
    sit together in the key since #56, so a window is a stretch of it. No row is looked up
    through a secondary index. Postgres does not store rows in key order and keeps one plain
    read.
@@ -224,7 +224,7 @@ counted.
 ### The short cache
 
 `get_inventory` and `get_signals` keep what they read for 30 s (`wolf_read_cache_seconds`,
-[`wolf/read_cache.py`](../frappe_wolf/wolf/read_cache.py)). The cached value is read without
+[`wolf/read_cache.py`](../dodock_wolf/wolf/read_cache.py)). The cached value is read without
 access conditions, shared by every caller, and each request keeps what its caller may see
 ([docs/ui-api.md](ui-api.md#short-cache-get_inventory-and-get_signals)). Rules and incidents
 are read per request.

@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from frappe_wolf.wolf import public_status as ps
+from dodock_wolf.wolf import public_status as ps
 
 T0 = datetime(2026, 10, 29, 2, 0, 0)
 

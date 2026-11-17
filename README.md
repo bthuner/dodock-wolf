@@ -1,29 +1,29 @@
-<p align="center"><img src="docs/logo.png" width="96" alt="Frappe Wolf"></p>
+<p align="center"><img src="docs/logo.png" width="96" alt="Dodock Wolf"></p>
 
-# Frappe Wolf
+# Dodock Wolf
 
-[![CI](https://github.com/bthuner/frappe-wolf/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/bthuner/frappe-wolf/actions/workflows/ci.yml)
+[![CI](https://github.com/bthuner/dodock-wolf/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/bthuner/dodock-wolf/actions/workflows/ci.yml)
 
 Self-hosted observability for Frappe benches, ERPNext/Dokos sites and Linux hosts.
 It catches 502 windows, failed nightly crons, worker crashes and suspicious logins
 before customers notice, and keeps all data on your own Frappe site.
 
-- **Wolf App** (`frappe_wolf/`): a Frappe app that stores events, metrics, rules and incidents as
+- **Wolf App** (`dodock_wolf/`): a Frappe app that stores events, metrics, rules and incidents as
   DocTypes, evaluates alert rules at each scheduler tick (every minute once configured, see
   [Install the app](#install-the-app)), and shows a timeline in Desk.
 - **Wolf Agent** (`agent/`): a stdlib-only Python daemon on each host. It tails nginx, bench and
   auth logs, reads `/proc`, and ships batches over HTTPS.
 - **Security**: web attack and host intrusion detection, MITRE ATT&CK tags on every security
   event, and a roadmap towards a Frappe-native SOC layer: [`docs/cyber.md`](docs/cyber.md).
-- Wire protocol: [`docs/protocol.md`](docs/protocol.md). The design story is in the [making-of](https://bthuner.github.io/frappe-wolf/).
+- Wire protocol: [`docs/protocol.md`](docs/protocol.md). The design story is in the [making-of](https://bthuner.github.io/dodock-wolf/).
 
 ## Install the app
 
 ```bash
 cd ~/frappe-bench
-bench get-app https://github.com/bthuner/frappe-wolf
-bench --site wolf.example.com install-app frappe_wolf
-bench build --app frappe_wolf   # links the static assets and builds the Wolf UI (/wolf)
+bench get-app https://github.com/bthuner/dodock-wolf
+bench --site wolf.example.com install-app dodock_wolf
+bench build --app dodock_wolf   # links the static assets and builds the Wolf UI (/wolf)
 bench set-config -g scheduler_tick_interval 60   # run scheduled jobs every minute, then restart the scheduler
 ```
 
@@ -38,7 +38,7 @@ the Dokos preset rules. Open **Wolf Settings → Agent install command** to copy
 ## Install the agent on a host
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/bthuner/frappe-wolf/main/agent/install.sh \
+curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/main/agent/install.sh \
   | sudo WOLF_URL=https://wolf.example.com WOLF_TOKEN=<registration token> bash
 ```
 
@@ -314,7 +314,7 @@ a few hundred hosts, the Frappe tables above are enough and keep Wolf a plain Fr
 
 ## Signals captured on the Wolf site itself
 
-Without any agent, the site running Frappe Wolf records failed Scheduled Job Logs (`cron_failure`),
+Without any agent, the site running Dodock Wolf records failed Scheduled Job Logs (`cron_failure`),
 Error Logs (failed backups as `backup_failed`), failed desk logins, privileged logins from a new IP
 or a new country, privileged role grants, Email Queue backlogs and sending errors, each
 `bench migrate` (as a deployment) and risky application changes: Server/Client Scripts that can
@@ -341,12 +341,12 @@ nothing is flagged until a first public login is known.
 
 Some signals can only be seen from inside a site. Frappe logs "Scheduled Job Failed" at INFO,
 which the default logger level drops, and it often writes no Scheduled Job Log, so the agent
-cannot see a failing cron on a site from `scheduler.log`. Install `frappe_wolf` on every site
+cannot see a failing cron on a site from `scheduler.log`. Install `dodock_wolf` on every site
 and keep one of them as the **central** Wolf site. Set the others to **satellite** mode:
 
 ```bash
-bench --site b.example.com install-app frappe_wolf
-bench --site b.example.com execute frappe_wolf.satellite.register \
+bench --site b.example.com install-app dodock_wolf
+bench --site b.example.com execute dodock_wolf.satellite.register \
   --kwargs '{"url": "https://wolf.example.com", "token": "<central registration token>"}'
 # add "verify_tls": 0 for a self-signed central site
 ```
@@ -390,7 +390,7 @@ searches, the Wolf Overview page, charts and incident timelines. Rows are OR-ed.
 records (CPU, disk, SSH logins: no site) need a `host` row. A Wolf User without any row is not
 restricted. Frappe's own User Permissions cannot do this, because site/bench/host are plain
 Data fields, so Wolf uses `permission_query_conditions` and `has_permission` hooks
-(`frappe_wolf/wolf/access.py`). Alert rule definitions stay readable by every Wolf User.
+(`dodock_wolf/wolf/access.py`). Alert rule definitions stay readable by every Wolf User.
 
 **Agent secrets.** Wolf stores only a salted HMAC-SHA256 hash of each agent's secret; the
 secret is shown once, at registration or when you click **Rotate secret** on the Wolf Agent
@@ -418,7 +418,7 @@ python3 -m unittest discover -s agent/tests          # agent tests
 ### Wolf UI
 
 The operator UI at `/wolf` is a Vue app built on [frappe-ui](https://ui.frappe.io) in
-[`frontend/`](frontend/) ([#19](https://github.com/bthuner/frappe-wolf/issues/19)). Desk keeps the
+[`frontend/`](frontend/) ([#19](https://github.com/bthuner/dodock-wolf/issues/19)). Desk keeps the
 configuration DocTypes and stays usable for everything the Wolf UI does not show yet; its views are
 added one by one, and a view that is not built says so and links to Desk. It reuses the Frappe
 session: guests are sent to the login page, users without the Wolf User or Wolf Manager role get a
@@ -434,7 +434,7 @@ cd frontend
 yarn install
 yarn dev        # Vite on the bench port + 80 (8080 for 8000), proxied to the bench
 yarn test       # unit and component tests (Vitest)
-yarn build      # writes frappe_wolf/public/frontend and frappe_wolf/www/wolf.html
+yarn build      # writes dodock_wolf/public/frontend and dodock_wolf/www/wolf.html
 yarn e2e        # browser tests of that build (Playwright + axe), after `yarn build`
 ```
 
@@ -448,7 +448,7 @@ partial, stale and disconnected: a view never claims "nothing" before it has rea
 read failed, and a refusal says what may not be seen. They need Chromium: `npx playwright
 install chromium`, or point `WOLF_CHROMIUM` at an installed one.
 
-Node 20.19 or newer is required. The build output is not committed; `bench build --app frappe_wolf`
+Node 20.19 or newer is required. The build output is not committed; `bench build --app dodock_wolf`
 produces it on the bench.
 
 ### CI checks

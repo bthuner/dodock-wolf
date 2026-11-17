@@ -1,6 +1,6 @@
 # Wolf UI API
 
-Read APIs behind the Wolf UI (`/wolf`, [#19](https://github.com/bthuner/frappe-wolf/issues/19)).
+Read APIs behind the Wolf UI (`/wolf`, [#19](https://github.com/bthuner/dodock-wolf/issues/19)).
 They need the Wolf User, Wolf Manager or System Manager role, and apply the caller's access
 rules (see [Privacy and access](../README.md#privacy-and-access)) inside the query. Answers are
 not cached, so each one is the caller's own.
@@ -38,7 +38,7 @@ A restricted Wolf User (one with Wolf User Scope rows) gets counts and inventory
 records they may see, and `"restricted": true`. A Wolf User **without any** Wolf User Scope
 row is not restricted: they see everything, as in Desk. That is the current rule, kept as is.
 
-## `frappe_wolf.api.scope.get_counts`
+## `dodock_wolf.api.scope.get_counts`
 
 Exact counts for the overview and entity dashboards. Arguments: window and scope.
 
@@ -72,7 +72,7 @@ Exact counts for the overview and entity dashboards. Arguments: window and scope
   that host. `fresh` means seen within the agent silence threshold of Wolf Settings, the same rule
   as the Desk overview's online flag.
 
-## `frappe_wolf.api.scope.get_inventory`
+## `dodock_wolf.api.scope.get_inventory`
 
 The hosts, benches and sites the caller may see. Argument: `days` (default 7, at most 90), the
 telemetry window.
@@ -112,14 +112,14 @@ list as complete.
 
 ## Incident page
 
-### `frappe_wolf.api.incident_view.list_incidents`
+### `dodock_wolf.api.incident_view.list_incidents`
 
 Incidents the caller may see, newest first. Arguments: `status` (`unresolved`, the default,
 `resolved` or `all`), the scope arguments, `limit` (at most 200) and `cursor`. Pages follow
 `(started_at, name)`, so two incidents started at the same second are neither repeated nor
 skipped. Returns `incidents`, `paging` (`has_more`, `next_cursor`) and `time_zone`.
 
-### `frappe_wolf.api.incident_view.get_incident`
+### `dodock_wolf.api.incident_view.get_incident`
 
 The incident header in one call: title, status, severity, scope, start, acknowledgement,
 resolution and owner, rule, silence, notification and escalation times, merge and split links,
@@ -134,7 +134,7 @@ and Wolf Managers also acknowledge, resolve, take the incident, and:
 
 Each matches the check the action itself makes.
 
-### `frappe_wolf.api.incident_view.get_timeline`
+### `dodock_wolf.api.incident_view.get_timeline`
 
 One page of the timeline, oldest first. Arguments: `incident`, `limit` (default 100, at most
 500), `cursor`, and `families`, a comma-separated subset of:
@@ -165,7 +165,7 @@ and 300 comments; `truncated.activity_version` and `truncated.activity_comment` 
 older ones exist. `window` is the incident's window (start minus `padding_minutes`, to its
 resolution or now), the same one Desk and the postmortem use.
 
-### `frappe_wolf.api.incident_view.act`
+### `dodock_wolf.api.incident_view.act`
 
 POST `incident` and `action`, one of `acknowledge`, `resolve` or `assign_to_me`. It runs the
 incident's own method, so Frappe's write permission applies, and returns the new
@@ -173,7 +173,7 @@ incident's own method, so Frappe's write permission applies, and returns the new
 and resolving or taking needs an unresolved one. A page left open on a stale incident gets
 an error instead of reopening it. Merged incidents refuse every action.
 
-### `frappe_wolf.api.incident_view.merge_preview`
+### `dodock_wolf.api.incident_view.merge_preview`
 
 `source`, and optionally `target`; Wolf Managers with write permission only. Nothing is written.
 
@@ -186,10 +186,10 @@ an error instead of reopening it. Merged incidents refuse every action.
   - `target_after`: severity, start and status, once the target covers both;
   - `source_after`: Resolved, merged into the target.
 
-The merge itself is `frappe_wolf.api.incident.merge` (POST `source`, `target`), which checks
+The merge itself is `dodock_wolf.api.incident.merge` (POST `source`, `target`), which checks
 again.
 
-### `frappe_wolf.api.incident_view.split_preview`
+### `dodock_wolf.api.incident_view.split_preview`
 
 `incident`, and optionally `events` (a JSON list of Wolf Event names); Wolf Managers only.
 Nothing is written.
@@ -202,12 +202,12 @@ Nothing is written.
   - `new_incident`: title, severity, start and status. It is Open, or Resolved when the source
     is. It has no alert rule, so nothing resolves it by itself.
 
-The split itself is `frappe_wolf.api.incident.split` (POST `incident`, `events`, `title`).
-The postmortem is created by `frappe_wolf.api.incident.create_postmortem` and edited in Desk.
+The split itself is `dodock_wolf.api.incident.split` (POST `incident`, `events`, `title`).
+The postmortem is created by `dodock_wolf.api.incident.create_postmortem` and edited in Desk.
 
 ## Dashboards
 
-### `frappe_wolf.api.dashboard.get_signals`
+### `dodock_wolf.api.dashboard.get_signals`
 
 The newest value of every signal series in scope (`site`, `bench` with `host`, `host`), one
 series per metric, host, bench, site and label. Each series has a `state`:
@@ -252,7 +252,7 @@ telemetry triples, `get_signals` its series (newest value and last time seen).
 - One cached value per site and per scope (`get_signals`' site, bench and host; the inventory's
   `days`): a dashboard of another scope has its own.
 
-### `frappe_wolf.api.dashboard.get_http`
+### `dodock_wolf.api.dashboard.get_http`
 
 Requests, 5xx and 502 per bucket over the window (the common window and scope arguments),
 summed across labels and read at the resolution of the window (`resolution`). Only whole
@@ -263,7 +263,7 @@ data" from "zero". `deployments` lists the deployments in the requested window. 
 dashboard that includes deployments recorded for its whole bench (no site), as incidents link
 them.
 
-### `frappe_wolf.api.dashboard.get_monitoring`
+### `dodock_wolf.api.dashboard.get_monitoring`
 
 Whether Wolf itself works: the site's health (rules, scheduler, ingest queue), rollup
 watermarks, every agent and satellite with its state, last contact, clock skew and version,
@@ -279,7 +279,7 @@ spans the window's edge, and each response says so in `basis`. Searches (`q`) ma
 substring of the title, at most 100 characters: `%` and `_` match themselves, and there is no
 regex.
 
-### `frappe_wolf.api.explore.list_events`
+### `dodock_wolf.api.explore.list_events`
 
 Event records active in the window (first seen before its end, last seen after its start),
 newest first, paged by `(first seen, name)`. Arguments: the common window and scope arguments,
@@ -290,9 +290,9 @@ Payloads are not in the list; `get_event(name)` returns one record with its payl
 `ip:203.0.113.5`, `host:erp-01`, `site:erp.example.com` or `user:jane@example.com`. Values are
 normalised and resolved through the aliases (#72 step 3). For example, `host:erp-01` also finds
 the Wazuh alerts of the agent named `wazuh-erp01` when an alias says they are the same host.
-`frappe_wolf.api.entities.find(entity, ...)` is the same list. The response echoes `entity`.
+`dodock_wolf.api.entities.find(entity, ...)` is the same list. The response echoes `entity`.
 
-### `frappe_wolf.api.explore.list_error_groups`
+### `dodock_wolf.api.explore.list_error_groups`
 
 Groups of error records, by fingerprint, that have a record active in the window, latest
 first. The window and `q` choose the groups. Their figures cover every record of the group the
@@ -306,7 +306,7 @@ presented as new:
 - the title of the most recently seen record, which stands for the group. A fingerprint
 includes the site unless the agent sends its own, so most groups concern one site.
 
-### `frappe_wolf.api.explore.get_error_group`
+### `dodock_wolf.api.explore.get_error_group`
 
 Every visible record of one group, whatever its age:
 - where it happened, by site, bench and host;
@@ -321,7 +321,7 @@ those.
 
 ## Metrics explorer
 
-### `frappe_wolf.api.metrics.get_metric_catalog`
+### `dodock_wolf.api.metrics.get_metric_catalog`
 
 Every catalogued metric (`wolf/catalog.py`) and the custom metrics seen in the last 7 days.
 Each one has:
@@ -338,7 +338,7 @@ catalog lists every metric the agent sends, which a unit test checks against the
 source. `get_labels(metric, scope)` lists a metric's label values (at most 100), including those
 first seen in the last hour.
 
-### `frappe_wolf.api.metrics.query_metric`
+### `dodock_wolf.api.metrics.query_metric`
 
 Arguments:
 - `metric`, `aggregation` (default per kind), `group_by` (default `none`) and `label`;
@@ -367,7 +367,7 @@ buckets are gaps.
 
 ## Live updates
 
-The Wolf UI stays current over Frappe's own socket.io server (`frappe_wolf/wolf/live.py`,
+The Wolf UI stays current over Frappe's own socket.io server (`dodock_wolf/wolf/live.py`,
 `frontend/src/services/live.js`). The server never pushes telemetry: it sends an
 **invalidation**, the event `wolf_invalidate`, and the page fetches again through the APIs
 above, which check permissions as usual.
@@ -409,12 +409,12 @@ through one queue: never two at once. Polling skips hidden tabs.
 
 ## Security
 
-### `frappe_wolf.api.security.list_sites`
+### `dodock_wolf.api.security.list_sites`
 
 Sites with a recent `site_config_risks` or `backup_age_hours` sample, plus the Wolf site itself
 (not on a satellite), filtered by the caller's access.
 
-### `frappe_wolf.api.security.get_posture`
+### `dodock_wolf.api.security.get_posture`
 
 Argument: `site` (default: the Wolf site). Returns `site`, `local` (the Wolf site: System Settings
 are readable), `hosts`, `recent_hours`, `score`, `coverage`, `passed`, `failed`, `unknown` and
@@ -429,7 +429,7 @@ The hourly `record_security_scores` job stores the score as the `security_score`
 reference, deadlines}`; each deadline is `{id, regime, label, due_at, done_at, status,
 estimated}` with `status` `open`, `due_soon` (within 6 h), `overdue`, `done` or `done_late`.
 
-### `frappe_wolf.api.compliance.get_report`
+### `dodock_wolf.api.compliance.get_report`
 
 Argument: `incident`. Returns `{incident, markdown}`: a draft with the facts, the deadlines,
 the timeline (linked events and comments, 100 each at most) and the postmortem's impact, root
@@ -437,13 +437,13 @@ cause, lessons and action items. Read permission on the incident is enough. Noth
 
 ## Response actions
 
-### `frappe_wolf.api.response.get_response`
+### `dodock_wolf.api.response.get_response`
 
 Argument: `incident`. Returns `proposals` (`{action, target, agent, host, bench, site, reason,
 label}`, from the incident's security events, without the ones already approved or applied),
 `actions` (the incident's Wolf Response Action rows), `can_approve`, `default_hours`, `max_hours`.
 
-### `frappe_wolf.api.response.approve` (POST)
+### `dodock_wolf.api.response.approve` (POST)
 
 Arguments: `incident`, `action` (`block_ip`, `disable_user`, `logout_sessions`,
 `revoke_api_keys`), `target`, `agent` (block_ip), `duration_hours` (block_ip, 1 to 168), `reason`.

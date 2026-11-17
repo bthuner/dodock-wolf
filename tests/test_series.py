@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from frappe_wolf.wolf.series import bucket_series, bucket_start
+from dodock_wolf.wolf.series import bucket_series, bucket_start
 
 
 def row(name, ts, value, label=None):

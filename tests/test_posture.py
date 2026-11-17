@@ -1,6 +1,6 @@
 import unittest
 
-from frappe_wolf.wolf import posture
+from dodock_wolf.wolf import posture
 
 SSTI = {"id": "GHSA-aaaa", "cve": None, "severity": "critical", "summary": "SSTI", "url": "https://github.com/x",
         "published": "2026-10-15", "ranges": [{"range": "<16.21.0", "patched": "16.21.0"}, {"range": "<15.111.0", "patched": "15.111.0"}]}

@@ -2,7 +2,7 @@ import json
 import unittest
 from datetime import datetime, timedelta
 
-from frappe_wolf.wolf import forwarding, schema
+from dodock_wolf.wolf import forwarding, schema
 
 NOW = datetime(2026, 10, 29, 3, 0, 0)
 SCOPE = {"host": "bench-01", "bench": "frappe-bench", "site": "b.example.com"}

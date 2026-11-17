@@ -1,5 +1,5 @@
 """Agent pushes over HTTP, as agents send them: timed POSTs of
-frappe_wolf.api.ingest.push with X-Wolf-Agent-Id / X-Wolf-Agent-Secret, from several agents at once.
+dodock_wolf.api.ingest.push with X-Wolf-Agent-Id / X-Wolf-Agent-Secret, from several agents at once.
 
 Agents are created in-process (register() over HTTP is limited to 20 an hour per address); only
 the timed pushes go over HTTP. Run on the bench, from sites/, after ci/load_test.py filled the
@@ -70,7 +70,7 @@ def main():
 	# hour per address, and this measures pushes, not registration
 	from frappe.utils import now_datetime
 
-	from frappe_wolf.wolf import agent_secrets
+	from dodock_wolf.wolf import agent_secrets
 
 	agents = []
 	for i in range(a.agents):
@@ -114,7 +114,7 @@ def run(a, agents):
 		if i % 10 == 0:
 			body["events"].append({"type": "error", "category": "http_5xx", "severity": "warning", "host": host,
 			                       "title": f"load 500 on {host}", "timestamp": stamp})  # fmt: skip
-		t, status, _ = post(a.url, a.site, "frappe_wolf.api.ingest.push", body,
+		t, status, _ = post(a.url, a.site, "dodock_wolf.api.ingest.push", body,
 		                    {"X-Wolf-Agent-Id": agent_id, "X-Wolf-Agent-Secret": secret})  # fmt: skip
 		with lock:
 			statuses[str(status)] = statuses.get(str(status), 0) + 1

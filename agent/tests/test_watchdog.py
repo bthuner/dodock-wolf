@@ -67,7 +67,7 @@ class TestAssess(unittest.TestCase):
 		self.assertIn("job queue unreachable: refused", assess(health(rules_age=400, queues={"error": "refused"}))[0])
 
 	def test_ingest_backlog(self):
-		# same sentences as frappe_wolf/wolf/heartbeat.py:assess
+		# same sentences as dodock_wolf/wolf/heartbeat.py:assess
 		queues = {"ingest_queue": "short", "ingest_backlog_seconds": 420, "workers": 0}
 		self.assertEqual(
 			assess(health(queues=queues)),

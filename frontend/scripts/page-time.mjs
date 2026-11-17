@@ -30,7 +30,7 @@ const base = `${target.protocol}//${opts.site}:${target.port || 80}`
 const browser = await chromium.launch({ args: [`--host-resolver-rules=MAP ${opts.site} ${target.hostname}`],
   ...(process.env.WOLF_CHROMIUM ? { executablePath: process.env.WOLF_CHROMIUM } : {}) })
 
-const READ = /\/api\/method\/(frappe_wolf\.api\.[\w.]+)/
+const READ = /\/api\/method\/(dodock_wolf\.api\.[\w.]+)/
 
 async function login() {
   // from inside the page: Node's request client would not use the browser's host mapping
@@ -85,8 +85,8 @@ async function measure(page) {
   const timing = await page.evaluate(() => {
     const nav = performance.getEntriesByType('navigation')[0]
     const reads = performance.getEntriesByType('resource')
-      .filter((e) => e.name.includes('/api/method/frappe_wolf.api.'))
-      .map((e) => ({ name: e.name.match(/frappe_wolf\.api\.([\w.]+)/)[1], start: e.startTime, end: e.responseEnd }))
+      .filter((e) => e.name.includes('/api/method/dodock_wolf.api.'))
+      .map((e) => ({ name: e.name.match(/dodock_wolf\.api\.([\w.]+)/)[1], start: e.startTime, end: e.responseEnd }))
     return { domContentLoaded: nav?.domContentLoadedEventEnd, reads }
   })
   for (const [event, fn] of [['request', onRequest], ['response', onResponse], ['requestfinished', settle], ['requestfailed', onFailed]]) page.off(event, fn)

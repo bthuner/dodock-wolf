@@ -2,7 +2,7 @@ import { ref, shallowRef } from 'vue'
 
 import { call, failure } from '@/services/api'
 
-const METHOD = 'frappe_wolf.api.incident_view.get_timeline'
+const METHOD = 'dodock_wolf.api.incident_view.get_timeline'
 export const PAGE_SIZE = 100
 
 // Pages of one incident timeline. Only the latest request may write its result: a slow answer

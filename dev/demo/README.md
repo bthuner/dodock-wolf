@@ -1,6 +1,6 @@
 # Local demo: the 2AM scenario from CLAUDE.md
 
-One Dokos bench with `frappe_wolf` on the site `wolf.localhost`, plus:
+One Dokos bench with `dodock_wolf` on the site `wolf.localhost`, plus:
 
 - an nginx front that logs the site name;
 - the Wolf agent, tailing the bench and nginx logs and Redis;
@@ -110,7 +110,7 @@ timeline, charts, purge and auto-resolve. It works the same on MariaDB and on Po
 docker compose exec backend bash -c 'cd sites && ../env/bin/python /etc/wolf/db_smoke.py wolf.localhost'
 WOLF_DEMO_PG_IMAGE=postgres:16 docker compose --profile postgres up -d pgdb
 docker compose exec backend bench new-site pg.localhost --db-type postgres --db-host pgdb \
-  --db-root-username postgres --db-root-password admin --admin-password admin --install-app frappe_wolf
+  --db-root-username postgres --db-root-password admin --admin-password admin --install-app dodock_wolf
 docker compose exec backend bash -c 'cd sites && ../env/bin/python /etc/wolf/db_smoke.py pg.localhost'
 ```
 

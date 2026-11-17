@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from frappe_wolf.wolf import compliance
+from dodock_wolf.wolf import compliance
 
 AWARE = datetime(2026, 11, 1, 9, 0)
 

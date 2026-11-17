@@ -60,8 +60,8 @@ describe('MergeDialog', () => {
 
   it('says what moves and what both incidents become before merging, then merges once', async () => {
     const calls = server({
-      'frappe_wolf.api.incident_view.merge_preview': (args) => preview(args.target),
-      'frappe_wolf.api.incident.merge': () => ({ target: 'WINC-2', events: 3, comments: 1 }),
+      'dodock_wolf.api.incident_view.merge_preview': (args) => preview(args.target),
+      'dodock_wolf.api.incident.merge': () => ({ target: 'WINC-2', events: 3, comments: 1 }),
     })
     const dialog = await mounted(MergeDialog, { incident: 'WINC-1' })
     expect(button('Merge').disabled).toBe(true) // nothing picked, nothing to confirm
@@ -81,8 +81,8 @@ describe('MergeDialog', () => {
 
   it("keeps the choice and shows the server's reason when it refuses", async () => {
     server({
-      'frappe_wolf.api.incident_view.merge_preview': (args) => preview(args.target),
-      'frappe_wolf.api.incident.merge': () => refuse('WINC-2 was merged into WINC-9: merge into that incident instead.'),
+      'dodock_wolf.api.incident_view.merge_preview': (args) => preview(args.target),
+      'dodock_wolf.api.incident.merge': () => refuse('WINC-2 was merged into WINC-9: merge into that incident instead.'),
     })
     const dialog = await mounted(MergeDialog, { incident: 'WINC-1' })
     const select = document.body.querySelector('[data-testid="merge-target"]')
@@ -98,7 +98,7 @@ describe('MergeDialog', () => {
 
   it('cannot confirm a merge the server says is impossible', async () => {
     server({
-      'frappe_wolf.api.incident_view.merge_preview': (args) => ({
+      'dodock_wolf.api.incident_view.merge_preview': (args) => ({
         ...preview(args.target),
         preview: args.target && { ...preview(args.target).preview, error: 'You may not change WINC-3.' },
       }),
@@ -128,8 +128,8 @@ describe('SplitDialog', () => {
 
   it('previews the new incident from the ticked events and splits them with the title', async () => {
     const calls = server({
-      'frappe_wolf.api.incident_view.split_preview': (args) => answer(args.events && JSON.parse(args.events)),
-      'frappe_wolf.api.incident.split': () => 'WINC-7',
+      'dodock_wolf.api.incident_view.split_preview': (args) => answer(args.events && JSON.parse(args.events)),
+      'dodock_wolf.api.incident.split': () => 'WINC-7',
     })
     const dialog = await mounted(SplitDialog, { incident: 'WINC-1' })
     expect(body()).toContain('14 reported') // a deduplicated record, shown as such
@@ -151,7 +151,7 @@ describe('SplitDialog', () => {
   it('never offers to confirm a preview made for another selection', async () => {
     let fail = false
     server({
-      'frappe_wolf.api.incident_view.split_preview': (args) => (fail ? new Response('{}', { status: 502 }) : answer(args.events && JSON.parse(args.events))),
+      'dodock_wolf.api.incident_view.split_preview': (args) => (fail ? new Response('{}', { status: 502 }) : answer(args.events && JSON.parse(args.events))),
     })
     await mounted(SplitDialog, { incident: 'WINC-1' })
     const boxes = document.body.querySelectorAll('input[type="checkbox"]')
@@ -167,8 +167,8 @@ describe('SplitDialog', () => {
 
   it('keeps the selection and title when the server refuses', async () => {
     server({
-      'frappe_wolf.api.incident_view.split_preview': (args) => answer(args.events && JSON.parse(args.events)),
-      'frappe_wolf.api.incident.split': () => refuse('Not linked to this incident: E2.'),
+      'dodock_wolf.api.incident_view.split_preview': (args) => answer(args.events && JSON.parse(args.events)),
+      'dodock_wolf.api.incident.split': () => refuse('Not linked to this incident: E2.'),
     })
     const dialog = await mounted(SplitDialog, { incident: 'WINC-1' })
     document.body.querySelectorAll('input[type="checkbox"]')[1].click()

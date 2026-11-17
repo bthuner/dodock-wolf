@@ -121,7 +121,7 @@ class TestShipper(unittest.TestCase):
 		self.server.push_interval = 15
 		self.assertTrue(self.shipper.send([{"metric_name": "cpu_usage", "value": 1}], [{"type": "error"}]))
 		req = self.server.requests[0]
-		self.assertEqual(req["path"], "/api/method/frappe_wolf.api.ingest.push")
+		self.assertEqual(req["path"], "/api/method/dodock_wolf.api.ingest.push")
 		self.assertEqual(req["headers"]["X-Wolf-Agent-Id"], "WAG-0001")
 		self.assertEqual(req["headers"]["X-Wolf-Agent-Secret"], "secret")
 		self.assertEqual(req["headers"]["Content-Type"], "application/json")
@@ -225,13 +225,13 @@ class TestShipper(unittest.TestCase):
 		self.server.status = 200
 		self.assertEqual(self.shipper.status()["health"]["ok"], True)
 		req = self.server.requests[-1]
-		self.assertEqual(req["path"], "/api/method/frappe_wolf.api.ingest.status")
+		self.assertEqual(req["path"], "/api/method/dodock_wolf.api.ingest.status")
 		self.assertEqual(req["headers"]["X-Wolf-Agent-Secret"], "secret")
 
 	def test_mark_deployment(self):
 		self.shipper.mark_deployment("main", note="bench update")
 		req = self.server.requests[-1]
-		self.assertEqual(req["path"], "/api/method/frappe_wolf.api.ingest.deployment")
+		self.assertEqual(req["path"], "/api/method/dodock_wolf.api.ingest.deployment")
 		self.assertEqual(req["body"]["bench"], "main")
 		self.assertEqual(req["body"]["source"], "manual")
 		self.assertEqual(req["headers"]["X-Wolf-Agent-Id"], "WAG-0001")
@@ -247,7 +247,7 @@ class TestShipper(unittest.TestCase):
 		resp = register(self.server.url, "tok", "bench-01", [{"name": "main", "path": "/b", "sites": ["a"], "logs_dir": "/b/logs"}], "Debian 12")
 		self.assertEqual(resp["agent_id"], "WAG-0007")
 		req = self.server.requests[-1]
-		self.assertEqual(req["path"], "/api/method/frappe_wolf.api.agent.register")
+		self.assertEqual(req["path"], "/api/method/dodock_wolf.api.agent.register")
 		self.assertNotIn("X-Wolf-Agent-Id", req["headers"])
 		self.assertEqual(req["body"]["registration_token"], "tok")
 		# site domains let the Wolf site map a domain to its site (entities, #72)

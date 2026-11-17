@@ -1,4 +1,4 @@
-Frappe Wolf Observability — MVP
+Dodock Wolf Observability — MVP
 One-line summary
 
 First-class observability for Frappe benches, ERPNext sites, Linux hosts, and internal services — owned by Dokos, not Datadog.
@@ -26,7 +26,7 @@ MVP goals
 
         Suspicious access patterns (multiple failed logins, admin login from unusual IP, unexpected new users with high roles).
 
-    Provide a single UI inside Frappe ("Frappe Wolf") that shows:
+    Provide a single UI inside Frappe ("Dodock Wolf") that shows:
 
         Timeline of incidents for a given site/bench.
 
@@ -59,7 +59,7 @@ The MVP focuses on:
 Architecture sketch
 Components
 
-    Frappe Wolf App (server-side):
+    Dodock Wolf App (server-side):
 
         Frappe app installed on Dokos/Frappe sites.
 
@@ -260,7 +260,7 @@ Wolf MVP will not copy all features but will:
 
 MVP backlog (high-level)
 
-    Frappe Wolf App
+    Dodock Wolf App
 
         Define DocTypes: Wolf Event, Wolf Metric Sample, Wolf Alert Rule, Wolf Incident.
 

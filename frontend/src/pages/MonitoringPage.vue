@@ -16,7 +16,7 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    monitoring.value = await call('frappe_wolf.api.dashboard.get_monitoring')
+    monitoring.value = await call('dodock_wolf.api.dashboard.get_monitoring')
   } catch (e) {
     error.value = failure(e, "Wolf's own monitoring")
   } finally {

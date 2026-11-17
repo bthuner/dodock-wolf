@@ -1,0 +1,171 @@
+"""Storage of Wolf Events and Metric Samples."""
+
+import os
+import socket
+
+import frappe
+from frappe.utils import add_to_date, get_system_timezone, now_datetime
+
+from dodock_wolf.wolf import schema, storage
+
+
+def system_tz():
+	return get_system_timezone() or "UTC"
+
+
+def local_scope():
+	"""Host/bench/site of the Frappe process itself, matching what the agent reports."""
+	return {
+		"host": socket.gethostname(),
+		"bench": os.path.basename(os.path.abspath(frappe.utils.get_bench_path())),
+		"site": frappe.local.site,
+	}
+
+
+def insert_metrics(rows, agent=None):
+	"""Bulk insert normalized metric dicts (see schema.normalize_metric)."""
+	if not rows:
+		return 0
+	now = now_datetime()
+	fields = [
+		"name", "creation", "modified", "owner", "modified_by", "docstatus",
+		"metric_name", "value", "timestamp", "host", "bench", "site", "label_key", "labels",
+	]  # fmt: skip
+	values = [
+		(
+			storage.sample_name(r["metric_name"], r["timestamp"], frappe.generate_hash(length=10)),
+			now, now, "Administrator", "Administrator", 0,
+			r["metric_name"], r["value"], r["timestamp"], r["host"], r["bench"], r["site"],
+			r["label_key"], r["labels"],
+		)  # fmt: skip
+		for r in rows
+	]
+	values.sort()  # in name order (names are unique and first), the order InnoDB stores them in
+	frappe.db.bulk_insert("Wolf Metric Sample", fields, values)
+	# samples for minutes that are rolled up already (spool replay) get them rolled again
+	from dodock_wolf.wolf import rollups
+
+	rollups.note_samples([r["timestamp"] for r in rows], now)
+	return len(values)
+
+
+def insert_event(data, agent=None, dedupe_minutes=None):
+	"""Insert a normalized event dict; returns the Wolf Event name.
+
+	With `dedupe_minutes`, an event with the same fingerprint and site seen within
+	that window is bumped (count/last_seen) instead of creating a new row.
+	"""
+	if dedupe_minutes and data.get("fingerprint"):
+		existing = frappe.db.get_value(
+			"Wolf Event",
+			{
+				"fingerprint": data["fingerprint"],
+				"site": data.get("site"),
+				"last_seen": (">=", add_to_date(data["timestamp"], minutes=-dedupe_minutes)),
+			},
+			["name", "count"],
+			as_dict=True,
+			order_by="last_seen desc",
+		)
+		if existing:
+			frappe.db.set_value(
+				"Wolf Event",
+				existing.name,
+				{"count": (existing.count or 1) + data.get("count", 1), "last_seen": data["timestamp"]},
+				update_modified=False,
+			)
+			from dodock_wolf.wolf import live
+
+			live.list_changed("events")  # a repeat bumps count / last seen: the lists show both
+			return existing.name
+
+	if data.get("event_type") == "security":
+		from dodock_wolf.api import threat
+
+		data = threat.enrich(data)  # IP reputation lists (off unless enabled)
+		from dodock_wolf.api import crowdsec
+
+		data = crowdsec.enrich(data)  # CrowdSec decisions (off unless enabled)
+	found = None
+	if data.get("event_type") == "security":
+		data, found = _with_entities(data)
+	data.setdefault("last_seen", data.get("timestamp"))  # window queries filter on it
+	doc = frappe.get_doc({"doctype": "Wolf Event", "agent": agent, **data})
+	doc.flags.ignore_permissions = True
+	doc.flags.ignore_links = True
+	doc.insert()
+	if found:
+		from dodock_wolf.api import entities
+
+		entities.index(doc.name, found, data.get("timestamp"))
+	return doc.name
+
+
+def _with_entities(data):
+	"""(data, entities): the security event's entities in its payload (wolf/entities.py, #72)."""
+	import json
+
+	from dodock_wolf.api import entities
+
+	try:
+		payload = json.loads(data["payload"]) if data.get("payload") else {}
+		entities.learn_from_event(data, payload)
+		found, payload = entities.prepare(data, payload)
+		if found:
+			data = {**data, "payload": schema.dump_payload(payload)}
+		return data, found
+	except Exception:
+		frappe.logger("dodock_wolf").exception("could not read the entities of an event")
+		return data, None
+
+
+def emit(event_type, title, severity="warning", category=None, source="frappe", payload=None, dedupe_minutes=None, **scope):
+	"""Record an event raised by the Wolf app itself (local signals, rule engine).
+
+	On a satellite site the event goes to the outbox for the central site instead, and the
+	return value is a Wolf Outbox name.
+	"""
+	from dodock_wolf import satellite
+	timestamp = scope.pop("timestamp", None)
+	raw = {
+		**local_scope(),
+		**scope,
+		"type": event_type,
+		"title": title,
+		"severity": severity,
+		"category": category,
+		"source": source,
+		"payload": payload,
+	}
+	now = now_datetime()
+	data = schema.normalize_event(raw, system_tz(), now)
+	data["timestamp"] = data["last_seen"] = timestamp or now
+	if satellite.is_satellite():
+		return satellite.enqueue(data, dedupe_minutes=dedupe_minutes)
+	return insert_event(data, dedupe_minutes=dedupe_minutes)
+
+
+def scope_clause(host=None, bench=None, site=None, prefix=""):
+	"""SQL clause matching events that belong to the same bench/site/host.
+
+	A site matches directly; a bench matches on the same host (bench names are only
+	unique per host); a host matches host-level events (no bench/site).
+	"""
+	clauses, params = [], {}
+	if site:
+		clauses.append(f"{prefix}`site` = %(scope_site)s")
+		params["scope_site"] = site
+	if bench:
+		if host:
+			clauses.append(f"({prefix}`bench` = %(scope_bench)s and {prefix}`host` = %(scope_host)s)")
+		else:
+			clauses.append(f"{prefix}`bench` = %(scope_bench)s")
+		params["scope_bench"] = bench
+	if host:
+		clauses.append(
+			f"({prefix}`host` = %(scope_host)s and coalesce({prefix}`bench`, '') = '' and coalesce({prefix}`site`, '') = '')"
+		)
+		params["scope_host"] = host
+	if not clauses:
+		return "1=1", params
+	return "(" + " or ".join(clauses) + ")", params

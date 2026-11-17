@@ -1,7 +1,7 @@
 import unittest
 from datetime import time, timedelta
 
-from frappe_wolf.wolf import conditions as c
+from dodock_wolf.wolf import conditions as c
 
 
 class TestCompare(unittest.TestCase):

@@ -1,6 +1,6 @@
 # Wolf Agent
 
-Host-side daemon for Frappe Wolf. It collects host metrics, tails Frappe bench,
+Host-side daemon for Dodock Wolf. It collects host metrics, tails Frappe bench,
 nginx and sshd logs, reads RQ queue lengths from Redis, and pushes everything to a
 Wolf site over HTTPS (see [`../docs/protocol.md`](../docs/protocol.md)).
 Pure Python ≥ 3.9 standard library, no dependencies.
@@ -118,7 +118,7 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
     subject (source IP, else host) per push interval, with a count. Level 12 and above is
     critical, 7 to 11 warning.
   - The `sca` group (configuration assessment) is excluded by default (`exclude_groups`). The
-    `frappe_wolf` group, Wazuh's alerts on Wolf's own SIEM export, is always excluded, so
+    `dodock_wolf` group, Wazuh's alerts on Wolf's own SIEM export, is always excluded, so
     nothing loops back.
   - The event's host is the Wazuh agent's name. For logs the manager received by syslog
     (agent `000`), it is the host name in the log line, where it happened.
@@ -128,15 +128,15 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
     alerts to Wolf itself:
     1. Register a source of kind `integration`. It is never reported silent, since it only
        speaks when Wazuh has an alert:
-       `curl -X POST -H 'Content-Type: application/json' -d '{"registration_token": "...", "hostname": "wazuh-manager", "kind": "integration"}' https://wolf.example.com/api/method/frappe_wolf.api.agent.register`
+       `curl -X POST -H 'Content-Type: application/json' -d '{"registration_token": "...", "hostname": "wazuh-manager", "kind": "integration"}' https://wolf.example.com/api/method/dodock_wolf.api.agent.register`
        gives `agent_id` and `agent_secret`.
-    2. Copy `agent/wazuh/custom-frappe-wolf` and `custom-frappe-wolf.py` to
+    2. Copy `agent/wazuh/custom-dodock-wolf` and `custom-dodock-wolf.py` to
        `/var/ossec/integrations/` (`root:wazuh`, mode 750).
     3. Add this to `ossec.conf`, then restart the manager:
 
        ```xml
        <integration>
-         <name>custom-frappe-wolf</name>
+         <name>custom-dodock-wolf</name>
          <hook_url>https://wolf.example.com</hook_url>
          <api_key>AGENT_ID:AGENT_SECRET</api_key>
          <level>7</level>
@@ -145,7 +145,7 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
        ```
 
     Wazuh runs the script for each alert at or above `<level>`. Wolf maps the alert like the
-    agent does (`sca` and `frappe_wolf` left out), and the same rule and subject within 10 min
+    agent does (`sca` and `dodock_wolf` left out), and the same rule and subject within 10 min
     bump one event's count. Errors go to `/var/ossec/logs/integrations.log`.
 - **App versions** (every `versions.interval`, 1 h): `app_version` per bench and app, from the
   `__version__` in `apps/<app>/<app>/__init__.py`, which the Wolf site compares with the GitHub

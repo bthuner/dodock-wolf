@@ -1,8 +1,8 @@
 import unittest
 from datetime import datetime, timedelta
 
-from frappe_wolf.wolf import catalog
-from frappe_wolf.wolf.presets import PRESETS
+from dodock_wolf.wolf import catalog
+from dodock_wolf.wolf.presets import PRESETS
 
 NOW = datetime(2026, 10, 30, 12, 0)
 

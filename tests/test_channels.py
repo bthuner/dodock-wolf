@@ -6,10 +6,10 @@ from email.header import decode_header
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from frappe_wolf.wolf import channels as c
-from frappe_wolf.wolf.channels import gotify, matrix, mattermost, ntfy, pagerduty, slack, sms
+from dodock_wolf.wolf import channels as c
+from dodock_wolf.wolf.channels import gotify, matrix, mattermost, ntfy, pagerduty, slack, sms
 
-ACK = "https://wolf.example.com/api/method/frappe_wolf.api.actions.incident_action?incident=WINC-00012&action=ack&sig=aa"
+ACK = "https://wolf.example.com/api/method/dodock_wolf.api.actions.incident_action?incident=WINC-00012&action=ack&sig=aa"
 RESOLVE = ACK.replace("action=ack", "action=resolve")
 
 
@@ -490,7 +490,7 @@ class TestPagerDuty(unittest.TestCase):
 		(req,) = pagerduty.build_payload(msg(title="x" * 2000, host=None, site=None, bench=None), self.CFG)
 		p = req["json"]["payload"]
 		self.assertLessEqual(len(p["summary"]), 1024)
-		self.assertEqual(p["source"], "frappe-wolf")
+		self.assertEqual(p["source"], "dodock-wolf")
 		self.assertNotIn("component", p)
 
 

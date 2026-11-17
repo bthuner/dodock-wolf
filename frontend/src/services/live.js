@@ -1,4 +1,4 @@
-// Live updates (frappe_wolf/wolf/live.py). The server only says *that* something changed, in
+// Live updates (dodock_wolf/wolf/live.py). The server only says *that* something changed, in
 // rooms Frappe guards with the reader's permissions (doc_subscribe checks read permission on the
 // incident, doctype_subscribe on the DocType); views then fetch again through the APIs.
 //

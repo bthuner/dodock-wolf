@@ -2,7 +2,7 @@ import json
 import unittest
 from datetime import datetime, timezone
 
-from frappe_wolf.wolf import siem
+from dodock_wolf.wolf import siem
 
 EVENT = {
 	"name": "abc123", "event_type": "security", "category": "web_attack_probe", "severity": "critical",
@@ -18,7 +18,7 @@ class TestCef(unittest.TestCase):
 	def test_header_and_extensions(self):
 		line = siem.cef(EVENT, "0.1.0")
 		self.assertTrue(line.startswith(
-			"CEF:0|Dokos|Frappe Wolf|0.1.0|web_attack_probe|60 web attack probe(s) from 45.33.32.156 (env_file\\|vcs)|9|"))  # fmt: skip
+			"CEF:0|Dokos|Dodock Wolf|0.1.0|web_attack_probe|60 web attack probe(s) from 45.33.32.156 (env_file\\|vcs)|9|"))  # fmt: skip
 		self.assertIn("src=45.33.32.156", line)
 		self.assertIn("cs4Label=mitre_attack cs4=T1595.003", line)
 		self.assertIn("cs5=firehol_level1", line)
@@ -49,7 +49,7 @@ class TestOcsf(unittest.TestCase):
 class TestSyslog(unittest.TestCase):
 	def test_rfc5424(self):
 		msg = siem.syslog("hello", "erp.example.com", "critical", "web_attack_probe", datetime(2026, 11, 1, 10, 0, tzinfo=timezone.utc))
-		self.assertEqual(msg, "<130>1 2026-11-01T10:00:00.000Z erp.example.com frappe-wolf - web_attack_probe - hello")
+		self.assertEqual(msg, "<130>1 2026-11-01T10:00:00.000Z erp.example.com dodock-wolf - web_attack_probe - hello")
 		self.assertTrue(siem.syslog("x", "h", "info").startswith("<134>1 "))
 		self.assertIn(" myhost ", siem.syslog("x", "my host", "warning"))  # header fields carry no spaces
 
@@ -75,7 +75,7 @@ class TestSyslog(unittest.TestCase):
 		bare = siem.render("event", EVENT, "ocsf", "erp.example.com", header="none")
 		self.assertEqual(json.loads(bare)["finding_info"]["uid"], "abc123")
 		cef = siem.render("event", EVENT, "cef", "erp.example.com", header="none")
-		self.assertTrue(cef.startswith("CEF:0|Dokos|Frappe Wolf|"))
+		self.assertTrue(cef.startswith("CEF:0|Dokos|Dodock Wolf|"))
 		self.assertIn("dvchost=erp.example.com", cef)
 		entry = {"seq": 7, "at": datetime(2026, 11, 1, 10, 0, tzinfo=timezone.utc), "kind": "incident", "mac": "m" * 64}
 		self.assertEqual(json.loads(siem.render("journal", entry, "ocsf", "h", header="none"))["wolf_journal"]["seq"], 7)

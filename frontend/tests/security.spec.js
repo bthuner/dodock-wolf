@@ -42,8 +42,8 @@ afterEach(() => vi.unstubAllGlobals())
 describe('SecurityPage', () => {
   it('shows the score, failures first, evidence in words and the fix', async () => {
     const fetchFn = server({
-      'frappe_wolf.api.security.list_sites': () => ['a.example.com'],
-      'frappe_wolf.api.security.get_posture': () => POSTURE,
+      'dodock_wolf.api.security.list_sites': () => ['a.example.com'],
+      'dodock_wolf.api.security.get_posture': () => POSTURE,
     })
     const page = await open('/security?site=a.example.com')
     expect(fetchFn.mock.calls.some(([u]) => u.includes('get_posture?site=a.example.com'))).toBe(true)
@@ -70,10 +70,10 @@ describe('SecurityPage', () => {
 
   it('shows the journal to managers and its verification', async () => {
     server({
-      'frappe_wolf.api.security.list_sites': () => [],
-      'frappe_wolf.api.security.get_posture': () => POSTURE,
-      'frappe_wolf.api.journal.get_status': () => ({ entries: 42, pending: 3, anchor: `42:${'a'.repeat(64)}`, key: true }),
-      'frappe_wolf.api.journal.verify': () => ({ ok: false, checked: 9, problem: { seq: 10, why: 'content does not match its digest' } }),
+      'dodock_wolf.api.security.list_sites': () => [],
+      'dodock_wolf.api.security.get_posture': () => POSTURE,
+      'dodock_wolf.api.journal.get_status': () => ({ entries: 42, pending: 3, anchor: `42:${'a'.repeat(64)}`, key: true }),
+      'dodock_wolf.api.journal.verify': () => ({ ok: false, checked: 9, problem: { seq: 10, why: 'content does not match its digest' } }),
     })
     const router = makeRouter(createMemoryHistory('/wolf'), BOOT)
     await router.push('/security')
@@ -91,11 +91,11 @@ describe('SecurityPage', () => {
 
   it('says what the retention purged, and that verification checks it', async () => {
     server({
-      'frappe_wolf.api.security.list_sites': () => [],
-      'frappe_wolf.api.security.get_posture': () => POSTURE,
-      'frappe_wolf.api.journal.get_status': () => ({ entries: 30, last_seq: 42, pending: 0, anchor: `42:${'a'.repeat(64)}`, key: true,
+      'dodock_wolf.api.security.list_sites': () => [],
+      'dodock_wolf.api.security.get_posture': () => POSTURE,
+      'dodock_wolf.api.journal.get_status': () => ({ entries: 30, last_seq: 42, pending: 0, anchor: `42:${'a'.repeat(64)}`, key: true,
         retention_days: 365, purged_through: 12, purged_at: '2026-11-02 03:17:00' }),
-      'frappe_wolf.api.journal.verify': () => ({ ok: true, checked: 30, first_seq: 13, purged_through: 12, problem: null }),
+      'dodock_wolf.api.journal.verify': () => ({ ok: true, checked: 30, first_seq: 13, purged_through: 12, problem: null }),
     })
     const router = makeRouter(createMemoryHistory('/wolf'), BOOT)
     await router.push('/security')

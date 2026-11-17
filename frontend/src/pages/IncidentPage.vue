@@ -96,7 +96,7 @@ const openFor = computed(() => {
 async function loadIncident() {
   loadError.value = null
   try {
-    incident.value = await call('frappe_wolf.api.incident_view.get_incident', { incident: name.value })
+    incident.value = await call('dodock_wolf.api.incident_view.get_incident', { incident: name.value })
   } catch (e) {
     incident.value = null
     loadError.value = failure(e, 'this incident')
@@ -155,7 +155,7 @@ const reportError = ref(null)
 async function loadReport() {
   reportError.value = null
   try {
-    report.value = (await call('frappe_wolf.api.compliance.get_report', { incident: name.value })).markdown
+    report.value = (await call('dodock_wolf.api.compliance.get_report', { incident: name.value })).markdown
   } catch (e) {
     reportError.value = e.message
   }
@@ -165,7 +165,7 @@ async function act(action) {
   acting.value = action
   actionError.value = null
   try {
-    incident.value = await call('frappe_wolf.api.incident_view.act', { incident: name.value, action }, { post: true })
+    incident.value = await call('dodock_wolf.api.incident_view.act', { incident: name.value, action }, { post: true })
     await timeline.load(families.value, timeline.rows.value.length)
   } catch (e) {
     actionError.value = e.message // the server's reason; nothing changed on screen
@@ -191,7 +191,7 @@ async function writePostmortem() {
   postmortemBusy.value = true
   actionError.value = null
   try {
-    const name = await call('frappe_wolf.api.incident.create_postmortem', { incident: incident.value.name }, { post: true })
+    const name = await call('dodock_wolf.api.incident.create_postmortem', { incident: incident.value.name }, { post: true })
     incident.value = { ...incident.value, postmortem: name }
     window.location.assign(`/app/wolf-postmortem/${encodeURIComponent(name)}`)
   } catch (e) {
@@ -205,7 +205,7 @@ async function postComment() {
   posting.value = true
   actionError.value = null
   try {
-    await call('frappe_wolf.api.incident.add_comment', { incident: name.value, content: comment.value }, { post: true })
+    await call('dodock_wolf.api.incident.add_comment', { incident: name.value, content: comment.value }, { post: true })
     comment.value = '' // cleared only once it is saved
     // the Comment button is disabled now that the box is empty: the box takes the focus, unless
     // the reader has moved on meanwhile

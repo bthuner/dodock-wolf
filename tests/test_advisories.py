@@ -2,7 +2,7 @@ import io
 import json
 import unittest
 
-from frappe_wolf.wolf import advisories as adv
+from dodock_wolf.wolf import advisories as adv
 
 
 def entry(range_, patched):
@@ -97,7 +97,7 @@ class TestFetch(unittest.TestCase):
 
 		out = adv.fetch("frappe/frappe", opener=opener)
 		self.assertEqual(len(seen), 2)
-		self.assertEqual(seen[0][1], "frappe-wolf")
+		self.assertEqual(seen[0][1], "dodock-wolf")
 		self.assertEqual(out, [{"id": "GHSA-1", "cve": "CVE-1", "severity": "high", "summary": "s", "url": "u",
 		                        "published": "2026-10-01", "ranges": [{"range": "<16.1.0", "patched": "16.1.0"}]}])  # fmt: skip
 

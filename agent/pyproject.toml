@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wolf-agent"
 version = "0.1.0"
-description = "Host-side agent for Frappe Wolf observability"
+description = "Host-side agent for Dodock Wolf observability"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }

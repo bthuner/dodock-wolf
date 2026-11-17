@@ -217,7 +217,7 @@ def cmd_run(args):
 
 
 def build_parser():
-	p = argparse.ArgumentParser(prog="wolf-agent", description="Frappe Wolf host agent")
+	p = argparse.ArgumentParser(prog="wolf-agent", description="Dodock Wolf host agent")
 	p.add_argument("--config", help="config path (default $WOLF_AGENT_CONFIG or /etc/wolf-agent/config.json)")
 	p.add_argument("-v", "--verbose", action="store_true")
 	p.add_argument("--version", action="version", version=__version__)

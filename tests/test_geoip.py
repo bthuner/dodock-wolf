@@ -4,7 +4,7 @@ import struct
 import tempfile
 import unittest
 
-from frappe_wolf.wolf import geoip
+from dodock_wolf.wolf import geoip
 
 # --- a tiny MaxMind DB writer, just enough to build fixtures for the reader -----------------
 

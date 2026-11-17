@@ -69,7 +69,7 @@ def summary(samples):
 
 class Loader:
 	def __init__(self, args):
-		from frappe_wolf.wolf import rollups, storage
+		from dodock_wolf.wolf import rollups, storage
 
 		self.args, self.rollups, self.storage = args, rollups, storage
 		self.hosts = [f"{PREFIX}{i:03d}" for i in range(args.hosts)]
@@ -185,8 +185,8 @@ class Loader:
 
 
 def push_payload(loader, host, i):
-	from frappe_wolf.wolf import events
-	from frappe_wolf.wolf.heartbeat import to_utc_iso
+	from dodock_wolf.wolf import events
+	from dodock_wolf.wolf.heartbeat import to_utc_iso
 
 	stamp = to_utc_iso(now_datetime(), events.system_tz())
 	data = {
@@ -218,8 +218,8 @@ def main():
 	frappe.local.request_ip = "127.0.0.1"
 	from frappe.utils.background_jobs import get_queue
 
-	from frappe_wolf.api import ingest, ui
-	from frappe_wolf.wolf import rollups, rules
+	from dodock_wolf.api import ingest, ui
+	from dodock_wolf.wolf import rollups, rules
 
 	loader = Loader(args)
 	print(f"site {args.site} on {frappe.conf.db_type or 'mariadb'}: {args.hosts} hosts x {args.metrics} metrics x "
@@ -289,7 +289,7 @@ def main():
 		print(f"  overview page {range_key}: {results[f'overview page {range_key} (overview + chart)']}", flush=True)
 
 	# the Wolf UI's overview (/wolf): six reads the browser sends at once
-	from frappe_wolf.api import dashboard, incident_view, metrics, scope
+	from dodock_wolf.api import dashboard, incident_view, metrics, scope
 
 	# get_counts and get_http follow the range picker; the four others ignore it, so they are timed
 	# once rather than once per range
