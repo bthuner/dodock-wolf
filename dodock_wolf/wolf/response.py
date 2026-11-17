@@ -72,6 +72,19 @@ def check(action, target, approver=None, hours=None):
 	return None
 
 
+# alerts that name the host they are about, not the one that read them (a Wazuh manager, a sensor)
+EXTERNAL_CATEGORIES = {"hids_alert", "network_ids_alert"}
+
+
+def attacked_host(event, sender_kind, sender_hostname):
+	"""The host a block is for. Suricata and Wazuh alerts, and whatever an integration posts, name
+	the host they are about; any other agent's event is about its own host, whatever its `host`
+	says: a compromised agent cannot point a block at another machine."""
+	if sender_kind == "integration" or event.get("category") in EXTERNAL_CATEGORIES or not sender_hostname:
+		return event.get("host")
+	return sender_hostname
+
+
 def executors(block_with, wolf_agent, wazuh):
 	"""Who can apply a block on a host: its Wolf Agent (when it has one) and/or Wazuh (when set
 	up), as Block With asks."""
@@ -113,8 +126,11 @@ def suggest(events, block_with="wolf_agent", wazuh=False):
 	return out
 
 
-def label(action, target, hours=None, host=None, executors=None):
+def label(action, target, hours=None, host=None, executors=None, wazuh_hours=None):
 	text = LABELS[action].format(target=target, hours=hours or DEFAULT_HOURS, host=host or "its host")
 	if action == "block_ip" and executors and "wazuh" in executors:
-		text += " with Wazuh" if list(executors) == ["wazuh"] else " with the Wolf Agent and Wazuh"
+		if list(executors) == ["wazuh"]:
+			text += " with Wazuh"
+		else:  # each applies its own duration: the hours asked, and Wazuh's command timeout
+			text += f" with the Wolf Agent, and for {wazuh_hours or hours or DEFAULT_HOURS} h with Wazuh"
 	return text

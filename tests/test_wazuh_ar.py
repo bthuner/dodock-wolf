@@ -22,6 +22,18 @@ class TestWazuhActiveResponse(unittest.TestCase):
 		self.assertEqual(w.find_agent(agents, {"db-01.example.com"}, {"10.0.0.6"}), "002")
 		self.assertIsNone(w.find_agent(agents, {"wazuh-manager"}, {"127.0.0.1"}))  # the manager never blocks
 		self.assertIsNone(w.find_agent(agents, {"nope"}, {"10.9.9.9"}))
+		# two machines behind one NAT: an address alone does not tell which one
+		nat = agents + [{"id": "003", "name": "web-03", "ip": "10.0.0.6"}]
+		self.assertIsNone(w.find_agent(nat, {"db-01.example.com"}, {"10.0.0.6"}))
+		self.assertEqual(w.find_agent(nat, {"web-03"}, {"10.0.0.6"}), "003")  # the name still decides
+
+	def test_url(self):
+		self.assertTrue(w.safe_url("https://wazuh-manager:55000"))
+		self.assertTrue(w.safe_url("http://127.0.0.1:55000"))
+		self.assertTrue(w.safe_url("http://localhost:55000/"))
+		self.assertFalse(w.safe_url("http://wazuh-manager:55000"))  # the password would go in clear
+		self.assertFalse(w.safe_url("http://127.0.0.1.evil.example:55000"))
+		self.assertFalse(w.safe_url("ftp://x"))
 
 	def test_body_and_answer(self):
 		self.assertEqual(w.block_body("firewall-drop60", "203.0.113.5"),

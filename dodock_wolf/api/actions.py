@@ -102,8 +102,14 @@ def response_action(incident=None, action=None, target=None, agent=None, hours=N
 	                      (host or (frappe.db.get_value("Wolf Agent", agent, "hostname") if agent else inc.host)))  # fmt: skip
 	summary = (f"<p><strong>{escape_html(inc.name)}</strong> · {escape_html(inc.severity)} · {escape_html(inc.title)}</p>"
 	           f"<p>{escape_html(_('Proposed response'))}: <strong>{escape_html(what)}</strong></p>")  # fmt: skip
-	taken = frappe.db.get_value("Wolf Response Action", {"incident": incident, "action": action, "target": target,
-	                            "status": ("in", ("Approved", "Applied"))}, ["name", "status", "approved_by"], as_dict=True)  # fmt: skip
+	# what is left to approve: the proposal itself (a block is per host and executor, and a failed half
+	# can be approved again); nothing when it was already taken
+	proposed = any(p["action"] == action and p["target"] == target and (action != "block_ip" or (host and p["host"] == host)
+	               or (not host and agent and p.get("agent") == agent)) for p in response_api._proposals(frappe.get_doc("Wolf Incident", incident)))  # fmt: skip
+	taken = None if proposed else frappe.db.get_value(
+		"Wolf Response Action", {"incident": incident, "action": action, "target": target, "status": ("in", ("Approved", "Applied")),
+		                         **({"host": host} if host else {})},
+		["name", "status", "approved_by"], as_dict=True, order_by="creation desc")  # fmt: skip
 	if taken:
 		return _page(what, summary + "<p>" + _("Nothing to do: {0} is already {1} (approved by {2}).").format(
 			escape_html(taken.name), _(taken.status).lower(), escape_html(taken.approved_by)) + "</p>", "blue")  # fmt: skip
@@ -126,10 +132,13 @@ def response_action(incident=None, action=None, target=None, agent=None, hours=N
 		frappe.clear_messages()
 		return _page(what, summary + "<p>" + escape_html(str(e)) + "</p>", "red", 409)
 	frappe.db.commit()
-	note = {"Approved": _("approved: the agent applies it at its next push"), "Applied": _("applied: {0}").format(row.get("result")),
-	        "Failed": _("failed: {0}").format(row.get("result"))}[row["status"]]  # fmt: skip
-	return _page(what, summary + "<p>" + escape_html(f"{row['name']} {note}.") + "</p>",
-	             "red" if row["status"] == "Failed" else "green")
+	def note(r):
+		return {"Approved": _("approved: the agent applies it at its next push"), "Applied": _("applied: {0}").format(r.get("result")),
+		        "Failed": _("failed: {0}").format(r.get("result"))}[r["status"]]  # fmt: skip
+
+	lines = "".join(f"<p>{escape_html(r['name'] + ' ' + note(r))}.</p>" for r in [row, *(row.get("also") or [])])
+	failed = any(r["status"] == "Failed" for r in [row, *(row.get("also") or [])])
+	return _page(what, summary + lines, "red" if failed else "green")
 
 
 def _page(title, html, color, status=200):

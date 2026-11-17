@@ -39,7 +39,10 @@ class Client:
 			raise wazuh_ar.WazuhError(f"Wazuh API unreachable: {type(e).__name__}") from e
 		if r.status_code != 200:
 			raise wazuh_ar.WazuhError(f"Wazuh API login refused (HTTP {r.status_code})")
-		self.token = (r.json().get("data") or {}).get("token")
+		try:
+			self.token = (r.json().get("data") or {}).get("token")
+		except (ValueError, AttributeError) as e:
+			raise wazuh_ar.WazuhError("Wazuh API login answered something else than JSON") from e
 		if not self.token:
 			raise wazuh_ar.WazuhError("Wazuh API login gave no token")
 
@@ -52,6 +55,8 @@ class Client:
 		try:
 			body = r.json()
 		except ValueError:
+			body = {}
+		if not isinstance(body, dict):
 			body = {}
 		if r.status_code >= 400:
 			raise wazuh_ar.WazuhError(f"Wazuh API {method} {path.split('?')[0]}: HTTP {r.status_code} {body.get('detail') or ''}".strip())
@@ -73,8 +78,8 @@ def host_names_and_addresses(host):
 	names, addresses = {canonical}, set()
 	for alias in frappe.get_all("Wolf Entity Alias", filters={"kind": "host", "canonical": canonical}, pluck="alias"):
 		(addresses if entities.normal_ip(alias) else names).add(alias)
-	for row in frappe.get_all("Wolf Agent", filters={"hostname": host}, fields=["last_ip"]):
-		if row.last_ip:
+	for row in frappe.get_all("Wolf Agent", fields=["hostname", "last_ip"]):
+		if row.last_ip and entities.normal_name(row.hostname) in names:  # its hostname may be an FQDN alias
 			addresses.add(row.last_ip)
 	return names, addresses
 

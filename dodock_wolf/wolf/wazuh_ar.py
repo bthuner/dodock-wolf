@@ -47,18 +47,26 @@ def command_error(command):
 
 
 def find_agent(agents, names, addresses):
-	"""The id of the Wazuh agent that is the host: by name first, then by address. `agents` are
-	`{id, name, ip}` rows from GET /agents; the manager (000) never runs a block."""
+	"""The id of the Wazuh agent that is the host: by name first, then by an address only one agent
+	has (hosts behind one NAT, or agents reporting `any`, share addresses). `agents` are `{id, name,
+	ip}` rows from GET /agents; the manager (000) never runs a block."""
 	names = {str(n).strip().lower() for n in names if n}
 	addresses = {str(a).strip() for a in addresses if a}
 	usable = [a for a in agents if str(a.get("id")) != "000"]
 	for agent in usable:
 		if str(agent.get("name") or "").strip().lower() in names:
 			return str(agent["id"])
-	for agent in usable:
-		if str(agent.get("ip") or "").strip() in addresses:
-			return str(agent["id"])
-	return None
+	by_address = [a for a in usable if str(a.get("ip") or "").strip() in addresses]
+	return str(by_address[0]["id"]) if len(by_address) == 1 else None
+
+
+def safe_url(url):
+	"""https://, or http:// to this machine only: the API password goes with every login."""
+	url = str(url or "").strip().lower()
+	if url.startswith("https://"):
+		return True
+	host = url.removeprefix("http://").split("/")[0].rsplit(":", 1)[0].strip("[]") if url.startswith("http://") else ""
+	return host in ("localhost", "127.0.0.1", "::1")
 
 
 def block_body(command, ip):

@@ -20,7 +20,7 @@ from frappe.utils import add_to_date, cint, now_datetime
 
 from dodock_wolf.api import entities as entities_api
 from dodock_wolf.api import wazuh_ar as wazuh_ar_api
-from dodock_wolf.wolf import entities, events, response, wazuh_ar
+from dodock_wolf.wolf import events, response, wazuh_ar
 from dodock_wolf.wolf.spa import MANAGER_ROLES
 
 EVENT_LIMIT = 500
@@ -43,16 +43,19 @@ def _events(incident):
 		limit=EVENT_LIMIT,
 	)
 	aliases = entities_api.aliases()
+	senders = {r.name: r for r in frappe.get_all("Wolf Agent", fields=["name", "hostname", "kind"],
+	                                             filters={"name": ("in", list({r.agent for r in rows if r.agent}) or [""])})}  # fmt: skip
 	agents = _wolf_agents(aliases)
 	for r in rows:
 		try:
 			r["payload"] = json.loads(r.payload) if r.payload else {}
 		except ValueError:
 			r["payload"] = {}
-		# the attacked host, under its canonical name (a Wazuh agent name or an FQDN resolves to it),
-		# and the Wolf Agent running there: not the one that sent the alert (a Wazuh manager's, an
-		# integration's)
-		r["block_host"] = aliases.host(r.host)
+		# the attacked host, under its canonical name (a Wazuh agent name or an FQDN resolves to it):
+		# for a Suricata or Wazuh alert the host it names, else the sending agent's own
+		# (response.attacked_host); and the Wolf Agent running there
+		sender = senders.get(r.agent) or frappe._dict()
+		r["block_host"] = aliases.host(response.attacked_host(r, sender.kind or ("agent" if r.agent else None), sender.hostname))
 		r["block_agent"] = agents.get(r["block_host"])
 	return rows
 
@@ -79,33 +82,55 @@ def _is_manager():
 	return frappe.session.user == "Administrator" or bool(set(frappe.get_roles()) & set(MANAGER_ROLES))
 
 
-def _key(action, target, host):
-	"""A block is one address on one host; a user action, one user."""
-	return (action, str(target), entities.normal_name(host) if action == "block_ip" else None)
+def _key(action, target, host, executor=None, aliases=None):
+	"""A block is one address on one host by one executor; a user action, one user."""
+	if action != "block_ip":
+		return (action, str(target), None, None)
+	canonical = (aliases or entities_api.aliases()).host(host)  # rows before #72 step 6 kept the agent's hostname
+	return (action, str(target), canonical, executor or "wolf_agent")
 
 
 def _proposals(doc):
-	"""What Wolf proposes for this incident now (approve() only accepts one of these)."""
-	taken = {_key(a.action, a.target, a.host) for a in _actions(doc.name) if a.status in ("Approved", "Applied")}
+	"""What Wolf proposes for this incident now (approve() only accepts one of these). A block is
+	proposed for the executors that have not applied it yet: a failed Wazuh half can be retried
+	while the Wolf Agent's half waits."""
+	aliases = entities_api.aliases()
+	taken = {_key(a.action, a.target, a.host, a.executor, aliases) for a in _actions(doc.name)
+	         if a.status in ("Approved", "Applied")}  # fmt: skip
 	settings = frappe.get_cached_doc("Wolf Settings")
 	proposals = []
 	for p in response.suggest(_events(doc.name), settings.get("block_with") or "wolf_agent", wazuh_ar_api.enabled(settings)):
-		if _key(p["action"], p["target"], p["host"]) in taken:
+		if p["action"] == "block_ip":
+			p["executors"] = [e for e in p["executors"] if _key("block_ip", p["target"], p["host"], e, aliases) not in taken]
+			if not p["executors"]:
+				continue
+			if "wolf_agent" not in p["executors"]:
+				p["agent"] = None
+		elif _key(p["action"], p["target"], None) in taken:
 			continue
 		if p["action"] in response.USER_ACTIONS and not frappe.db.exists("User", p["target"]):
 			continue  # a failed login for an unknown name: nothing to disable
-		p["label"] = response.label(p["action"], p["target"], _hours(p, settings), p["host"], p.get("executors"))
+		p["label"] = response.label(p["action"], p["target"], _hours(p, settings), p["host"], p.get("executors"),
+		                            wazuh_hours=_wazuh_hours(settings))  # fmt: skip
 		proposals.append(p)
 	return proposals
 
 
+def _wazuh_seconds(settings):
+	return wazuh_ar.command_seconds(settings.get("wazuh_ar_command")) or 0
+
+
+def _wazuh_hours(settings):
+	return max(round(_wazuh_seconds(settings) / 3600), 1)
+
+
 def _hours(p, settings, asked=None):
-	"""A block's duration: the one asked for, or Wazuh's command timeout when only Wazuh applies it."""
+	"""The Wolf Agent's block duration (the one asked for), or Wazuh's command timeout when only
+	Wazuh applies it."""
 	if p["action"] != "block_ip":
 		return None
 	if p.get("executors") == ["wazuh"]:
-		seconds = wazuh_ar.command_seconds(settings.get("wazuh_ar_command")) or 0
-		return max(round(seconds / 3600), 1)
+		return _wazuh_hours(settings)
 	return cint(asked) or response.DEFAULT_HOURS
 
 
@@ -189,14 +214,22 @@ def approve(incident, action, target, agent=None, duration_hours=None, reason=No
 	rows = []
 	if action == "block_ip":
 		for executor in proposal["executors"]:
-			length = hours if executor == "wolf_agent" else _hours({**proposal, "executors": ["wazuh"]}, settings)
-			row = frappe.get_doc({**common, "executor": executor, "host": proposal["host"], "duration_hours": length,
-			                      "agent": proposal["agent"] if executor == "wolf_agent" else None,
-			                      "expires_at": add_to_date(now, hours=length)})  # fmt: skip
+			wazuh = executor == "wazuh"
+			row = frappe.get_doc({**common, "executor": executor, "host": proposal["host"],
+			                      "duration_hours": _wazuh_hours(settings) if wazuh else hours,
+			                      "agent": None if wazuh else proposal["agent"],
+			                      # Wazuh removes it when its command's timeout runs out, to the second
+			                      "expires_at": add_to_date(now, seconds=_wazuh_seconds(settings)) if wazuh else add_to_date(now, hours=hours)})  # fmt: skip
 			row.insert(ignore_permissions=True)
-			if executor == "wazuh":
-				wazuh_ar_api.apply_block(row)  # Applied or Failed at once
 			rows.append(row)
+		if any(r.executor == "wazuh" for r in rows):
+			# the approval is recorded and journaled before Wolf calls out: whatever happens next, a
+			# block Wazuh applied has its row
+			frappe.db.commit()
+			for row in rows:
+				if row.executor == "wazuh":
+					wazuh_ar_api.apply_block(row)  # Applied or Failed at once
+					frappe.db.commit()
 	else:
 		row = frappe.get_doc(common).insert(ignore_permissions=True)
 		try:
@@ -206,10 +239,11 @@ def approve(incident, action, target, agent=None, duration_hours=None, reason=No
 			row.status, row.result = "Failed", str(e)[:RESULT_LENGTH]
 		row.save(ignore_permissions=True)
 		rows.append(row)
-	what = response.label(action, target, hours, proposal["host"], proposal.get("executors"))
+	what = response.label(action, target, hours, proposal["host"], proposal.get("executors"), wazuh_hours=_wazuh_hours(settings))
 	notes = []
 	for row in rows:
 		by = {"wazuh": "Wazuh", "wolf_agent": "the Wolf Agent"}.get(row.get("executor")) if action == "block_ip" else None
+		by = f"{by}, {row.duration_hours} h" if by else None
 		state = {"Approved": "approved, waiting for the agent", "Applied": f"applied: {row.result}",
 		         "Failed": f"failed: {row.result}"}[row.status]  # fmt: skip
 		notes.append(f"{row.name}{f' ({by})' if by else ''} {state}")

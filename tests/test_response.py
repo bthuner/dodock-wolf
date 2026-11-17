@@ -57,6 +57,14 @@ class TestSuggest(unittest.TestCase):
 		                  ("45.33.32.156", "bench-01", "agent-1", ["wolf_agent", "wazuh"])])  # fmt: skip
 		self.assertEqual(blocks(block_with="wazuh", wazuh=False), [])  # Wazuh not set up: nobody can block
 
+	def test_only_external_alerts_name_another_host(self):
+		probe = {"category": "web_attack_probe", "host": "web-02"}
+		self.assertEqual(response.attacked_host(probe, "agent", "web-01"), "web-01")  # its own host, whatever it says
+		self.assertEqual(response.attacked_host({**probe, "category": "hids_alert"}, "agent", "wazuh-mgr"), "web-02")
+		self.assertEqual(response.attacked_host({**probe, "category": "network_ids_alert"}, "agent", "sensor"), "web-02")
+		self.assertEqual(response.attacked_host(probe, "integration", "wazuh-mgr"), "web-02")
+		self.assertEqual(response.attacked_host(probe, None, None), "web-02")  # the site's own events
+
 	def test_executors(self):
 		self.assertEqual(response.executors("wolf_agent", "a", True), ["wolf_agent"])
 		self.assertEqual(response.executors("both", None, True), ["wazuh"])

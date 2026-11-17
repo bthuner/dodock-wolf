@@ -12,11 +12,19 @@ class WolfSettings(Document):
 
 			if not self.get("wazuh_api_url") or not self.get("wazuh_api_user"):
 				frappe.throw("Blocking with Wazuh needs the Wazuh API URL and user")
-			if not str(self.wazuh_api_url).startswith(("https://", "http://")):
-				frappe.throw("The Wazuh API URL must start with https:// or http://")
+			if not wazuh_ar.safe_url(self.wazuh_api_url):
+				frappe.throw("The Wazuh API URL must start with https:// (http:// only for this machine)")
+			before = None if self.is_new() else self.get_doc_before_save()
+			if before and before.get("wazuh_api_url") and before.wazuh_api_url != self.wazuh_api_url and not self._new_password():
+				# the stored password must not follow the URL to another server
+				frappe.throw("Enter the Wazuh API password again when you change the Wazuh API URL")
 			error = wazuh_ar.command_error(self.get("wazuh_ar_command"))
 			if error:
 				frappe.throw(error)
+
+	def _new_password(self):
+		value = self.get("wazuh_api_password")
+		return bool(value) and set(str(value)) != {"*"}  # unchanged Password fields come back masked
 
 	@frappe.whitelist()
 	def regenerate_registration_token(self):

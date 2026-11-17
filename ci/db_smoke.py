@@ -2291,6 +2291,7 @@ def main():
 		tz, at = events.system_tz(), now_datetime()
 		blk = frappe.get_doc({"doctype": "Wolf Agent", "hostname": "bench-blk", "kind": "agent"}).insert(ignore_permissions=True)
 		integ = frappe.get_doc({"doctype": "Wolf Agent", "hostname": "wazuh-mgr", "kind": "integration"}).insert(ignore_permissions=True)
+		two = frappe.get_doc({"doctype": "Wolf Agent", "hostname": "bench-two", "kind": "agent"}).insert(ignore_permissions=True)
 		inc = frappe.get_doc({"doctype": "Wolf Incident", "title": "blk incident", "severity": "critical", "status": "Open",
 		                      "started_at": at}).insert(ignore_permissions=True)  # fmt: skip
 
@@ -2308,8 +2309,11 @@ def main():
 			ev("hids_alert", "web-02", "45.33.32.250", integ.name)
 			ev("ssh_failed_login", "bench-blk", "45.33.32.251", blk.name)
 			ev("hids_alert", "nowhere-host", "45.33.32.252", integ.name)
+			ev("web_attack_probe", "web-02", "45.33.32.253", blk.name)  # an ordinary agent naming another host
+			ev("ssh_failed_login", "bench-two", "45.33.32.254", two.name)  # a Wolf Agent, no Wazuh agent yet
 			got = proposals()
-			assert set(got) == {("45.33.32.251", "bench-blk")}, f"wolf_agent: only where a Wolf Agent runs: {got}"
+			assert set(got) == {("45.33.32.251", "bench-blk"), ("45.33.32.253", "bench-blk"), ("45.33.32.254", "bench-two")}, \
+				f"wolf_agent: only where a Wolf Agent runs, and an agent's own events on its own host: {got}"
 			assert got[("45.33.32.251", "bench-blk")]["agent"] == blk.name
 
 			settings.update({"block_with": "both", "wazuh_api_url": f"http://127.0.0.1:{server.server_address[1]}",
@@ -2319,8 +2323,11 @@ def main():
 			got = proposals()
 			assert {k: p["executors"] for k, p in got.items()} == {
 				("45.33.32.250", "web-02"): ["wazuh"], ("45.33.32.251", "bench-blk"): ["wolf_agent", "wazuh"],
-				("45.33.32.252", "nowhere-host"): ["wazuh"]}, got  # fmt: skip
+				("45.33.32.252", "nowhere-host"): ["wazuh"], ("45.33.32.253", "bench-blk"): ["wolf_agent", "wazuh"],
+				("45.33.32.254", "bench-two"): ["wolf_agent", "wazuh"]}, got  # fmt: skip
 			assert got[("45.33.32.250", "web-02")]["label"] == "Block 45.33.32.250 for 2 h on web-02 with Wazuh"
+			assert got[("45.33.32.251", "bench-blk")]["label"] == \
+				"Block 45.33.32.251 for 24 h on bench-blk with the Wolf Agent, and for 2 h with Wazuh"
 
 			only = response_api.approve(inc.name, "block_ip", "45.33.32.250", host="web-02", duration_hours=48)
 			assert (only["executor"], only["status"], only["wazuh_agent_id"], only["duration_hours"]) == ("wazuh", "Applied", "001", 2), only
@@ -2332,8 +2339,27 @@ def main():
 			assert [a["ip"] for a in response_api.pending_for_agent(blk.name)] == ["45.33.32.251"], "the agent's half"
 			failed = response_api.approve(inc.name, "block_ip", "45.33.32.252", host="nowhere-host")
 			assert failed["status"] == "Failed" and "no Wazuh agent is nowhere-host" in failed["result"], failed
+			# both, with Wazuh failing: the Wolf Agent's half waits, Wazuh's alone is proposed again, then applied
+			half = response_api.approve(inc.name, "block_ip", "45.33.32.254", host="bench-two", duration_hours=6)
+			assert (half["status"], half["also"][0]["status"]) == ("Approved", "Failed"), half
+			retry = proposals()[("45.33.32.254", "bench-two")]
+			assert (retry["executors"], retry["agent"]) == (["wazuh"], None), retry
+			agents.append({"id": "003", "name": "bench-two", "ip": "10.8.0.4"})
+			again = response_api.approve(inc.name, "block_ip", "45.33.32.254", host="bench-two")
+			assert (again["executor"], again["status"], again["wazuh_agent_id"], again["also"]) == ("wazuh", "Applied", "003", []), again
 			# applied or waiting blocks are not proposed again; a failed one is, to retry once the alias is fixed
-			assert set(proposals()) == {("45.33.32.252", "nowhere-host")}, proposals()
+			assert set(proposals()) == {("45.33.32.252", "nowhere-host"), ("45.33.32.253", "bench-blk")}, proposals()
+			# the stored password never follows the URL to another server; http:// only to this machine
+			for url, why in ((f"https://wazuh.example.com:{server.server_address[1]}", "password again"),
+			                 ("http://wazuh-manager:55000", "https://")):  # fmt: skip
+				changed = frappe.get_single("Wolf Settings")
+				changed.wazuh_api_url = url
+				try:
+					changed.save(ignore_permissions=True)
+					raise AssertionError(f"{url} saved")
+				except frappe.ValidationError as e:
+					assert why in str(e), e
+					frappe.clear_messages()
 			journal = frappe.get_all("Wolf Journal Entry", filters={"ref_name": only["name"]}, pluck="content")
 			assert any("wazuh" in (c or "") for c in journal), f"the Wazuh block is not journaled: {journal}"
 		finally:
@@ -2343,10 +2369,11 @@ def main():
 		frappe.db.delete("Wolf Response Action", {"incident": inc.name})
 		frappe.db.delete("Wolf Event", {"incident": inc.name})
 		frappe.delete_doc("Wolf Incident", inc.name, force=True, ignore_permissions=True)
-		for name in (blk.name, integ.name):
+		for name in (blk.name, integ.name, two.name):
 			frappe.delete_doc("Wolf Agent", name, force=True, ignore_permissions=True)
 		return ("Wazuh alert from the integration blocked on web-02 by Wazuh (2 h, its command's timeout); bench-blk by "
-		        "its Wolf Agent and Wazuh; an unknown host fails with why; journaled; Wolf Agent only by default")
+		        "its Wolf Agent and Wazuh; a failed Wazuh half retried; an agent cannot name another host; an unknown "
+		        "host fails with why; journaled; the password does not follow a new URL; Wolf Agent only by default")
 
 	def crowdsec_check():
 		"""CrowdSec LAPI (a local stand-in): decisions tag events, detections and approved blocks go out."""
