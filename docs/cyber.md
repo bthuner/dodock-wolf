@@ -579,8 +579,10 @@ Built: file integrity on the bench, for benches without Wazuh (`agent/wolf_agent
 and supervisor config with its baseline, hashing only what changed size or time, and everything
 daily. Code that changed while the app's git commit stayed the same is `bench_code_changed` at
 critical (a web shell, a patched file); with a new commit it is a deployment, at info; an app
-without a git checkout gives a warning, since Wolf cannot tell. Measured on a bench of six apps
-(15,000 files): 2.5 s for the baseline, 0.5 s per scan, 1.2 s for the daily full scan. A config
+without a git checkout gives a warning, since Wolf cannot tell. Build output (`public/dist`,
+`*.egg-info`, `.mo`) and runtime files (`config/pids`) are not watched, and an app is judged after
+a pull finishes. Measured on a bench of six apps (14,800 files): 2.2 s for the baseline, 0.3 s per
+scan, 0.8 s for the daily full scan. A config
 change is `bench_config_changed` (warning), with only the names of the keys that changed. Presets:
 *Bench code changed outside a deployment*, *Bench or server config changed*.
 

@@ -52,6 +52,7 @@ _SPEC = [
 	("exposed_services", "security", "Bench services listening beyond loopback", "gauge", "services", "host", 600),
 	("site_config_risks", "security", "Risky site_config settings", "gauge", "settings", "site", 600),
 	("integrity_files", "security", "Files under integrity watch", "gauge", "files", "bench", 900),
+	("integrity_unreadable", "security", "Files the integrity check cannot read", "gauge", "files", "bench", 900),
 	("security_score", "security", "Security score", "gauge", "/ 100", "site", 3600),
 	("site_setting", "security", "System Settings value", "gauge", "", "site", 3600),
 	# major * 1e6 + minor * 1e3 + patch: a step on the chart is an upgrade
