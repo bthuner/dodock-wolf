@@ -21,7 +21,6 @@ function contentRoutes(): string[] {
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
-    '@nuxt/image',
     '@nuxt/ui',
     '@nuxt/content',
     '@nuxtjs/i18n',
@@ -53,8 +52,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      // Placeholder until the site has a host: set NUXT_PUBLIC_SITE_URL at build time.
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://wolf.dokos.io'
+      // The published address, with its base path (GitHub Pages: /dodock-wolf). No trailing slash.
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://bthuner.github.io/dodock-wolf'
     }
   },
 
@@ -101,12 +100,12 @@ export default defineNuxtConfig({
   },
 
   llms: {
-    domain: 'https://wolf.dokos.io',
-    title: 'Frappe Wolf',
+    domain: process.env.NUXT_PUBLIC_SITE_URL || 'https://bthuner.github.io/dodock-wolf',
+    title: 'Dodock Wolf',
     description: 'Self-hosted observability and security for Frappe benches, ERPNext and Dokos sites, and their Linux hosts.',
     full: {
-      title: 'Frappe Wolf: full documentation',
-      description: 'Every page of the Frappe Wolf documentation, in English.'
+      title: 'Dodock Wolf: full documentation',
+      description: 'Every page of the Dodock Wolf documentation, in English.'
     },
     sections: [
       { title: 'Getting started', contentCollection: 'docs_en', contentFilters: [{ field: 'path', operator: 'LIKE', value: '/getting-started%' }] },

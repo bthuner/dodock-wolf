@@ -1,6 +1,8 @@
 <!-- A Wolf UI screenshot in the reader's colour mode: public/img/<name>-{light,dark}.jpg,
      taken on the demo bench (docs/screenshots). -->
 <script setup lang="ts">
+const publicPath = usePublicPath()
+
 defineProps<{
   name: string
   alt: string
@@ -11,8 +13,8 @@ defineProps<{
 <template>
   <figure class="my-6">
     <UColorModeImage
-      :light="`/img/${name}-light.jpg`"
-      :dark="`/img/${name}-dark.jpg`"
+      :light="publicPath(`/img/${name}-light.jpg`)"
+      :dark="publicPath(`/img/${name}-dark.jpg`)"
       :alt="alt"
       class="w-full rounded-lg border border-default shadow-sm"
       loading="lazy"

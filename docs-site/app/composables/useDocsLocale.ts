@@ -11,7 +11,7 @@ const strings = {
     viewMarkdown: 'View as Markdown',
     notFound: 'Page not found',
     notFoundDescription: 'This page does not exist, or not in this language yet.',
-    credits: 'Frappe Wolf · MIT · Built by Dokos'
+    credits: 'Dodock Wolf · MIT · Built by Dokos'
   },
   fr: {
     toc: 'Sur cette page',
@@ -23,7 +23,7 @@ const strings = {
     viewMarkdown: 'Voir en Markdown',
     notFound: 'Page introuvable',
     notFoundDescription: 'Cette page n’existe pas, ou pas encore dans cette langue.',
-    credits: 'Frappe Wolf · MIT · Conçu par Dokos'
+    credits: 'Dodock Wolf · MIT · Conçu par Dokos'
   }
 } as const
 

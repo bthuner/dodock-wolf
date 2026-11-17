@@ -1,0 +1,56 @@
+name: Publish GitHub Pages
+
+# bthuner.github.io/dodock-wolf/          the documentation site (docs-site/), French at /fr/
+# bthuner.github.io/dodock-wolf/making-of/ the making-of page (docs/making-of/)
+# Both go to the gh-pages branch in one commit: publishing one alone would wipe the other.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs-site/**"
+      - "docs/making-of/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NUXT_APP_BASE_URL: /dodock-wolf/
+      NUXT_PUBLIC_SITE_URL: https://bthuner.github.io/dodock-wolf
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: yarn
+          cache-dependency-path: docs-site/yarn.lock
+      - name: Build the docs site
+        working-directory: docs-site
+        run: |
+          yarn install --frozen-lockfile --non-interactive
+          yarn generate
+          yarn check:links
+      - name: Assemble the site
+        run: |
+          mkdir -p _site/making-of
+          cp -r docs-site/.output/public/. _site/
+          cp docs/making-of/index.html _site/making-of/
+          cp -r docs/making-of/assets _site/making-of/
+          # Nuxt writes _nuxt/ and _payload.json: Jekyll would drop anything starting with "_"
+          touch _site/.nojekyll
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _site
+          publish_branch: gh-pages
+          commit_message: "Publish docs and making-of from ${{ github.sha }}"

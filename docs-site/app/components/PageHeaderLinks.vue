@@ -7,6 +7,7 @@ const toast = useToast()
 const { copy, copied } = useClipboard()
 const { siteUrl } = useRuntimeConfig().public
 const { t } = useDocsLocale()
+const publicPath = usePublicPath()
 
 const routePath = computed(() => withoutTrailingSlash(route.path))
 const mdPath = computed(() => `${siteUrl}/raw${routePath.value}.md`)
@@ -29,7 +30,7 @@ const items = computed(() => [
 ])
 
 async function copyPage() {
-  copy(await $fetch<string>(`/raw${routePath.value}.md`))
+  copy(await $fetch<string>(publicPath(`/raw${routePath.value}.md`)))
 }
 </script>
 

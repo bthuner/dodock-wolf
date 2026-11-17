@@ -24,8 +24,8 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Making Dodock Wolf">
 <meta property="og:description" content="Brief, brand, identity, protocol, security and build log of Dodock Wolf: observability for Frappe benches, sites and Linux hosts.">
-<meta property="og:url" content="https://bthuner.github.io/dodock-wolf/">
-<meta property="og:image" content="https://bthuner.github.io/dodock-wolf/assets/og-1200x630.png">
+<meta property="og:url" content="https://bthuner.github.io/dodock-wolf/making-of/">
+<meta property="og:image" content="https://bthuner.github.io/dodock-wolf/making-of/assets/og-1200x630.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="The Dodock Wolf logo, a white line wolf head on an electric blue rounded square, on a dark background">
@@ -771,22 +771,22 @@ Deployment shortly before: 2026-10-29 01:47:12
       <div class="rail" id="rail" tabindex="0" role="region" aria-label="Screenshots of the Wolf UI, scroll horizontally">
         <figure class="frame">
           <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span>/wolf/incidents/…</span></div>
-          <img src="assets/wolf-ui-incident.jpg" width="1280" height="800" loading="lazy" alt="The Wolf UI incident page: a warning incident for scheduler failures on wolf.localhost, acknowledged, with its scope, start time, owner and rule, the assign and resolve actions, and the timeline below with context rows marked as same scope">
+          <img src="assets/wolf-ui-incident.jpg" width="1280" height="800" loading="lazy" alt="The Wolf UI incident page: a warning incident, security score low on wolf.localhost, acknowledged, with its scope, start time, owner, preceding deployment and rule, the assign, resolve and merge actions, and the timeline below: the deployment marked as preceding change, then context rows marked as same scope">
           <figcaption>The incident page, light theme.</figcaption>
         </figure>
         <figure class="frame">
           <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span>/wolf/sites/wolf.localhost</span></div>
-          <img src="assets/wolf-ui-overview.jpg" width="1280" height="800" loading="lazy" alt="A site dashboard in the dark theme: counts of unresolved, unacknowledged and critical incidents, the four unresolved incidents of wolf.localhost, and HTTP responses over 24 hours with dashed lines at each deployment">
+          <img src="assets/wolf-ui-overview.jpg" width="1280" height="800" loading="lazy" alt="A site dashboard in the dark theme: counts of unresolved, unacknowledged and critical incidents, the four unresolved incidents of wolf.localhost, and HTTP responses over 24 hours with a dashed line at the deployment">
           <figcaption>A site dashboard, dark theme. Dashed lines are deployments.</figcaption>
         </figure>
         <figure class="frame">
           <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span>/wolf/metrics</span></div>
-          <img src="assets/wolf-ui-metrics.jpg" width="1280" height="800" loading="lazy" alt="The metrics explorer: memory used, maximum per host over 6 hours, read from minute rollups in 3-minute buckets, with a gap before the data starts">
+          <img src="assets/wolf-ui-metrics.jpg" width="1280" height="800" loading="lazy" alt="The metrics explorer: memory used, maximum per host over the last hour, read from raw data in 1-minute buckets, with a gap before the data starts">
           <figcaption>The metrics explorer: what it read is stated above the chart.</figcaption>
         </figure>
         <figure class="frame">
           <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span>/wolf/monitoring</span></div>
-          <img src="assets/wolf-ui-monitoring.jpg" width="1280" height="800" loading="lazy" alt="The monitoring page, light theme, titled Is Wolf working: alert rules evaluated 1 minute ago, scheduler enabled, ingest queue empty with 2 workers, rollups done until 01:15, 1 of 1 agents reporting, and a note that an online agent does not mean its watchdog has a fallback channel">
+          <img src="assets/wolf-ui-monitoring.jpg" width="1280" height="800" loading="lazy" alt="The monitoring page, light theme, titled Is Wolf working: alert rules evaluated 1 minute ago, scheduler enabled, ingest queue empty with 2 workers, rollups done until 01:32, 1 of 1 agents reporting, and a note that an online agent does not mean its watchdog has a fallback channel">
           <figcaption>Monitoring: is Wolf working. It adds what an online agent does not prove.</figcaption>
         </figure>
       </div>
@@ -945,8 +945,8 @@ X-Wolf-Agent-Secret: ••••••••
 
         <figure class="frame wide" data-reveal>
           <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span>/wolf/security</span></div>
-          <img src="assets/wolf-ui-security.jpg" width="1280" height="800" loading="lazy" alt="The security page in the dark theme: a score of 29 out of 100 for wolf.localhost, 3 checks passed, 2 failed, 3 unknown, Wolf could read 59% of the weight. A table lists each check with its result, what Wolf read, the fix and its weight. Below, the tamper-evident journal with 7 signed entries, its anchor and a Verify button">
-          <figcaption>29 / 100 on the demo stack, and the page does not flatter it: three checks are unknown, and Wolf says it could read 59% of the weight.</figcaption>
+          <img src="assets/wolf-ui-security.jpg" width="1280" height="800" loading="lazy" alt="The security page in the dark theme: a score of 22 out of 100 for wolf.localhost, 3 checks passed, 2 failed, 7 unknown, Wolf could read 43% of the weight. A table lists each check with its result, what Wolf read, the fix and its weight. Below, the tamper-evident journal with 11 signed entries and a Verify button">
+          <figcaption>22 / 100 on the demo stack, and the page does not flatter it: seven checks are unknown, and Wolf says it could read 43% of the weight.</figcaption>
         </figure>
 
         <div class="principles wide" data-reveal>
