@@ -166,7 +166,8 @@ watch([metric, site, host, bench], loadLabels)
     <PageTitle title="Metrics" />
     <Button label="Refresh" icon-left="lucide-refresh-cw" :loading="loading" @click="query" />
   </PageHeader>
-  <div class="mx-auto max-w-6xl space-y-4 p-5">
+  <div class="wolf-page space-y-4">
+    <div class="wolf-card wolf-toolbar">
     <div class="flex flex-wrap items-center gap-2">
       <Select :model-value="metric" :options="metricOptions" class="w-72" aria-label="Metric" @update:model-value="chooseMetric" />
       <Select v-if="aggOptions.length" :model-value="spec && spec.aggregations.includes(aggregation) ? aggregation : spec?.default_aggregation"
@@ -181,20 +182,22 @@ watch([metric, site, host, bench], loadLabels)
       <ScopeInputs />
       <Button v-if="explicit" label="Back to a relative window" @click="resetRange" />
     </div>
+    </div>
 
-    <p v-if="spec?.unlisted" class="text-sm" style="color: var(--wolf-warning)">
+    <p v-if="spec?.unlisted" class="wolf-note" data-tone="warning">
       {{ metric }} is not in the catalog and had no data you can see in the last 7 days. It is read as a custom metric.
     </p>
     <p v-if="spec" class="text-sm text-ink-gray-6">
       {{ spec.label }}: {{ spec.kind === 'interval_count' ? 'counted per push interval, summed per bucket for a total' : spec.kind === 'gauge' ? 'a level at each sample' : 'a custom metric, read as a level' }}<template v-if="spec.unit">, in {{ spec.unit }}</template>.
       <template v-if="spec.caveat"> {{ spec.caveat }}</template>
     </p>
-    <p v-if="catalogError" role="alert" class="text-sm" style="color: var(--wolf-critical)">Catalog: {{ catalogError }}</p>
-    <p v-if="error" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ error }}</p>
+    <p v-if="catalogError" role="alert" class="wolf-alert">Catalog: {{ catalogError }}</p>
+    <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>
 
     <LoadingNote v-if="!catalogLoaded" what="the metric catalog" />
     <LoadingNote v-else-if="loading && !result && !error" what="the samples" />
-    <section v-if="result" class="wolf-card space-y-2" aria-label="Chart">
+    <section v-if="result" class="wolf-card space-y-3" aria-label="Chart">
+      <h2 class="wolf-h2">{{ spec?.label || metric }}</h2>
       <p class="text-sm text-ink-gray-6">
         {{ result.aggregation }} per {{ result.bucket_seconds >= 3600 ? `${result.bucket_seconds / 3600} h` : `${result.bucket_seconds / 60} min` }},
         read from {{ result.resolution }} data, {{ full(result.window.since, tz) }} to {{ full(result.window.until, tz, { zone: false }) }}.
@@ -202,7 +205,7 @@ watch([metric, site, host, bench], loadLabels)
         <template v-if="result.retention.clipped"> Data before {{ full(result.retention.kept_from, tz, { zone: false }) }} is no longer kept at this resolution: those buckets are empty, not zero.</template>
         <template v-if="result.groups.total > result.groups.shown"> Showing {{ result.groups.shown }} of {{ result.groups.total }} groups, {{ result.groups.ranked_by }}.</template>
       </p>
-      <p v-if="pending" class="text-sm" style="color: var(--wolf-brand-text)">
+      <p v-if="pending" class="wolf-note" data-tone="brand">
         Range starts at {{ full(pending, tz, { zone: false }) }}: select the point where it ends.
       </p>
       <div v-if="rows.length" class="h-72">
@@ -215,10 +218,10 @@ watch([metric, site, host, bench], loadLabels)
         Breaks in a line are buckets without samples.
       </p>
 
-      <ul v-if="result.series.length" class="divide-y divide-[var(--wolf-line)] text-sm">
-        <li v-for="s in result.series" :key="s.name" class="flex flex-wrap gap-x-3 py-1">
-          <span class="text-ink-gray-9">{{ s.name }}</span>
-          <span class="wolf-data">{{ result.aggregation }} {{ value(s.value) }}</span>
+      <ul v-if="result.series.length" class="wolf-rows">
+        <li v-for="s in result.series" :key="s.name">
+          <span class="wolf-rows-main">{{ s.name }}</span>
+          <span class="wolf-data wolf-rows-figure">{{ result.aggregation }} {{ value(s.value) }}</span>
           <span class="text-ink-gray-6">{{ s.samples }} samples</span>
           <span v-if="result.live" :style="s.stale ? { color: 'var(--wolf-warning)' } : {}" class="text-ink-gray-6">
             {{ s.stale ? 'no new data, ' : '' }}last sample <time :title="full(s.last_sample, tz)">{{ ago(s.last_sample) }} ago</time>
@@ -227,17 +230,17 @@ watch([metric, site, host, bench], loadLabels)
         </li>
       </ul>
 
-      <Button v-if="rows.length" :label="showTable ? 'Hide the data table' : 'Show the data as a table'" @click="showTable = !showTable" />
-      <div v-if="showTable" class="max-h-96 overflow-auto">
-        <table class="w-full text-left text-sm">
+      <Button v-if="rows.length" size="sm" :icon-left="showTable ? 'lucide-chevron-up' : 'lucide-table'" :label="showTable ? 'Hide the data table' : 'Show the data as a table'" @click="showTable = !showTable" />
+      <div v-if="showTable" class="wolf-tablewell">
+        <table class="wolf-table">
           <caption class="sr-only">{{ spec?.label }}, {{ result.aggregation }} per bucket</caption>
-          <thead class="text-ink-gray-6">
-            <tr><th scope="col" class="py-1 font-normal">Bucket start ({{ tz }})</th><th v-for="s in result.series" :key="s.name" scope="col" class="font-normal">{{ s.name }}</th></tr>
+          <thead>
+            <tr><th scope="col">Bucket start ({{ tz }})</th><th v-for="s in result.series" :key="s.name" scope="col" class="wolf-num wolf-th-data">{{ s.name }}</th></tr>
           </thead>
           <tbody>
-            <tr v-for="r in rows" :key="r.iso" class="border-t border-[var(--wolf-line)]">
-              <th scope="row" class="wolf-data py-0.5 font-normal">{{ full(r.iso, tz, { zone: false }) }}</th>
-              <td v-for="s in result.series" :key="s.name" class="wolf-data">{{ r[s.name] == null ? 'no data' : value(r[s.name]) }}</td>
+            <tr v-for="r in rows" :key="r.iso">
+              <th scope="row" class="wolf-data">{{ full(r.iso, tz, { zone: false }) }}</th>
+              <td v-for="s in result.series" :key="s.name" class="wolf-data wolf-num">{{ r[s.name] == null ? 'no data' : value(r[s.name]) }}</td>
             </tr>
           </tbody>
         </table>

@@ -264,52 +264,58 @@ watch(name, () => {
     </div>
   </PageHeader>
 
-  <section v-if="loadError" class="max-w-2xl p-5 text-base text-ink-gray-8">
-    <p role="alert">{{ loadError }}</p>
+  <section v-if="loadError" class="max-w-2xl space-y-3 p-5 text-base text-ink-gray-8">
+    <p role="alert" class="wolf-alert">{{ loadError }}</p>
     <RouterLink class="wolf-link" :to="{ name: 'incidents' }">Back to incidents</RouterLink>
   </section>
 
   <div v-else-if="!incident" class="p-5"><LoadingNote what="the incident" /></div>
-  <div v-else class="mx-auto max-w-5xl space-y-5 p-5">
-    <header class="wolf-card space-y-2">
+  <div v-else class="wolf-page wolf-incident space-y-5">
+    <header class="wolf-card wolf-incident-head" :data-severity="incident.resolved.at ? null : incident.severity">
       <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-gray-6">
         <SeverityGlyph :severity="incident.severity" />
         <span class="wolf-badge">{{ incident.status }}</span>
         <span v-if="scope">{{ scope }}</span>
       </div>
-      <h1 class="text-xl font-semibold text-ink-gray-9">{{ incident.title }}</h1>
-      <dl class="wolf-facts text-sm">
-        <dt>Started</dt>
-        <dd><time class="wolf-data" :datetime="incident.started_at">{{ full(incident.started_at, tz) }}</time>, {{ openFor }}</dd>
-        <template v-if="incident.acknowledged.at">
+      <h1 class="wolf-incident-title">{{ incident.title }}</h1>
+      <dl class="wolf-factgrid">
+        <div>
+          <dt>Started</dt>
+          <dd><time class="wolf-data" :datetime="incident.started_at">{{ full(incident.started_at, tz) }}</time>, {{ openFor }}</dd>
+        </div>
+        <div v-if="incident.acknowledged.at">
           <dt>Acknowledged</dt>
           <dd>{{ incident.acknowledged.by_name || incident.acknowledged.by }}, <time class="wolf-data">{{ clock(incident.acknowledged.at, tz) }}</time></dd>
-        </template>
-        <template v-if="incident.resolved.at">
+        </div>
+        <div v-if="incident.resolved.at">
           <dt>Resolved</dt>
           <dd>{{ incident.resolved.by_name || incident.resolved.by || 'automatically' }}, <time class="wolf-data">{{ clock(incident.resolved.at, tz) }}</time></dd>
-        </template>
-        <dt>Owner</dt>
-        <dd>{{ incident.assigned_to ? incident.assigned_to.name : 'Nobody yet' }}</dd>
-        <template v-if="incident.deployment">
+        </div>
+        <div>
+          <dt>Owner</dt>
+          <dd>{{ incident.assigned_to ? incident.assigned_to.name : 'Nobody yet' }}</dd>
+        </div>
+        <div v-if="incident.deployment">
           <dt>Deployment before it</dt>
           <dd>
             <time class="wolf-data">{{ full(incident.deployment.at, tz) }}</time>
             <span v-if="!incident.deployment.available">, details deleted by retention</span>
           </dd>
-        </template>
-        <template v-if="incident.alert_rule">
+        </div>
+        <div v-if="incident.alert_rule">
           <dt>Rule</dt>
           <dd>{{ incident.alert_rule.name }}</dd>
-        </template>
-        <template v-if="incident.silenced">
+        </div>
+        <div v-if="incident.silenced">
           <dt>Silenced</dt>
           <dd>Yes: no notifications are sent for it</dd>
-        </template>
-        <dt>Linked events</dt>
-        <dd>{{ count(incident.event_records, 'record') }}, {{ count(incident.event_occurrences, 'reported occurrence') }}</dd>
+        </div>
+        <div>
+          <dt>Linked events</dt>
+          <dd>{{ count(incident.event_records, 'record') }}, {{ count(incident.event_occurrences, 'reported occurrence') }}</dd>
+        </div>
       </dl>
-      <section v-if="incident.regulatory" class="space-y-2 border-t border-outline-gray-1 pt-2" aria-label="Regulatory reporting">
+      <section v-if="incident.regulatory" class="wolf-incident-part space-y-2" aria-label="Regulatory reporting">
         <h2 class="text-sm font-semibold text-ink-gray-9">
           Regulatory reporting:
           {{
@@ -351,14 +357,14 @@ watch(name, () => {
           sending times in Desk.
           <Button size="sm" variant="ghost" label="Report draft" @click="loadReport" />
         </p>
-        <p v-if="reportError" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ reportError }}</p>
-        <pre v-if="report" class="wolf-data max-h-96 overflow-auto whitespace-pre-wrap rounded bg-surface-gray-1 p-3 text-xs">{{ report }}</pre>
+        <p v-if="reportError" role="alert" class="wolf-alert">{{ reportError }}</p>
+        <pre v-if="report" class="wolf-data wolf-details">{{ report }}</pre>
       </section>
       <p v-if="incident.merged_into" class="text-sm">
         Merged into
         <RouterLink class="wolf-link" :to="{ name: 'incident', params: { incident: incident.merged_into } }">{{ incident.merged_into }}</RouterLink>.
       </p>
-      <div class="flex flex-wrap items-center gap-2 pt-1">
+      <div class="wolf-incident-part flex flex-wrap items-center gap-2">
         <Button v-if="incident.can.acknowledge" variant="solid" label="Acknowledge" :loading="acting === 'acknowledge'" @click="act('acknowledge')" />
         <Button v-if="incident.can.assign_to_me" label="Assign to me" :loading="acting === 'assign_to_me'" @click="act('assign_to_me')" />
         <Button v-if="incident.can.resolve" label="Resolve" :loading="acting === 'resolve'" @click="act('resolve')" />
@@ -375,15 +381,16 @@ watch(name, () => {
         {{ workflowNote.text }}
         <RouterLink class="wolf-link" :to="{ name: 'incident', params: { incident: workflowNote.link } }">{{ workflowNote.link }}</RouterLink>.
       </p>
-      <p v-if="actionError" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ actionError }}</p>
+      <p v-if="actionError" role="alert" class="wolf-alert">{{ actionError }}</p>
       <MergeDialog v-if="incident.can.merge" v-model:open="merging" :incident="incident.name" :time-zone="tz" @merged="onMerged" />
       <SplitDialog v-if="incident.can.split" v-model:open="splitting" :incident="incident.name" :time-zone="tz" @split="onSplit" />
     </header>
 
     <ResponsePanel :incident="incident.name" :time-zone="tz" @changed="refresh" />
 
-    <section class="space-y-3" aria-label="Timeline">
+    <section class="wolf-card wolf-timeline space-y-3" aria-label="Timeline">
       <div class="flex flex-wrap items-center gap-3">
+        <h2 class="wolf-h2 mr-auto">Timeline</h2>
         <TabButtons v-model="show" :options="SHOW.map(({ value, label }) => ({ value, label }))" />
         <TextInput v-model="query" type="search" placeholder="Search loaded rows" class="w-56" aria-label="Search loaded rows" />
         <span class="text-sm text-ink-gray-6">Times in {{ tz }}</span>
@@ -395,7 +402,7 @@ watch(name, () => {
         Activity shows the newest {{ cut.shown }} of {{ cut.total }} {{ key === 'activity_version' ? 'recorded changes' : 'comments' }};
         older ones are in Desk.
       </p>
-      <p v-if="timeline.error.value" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ timeline.error.value }}</p>
+      <p v-if="timeline.error.value" role="alert" class="wolf-alert">{{ timeline.error.value }}</p>
 
       <ol class="wolf-rail">
         <template v-for="item in items" :key="item.key">

@@ -37,41 +37,45 @@ const live = useLive(hub, {
       <Button label="Refresh" icon-left="lucide-refresh-cw" :loading="list.loading.value" @click="live.apply()" />
     </div>
   </PageHeader>
-  <div class="mx-auto max-w-6xl space-y-3 p-5">
+  <div class="wolf-page space-y-3">
     <ExploreFilters />
     <p class="text-sm text-ink-gray-6">
       Groups with error records active in the window. Their figures cover all their records you may see, whatever
       their age; occurrences add up each record's reported count, so they are not a count for the window.
     </p>
-    <p v-if="list.error.value" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ list.error.value }}</p>
-    <table v-if="list.items.value.length" class="wolf-card w-full text-left text-sm">
-      <thead class="text-ink-gray-6">
-        <tr>
-          <th class="py-1 font-normal">Error</th>
-          <th class="font-normal">Records</th>
-          <th class="font-normal">Reported occurrences</th>
-          <th class="font-normal">Sites</th>
-          <th class="font-normal">First seen</th>
-          <th class="font-normal">Last seen</th>
-          <th class="font-normal">Incidents</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="g in list.items.value" :key="g.fingerprint" class="border-t border-[var(--wolf-line)] align-top">
-          <td class="py-1.5 pr-3">
-            <SeverityGlyph :severity="g.severity" :show-label="false" />
-            <RouterLink class="text-ink-gray-9 hover:underline" :to="{ name: 'error-group', params: { fingerprint: g.fingerprint } }">{{ g.title }}</RouterLink>
-            <div class="text-ink-gray-6">{{ [g.latest.site, g.latest.bench, g.latest.host].filter(Boolean).join(' · ') }}</div>
-          </td>
-          <td class="wolf-data">{{ g.records }}<span v-if="g.records_in_window !== g.records" class="text-ink-gray-6"> ({{ g.records_in_window }} in window)</span></td>
-          <td class="wolf-data">{{ g.occurrences }}</td>
-          <td class="wolf-data">{{ g.sites }}<span v-if="g.host_wide" class="text-ink-gray-6"> + host-wide</span></td>
-          <td class="wolf-data"><time :datetime="g.first_seen">{{ full(g.first_seen, tz, { zone: false }) }}</time></td>
-          <td class="wolf-data"><time :datetime="g.last_seen">{{ full(g.last_seen, tz, { zone: false }) }}</time></td>
-          <td class="wolf-data">{{ g.incidents || '' }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <p v-if="list.error.value" role="alert" class="wolf-alert">{{ list.error.value }}</p>
+    <div v-if="list.items.value.length" class="wolf-card wolf-tablecard">
+      <table class="wolf-table">
+        <thead>
+          <tr>
+            <th class="wolf-th-main">Error</th>
+            <th class="wolf-num">Records</th>
+            <th class="wolf-num wolf-th-wrap">Reported occurrences</th>
+            <th class="wolf-num">Sites</th>
+            <th>First seen</th>
+            <th>Last seen</th>
+            <th class="wolf-num">Incidents</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="g in list.items.value" :key="g.fingerprint" :data-severity="g.severity">
+            <td>
+              <div class="flex items-baseline gap-2">
+                <SeverityGlyph :severity="g.severity" :show-label="false" />
+                <RouterLink class="wolf-table-title hover:underline" :to="{ name: 'error-group', params: { fingerprint: g.fingerprint } }">{{ g.title }}</RouterLink>
+              </div>
+              <div class="wolf-table-sub">{{ [g.latest.site, g.latest.bench, g.latest.host].filter(Boolean).join(' · ') }}</div>
+            </td>
+            <td class="wolf-data wolf-num">{{ g.records }}<span v-if="g.records_in_window !== g.records" class="wolf-table-sub wolf-table-under"> ({{ g.records_in_window }} in window)</span></td>
+            <td class="wolf-data wolf-num">{{ g.occurrences }}</td>
+            <td class="wolf-data wolf-num">{{ g.sites }}<span v-if="g.host_wide" class="wolf-table-sub wolf-table-under"> + host-wide</span></td>
+            <td class="wolf-data"><time :datetime="g.first_seen">{{ full(g.first_seen, tz, { zone: false }) }}</time></td>
+            <td class="wolf-data"><time :datetime="g.last_seen">{{ full(g.last_seen, tz, { zone: false }) }}</time></td>
+            <td class="wolf-data wolf-num">{{ g.incidents || '' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     <LoadingNote v-if="list.loading.value && !list.items.value.length && !list.error.value" what="error groups" />
     <p v-if="!list.loading.value && !list.error.value && !list.items.value.length" class="text-sm text-ink-gray-6">No error groups match.</p>
     <p v-if="list.items.value.length" class="text-sm text-ink-gray-6">Times in {{ tz }}.</p>

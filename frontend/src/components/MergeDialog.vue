@@ -99,7 +99,7 @@ async function merge() {
       </label>
 
       <div v-if="preview" class="wolf-card space-y-2" aria-live="polite" data-testid="merge-preview">
-        <p v-if="preview.error" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ preview.error }}</p>
+        <p v-if="preview.error" role="alert" class="wolf-alert">{{ preview.error }}</p>
         <template v-else>
           <p>
             <b>Moves</b> {{ plural(preview.events, 'event') }} and {{ plural(preview.comments, 'comment') }} from {{ incident }}
@@ -113,7 +113,7 @@ async function merge() {
           <p><b>{{ incident }}</b> becomes Resolved, merged into {{ preview.target.name }}.</p>
         </template>
       </div>
-      <p v-if="error" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ error }}</p>
+      <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>
     </div>
     <template #actions>
       <div class="flex justify-end gap-2">

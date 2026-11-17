@@ -27,7 +27,7 @@ const slowTick = computed(() => tickSeconds.value > 60)
 
 <template>
   <section class="wolf-card space-y-3" aria-label="Monitoring">
-    <h2 class="text-base font-semibold text-ink-gray-9">Is Wolf working</h2>
+    <h2 class="wolf-h2">Is Wolf working</h2>
     <dl class="wolf-facts text-sm">
       <dt>Alert rules</dt>
       <dd v-if="!health">Unknown: the site could not compute its health.</dd>
@@ -69,13 +69,14 @@ const slowTick = computed(() => tickSeconds.value > 60)
         <dd>satellite of {{ monitoring.mode.central_url }}; {{ monitoring.mode.pending }} items waiting to forward</dd>
       </template>
     </dl>
-    <table v-if="!compact && monitoring.agents.length" class="w-full text-left text-sm">
-      <thead class="text-ink-gray-6">
-        <tr><th class="py-1 font-normal">Host or site</th><th class="font-normal">Kind</th><th class="font-normal">State</th><th class="font-normal">Last seen</th><th class="font-normal">Clock skew</th><th class="font-normal">Version</th></tr>
+    <div v-if="!compact && monitoring.agents.length" class="wolf-tablewell">
+    <table class="wolf-table">
+      <thead>
+        <tr><th>Host or site</th><th>Kind</th><th>State</th><th>Last seen</th><th>Clock skew</th><th>Version</th></tr>
       </thead>
       <tbody>
-        <tr v-for="a in monitoring.agents" :key="a.name" class="border-t border-[var(--wolf-line)]">
-          <td class="py-1">{{ a.hostname }}</td>
+        <tr v-for="a in monitoring.agents" :key="a.name">
+          <td class="font-medium">{{ a.hostname }}</td>
           <td>{{ a.kind }}</td>
           <td>{{ STATE[a.state] }}</td>
           <td class="wolf-data">{{ a.last_seen ? `${ago(a.last_seen)} ago` : '' }}</td>
@@ -84,6 +85,7 @@ const slowTick = computed(() => tickSeconds.value > 60)
         </tr>
       </tbody>
     </table>
+    </div>
     <p class="text-sm text-ink-gray-6">{{ monitoring.note }}</p>
   </section>
 </template>

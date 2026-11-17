@@ -31,8 +31,8 @@ onMounted(load)
     <PageTitle title="Monitoring" />
     <Button label="Refresh" icon-left="lucide-refresh-cw" :loading="loading" @click="load" />
   </PageHeader>
-  <div class="mx-auto max-w-6xl space-y-5 p-5">
-    <p v-if="error" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ error }}</p>
+  <div class="wolf-page space-y-5">
+    <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>
     <LoadingNote v-if="loading && !monitoring && !error" />
     <MonitoringPanel v-if="monitoring" :monitoring="monitoring" :time-zone="boot.time_zone" />
   </div>

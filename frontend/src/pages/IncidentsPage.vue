@@ -77,25 +77,29 @@ const live = useLive(hub, {
       <Button label="Refresh" icon-left="lucide-refresh-cw" :loading="loading" @click="live.apply()" />
     </div>
   </PageHeader>
-  <div class="mx-auto max-w-5xl space-y-3 p-5">
+  <div class="wolf-page space-y-3">
     <TabButtons v-model="status" :options="STATUSES" />
-    <p v-if="error" role="alert" class="text-sm" style="color: var(--wolf-critical)">{{ error }}</p>
+    <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>
     <LoadingNote v-if="loading && !incidents.length && !error" what="incidents" />
-    <ul class="wolf-card divide-y divide-[var(--wolf-line)] p-0">
-      <li v-for="i in incidents" :key="i.name" class="px-4 py-3">
-        <RouterLink :to="{ name: 'incident', params: { incident: i.name } }" class="block">
-          <div class="flex flex-wrap items-baseline gap-x-3 text-sm text-ink-gray-6">
-            <SeverityGlyph :severity="i.severity" />
-            <span class="wolf-badge">{{ i.status }}</span>
-            <span>{{ scope(i) }}</span>
-            <span class="wolf-data">{{ i.name }}</span>
+    <ul v-if="incidents.length" class="wolf-card wolf-list">
+      <li v-for="i in incidents" :key="i.name" :data-severity="i.resolved_at ? null : i.severity">
+        <RouterLink :to="{ name: 'incident', params: { incident: i.name } }" class="wolf-list-row wolf-list-incident">
+          <SeverityGlyph :severity="i.severity" />
+          <div class="min-w-0">
+            <div class="wolf-list-title">{{ i.title }}</div>
+            <div class="wolf-list-sub">
+              <span>{{ scope(i) }}</span>
+              <span class="wolf-data">{{ i.name }}</span>
+            </div>
           </div>
-          <div class="text-base text-ink-gray-9">{{ i.title }}</div>
-          <div class="text-sm text-ink-gray-6">
-            <time class="wolf-data" :datetime="i.started_at">{{ full(i.started_at, tz) }}</time>
-            <span v-if="i.resolved_at">, lasted {{ duration(i.started_at, i.resolved_at) }}</span>
-            <span v-if="i.assigned_name"> · {{ i.assigned_name }}</span>
-            <span v-if="i.merged_into"> · merged into {{ i.merged_into }}</span>
+          <div class="wolf-list-end">
+            <span class="wolf-badge">{{ i.status }}</span>
+            <div class="wolf-list-sub">
+              <time class="wolf-data" :datetime="i.started_at">{{ full(i.started_at, tz) }}</time>
+              <span v-if="i.resolved_at">, lasted {{ duration(i.started_at, i.resolved_at) }}</span>
+              <span v-if="i.assigned_name"> · {{ i.assigned_name }}</span>
+              <span v-if="i.merged_into"> · merged into {{ i.merged_into }}</span>
+            </div>
           </div>
         </RouterLink>
       </li>

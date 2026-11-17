@@ -52,11 +52,43 @@ describe('SecurityPage', () => {
     expect(text).toContain('2 passed, 2 failed, 4 unknown')
     expect(text).toContain('Wolf could read 59% of the weight')
     expect(text).toContain('System Settings of this site are read by the agent from its database')
-    const rows = page.findAll('tbody tr').map((r) => r.text())
-    expect(rows[0]).toContain('Failed') // failures first
-    expect(rows[0]).toContain('Fix: Bind MariaDB')
-    expect(rows[1]).toContain('Unknown') // never shown as passed
-    expect(rows[2]).toContain('Passed')
+    const rows = page.findAll('[data-check]')
+    expect(rows.map((r) => r.attributes('data-check'))).toEqual(['exposure', 'two_factor', 'tls']) // failures first
+    expect(rows[0].text()).toContain('(Failed)')
+    expect(rows[0].get('.wolf-fix').text()).toContain('Bind MariaDB')
+    expect(rows[1].text()).toContain('(Unknown)') // never shown as passed
+    expect(rows[2].text()).toContain('(Passed)')
+    // each state has its own group, with the word in its title
+    expect(page.findAll('.wolf-checks-head h2').map((h) => h.text().replace(/\s+/g, ' '))).toEqual(['✕ Failed 1', '? Unknown 1', '✓ Passed 1'])
+  })
+
+  it('draws the weight of every check, and what passing one would add', async () => {
+    server({
+      'dodock_wolf.api.security.list_sites': () => ['a.example.com'],
+      'dodock_wolf.api.security.get_posture': () => POSTURE,
+    })
+    const page = await open('/security?site=a.example.com')
+    const bar = page.get('.wolf-weightbar')
+    expect(bar.attributes('aria-label')).toBe('Weight of the checks: 3 failed, 3 unknown, 2 passed, of 8')
+    const segments = bar.findAll('.wolf-weightbar-seg')
+    expect(segments.map((s) => [s.attributes('data-status'), s.element.style.flexGrow])).toEqual([['fail', '3'], ['unknown', '3'], ['pass', '2']])
+    // 2 of 8 passed is 25; with the failed check (weight 3) it is 5 of 8, 63: +38. Nothing for a passed one.
+    const rows = page.findAll('[data-check]')
+    expect(rows[0].get('.wolf-check-gain').text()).toBe('+38')
+    expect(rows[2].find('.wolf-check-gain').exists()).toBe(false)
+  })
+
+  it('draws the commands of a fix as code, never as HTML', async () => {
+    const check = { id: 'hsts', label: 'HSTS', weight: 1, status: 'fail', evidence: 'no header', fix: 'Add `add_header <b>x</b>;` to nginx.' }
+    server({
+      'dodock_wolf.api.security.list_sites': () => [],
+      'dodock_wolf.api.security.get_posture': () => ({ ...POSTURE, checks: [check] }),
+    })
+    const page = await open()
+    const fix = page.get('.wolf-fix')
+    expect(fix.get('code').text()).toBe('add_header <b>x</b>;')
+    expect(fix.find('b').exists()).toBe(false)
+    expect(fix.get('p').text()).toBe('Add add_header <b>x</b>; to nginx.')
   })
 
   it('says why a site is refused', async () => {
