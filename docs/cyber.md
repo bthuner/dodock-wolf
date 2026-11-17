@@ -518,9 +518,10 @@ Built: incidents grouped by entity across sources (`wolf/incidents.py`, `entity_
 - A user ties events together only when it is an e-mail address (`root` on two hosts or
   `Administrator` on two sites are not one person), and not from failed logins or `sudo`
   failures, whose user the attacker chose.
-- Order: an open incident of the event's own site, then one sharing an IP or user, then one of
-  its bench or host. Only incidents started in the last 24 hours take events by entity, so a
-  scanner coming back every hour does not keep one incident growing.
+- Only incidents started in the last 24 hours take events by entity, so a scanner coming back
+  every hour does not keep one incident growing. Sharing a site, bench or host alone attaches
+  nothing: an incident's evidence is what its rule matched (for a metric rule, the events behind
+  the metric, `rules.metric_event_names`), and the rest of its scope is context on its timeline.
 - A rule's evidence is its own: when a rule fires on events another incident took by IP, they
   move to the rule's incident.
 - The incident's timeline shows the events of other scopes it gathered, to users who may read

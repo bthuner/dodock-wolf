@@ -264,42 +264,24 @@ def entity_incident(event_name, event):
 
 
 def attach_to_open_incident(event_name, event):
-	"""Correlate a freshly ingested event with an open incident. In order: the open incident it is
-	already linked to (a repeat), one of its own site, one sharing an IP or e-mail user with it
-	(security events, entity_incident), one of its bench or host."""
-	if event["severity"] == "info" and event["event_type"] != "deployment":
+	"""Correlate a freshly ingested event with an open incident: the one it is already linked to (a
+	repeat folded into its record), or one sharing an IP or e-mail user with it (security events,
+	entity_incident).
+
+	Sharing a site, bench or host is not enough. An incident's evidence is what its rule matched
+	(rules.py links it); the other events of its scope are context, which its timeline shows
+	anyway. Attaching by scope made any event of a site evidence of the site's newest open
+	incident, whatever that incident was about: 502 responses under "Server Script can run new
+	code", and none under "502 spike after deployment"."""
+	if event["severity"] == "info":
 		return None
 	current = frappe.db.get_value("Wolf Event", event_name, "incident")
 	if current and frappe.db.get_value("Wolf Incident", current, "status") in OPEN:
 		return _attach(event_name, event, current)
-	rows = frappe.db.sql(
-		"""select name,
-			-- most specific scope first: a site event belongs to the site's incident
-			-- rather than to a host-wide one (disk, load) opened later
-			case
-				when coalesce(site, '') != '' and site = %(site)s then 0
-				when coalesce(bench, '') != '' and bench = %(bench)s then 1
-				else 2
-			end as specificity
-		from `tabWolf Incident`
-		where status in ('Open', 'Acknowledged') and (
-			(coalesce(site, '') != '' and site = %(site)s)
-			or (coalesce(site, '') = '' and coalesce(bench, '') != '' and bench = %(bench)s
-				and coalesce(host, '') in ('', %(host)s))
-			or (host = %(host)s and coalesce(bench, '') = '' and coalesce(site, '') = '')
-		)
-		order by specificity, started_at desc
-		limit 1""",
-		{"site": event.get("site") or "", "bench": event.get("bench") or "", "host": event.get("host") or ""},
-	)
-	if rows and rows[0][1] == 0:
-		return _attach(event_name, event, rows[0][0])
 	incident = entity_incident(event_name, event)
 	if incident:
 		return _attach(event_name, event, incident)
-	if not rows:
-		return None
-	return _attach(event_name, event, rows[0][0])
+	return None
 
 
 def _attach(event_name, event, incident):

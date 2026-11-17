@@ -99,13 +99,21 @@ def main():
 		return out
 
 	def correlate():
+		site_incident = frappe.db.get_value("Wolf Incident", {"alert_rule": "smoke 502"}, "name", order_by="creation desc")
+		# Sharing the site is not enough: the 500 is context of the site's incident, not its evidence.
 		e = schema.normalize_event({"type": "error", "host": HOST, "bench": "b1", "site": "smoke.localhost",
 		                            "severity": "critical", "title": "smoke 500"}, tz, now)
-		inc = incidents.attach_to_open_incident(events.insert_event(e), e)
-		site_incident = frappe.db.get_value("Wolf Incident", {"site": "smoke.localhost", "status": "Open"}, "name",
-		                                    order_by="started_at desc")
-		assert inc, "not attached"
-		return f"attached to {inc} (site incident {site_incident})"
+		error = events.insert_event(e)
+		assert incidents.attach_to_open_incident(error, e) is None, "attached by scope alone"
+		assert any(r.name == error for r in incidents.get_timeline(site_incident)), "500 missing from the site's context"
+		# The 502 responses behind the metric are the 502 rule's evidence, linked when it evaluates again.
+		e = schema.normalize_event({"type": "error", "category": "http_502", "host": HOST, "bench": "b1",
+		                            "site": "smoke.localhost", "severity": "critical", "title": "smoke 502 on GET /"}, tz, now)
+		responses = events.insert_event(e)
+		assert incidents.attach_to_open_incident(responses, e) is None
+		rules.evaluate(frappe.get_doc("Wolf Alert Rule", "smoke 502"))
+		assert frappe.db.get_value("Wolf Event", responses, "incident") == site_incident, "502 events not the 502 rule's evidence"
+		return f"500 is context, 502 events are evidence of {site_incident}"
 
 	def timeline():
 		inc = frappe.db.get_value("Wolf Incident", {"alert_rule": "smoke 502"}, "name", order_by="creation desc")
@@ -625,15 +633,25 @@ def main():
 			agent = doc.name
 		frappe.local.request_ip = "127.0.0.1"
 		stamp = (now - timedelta(seconds=5)).strftime("%Y-%m-%d %H:%M:%S")
+		# Both modes correlate: the pushed events name the IP of an open incident's probe, so they join it.
+		# (Sharing a site alone would attach nothing: that is context, not evidence.)
+		ip = "45.33.32.178"  # used by no other check: events of one IP would correlate across checks
+		seed = schema.normalize_event({"type": "security", "category": "web_attack_probe", "severity": "warning",
+		                               "host": HOST, "site": "smoke.localhost", "title": "smoke ingest probe",
+		                               "payload": {"ip": ip}}, tz, now - timedelta(minutes=5))  # fmt: skip
+		target = frappe.get_doc({"doctype": "Wolf Incident", "title": "smoke ingest incident", "severity": "warning",
+		                         "status": "Open", "started_at": now - timedelta(minutes=10),
+		                         "site": "smoke.localhost"}).insert(ignore_permissions=True)  # fmt: skip
+		incidents.link_events(target.name, [events.insert_event(seed)])
 
 		def payload(tag):
 			# the sync push has no sent_at (older agents), the async one has
 			sent_at = {"sent_at": (now - timedelta(seconds=2)).isoformat()} if tag == "async" else {}
 			return {**sent_at, "hostname": "smoke-ingest", "agent_version": "smoke",
 			        "metrics": [{"metric_name": "smoke_ingest", "value": 1, "labels": {"mode": tag}}],
-			        "events": [{"type": "error", "category": "http_502", "severity": "critical", "host": HOST,
-			                    "bench": "b1", "site": "smoke.localhost", "title": f"smoke {tag} 502",
-			                    "fingerprint": f"smoke-{tag}-{stamp}"}]}
+			        "events": [{"type": "security", "category": "web_attack_probe", "severity": "warning", "host": HOST,
+			                    "bench": "b1", "site": "smoke.localhost", "title": f"smoke {tag} probe",
+			                    "fingerprint": f"smoke-{tag}-{stamp}", "payload": {"ip": ip}}]}
 
 		def set_mode(mode):
 			settings = frappe.get_single("Wolf Settings")
@@ -650,7 +668,7 @@ def main():
 		res = ingest_api.accept(agent, payload("sync"))
 		assert res["queued"] is False and res["metrics"] == 1 and res["events"] == 1, res
 		count, incident = stored("sync")
-		assert count == 1 and incident, f"sync push not stored/correlated: {count}, {incident}"
+		assert count == 1 and incident == target.name, f"sync push not stored/correlated: {count}, {incident}"
 
 		set_mode("async")
 		before = frappe.db.get_value("Wolf Agent", agent, "last_seen")
@@ -669,7 +687,7 @@ def main():
 			ingest_api.store_batch(**kwargs)
 			job.delete()
 		count, incident = stored("async")
-		assert count == 1 and incident, f"queued push not stored/correlated: {count}, {incident}"
+		assert count == 1 and incident == target.name, f"queued push not stored/correlated: {count}, {incident}"
 		return f"sync stored inline, async queued {len(jobs)} job(s) then stored, both attached to {incident}"
 
 	def purge_metrics():
@@ -1957,10 +1975,11 @@ def main():
 			assert got is None, f"{why} grouped into {got}"
 		assert attach(ids("corr late", ip), 200) is None, "an IP seen 3 hours later grouped"
 
-		# an open incident of the event's own site comes first
+		# the IP decides, not the site: an open incident of the event's own site does not take it
 		own = incident("corr own site", site="corr-d.localhost")
-		assert attach(ids("corr own", ip, site="corr-d.localhost")) == own.name, "own site's incident not preferred"
-		frappe.db.set_value("Wolf Incident", own.name, "status", "Resolved")  # it holds an event of the IP now
+		assert attach(ids("corr own", ip, site="corr-d.localhost")) == inc.name, "grouped by site instead of by IP"
+		assert attach(ids("corr site only", "45.33.32.177", site="corr-d.localhost")) is None, "attached by site alone"
+		frappe.db.set_value("Wolf Incident", own.name, "status", "Resolved")
 		# a rule's evidence is its own: its events come back from the incident that took them by IP
 		taken, taken_event = ev(ids("corr taken", ip, host="corr-e"))
 		assert incidents.attach_to_open_incident(taken, taken_event) == inc.name
@@ -1968,7 +1987,7 @@ def main():
 		incidents.link_events(host_inc.name, [taken, probe])
 		assert frappe.db.get_value("Wolf Event", taken, "incident") == host_inc.name, "rule evidence left elsewhere"
 		assert frappe.db.get_value("Wolf Event", probe, "incident") == inc.name, "in-scope evidence moved"
-		assert frappe.db.get_value("Wolf Incident", inc.name, "event_count") == 3, "count not refreshed"
+		assert frappe.db.get_value("Wolf Incident", inc.name, "event_count") == 4, "count not refreshed"
 
 		frappe.db.set_single_value("Wolf Settings", "correlate_by_entity", 0)
 		frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
