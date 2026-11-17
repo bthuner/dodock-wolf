@@ -6,7 +6,7 @@ import json
 import frappe
 from frappe.utils import add_to_date, cint, get_datetime, now_datetime
 
-from dodock_wolf.wolf import live
+from dodock_wolf.wolf import live, timeline
 from dodock_wolf.wolf.conditions import describe_group
 from dodock_wolf.wolf.events import scope_clause
 
@@ -318,23 +318,56 @@ def incident_window(inc):
 	return start, end, padding
 
 
+# What happened around an incident's events from other scopes: changes and health, not their noise.
+HEALTH_TYPES = ("deployment", "error", "cron_failure", "worker_failure", "host_metric_alert")
+HOST_WIDE_TYPES = ("deployment", "cron_failure", "worker_failure")  # of every site on a related host
+MAX_RELATED_SCOPES = 10
+
+
+def related_clause(inc):
+	"""(" or (...)", params): deployments and health events of the scopes the incident's linked
+	events came from beyond its own (timeline.related_scopes): a site's; a bench's on its host; on
+	a host, its host-wide events and its benches' deployments and failed crons and workers, not
+	the Error Logs of every site it serves."""
+	linked = frappe.db.sql("select distinct host, bench, site from `tabWolf Event` where incident = %s", inc.name)
+	scopes = timeline.related_scopes((inc.host, inc.bench, inc.site), linked, MAX_RELATED_SCOPES)
+	parts, params = [], {}
+	for n, (host, bench, site) in enumerate(scopes):
+		if site:
+			parts.append(f"`site` = %(rs_site{n})s")
+		elif bench:
+			parts.append(f"(`bench` = %(rs_bench{n})s" + (f" and `host` = %(rs_host{n})s)" if host else ")"))
+		else:
+			parts.append(f"(`host` = %(rs_host{n})s and (coalesce(`site`, '') = '' or `event_type` in %(host_wide_types)s))")
+		params.update({f"rs_site{n}": site, f"rs_bench{n}": bench, f"rs_host{n}": host})
+	if not parts:
+		return "", {}
+	params.update(health_types=HEALTH_TYPES, host_wide_types=HOST_WIDE_TYPES)
+	return f" or (`event_type` in %(health_types)s and ({' or '.join(parts)}))", params
+
+
 def get_timeline(incident, limit=300):
-	"""Events linked to the incident plus everything in the same scope during its window."""
+	"""Events linked to the incident, everything in its scope during its window, and the health
+	events and deployments of the scopes its events came from (related_clause). Linked events come
+	first under the limit: context never pushes evidence out."""
 	inc = frappe.get_doc("Wolf Incident", incident) if isinstance(incident, str) else incident
 	start, end, _padding = incident_window(inc)
-	clause, params = scope_clause(inc.host, inc.bench, inc.site)
-	params.update(incident=inc.name, start=start, end=end, limit=cint(limit))
-	return frappe.db.sql(
+	# an incident without any scope has no context of its own: "same scope" would mean every site
+	clause, params = scope_clause(inc.host, inc.bench, inc.site) if (inc.host or inc.bench or inc.site) else ("1=0", {})
+	related, related_params = related_clause(inc)
+	params.update(related_params, incident=inc.name, start=start, end=end, limit=cint(limit))
+	rows = frappe.db.sql(
 		f"""select name, title, event_type, category, severity, source, `timestamp`, last_seen,
 			`count`, host, bench, site, incident, payload
 		from `tabWolf Event`
 		where incident = %(incident)s
-			or (`timestamp` between %(start)s and %(end)s and {clause})
-		order by `timestamp` asc
+			or (`timestamp` between %(start)s and %(end)s and ({clause}{related}))
+		order by case when incident = %(incident)s then 0 else 1 end, `timestamp` desc
 		limit %(limit)s""",
 		params,
 		as_dict=True,
 	)
+	return sorted(rows, key=lambda r: (get_datetime(r.timestamp), r.name))
 
 
 def parse_payload(row):

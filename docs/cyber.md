@@ -546,9 +546,17 @@ on the host, because warning-level Suricata and Wazuh alerts are constant on exp
 often belongs to an earlier incident already; it stays there, and the sequence incident's
 timeline, which starts at the first event, shows it.
 
-Planned: the timeline interleaving every source with deployments and health events, and
-standalone parity for benches without Suricata or Wazuh: file integrity and outbound connections
-of bench processes. Wolf alone stays fully supported.
+Built: one story per incident. Its timeline already held every source's events of its scope with
+the deployments and health events there (failed crons, errors, the events metric rules emit for
+5xx spikes or a full disk). When it took events from other scopes, by IP or user or through a
+sequence rule, it now also shows the deployments and health events of those scopes in its window
+(`incidents.related_clause`), not their other security events. On a related host that is its
+host-wide events and its benches' deployments and failed crons and workers, not the Error Logs of
+every site it serves. An attack on one host and an
+outage on another read as one story, for the users allowed to see both.
+
+Planned: standalone parity for benches without Suricata or Wazuh: file integrity and outbound
+connections of bench processes. Wolf alone stays fully supported.
 
 ## 5. Mapping reference
 

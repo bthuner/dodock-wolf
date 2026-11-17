@@ -147,10 +147,12 @@ def _events_after(doc, start, end, wanted, cursor_key, limit):
 	allowed, allowed_params = access.sql_condition("Wolf Event")
 	if "evidence" in wanted:
 		parts.append(f"(incident = %(incident)s{allowed})")
-	# an incident without any scope has no context: "same scope" would mean every site
-	if "context" in wanted and (doc.host or doc.bench or doc.site):
-		clause, params = events.scope_clause(doc.host, doc.bench, doc.site)
-		parts.append(f"(coalesce(incident, '') != %(incident)s and `timestamp` between %(start)s and %(end)s and {clause}{allowed})")
+	# an incident without any scope has no context of its own: "same scope" would mean every site
+	related, related_params = incidents.related_clause(doc) if "context" in wanted else ("", {})
+	if "context" in wanted and (doc.host or doc.bench or doc.site or related):
+		clause, params = events.scope_clause(doc.host, doc.bench, doc.site) if (doc.host or doc.bench or doc.site) else ("1=0", {})
+		params.update(related_params)
+		parts.append(f"(coalesce(incident, '') != %(incident)s and `timestamp` between %(start)s and %(end)s and ({clause}{related}){allowed})")
 	params.update(allowed_params)
 	if not parts:
 		return [], False
