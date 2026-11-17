@@ -25,7 +25,7 @@ RETRY_SECONDS = 60
 def assess(health, stale_minutes=DEFAULT_STALE_MINUTES):
 	"""Problems in the push response's `health` (docs/protocol.md §4), empty if healthy.
 
-	Mirrors frappe_wolf/wolf/heartbeat.py:assess; keep the two in sync.
+	Mirrors dodock_wolf/wolf/heartbeat.py:assess; keep the two in sync.
 	"""
 	if not isinstance(health, dict):
 		return []

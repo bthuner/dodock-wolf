@@ -1,5 +1,5 @@
 [Unit]
-Description=Frappe Wolf observability agent
+Description=Dodock Wolf observability agent
 After=network-online.target
 Wants=network-online.target
 

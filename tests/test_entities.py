@@ -1,6 +1,6 @@
 import unittest
 
-from frappe_wolf.wolf import entities
+from dodock_wolf.wolf import entities
 
 ALIASES = entities.Aliases([
 	("host", "172.18.0.14", "bench-01"), ("host", "10.0.0.7", "erp-web02"), ("host", "erp-web02.prod.example.com", "erp-web02"),

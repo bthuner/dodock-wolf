@@ -1,4 +1,4 @@
-# Frappe Wolf: identity tokens
+# Dodock Wolf: identity tokens
 
 These are the tokens behind the making-of page and the Wolf UI. Copy them as they are.
 Every text pair below meets WCAG AA (4.5:1) on its own background. The ratios were checked
@@ -6,7 +6,7 @@ when the palette was rebuilt around the official logo.
 
 ## The mark
 
-![Frappe Wolf logo](assets/logo-192.png)
+![Dodock Wolf logo](assets/logo-192.png)
 
 The founder designed the mark, and it is used as supplied. It is a wolf head in profile, drawn as
 a **single continuous white line**: two pricked ears, a long muzzle and an open jaw. One
@@ -96,5 +96,5 @@ Timestamps are always `HH:MM` in mono, with tabular figures.
 3. **Numbers over adjectives.** "count ≥ 10 in 5 min" beats "a lot of errors".
 4. **One wolf metaphor per screen, at most.** The brand is the wolf. The product is a tool.
 5. **Night-shift kindness.** Keep alerts short and put the link last. No double exclamation marks.
-6. **Names:** *Frappe Wolf* (the product), *Wolf Agent* (the host daemon), *Wolf App* (the Frappe
+6. **Names:** *Dodock Wolf* (the product), *Wolf Agent* (the host daemon), *Wolf App* (the Frappe
    app). DocTypes keep their technical names.

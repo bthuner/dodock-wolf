@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from frappe_wolf.wolf import heartbeat as hb
+from dodock_wolf.wolf import heartbeat as hb
 
 
 def health(rules_age=None, job_age=None, **extra):

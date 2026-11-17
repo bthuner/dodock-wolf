@@ -1,7 +1,7 @@
 import unittest
 
-from frappe_wolf.wolf import conditions
-from frappe_wolf.wolf.presets import PRESETS
+from dodock_wolf.wolf import conditions
+from dodock_wolf.wolf.presets import PRESETS
 
 EVENT_TYPES = {"error", "cron_failure", "worker_failure", "security", "host_metric_alert", "deployment"}
 
@@ -39,7 +39,7 @@ class TestPresets(unittest.TestCase):
 			self.assertTrue(any(p.get("event_category") == category for p in PRESETS), category)
 
 	def test_cyber_presets_map_to_attack(self):
-		from frappe_wolf.wolf import attack
+		from dodock_wolf.wolf import attack
 
 		security = [p for p in PRESETS if p.get("event_type") == "security"]
 		for p in security:

@@ -1,6 +1,6 @@
 import unittest
 
-from frappe_wolf.wolf import spa
+from dodock_wolf.wolf import spa
 
 
 class TestAccess(unittest.TestCase):

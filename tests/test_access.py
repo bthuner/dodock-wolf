@@ -1,6 +1,6 @@
 import unittest
 
-from frappe_wolf.wolf import agent_secrets, rate, scopes
+from dodock_wolf.wolf import agent_secrets, rate, scopes
 
 EVENT = scopes.COLUMNS["Wolf Event"]
 AGENT = scopes.COLUMNS["Wolf Agent"]

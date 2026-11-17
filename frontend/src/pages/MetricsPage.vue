@@ -63,7 +63,7 @@ const labelOptions = computed(() => [{ value: '', label: `Any ${spec.value?.labe
 
 async function loadCatalog() {
   try {
-    catalog.value = (await call('frappe_wolf.api.metrics.get_metric_catalog')).metrics
+    catalog.value = (await call('dodock_wolf.api.metrics.get_metric_catalog')).metrics
   } catch (e) {
     catalogError.value = failure(e, 'the metric catalog')
   } finally {
@@ -76,7 +76,7 @@ async function loadLabels() {
   labels.value = []
   if (!spec.value?.label_key) return
   try {
-    const answer = await call('frappe_wolf.api.metrics.get_labels', { metric: metric.value, site: site.value, host: host.value, bench: host.value ? bench.value : undefined })
+    const answer = await call('dodock_wolf.api.metrics.get_labels', { metric: metric.value, site: site.value, host: host.value, bench: host.value ? bench.value : undefined })
     if (mine === labelTicket) labels.value = answer.labels
   } catch {
     // the filter stays usable with "any"
@@ -100,7 +100,7 @@ async function query() {
     ...(explicit.value || { range: range.value }),
   }
   try {
-    const answer = await call('frappe_wolf.api.metrics.query_metric', args)
+    const answer = await call('dodock_wolf.api.metrics.query_metric', args)
     if (mine === ticket) result.value = answer
   } catch (e) {
     if (mine === ticket) error.value = failure(e, 'this metric')

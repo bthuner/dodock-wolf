@@ -34,7 +34,7 @@ async function load(append = false) {
   loading.value = true
   error.value = null
   try {
-    const page = await call('frappe_wolf.api.incident_view.list_incidents', {
+    const page = await call('dodock_wolf.api.incident_view.list_incidents', {
       status: status.value,
       cursor: append ? cursor.value : null,
     })

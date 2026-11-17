@@ -32,12 +32,12 @@ const SIGNALS = {
 
 function server(overrides = {}) {
   const handlers = {
-    'frappe_wolf.api.scope.get_counts': () => COUNTS,
-    'frappe_wolf.api.dashboard.get_http': () => HTTP,
-    'frappe_wolf.api.dashboard.get_signals': () => SIGNALS,
-    'frappe_wolf.api.incident_view.list_incidents': () => ({ incidents: [], paging: { has_more: false } }),
-    'frappe_wolf.api.scope.get_inventory': () => ({ hosts: [], note: '' }),
-    'frappe_wolf.api.dashboard.get_monitoring': () => ({ health: null, rollups: {}, agents: [], silence_minutes: 5, mode: { mode: 'central' }, note: '' }),
+    'dodock_wolf.api.scope.get_counts': () => COUNTS,
+    'dodock_wolf.api.dashboard.get_http': () => HTTP,
+    'dodock_wolf.api.dashboard.get_signals': () => SIGNALS,
+    'dodock_wolf.api.incident_view.list_incidents': () => ({ incidents: [], paging: { has_more: false } }),
+    'dodock_wolf.api.scope.get_inventory': () => ({ hosts: [], note: '' }),
+    'dodock_wolf.api.dashboard.get_monitoring': () => ({ health: null, rollups: {}, agents: [], silence_minutes: 5, mode: { mode: 'central' }, note: '' }),
     ...overrides,
   }
   const fetchFn = vi.fn(async (url) => {
@@ -109,7 +109,7 @@ describe('DashboardPage', () => {
   })
 
   it('says 502 is part of 5xx, and that no HTTP data is not no traffic', async () => {
-    server({ 'frappe_wolf.api.dashboard.get_http': () => ({ ...HTTP, has_data: { http_requests: false, http_5xx: false, http_502: false } }) })
+    server({ 'dodock_wolf.api.dashboard.get_http': () => ({ ...HTTP, has_data: { http_requests: false, http_5xx: false, http_502: false } }) })
     const { page } = await open()
     expect(page.text()).toContain('502 responses are part of the 5xx count')
     expect(page.text()).toContain('which is not the same as no traffic')
@@ -117,7 +117,7 @@ describe('DashboardPage', () => {
   })
 
   it('shows the other panels when one fails', async () => {
-    server({ 'frappe_wolf.api.dashboard.get_signals': () => { throw new Error('boom') } })
+    server({ 'dodock_wolf.api.dashboard.get_signals': () => { throw new Error('boom') } })
     const { page } = await open()
     expect(page.text()).toContain('Signals: boom')
     expect(page.text()).toContain('7 critical')
@@ -129,7 +129,7 @@ describe('DashboardPage', () => {
     // the server's order: firing, then stale, then the others
     const series = [...Array.from({ length: 9 }, (_, i) => row(i, 'firing')), ...Array.from({ length: 3 }, (_, i) => row(9 + i, 'stale')),
       ...Array.from({ length: 13 }, (_, i) => row(12 + i, 'unwatched'))]
-    server({ 'frappe_wolf.api.dashboard.get_signals': () => ({ ...SIGNALS, series, counts: { host: { firing: 9, stale: 3, unwatched: 13 } }, total_series: 25 }) })
+    server({ 'dodock_wolf.api.dashboard.get_signals': () => ({ ...SIGNALS, series, counts: { host: { firing: 9, stale: 3, unwatched: 13 } }, total_series: 25 }) })
     const { page } = await open()
     const rows = () => page.findAll('[aria-label="Signals"] li')
     expect(rows()).toHaveLength(10)
@@ -145,7 +145,7 @@ describe('DashboardPage', () => {
 
   it('draws the first 20 hosts and the rest on demand', async () => {
     const hosts = Array.from({ length: 23 }, (_, i) => ({ host: `host-${i}`, sources: ['agent'], benches: [] }))
-    server({ 'frappe_wolf.api.scope.get_inventory': () => ({ hosts, note: '' }) })
+    server({ 'dodock_wolf.api.scope.get_inventory': () => ({ hosts, note: '' }) })
     const { page } = await open()
     const drawn = () => page.findAll('[aria-label="Hosts, benches and sites"] > ul > li')
     expect(drawn()).toHaveLength(20)

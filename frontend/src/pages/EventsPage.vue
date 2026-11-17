@@ -15,7 +15,7 @@ import { clock, day, full } from '@/services/time'
 
 const boot = inject('boot')
 const tz = boot.time_zone
-const list = useExplore('frappe_wolf.api.explore.list_events', 'events', {
+const list = useExplore('dodock_wolf.api.explore.list_events', 'events', {
   itemKey: (e) => e.name,
   extraArgs: (q) => ({ event_type: pick(q.type, EVENT_TYPES), severity: pick(q.severity, SEVERITIES) }),
 })
@@ -30,7 +30,7 @@ async function toggle(name) {
   }
   open.value = { ...open.value, [name]: { loading: true } }
   try {
-    const event = await call('frappe_wolf.api.explore.get_event', { name })
+    const event = await call('dodock_wolf.api.explore.get_event', { name })
     open.value = { ...open.value, [name]: { text: JSON.stringify(event.payload, null, 2) } }
   } catch (e) {
     open.value = { ...open.value, [name]: { error: e.message } }

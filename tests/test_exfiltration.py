@@ -1,6 +1,6 @@
 import unittest
 
-from frappe_wolf.wolf import exfiltration as exf
+from dodock_wolf.wolf import exfiltration as exf
 
 MB = 1_000_000
 

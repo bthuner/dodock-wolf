@@ -9,9 +9,9 @@ import tempfile
 import threading
 import unittest
 
-from frappe_wolf.wolf import siem
+from dodock_wolf.wolf import siem
 
-MESSAGES = ["<134>1 2026-11-02T10:00:00.000Z h frappe-wolf - x - one", "<134>1 2026-11-02T10:00:00.000Z h frappe-wolf - x - deux é\nligne"]
+MESSAGES = ["<134>1 2026-11-02T10:00:00.000Z h dodock-wolf - x - one", "<134>1 2026-11-02T10:00:00.000Z h dodock-wolf - x - deux é\nligne"]
 
 
 def make_ca_and_server(tmp):

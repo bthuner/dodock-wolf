@@ -157,7 +157,7 @@ and for `--site <name>`.
   the job's `start`, so Wolf's "502 spike after deployment" rule links incidents that happen
   *during* a long migrate. If the bench cannot be determined yet, the event waits up to
   2 minutes for a step to name it, then ships host-scoped. Wolf's incident correlation also
-  matches host-scoped deployments (`scope_clause` in `frappe_wolf/wolf/events.py`).
+  matches host-scoped deployments (`scope_clause` in `dodock_wolf/wolf/events.py`).
   Fields: `category: "press"`, `source: "press-agent"`, and
   `payload.press_job / agent_job_id / local_job_id / sites`.
 - **One `error` event (`category: "press_job_failed"`, warning)** when such a job ends in

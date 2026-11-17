@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, timedelta
 
-from frappe_wolf.wolf import timeline
+from dodock_wolf.wolf import timeline
 
 TZ = "Europe/Paris"
 T0 = datetime(2026, 10, 30, 1, 47)

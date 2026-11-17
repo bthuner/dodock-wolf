@@ -27,5 +27,5 @@ loadBoot()
   })
   .catch((error) => {
     // no app to render into: say so plainly instead of leaving a blank page
-    document.getElementById('app').textContent = `Frappe Wolf could not start: ${error.message}`
+    document.getElementById('app').textContent = `Dodock Wolf could not start: ${error.message}`
   })

@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, timedelta
 
-from frappe_wolf.wolf import stats
+from dodock_wolf.wolf import stats
 
 T0 = datetime(2026, 10, 1, 2, 0, 0)
 

@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, timedelta
 
-from frappe_wolf.wolf import api_keys
+from dodock_wolf.wolf import api_keys
 
 NOW = datetime(2026, 11, 2, 12, 0)
 OLD = NOW - timedelta(days=3)

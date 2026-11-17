@@ -10,7 +10,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 const [major, minor] = process.versions.node.split('.').map(Number)
 if (major < 20 || (major === 20 && minor < 19)) {
   console.warn(
-    `\nFrappe Wolf: the Wolf UI (/wolf) needs Node 20.19 or newer, this is ${process.versions.node}. ` +
+    `\nDodock Wolf: the Wolf UI (/wolf) needs Node 20.19 or newer, this is ${process.versions.node}. ` +
       'Skipping it; Desk is not affected.\n',
   )
   process.exit(0)

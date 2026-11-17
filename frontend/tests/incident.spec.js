@@ -61,8 +61,8 @@ afterEach(() => {
 describe('IncidentPage', () => {
   it('shows the header, scope first, and every row family', async () => {
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => INCIDENT,
-      'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false }, totals: {}, truncated: {} }),
     })
     const { page } = await open()
     const text = page.text()
@@ -78,8 +78,8 @@ describe('IncidentPage', () => {
   it('offers merge, split and the postmortem as the server allows, never Desk for them', async () => {
     const timeline = () => ({ rows: ROWS, paging: { has_more: false }, totals: {}, truncated: {} })
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, can: { ...INCIDENT.can, merge: true, split: true, postmortem: false } }),
-      'frappe_wolf.api.incident_view.get_timeline': timeline,
+      'dodock_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, can: { ...INCIDENT.can, merge: true, split: true, postmortem: false } }),
+      'dodock_wolf.api.incident_view.get_timeline': timeline,
     })
     let { page } = await open()
     let labels = page.findAll('button').map((b) => b.text())
@@ -90,11 +90,11 @@ describe('IncidentPage', () => {
     page.unmount()
 
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => ({
+      'dodock_wolf.api.incident_view.get_incident': () => ({
         ...INCIDENT, status: 'Resolved', postmortem: 'WPM-00003',
         can: { ...INCIDENT.can, merge: false, split: false, postmortem: true },
       }), // prettier-ignore
-      'frappe_wolf.api.incident_view.get_timeline': timeline,
+      'dodock_wolf.api.incident_view.get_timeline': timeline,
     })
     ;({ page } = await open())
     labels = page.findAll('button').map((b) => b.text())
@@ -104,8 +104,8 @@ describe('IncidentPage', () => {
 
   it('counts one linked record in the singular', async () => {
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, event_records: 1, event_count: 1, event_occurrences: 1 }),
-      'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, event_records: 1, event_count: 1, event_occurrences: 1 }),
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false }, totals: {}, truncated: {} }),
     })
     const { page } = await open()
     expect(page.text()).toContain('1 record, 1 reported occurrence')
@@ -114,8 +114,8 @@ describe('IncidentPage', () => {
 
   it('renders comments as text', async () => {
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => INCIDENT,
-      'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false }, totals: {}, truncated: {} }),
     })
     const { page } = await open()
     expect(page.find('img').exists()).toBe(false)
@@ -124,8 +124,8 @@ describe('IncidentPage', () => {
 
   it('offers only the actions the server allows', async () => {
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, can: { comment: true, acknowledge: false, resolve: false, assign_to_me: false, workflow: false } }),
-      'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, can: { comment: true, acknowledge: false, resolve: false, assign_to_me: false, workflow: false } }),
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
     })
     const { page } = await open()
     const labels = page.findAll('button').map((b) => b.text())
@@ -136,9 +136,9 @@ describe('IncidentPage', () => {
 
   it('keeps the comment when posting fails, and shows why', async () => {
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => INCIDENT,
-      'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
-      'frappe_wolf.api.incident.add_comment': () =>
+      'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.incident.add_comment': () =>
         new Response(JSON.stringify({ _server_messages: JSON.stringify([JSON.stringify({ message: 'Not permitted' })]) }), { status: 403 }),
     })
     const { page } = await open()
@@ -151,8 +151,8 @@ describe('IncidentPage', () => {
 
   it('says a search only covers the loaded rows', async () => {
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => INCIDENT,
-      'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: true, next_cursor: 'c' }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: true, next_cursor: 'c' }, totals: {}, truncated: {} }),
     })
     const { page } = await open('/incidents/WINC-00001?q=502')
     expect(page.text()).toContain('1 of 4 loaded rows match; more rows are not loaded yet')
@@ -217,9 +217,9 @@ describe('IncidentPage regulatory reporting', () => {
       ],
     }  // prettier-ignore
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, regulatory }),
-      'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
-      'frappe_wolf.api.compliance.get_report': () => ({ markdown: '# Incident report: <b>x</b>' }),
+      'dodock_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, regulatory }),
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.compliance.get_report': () => ({ markdown: '# Incident report: <b>x</b>' }),
     })
     const { page } = await open()
     const text = page.text()
@@ -245,8 +245,8 @@ describe('IncidentPage regulatory reporting', () => {
       ],
     }  // prettier-ignore
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, regulatory }),
-      'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, regulatory }),
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
     })
     const { page } = await open()
     const text = page.text()
@@ -257,8 +257,8 @@ describe('IncidentPage regulatory reporting', () => {
 
   it('shows no regulatory section for an incident without a flag', async () => {
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, regulatory: null }),
-      'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, regulatory: null }),
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
     })
     const { page } = await open()
     expect(page.text()).not.toContain('Regulatory reporting')
@@ -271,12 +271,12 @@ describe('IncidentPage response actions', () => {
     const proposal = { action: 'block_ip', target: '45.33.32.156', agent: 'AG-1', host: 'bench-01', reason: 'ssh_failed_login: 25 failed',
       label: 'Block 45.33.32.156 for 24 h on bench-01' }  // prettier-ignore
     const fetchFn = server({
-      'frappe_wolf.api.incident_view.get_incident': () => INCIDENT,
-      'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
-      'frappe_wolf.api.response.get_response': () => ({
+      'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.response.get_response': () => ({
         proposals: actions.length ? [] : [proposal], actions, can_approve: true, default_hours: 24, max_hours: 168,
       }),
-      'frappe_wolf.api.response.approve': () => {
+      'dodock_wolf.api.response.approve': () => {
         actions = [{ name: 'WRA-00001', action: 'block_ip', target: '45.33.32.156', host: 'bench-01', status: 'Approved',
           approved_by: 'ops@example.com', approved_at: '2026-11-01T10:00:00Z', expires_at: '2026-11-02T10:00:00Z', result: null }]  // prettier-ignore
         return actions[0]
@@ -298,9 +298,9 @@ describe('IncidentPage response actions', () => {
 
   it('tells a Wolf User that only a manager can approve', async () => {
     server({
-      'frappe_wolf.api.incident_view.get_incident': () => INCIDENT,
-      'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
-      'frappe_wolf.api.response.get_response': () => ({
+      'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.response.get_response': () => ({
         proposals: [{ action: 'disable_user', target: 'x@example.com', reason: 'api_key_generated', label: 'Disable user x@example.com' }],
         actions: [], can_approve: false, default_hours: 24, max_hours: 168,
       }),

@@ -1,4 +1,4 @@
-# Making Frappe Wolf
+# Making Dodock Wolf
 
 > *The night shift never sleeps.*
 > The full, art-directed version of this story is in [`index.html`](index.html). The identity tokens are in [`brand.md`](brand.md).
@@ -22,14 +22,14 @@ every event.
 
 ## 03 · Naming and voice
 
-The product is *Frappe Wolf*, made of the *Wolf Agent* on the host and the *Wolf App* on the
+The product is *Dodock Wolf*, made of the *Wolf Agent* on the host and the *Wolf App* on the
 site. The DocTypes keep sober names, because operators type them at 2AM. The voice is that of a
 good on-call colleague: state facts, lead with scope, prefer numbers to adjectives, put the link
 last, and use one wolf metaphor per screen at most.
 
 ## 04 · Identity
 
-<img src="assets/logo-192.png" width="96" height="96" alt="Frappe Wolf logo">
+<img src="assets/logo-192.png" width="96" height="96" alt="Dodock Wolf logo">
 
 The founder's mark is used as supplied: a wolf head in profile drawn as a single white line, with
 an angular eye slit, on an electric blue (`#035AEC`) rounded square. The palette is rebuilt
@@ -127,7 +127,7 @@ Append new entries at the bottom. Mirror them in `index.html` (`#build-log`).
 - **2026-10-29 · Agent**: stdlib-only daemon with collector, rotation-aware tailer, parsers, Redis RESP client, spooling shipper, `install.sh` and a systemd unit.
 - **2026-10-29 · Desk**: overview page, incident timeline, workspace, Dokos presets, local signals.
 - **2026-10-29 · Identity**: official logo adopted. The palette was rebuilt around `#035AEC` and info moved to lilac.
-- **2026-10-29 · Publishing**: making-of published on [GitHub Pages](https://bthuner.github.io/frappe-wolf/) (`docs/making-of/`, relative assets, OG image).
+- **2026-10-29 · Publishing**: making-of published on [GitHub Pages](https://bthuner.github.io/dodock-wolf/) (`docs/making-of/`, relative assets, OG image).
 - **2026-10-29 · Alerting that holds**: an agent watchdog that alerts through its own channel when the site stops working, alert quality (flapping, cooldowns, digests), native channels (Slack, Mattermost, Matrix, ntfy, Gotify, SMS, PagerDuty), and the incident workflow (assignee, comments, merge and split, postmortems, MTTA and MTTR).
 - **2026-10-29 · Press and Pilot**: benches discovered on Press servers and from Pilot's `bench.toml`. Their deploys and migrations become deployment events.
 - **2026-10-29 · Privacy and access**: PII scrubbed on the host, per-site, bench and host grants for Wolf Users, hashed agent secrets, a push rate limit, and a clock-skew guard.

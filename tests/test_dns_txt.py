@@ -4,7 +4,7 @@ import struct
 import threading
 import unittest
 
-from frappe_wolf.wolf import dns_txt
+from dodock_wolf.wolf import dns_txt
 
 
 def answer(query, records, rcode=0, truncated=False):

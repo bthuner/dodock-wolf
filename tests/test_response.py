@@ -1,6 +1,6 @@
 import unittest
 
-from frappe_wolf.wolf import response
+from dodock_wolf.wolf import response
 
 
 def ev(category, payload, agent="agent-1", event_type="security", host="bench-01"):

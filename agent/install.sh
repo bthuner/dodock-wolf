@@ -16,7 +16,7 @@ CONFIG_DIR=/etc/wolf-agent
 CONFIG="$CONFIG_DIR/config.json"
 STATE_DIR=/var/lib/wolf-agent
 USER_NAME=wolf-agent
-REPO=https://github.com/bthuner/frappe-wolf
+REPO=https://github.com/bthuner/dodock-wolf
 REF="${WOLF_AGENT_REF:-main}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-.}")" && pwd)"
 if [[ -f "$SCRIPT_DIR/pyproject.toml" ]]; then
@@ -74,7 +74,7 @@ echo "==> installing systemd unit"
 if [[ -f "$SCRIPT_DIR/wolf-agent.service" ]]; then
 	install -m 0644 "$SCRIPT_DIR/wolf-agent.service" /etc/systemd/system/wolf-agent.service
 else
-	curl -fsSL "https://raw.githubusercontent.com/bthuner/frappe-wolf/$REF/agent/wolf-agent.service" \
+	curl -fsSL "https://raw.githubusercontent.com/bthuner/dodock-wolf/$REF/agent/wolf-agent.service" \
 		-o /etc/systemd/system/wolf-agent.service
 	chmod 0644 /etc/systemd/system/wolf-agent.service
 fi

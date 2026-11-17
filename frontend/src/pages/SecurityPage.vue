@@ -7,7 +7,7 @@ import PageTitle from '@/components/PageTitle.vue'
 import { useQueryParam } from '@/composables/useQueryParam'
 import { call, failure } from '@/services/api'
 
-// Security posture of one site (frappe_wolf/api/security.py): every check with what Wolf read
+// Security posture of one site (dodock_wolf/api/security.py): every check with what Wolf read
 // and the fix. A check Wolf cannot read is "Unknown" and does not count as passed.
 const STATUS = {
   pass: { label: 'Passed', glyph: '✓', color: 'var(--wolf-ok)' },
@@ -29,7 +29,7 @@ const siteOptions = computed(() => sites.value.map((s) => ({ label: s, value: s 
 
 async function loadSites() {
   try {
-    sites.value = await call('frappe_wolf.api.security.list_sites')
+    sites.value = await call('dodock_wolf.api.security.list_sites')
   } catch (e) {
     sitesError.value = failure(e, 'the sites')
   }
@@ -40,7 +40,7 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    const result = await call('frappe_wolf.api.security.get_posture', { site: site.value || undefined })
+    const result = await call('dodock_wolf.api.security.get_posture', { site: site.value || undefined })
     if (mine === ticket) posture.value = result
   } catch (e) {
     if (mine === ticket) {
@@ -52,7 +52,7 @@ async function load() {
   }
 }
 
-// tamper-evident journal (frappe_wolf/api/journal.py), managers only
+// tamper-evident journal (dodock_wolf/api/journal.py), managers only
 const boot = inject('boot', {})
 const journal = ref(null)
 const verdict = ref(null)
@@ -60,7 +60,7 @@ const verifying = ref(false)
 async function loadJournal() {
   if (!boot?.can?.configure) return
   try {
-    journal.value = await call('frappe_wolf.api.journal.get_status')
+    journal.value = await call('dodock_wolf.api.journal.get_status')
   } catch {
     journal.value = null
   }
@@ -68,7 +68,7 @@ async function loadJournal() {
 async function verifyJournal() {
   verifying.value = true
   try {
-    verdict.value = await call('frappe_wolf.api.journal.verify', {}, { post: true })
+    verdict.value = await call('dodock_wolf.api.journal.verify', {}, { post: true })
   } catch (e) {
     verdict.value = { ok: false, problem: { why: e.message } }
   } finally {

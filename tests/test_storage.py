@@ -2,9 +2,9 @@ import random
 import unittest
 from datetime import datetime, timedelta
 
-from frappe_wolf.wolf import storage
-from frappe_wolf.wolf.series import bucket_series
-from frappe_wolf.wolf.storage import HOUR, MINUTE, RAW
+from dodock_wolf.wolf import storage
+from dodock_wolf.wolf.series import bucket_series
+from dodock_wolf.wolf.storage import HOUR, MINUTE, RAW
 
 T0 = datetime(2026, 10, 29, 2, 0, 0)
 

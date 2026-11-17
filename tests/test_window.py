@@ -1,8 +1,8 @@
 import unittest
 from datetime import datetime, timedelta
 
-from frappe_wolf.wolf import window
-from frappe_wolf.wolf.schema import PayloadError
+from dodock_wolf.wolf import window
+from dodock_wolf.wolf.schema import PayloadError
 
 NOW = datetime(2026, 10, 30, 14, 0)  # Europe/Paris, CET (UTC+1) after the fall-back
 

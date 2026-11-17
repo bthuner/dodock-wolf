@@ -2,7 +2,7 @@ import json
 import unittest
 from datetime import datetime, timedelta
 
-from frappe_wolf.wolf import incident_ops as ops
+from dodock_wolf.wolf import incident_ops as ops
 
 T0 = datetime(2026, 10, 29, 2, 0, 0)
 

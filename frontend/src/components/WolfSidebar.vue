@@ -27,9 +27,9 @@ const menu = computed(() => [
 <template>
   <Sidebar aria-label="Wolf">
     <SidebarHeader
-      title="Frappe Wolf"
+      title="Dodock Wolf"
       :subtitle="boot.user.full_name"
-      logo="/assets/frappe_wolf/images/wolf.png"
+      logo="/assets/dodock_wolf/images/wolf.png"
       :menu-items="menu"
     />
     <div class="flex-1 overflow-y-auto px-2 pb-2">

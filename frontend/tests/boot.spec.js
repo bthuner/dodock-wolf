@@ -22,7 +22,7 @@ describe('loadBoot', () => {
     const win = fakeWindow()
     const fetchFn = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ message: BOOT }) })
     expect(await loadBoot({ win, fetchFn })).toEqual(BOOT)
-    expect(fetchFn.mock.calls[0][0]).toBe('/api/method/frappe_wolf.api.spa.get_boot')
+    expect(fetchFn.mock.calls[0][0]).toBe('/api/method/dodock_wolf.api.spa.get_boot')
     expect(win.wolf).toEqual(BOOT)
   })
 

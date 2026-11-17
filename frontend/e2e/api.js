@@ -46,53 +46,53 @@ const METRIC = { metric: 'disk_used_percent', label: 'Disk used', unit: '%', kin
 
 export function fixtures() {
   return {
-    'frappe_wolf.api.spa.get_boot': () => BOOT,
-    'frappe_wolf.api.scope.get_counts': () => ({
+    'dodock_wolf.api.spa.get_boot': () => BOOT,
+    'dodock_wolf.api.scope.get_counts': () => ({
       restricted: false,
       incidents: { unresolved: 3, critical_unresolved: 1, unacknowledged: 2, sites_with_unresolved: 2, unresolved_without_site: 0 },
       agents: { agent: { fresh: 2, stale: 0, never_seen: 0, disabled: 0 }, satellite: { fresh: 0, stale: 0, never_seen: 0, disabled: 0 } },
     }),
-    'frappe_wolf.api.dashboard.get_http': () => ({
+    'dodock_wolf.api.dashboard.get_http': () => ({
       window: { since: ago(60), until: NOW.toISOString() }, bucket_seconds: 60, resolution: '1m', deployments: [],
       series: { http_requests: [[ago(2), 120], [ago(1), 118]], http_5xx: [[ago(2), 3], [ago(1), 0]], http_502: [[ago(2), 2], [ago(1), 0]] },
       has_data: { http_requests: true, http_5xx: true, http_502: true },
     }),
-    'frappe_wolf.api.dashboard.get_signals': () => ({
+    'dodock_wolf.api.dashboard.get_signals': () => ({
       series: [{ metric_name: 'disk_used_percent', group: 'host', label: 'Disk used', unit: '%', host: 'bench-01', label_key: 'mount=/',
         value: 93, last_at: ago(1), state: 'firing', rules: [], incidents: ['WINC-00002'] }],
       counts: { host: { firing: 1 } }, missing: [], caveats: {}, email: {}, lookback_days: 7, truncated: false, total_series: 1,
     }),
-    'frappe_wolf.api.incident_view.list_incidents': () => ({
+    'dodock_wolf.api.incident_view.list_incidents': () => ({
       incidents: [{ name: INCIDENT.name, title: INCIDENT.title, status: 'Open', severity: 'critical', site: 'a.example.com',
         bench: 'frappe-bench', host: 'bench-01', started_at: INCIDENT.started_at, resolved_at: null, merged_into: null, assigned_name: null }],
       paging: { has_more: false, next_cursor: null },
     }),
-    'frappe_wolf.api.scope.get_inventory': () => ({ hosts: [], note: '' }),
-    'frappe_wolf.api.dashboard.get_monitoring': () => ({ health: null, rollups: {}, agents: [], silence_minutes: 5, mode: { mode: 'central' }, note: '' }),
-    'frappe_wolf.api.incident_view.get_incident': () => INCIDENT,
-    'frappe_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false, next_cursor: null }, totals: {}, truncated: {}, window: null }),
-    'frappe_wolf.api.incident_view.act': () => ({ ...INCIDENT, status: 'Acknowledged', acknowledged: { at: NOW.toISOString(), by: 'ops@example.com', by_name: 'Ops' },
+    'dodock_wolf.api.scope.get_inventory': () => ({ hosts: [], note: '' }),
+    'dodock_wolf.api.dashboard.get_monitoring': () => ({ health: null, rollups: {}, agents: [], silence_minutes: 5, mode: { mode: 'central' }, note: '' }),
+    'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
+    'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false, next_cursor: null }, totals: {}, truncated: {}, window: null }),
+    'dodock_wolf.api.incident_view.act': () => ({ ...INCIDENT, status: 'Acknowledged', acknowledged: { at: NOW.toISOString(), by: 'ops@example.com', by_name: 'Ops' },
       can: { ...INCIDENT.can, acknowledge: false } }),
-    'frappe_wolf.api.response.get_response': () => ({ proposals: [], actions: [], can_approve: true, default_hours: 24, max_hours: 168 }),
-    'frappe_wolf.api.explore.list_events': () => ({
+    'dodock_wolf.api.response.get_response': () => ({ proposals: [], actions: [], can_approve: true, default_hours: 24, max_hours: 168 }),
+    'dodock_wolf.api.explore.list_events': () => ({
       events: [{ name: 'E1', title: 'KeyError: customer', event_type: 'error', severity: 'critical', count: 14, first_seen: ago(30),
         last_seen: ago(5), site: 'a.example.com', bench: 'frappe-bench', host: 'bench-01', incident: null, fingerprint: 'fp1' }],
       paging: { has_more: false },
     }),
-    'frappe_wolf.api.explore.list_error_groups': () => ({
+    'dodock_wolf.api.explore.list_error_groups': () => ({
       groups: [{ fingerprint: 'fp1', title: 'KeyError: customer', severity: 'critical', records: 8, records_in_window: 3, occurrences: 47,
         sites: 2, host_wide: false, incidents: 1, first_seen: ago(300), last_seen: ago(5), latest: { site: 'a.example.com' } }],
       paging: { has_more: false },
     }),
-    'frappe_wolf.api.metrics.get_metric_catalog': () => ({ metrics: [METRIC] }),
-    'frappe_wolf.api.metrics.get_labels': () => ({ labels: ['mount=/'] }),
-    'frappe_wolf.api.metrics.query_metric': () => ({
+    'dodock_wolf.api.metrics.get_metric_catalog': () => ({ metrics: [METRIC] }),
+    'dodock_wolf.api.metrics.get_labels': () => ({ labels: ['mount=/'] }),
+    'dodock_wolf.api.metrics.query_metric': () => ({
       metric: METRIC, aggregation: 'avg', resolution: 'raw', bucket_seconds: 60, window: { since: ago(60), until: NOW.toISOString() },
       retention: { clipped: false }, groups: { shown: 1, total: 1, ranked_by: 'max over the window, highest first' }, live: true,
       series: [{ name: 'bench-01 · mount=/', value: 93, samples: 60, last_sample: ago(1), stale: false, points: [[ago(2), 92], [ago(1), 93]] }],
     }),
-    'frappe_wolf.api.security.list_sites': () => ['a.example.com'],
-    'frappe_wolf.api.security.get_posture': () => ({
+    'dodock_wolf.api.security.list_sites': () => ['a.example.com'],
+    'dodock_wolf.api.security.get_posture': () => ({
       site: 'a.example.com', local: true, hosts: ['bench-01'], recent_hours: 3, score: 71, coverage: 100, passed: 6, failed: 2, unknown: 0,
       checks: [
         { id: 'two_factor', label: 'Two-factor authentication for System Managers', weight: 3, status: 'fail', evidence: 'disabled in System Settings',
@@ -100,7 +100,7 @@ export function fixtures() {
         { id: 'backup', label: 'A backup newer than 26 h', weight: 2, status: 'pass', evidence: 'newest backup 3.0 h old', fix: null },
       ],
     }),
-    'frappe_wolf.api.journal.get_status': () => ({ entries: 12, anchor: `12:${'a'.repeat(64)}`, pending: 0, key: true }),
+    'dodock_wolf.api.journal.get_status': () => ({ entries: 12, anchor: `12:${'a'.repeat(64)}`, pending: 0, key: true }),
   }
 }
 

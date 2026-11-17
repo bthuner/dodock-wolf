@@ -1,6 +1,6 @@
 # Wolf cyber: benchmark and roadmap
 
-Frappe Wolf started as an observability tool (5xx windows, failed crons, workers, hosts) with a
+Dodock Wolf started as an observability tool (5xx windows, failed crons, workers, hosts) with a
 few security signals. This page compares it with a French sovereign SOC offer, SYLink / UniSOC,
 says what Wolf should take from it, and sets out the roadmap that gives Wolf a strong security
 focus. The first slice is built (see [What is built](#what-is-built)).
@@ -144,7 +144,7 @@ logs the agent already tails):
 - The journal follower now reads `sshd`, `sshd-session` (OpenSSH 9.8+), `sudo` and the
   shadow-utils tools, in `short-iso` format, so lines carry their real timestamps.
 
-**App: ATT&CK enrichment** (`frappe_wolf/wolf/attack.py`): at ingest, every `security` event
+**App: ATT&CK enrichment** (`dodock_wolf/wolf/attack.py`): at ingest, every `security` event
 gets a `mitre_attack` list of `{id, name, tactic}` in its payload. It merges the category's
 mapping with the technique IDs the agent sent. Events forwarded by satellites keep theirs.
 
@@ -235,7 +235,7 @@ Limits of export counting:
 ### Step 3: posture score and exposure (built)
 
 **Wolf → Security** (`/wolf/security`) shows a score out of 100 per site, with every check,
-what Wolf read and the fix (`frappe_wolf/wolf/posture.py`, `api/security.py`):
+what Wolf read and the fix (`dodock_wolf/wolf/posture.py`, `api/security.py`):
 
 | Check | Weight | Read from |
 |---|---|---|
@@ -300,7 +300,7 @@ proof of reachability: a firewall may block it.
 
 ### Step 4: deception and threat intelligence (built)
 
-Wolf Settings → **Threat intelligence and deception** (`frappe_wolf/api/threat.py`,
+Wolf Settings → **Threat intelligence and deception** (`dodock_wolf/api/threat.py`,
 `wolf/reputation.py`):
 
 - **Honeytokens**, each touch a critical `honeytoken_triggered` event (preset *Honeytoken
@@ -328,7 +328,7 @@ Wolf Settings → **Threat intelligence and deception** (`frappe_wolf/api/threat
     blocks get the tag but no raise.
   - **Detections out** (machine login from `cscli machines add`): security events with an IP,
     at or above the minimum severity (warning), become LAPI alerts with the scenario
-    `frappe-wolf/<category>`, sent once after a minute through a cursor, like the SIEM
+    `dodock-wolf/<category>`, sent once after a minute through a cursor, like the SIEM
     export. Past events are not replayed.
     - By default they carry `remediation: false`: CrowdSec records them (`cscli alerts list`)
       and decides nothing.
@@ -336,14 +336,14 @@ Wolf Settings → **Threat intelligence and deception** (`frappe_wolf/api/threat
       decide, and the default profile bans the IP for 4 h, with no human approval: that is
       CrowdSec's choice, not Wolf's.
   - **Approved blocks out**: when a Wolf Manager approves a `block_ip`, the same block goes to
-    the LAPI as a `ban` decision for the approved duration (origin `frappe-wolf`), so every
+    the LAPI as a `ban` decision for the approved duration (origin `dodock-wolf`), so every
     bouncer of that LAPI applies it (firewall, nginx, Cloudflare). The Wolf agent still applies
     its own block when its responder is on, and the incident comment says what was sent.
   - The LAPI refuses a login whose User-Agent is not `name/version`. Wolf sends
-    `frappe-wolf/<version>`.
+    `dodock-wolf/<version>`.
   - Tried against CrowdSec 1.6.4: a `cscli` ban tagged and raised a Wolf event, Wolf's
     detections appeared as alerts without a decision, and an approved block became a 6 h
-    `frappe-wolf` ban.
+    `dodock-wolf` ban.
 
 ### Step 5: human-validated response (built)
 
@@ -412,7 +412,7 @@ result; read-only for everyone) and a comment on the incident.
   - **Personal data breach (GDPR)** starts one clock: the notification to the supervisory
     authority (CNIL) within 72 h.
   - Ticking a flag sets *Aware since* to now; it can be corrected. The sending times and the
-    authority's reference are recorded on the incident (`frappe_wolf/wolf/compliance.py`,
+    authority's reference are recorded on the incident (`dodock_wolf/wolf/compliance.py`,
     `api/compliance.py`).
   - Every 5 minutes `check_deadlines` records one `regulatory_deadline` event per obligation
     when it is due within 6 h, and again when it is overdue, linked to the incident (so it is
@@ -486,7 +486,7 @@ Built: Wazuh as an optional source. The Wolf agent on the manager's host reads `
 into `hids_alert` events, from level 7, without configuration assessment and without Wazuh's
 alerts on Wolf's own export, and the "Host intrusion alert (critical)" preset alerts from
 level 12. Without a Wolf agent on the manager's host, a Wazuh custom integration
-(`agent/wazuh/custom-frappe-wolf`) posts each alert to `frappe_wolf.api.wazuh.alert` with the
+(`agent/wazuh/custom-dodock-wolf`) posts each alert to `dodock_wolf.api.wazuh.alert` with the
 credentials of a Wolf Agent of kind `integration`. Tried against a Wazuh 4.9.2 manager, both
 ways: sshd and sudo lines it received by syslog came out under the host that logged them, with
 Wazuh's ATT&CK techniques, and three alerts sent by its integration daemon became one event
