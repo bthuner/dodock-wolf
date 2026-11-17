@@ -14,7 +14,7 @@ import base64
 import json
 from datetime import datetime
 
-from dodock_wolf.wolf import window
+from dodock_wolf.wolf import detectors, window
 
 FAMILIES = ("evidence", "context", "activity", "delivery")
 RANK = {"event": 0, "activity": 1, "delivery": 2}  # tie-break between record families
@@ -126,6 +126,8 @@ def event_row(ev, incident, tz, deployment_event=None):
 		"event_type": ev.get("event_type"),
 		"category": ev.get("category"),
 		"source": ev.get("source"),
+		"source_label": detectors.source_label(ev.get("source")),  # Wolf agent, Wolf site, Suricata, Wazuh
+		"duplicate_of": ev.get("duplicate_of"),  # the same finding, seen first by another source
 		"scope": {k: ev.get(k) for k in ("site", "bench", "host")},
 		# what the record holds: first and last time it was seen, and how many repeats it absorbed
 		"count": ev.get("count") or 1,

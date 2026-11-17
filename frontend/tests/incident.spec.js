@@ -102,6 +102,25 @@ describe('IncidentPage', () => {
     expect(page.get('a[href="/app/wolf-postmortem/WPM-00003"]').text()).toContain('Postmortem WPM-00003')
   })
 
+  it('says who raised each event and links the same finding seen by another source', async () => {
+    const rows = [
+      { id: 'event:S1', kind: 'event', family: 'evidence', relation: 'linked', at: '2026-10-30T00:48:00Z', severity: 'warning',
+        summary: 'ET SCAN sqlmap', scope: { host: 'bench-01' }, count: 1, source: 'suricata', source_label: 'Suricata', details: {} },
+      { id: 'event:W1', kind: 'event', family: 'evidence', relation: 'linked', at: '2026-10-30T00:49:00Z', severity: 'warning',
+        summary: 'Web probes from 203.0.113.5', scope: { site: 'a.example.com' }, count: 3, source: 'nginx',
+        source_label: 'Wolf agent', duplicate_of: 'S1', details: {} },
+    ]
+    server({
+      'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows, paging: { has_more: false }, totals: {}, truncated: {} }),
+    })
+    const { page } = await open()
+    expect(page.text()).toContain('by Suricata')
+    expect(page.text()).toContain('by Wolf agent')
+    expect(page.findAll('a[href="#row-event-S1"]').map((a) => a.text())).toContain('S1')
+    expect(page.find('#row-event-S1').exists()).toBe(true) // the link lands on the first source's row
+  })
+
   it('counts one linked record in the singular', async () => {
     server({
       'dodock_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, event_records: 1, event_count: 1, event_occurrences: 1 }),

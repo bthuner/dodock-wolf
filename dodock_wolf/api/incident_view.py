@@ -19,7 +19,7 @@ from dodock_wolf.wolf.workflow import ACTIVITY_LIMITS, activity_filters, get_act
 
 ACTIONS = ("acknowledge", "resolve", "assign_to_me")
 EVENT_COLUMNS = """name, title, event_type, category, severity, source, `timestamp`, last_seen,
-	`count`, host, bench, site, incident, payload"""
+	`count`, host, bench, site, incident, duplicate_of, payload"""
 
 
 def _incident(name):

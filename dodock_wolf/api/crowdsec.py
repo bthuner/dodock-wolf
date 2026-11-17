@@ -138,7 +138,8 @@ def sync_decisions(api, now=None):
 def _event_rows(cursor, until):
 	since, after = cursor.get("event_creation") or str(now_datetime()), cursor.get("event_name") or ""
 	return frappe.db.sql(
-		"""select name, creation, event_type, category, severity, title, source, `timestamp`, `count`, host, site, payload
+		"""select name, creation, event_type, category, severity, title, source, `timestamp`, `count`, host, site, payload,
+			duplicate_of
 		from `tabWolf Event`
 		where event_type = 'security' and creation <= %(until)s
 			and (creation > %(since)s or (creation = %(since)s and name > %(after)s))
@@ -166,6 +167,8 @@ def push_detections(api, settings, now=None):
 			break
 		alerts = []
 		for r in rows:
+			if r.pop("duplicate_of", None):
+				continue  # the same finding as an event already sent (overlapping detectors in both mode)
 			try:
 				r["payload"] = json.loads(r.payload) if r.payload else {}
 			except ValueError:

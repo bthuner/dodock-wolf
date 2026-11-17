@@ -358,7 +358,7 @@ def get_timeline(incident, limit=300):
 	params.update(related_params, incident=inc.name, start=start, end=end, limit=cint(limit))
 	rows = frappe.db.sql(
 		f"""select name, title, event_type, category, severity, source, `timestamp`, last_seen,
-			`count`, host, bench, site, incident, payload
+			`count`, host, bench, site, incident, duplicate_of, payload
 		from `tabWolf Event`
 		where incident = %(incident)s
 			or (`timestamp` between %(start)s and %(end)s and ({clause}{related}))

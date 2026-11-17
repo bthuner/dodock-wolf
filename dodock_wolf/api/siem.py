@@ -71,7 +71,7 @@ def _event_rows(cursor, types, min_rank, until):
 	since, after = cursor.get("event_creation") or "1970-01-01", cursor.get("event_name") or ""
 	rows = frappe.db.sql(
 		"""select name, creation, event_type, category, severity, title, source, `timestamp`, `count`, host, bench, site,
-			incident, payload from `tabWolf Event`
+			incident, payload, duplicate_of from `tabWolf Event`
 		where event_type in %(types)s and creation <= %(until)s
 			and (creation > %(since)s or (creation = %(since)s and name > %(after)s))
 		order by creation asc, name asc limit %(limit)s""",
@@ -80,7 +80,8 @@ def _event_rows(cursor, types, min_rank, until):
 	)
 	keep = []
 	for r in rows:
-		if SEVERITY_RANK.get(r.severity, 0) >= min_rank:
+		# the same finding as an event already sent (overlapping detectors in both mode): sent once
+		if SEVERITY_RANK.get(r.severity, 0) >= min_rank and not r.pop("duplicate_of", None):
 			try:
 				r["payload"] = json.loads(r.payload) if r.payload else {}
 			except ValueError:

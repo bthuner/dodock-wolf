@@ -42,6 +42,8 @@ frappe.wolf.render_event = function (e, opts) {
 			<div class="text-muted small">
 				<span class="wolf-type">${esc(frappe.wolf.TYPE_LABEL[e.event_type] || e.event_type)}</span>
 				${e.category ? ` · ${esc(e.category)}` : ""} · ${esc(scope)}
+				${e.source_label ? ` · ${__("by {0}", [esc(e.source_label)])}` : ""}
+				${e.duplicate_of ? ` · ${__("same finding as")} <a href="/app/wolf-event/${encodeURIComponent(e.duplicate_of)}">${esc(e.duplicate_of)}</a>` : ""}
 				${e.incident && !opts.hide_incident ? ` · <a href="/app/wolf-incident/${encodeURIComponent(e.incident)}">${esc(e.incident)}</a>` : ""}
 			</div>
 		</div>

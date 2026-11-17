@@ -2007,6 +2007,58 @@ def main():
 		        "failed login, late IP, setting off, resolved kept out; own site first; rule evidence returned; "
 		        "scoped user sees its site only")  # fmt: skip
 
+	def detector_modes():
+		"""Wolf's own detectors next to Suricata and Wazuh: own, both (one finding), external (#72 step 4)."""
+		from dodock_wolf.api import ingest as ingest_api
+		from dodock_wolf.api import siem as siem_api
+
+		tz, at = events.system_tz(), now_datetime()
+
+		def mode(**values):
+			for field, value in values.items():
+				frappe.db.set_single_value("Wolf Settings", field, value)
+			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+
+		def ev(category, source, ip, minutes=0, technique="T1190", host="dm-web", **kw):
+			payload = {"ip": ip, "mitre_attack": [{"id": technique}]} if ip else {}
+			return schema.normalize_event({"type": "security", "severity": "warning", "category": category, "source": source,
+			                               "host": host, "title": f"dm {category} {ip}", "payload": payload, **kw}, tz,
+			                              at + timedelta(minutes=minutes))  # fmt: skip
+
+		def dup(name):
+			return frappe.db.get_value("Wolf Event", name, "duplicate_of")
+
+		try:
+			mode(web_detection_mode="both", host_detection_mode="own")
+			ids = events.insert_event(ev("network_ids_alert", "suricata", "45.33.32.240", -3))
+			probe = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.240"))
+			assert dup(probe) == ids, "the probe is not the same finding as the Suricata alert"
+			assert not dup(ids)
+			other_technique = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.240", technique="T1110"))
+			other_ip = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.241"))
+			late = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.240", 30))
+			assert not any(map(dup, (other_technique, other_ip, late))), "linked across techniques, IPs or time"
+			_scanned, kept = siem_api._event_rows({"event_creation": str(at - timedelta(minutes=1))}, ["security"], 0,
+			                                      now_datetime() + timedelta(minutes=1))  # fmt: skip
+			assert ids in {r.name for r in kept} and probe not in {r.name for r in kept}, "the same finding sent twice"
+			mode(web_detection_mode="own")
+			again = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.240", 1))
+			assert not dup(again), "linked in own mode"
+
+			# external: Wolf's auth.log signals give way to Wazuh while it reports from the host, not otherwise
+			mode(host_detection_mode="external")
+			ssh = ev("ssh_failed_login", "sshd", "45.33.32.242", host="dm-host")
+			got = ingest_api.store_batch(None, [], [ssh], correlate=False)
+			assert got["dropped"] == 0, f"dropped while Wazuh is quiet: {got}"
+			events.insert_event(ev("hids_alert", "wazuh", "45.33.32.243", host="dm-host"))
+			got = ingest_api.store_batch(None, [], [ssh, ev("ssh_failed_login", "sshd", "45.33.32.242", host="dm-other")], correlate=False)
+			assert (got["events"], got["dropped"]) == (1, 1), f"Wazuh reports from dm-host only: {got}"
+		finally:
+			mode(web_detection_mode="own", host_detection_mode="own")
+		frappe.db.delete("Wolf Event", {"title": ("like", "dm %")})
+		return "both: probe and Suricata alert one finding, sent to the SIEM once; other technique, IP, time and own mode apart; " \
+		       "external: auth.log kept while Wazuh is quiet, dropped on the host it reports from"
+
 	def timeline_related():
 		"""An incident's timeline shows the changes and health of the scopes its events came from."""
 		from dodock_wolf.api import incident_view
@@ -2828,6 +2880,7 @@ def main():
 	                 ("entity correlation", entity_correlation),
 	                 ("sequence rules", sequence_rules),
 	                 ("timeline related scopes", timeline_related),
+	                 ("detector modes", detector_modes),
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
 	                 ("response actions", response_actions), ("response links", response_links), ("journal", journal_chain),

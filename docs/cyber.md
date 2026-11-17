@@ -546,6 +546,17 @@ on the host, because warning-level Suricata and Wazuh alerts are constant on exp
 often belongs to an earlier incident already; it stays there, and the sequence incident's
 timeline, which starts at the first event, shows it.
 
+Built: overlapping detectors (`wolf/detectors.py`, `api/detectors.py`). Wolf Settings has one
+mode for the agent's nginx web probes against Suricata, and one for its auth.log signals against
+Wazuh: `own` (default, as alone), `both` (an event and the other source's alert about the same
+remote IP, sharing an ATT&CK technique when both name some, within 10 minutes, are one finding:
+the later is marked **Same Finding As** the first and not sent again to CrowdSec or the SIEM) or
+`external` (Wolf's own events of that detector are dropped while the other source reports from
+the host, and come back when it has been quiet for an hour). sudo, account and group events carry
+no IP, so in `both` mode they are never linked. Each timeline row names its source. Blocking
+(nftables against Wazuh active response) is left to step 6, where an approved block can be
+handed to Wazuh.
+
 Built: one story per incident. Its timeline already held every source's events of its scope with
 the deployments and health events there (failed crons, errors, the events metric rules emit for
 5xx spikes or a full disk). When it took events from other scopes, by IP or user or through a

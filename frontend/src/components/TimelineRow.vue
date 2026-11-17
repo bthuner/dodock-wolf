@@ -43,6 +43,10 @@ const detailText = computed(() => (details.value ? JSON.stringify(details.value,
       </div>
       <div class="text-sm text-ink-gray-6">
         <span v-if="scope">{{ scope }}</span>
+        <span v-if="row.source_label && row.kind !== 'activity' && row.kind !== 'delivery'"> · by {{ row.source_label }}</span>
+        <span v-if="row.duplicate_of">
+          · same finding as <a class="wolf-link" :href="`#row-event-${row.duplicate_of.replace(/[^A-Za-z0-9_-]/g, '-')}`">{{ row.duplicate_of }}</a>
+        </span>
         <span v-if="row.kind === 'activity' && row.user_name"> {{ row.user_name }}</span>
         <span v-if="repeated" class="wolf-data">
           · {{ row.count }} reported, last <time :datetime="row.last_seen" :title="full(row.last_seen, timeZone)">{{ clock(row.last_seen, timeZone) }}</time>
