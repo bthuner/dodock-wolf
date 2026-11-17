@@ -75,10 +75,11 @@ even when rows share a timestamp. The rail stays honest:
 
 ![The incident page of the Wolf UI](assets/wolf-ui-incident.jpg)
 
-## 06 · Information architecture: three rooms, then a few more
+## 06 · Information architecture: five rooms, then a few more
 
 The daily views moved out of Desk into the Wolf UI at `/wolf` (#19). It's a frappe-ui app on
-the same session and permissions. Desk keeps configuration.
+the same session and permissions. There were three rooms; two were added. Desk keeps
+configuration.
 
 1. **Overview** (built): exact counts, never the length of a list on screen. Then the newest
    unresolved incidents, HTTP responses with deployments marked, and every signal: workers,
@@ -87,9 +88,16 @@ the same session and permissions. Desk keeps configuration.
    host and bench. A bench is always addressed through its host.
 2. **Incident** (built): the timeline of chapter 05, scope first, with acknowledge, assign and
    resolve when the server allows them. Merge and split too, once the server has said what
-   would move. The postmortem starts there and is written in Desk.
+   would move. Proposed responses wait there for a manager's approval. The postmortem starts
+   there and is written in Desk.
 3. **Alert Rule** (built, in Desk): a form that reads like the brief's sentence, *when X > Y for
    Z minutes, send alert*. "For Z minutes" is the `min` aggregation over the window.
+4. **Security** (built): a score out of 100 per site, with every check, what Wolf read and the
+   fix. A check Wolf cannot read is unknown, and says so. The journal's anchor sits below, with
+   a Verify button.
+5. **Monitoring** (built): is Wolf itself working. When the rules were last evaluated, the
+   scheduler's pace, the ingest queue, how far the rollups got, and which agents report, with
+   their clock skew.
 
 Explorers came after the rooms:
 - **Events**: deduplicated records with their counts;
@@ -104,7 +112,22 @@ explains why there is no log search yet: Wolf stores parsed events, not raw line
 
 ![The metrics explorer](assets/wolf-ui-metrics.jpg)
 
-## 07 · The protocol is an interface
+![The monitoring page](assets/wolf-ui-monitoring.jpg)
+
+## 07 · The system: two halves of one animal
+
+The Wolf Agent listens on the host: `/proc`, the nginx, Frappe, scheduler, worker and auth logs,
+the queue Redis, and what the bench exposes. It pushes JSON over HTTPS every 30 s. The Wolf App
+remembers and decides: it tags security events with ATT&CK technique ids, resolves their
+entities, correlates events into incidents, evaluates rules every minute and signs its journal.
+It howls through email, webhooks, Raven, Slack, Mattermost, Matrix, ntfy, Gotify, SMS and
+PagerDuty, and exports to a SIEM as syslog.
+
+The wider pack is read when it is there and never required: Suricata's `eve.json`, Wazuh's
+`alerts.json` (or Wazuh posting to Wolf), and CrowdSec decisions. A block a manager approved
+goes back to the host with the agent's next push.
+
+## 08 · The protocol is an interface
 
 `docs/protocol.md` was written before any code, because the agent and the app were built in
 parallel. Its design decisions:
@@ -115,9 +138,71 @@ parallel. Its design decisions:
 - Fail closed (401/403 stops the agent) and retry open (spool to disk with backoff on 5xx or network errors).
 - Two small vocabularies: six event types and a dozen metrics. Nuance goes into `category`.
 
-## 08 · Build log
+## 09 · Security: nobody else sees the inside of a bench
 
-Append new entries at the bottom. Mirror them in `index.html` (`#build-log`).
+Wolf started as observability with a few security signals. On 1 November we compared it with a
+full SOC platform, SYLink's UniSOC, and decided not to match its breadth
+([`docs/cyber.md`](../cyber.md)). A DPI probe or a Windows EDR are separate products. What none
+of them see is the inside of a Frappe bench: DocTypes, roles and DocPerms, API keys, Server
+Scripts, `site_config.json`, or who exported 40,000 customers from a report. Wolf does not build
+packet inspection, a Windows or mobile EDR, phishing campaigns, an AI pentester or a 24/7 human
+SOC. It reads them or forwards to them.
+
+Six steps, each shipping without the ones after it, all built:
+
+1. **Detect**: probes, injections and secret files served, from the nginx logs; SSH logins after
+   a brute force, sudo abuse and new accounts, from the auth log; ATT&CK technique ids on every
+   security event.
+2. **Application**: scripts and console runs, permission drift wherever it was made, weakened
+   System Settings, an API key used from a new network, exports measured against the user's own
+   largest hour of the last 14 days.
+3. **Posture**: a score out of 100 per site from twelve weighted checks.
+4. **Deception**: decoy users, API keys and paths, where one touch is critical; offline IP
+   reputation lists; CrowdSec as an option.
+5. **Response**: block an IP, disable a user, log out all sessions, revoke API keys, from the
+   incident page or a signed link in the alert.
+6. **Evidence**: NIS2, DORA and GDPR deadlines on the incident, a tamper-evident journal, and
+   export to a SIEM as syslog in OCSF or CEF.
+
+![The security page of the Wolf UI](assets/wolf-ui-security.jpg)
+
+Four rules hold it together:
+
+- **Wolf proposes, a human approves.** Nothing runs on its own. Only what Wolf proposed from the
+  incident's own events can be approved. The agent refuses private addresses and durations over
+  a week, whatever the site sends. A signed link only says what to confirm, so a forwarded email
+  alone cannot act.
+- **Unknown is never safe.** A check Wolf cannot read counts as not passed, and the page says
+  how much of the weight it could read (59% on the demo stack, for a score of 29).
+- **The key is not in the database.** One job signs the journal every minute,
+  `mac = HMAC-SHA256(key, seq|at|kind|record|digest|prev_mac)`, with a key kept in the site
+  config. The SIEM export sends every entry out: an anchor Wolf cannot rewrite.
+- **Alone is the baseline.** Suricata and Wazuh are read when they are there and never
+  required. Tried against Suricata 7 with ET Open, a Wazuh 4.9.2 manager, CrowdSec 1.6.4, and
+  the export against rsyslog, Wazuh and Graylog.
+
+## 10 · Measured, then fixed
+
+The load test put 100 hosts and 7 days of data on the demo bench, about 20 M rows
+([`docs/load-test.md`](../load-test.md)). The push held (p95 115 ms). The overview did not.
+
+| Step | The overview's slowest read |
+|---|---|
+| Load test (#55), rows named by random hash | 13.8 to 23.8 s |
+| Rows stored in metric order (#56) | 1.5 s |
+| Reads in SQL (#57) | 0.73 s, under the 1 s target |
+
+In a browser the page is drawn in 0.9 to 1.0 s at the median, 0.53 s from the 30 s cache, and
+at most 0.65 s after a quiet spell. One query went from 194 s to 0.62 s.
+
+The wrong turns stay in the log: a table that grew by half, a 194 s read taken for an outlier,
+a browser timing of the wrong site, a "cached" run that was not, and a review fix that was
+measured slower and taken back.
+
+## 11 · Build log
+
+Append new entries at the end of their day. Mirror them in `index.html` (`#build-log`), where
+they are grouped by day.
 
 - **2026-10-29 · Brief**: CLAUDE.md adopted as the source of truth.
 - **2026-10-29 · Protocol**: v1 written before code (`docs/protocol.md`).
@@ -149,9 +234,26 @@ Append new entries at the bottom. Mirror them in `index.html` (`#build-log`).
 - **2026-11-01 · Reads in SQL**: reads of known metrics scan the primary key by name range, and chart buckets are summed by the database instead of 144 k rows merged in Python. A full run on fresh data then found `get_signals` at 194 to 233 s: MariaDB had turned the join that picks each series' newest value into a lookup per series, each walking a metric's whole minute rollups. Runs on older data had shown it once, taken for an outlier. `row_number()` reads the rows once: 0.62 s. Every Wolf UI read is now under 1 s at 100 hosts, the slowest at 0.73 s, and Desk's 24 h chart at 0.56 s. A review fix meant to keep old-named rows off the primary key was measured slower (1.15 s against 0.77 s) and taken back.
 - **2026-11-01 · The page in a browser**: `/wolf` opened in Chromium on the bench, timed from navigation start until every panel is drawn. 0.9 to 1.0 s at the median, 1.0 to 1.3 s at p95: the two slow reads (0.5 to 0.6 s each, side by side) and drawing 300 signal rows (0.1 to 0.3 s). The first try timed the wrong site: the demo's nginx serves one site whatever the host name, and the numbers were too good to be true.
 - **2026-11-01 · A short cache, shared and filtered**: the inventory and signals keep what they read for 30 s. What is cached is read without access conditions, the same for everyone; each request keeps what its caller may see, so no cache entry carries one user's rights to another, and a smoke check proves it with a host-scoped user. Rules and incidents stay per request. A page served from the cache is drawn in 0.53 s, p95 0.61 s. The first "cached" run was not: Dodock's web workers keep the site config for a minute, and still read the cache as off.
+- **2026-11-01 · Security orientation**: `docs/cyber.md` compares Wolf with a full SOC platform and sets a roadmap. The first slice needs no new DocType: web attacks read from the nginx logs, host intrusion signals from the auth log, and MITRE ATT&CK technique ids on every security event.
+- **2026-11-01 · Security steps 2 to 6** (#47): Frappe application signals, a security score per site and bench exposure, honeytokens and offline IP reputation lists, human-validated response actions, NIS2 and GDPR deadlines on incidents, a tamper-evident HMAC journal, and SIEM export as syslog with OCSF or CEF.
 - **2026-11-02 · Read again in the background**: a cached value past its 30 s is still served, up to 2 min, while one deduplicated job reads it again; every minute the scheduler reads again what was asked for in the last 10 minutes. Pages opened 45 s and 150 s apart were all served from the cache (max 0.65 s), with data 11 to 51 s old. The new job only ran once Frappe's cached hooks were cleared: `bench migrate` does that on a site, a copied `hooks.py` does not.
 
-## 09 · Trade-offs
+- **2026-11-02 · First rows**: the overview draws its first signal rows and hosts only, the rest on demand. On a load bench, drawing went from 100 to 53 ms cold.
+- **2026-11-02 · Drift, exports and keys**: permission drift outside the Role Permission Manager (Custom DocPerm, User Permission, desk access), unusual data exports per user against their own largest hour, and an API key used from an address outside every network it is known from.
+- **2026-11-02 · Approval from the alert**: alerts carry a signed link for each action Wolf proposes. The link only says what to confirm; only a logged-in manager's POST acts. Blocks can go through fail2ban instead of nftables, with a helper that unbans each address on time.
+- **2026-11-02 · Journal retention**: a purge first writes and signs a record of where it stopped, then deletes. Verification requires a journal that does not start at entry 1 to start right after that cut. Before retention existed, a journal missing its oldest entries still verified.
+- **2026-11-02 · Posture**: HSTS on the TLS check's own connection, SPF and DMARC of the mail domain from DNS, Frappe and ERPNext versions against GitHub Security Advisories, and System Settings of sites other than the Wolf site, read by the agent with the site's own credentials.
+- **2026-11-02 · Evidence**: SIEM export with TLS and a private CA, newline framing and bare messages, tried on rsyslog, Wazuh and Graylog. The NIS2 intermediate report on request, and DORA's major incident deadlines.
+- **2026-11-02 · CrowdSec**: decisions in, detections and approved blocks out, tried against CrowdSec 1.6.4. By default Wolf's detections carry no remediation: CrowdSec records them and decides nothing.
+- **2026-11-02 · Suricata and Wazuh as optional sources** (#72): the agent reads Suricata's `eve.json` and the Wazuh manager's `alerts.json`; without an agent on the manager's host, Wazuh posts its alerts to Wolf. Tried against Suricata 7 with ET Open and a Wazuh 4.9.2 manager. Wolf alone stays the baseline.
+- **2026-11-03 · Entities**: at ingest, each security event's IP, hosts, sites and users are normalised and resolved through aliases Wolf learns by itself. A Suricata address on the server becomes the host, a Wazuh agent name resolves to it, and one filter finds Wolf's, Suricata's and Wazuh's events together. Wolf never overwrites a manual alias.
+- **2026-11-17 · Name**: Frappe Wolf becomes Dodock Wolf. The app, its API paths and the making-of take the new name. Wolf Agent, Wolf App and the DocTypes keep theirs.
+- **2026-11-17 · One incident per attacker, across sources** (#72): a security event joins the open incident that names the same public remote IP, whatever its source, host or site. Sequence rules fire when one event follows another on the same IP, user or host: a scan, then a login from that address. A user ties events together only when it is an e-mail address: `root` on two hosts is not one person.
+- **2026-11-17 · One story per incident; overlapping detectors** (#72): an incident that took events from other scopes also shows their deployments and health events, for the users allowed to see both. Where Wolf's own detector and Suricata or Wazuh overlap, the operator picks: Wolf's own, both as one finding, or the external one only.
+- **2026-11-17 · Documentation site**: user documentation in `docs-site/`, in English and French, the same page at the same path in both.
+- **2026-11-17 · This page**: redesigned, with chapters for security and the load test, and the log grouped by day.
+
+## 12 · Trade-offs
 
 - **Python, not Rust, for the agent:** contributors can read it on day one. The protocol allows a Rust agent later.
 - **DocTypes, not ClickHouse:** storage you already back up, with retention settings.
@@ -159,8 +261,12 @@ Append new entries at the bottom. Mirror them in `index.html` (`#build-log`).
 - **Desk, not a separate SPA** (superseded by #19): no new logins, native permissions. The daily operator views now live in a frappe-ui app at `/wolf` that reuses the Frappe session and permissions; Desk keeps configuration.
 - **Honest numbers over pretty ones:** a gap stays a gap, a missing signal is not a zero, a repeat count is not a count for the window, and a past window is not "stale". Every page says what it read. A chart that looks calm because it hides what it doesn't know would wake no one at 2AM.
 
-## 10 · Next
+- **The inside of the bench, not the whole estate:** Wolf covers what a network probe or an EDR cannot know about Frappe, and forwards everything to the organisation's SOC in a standard form.
+- **Approval, not automation:** Wolf proposes a response and a manager approves it. When CrowdSec is asked to decide on detections, that is CrowdSec's choice, and the setting says so.
 
+## Next
+
+- **Standalone parity:** file integrity on the bench and outbound connections of bench processes, for benches without Suricata or Wazuh.
 - **Log search:** waits for raw-line storage, which Wolf deliberately doesn't have yet.
 - **A real Press server and Pilot host:** the integrations still need to run on one.
-- **The overview's first visit at 100 hosts:** a visit the background reads do not cover (the first in 10 quiet minutes on a scope) still takes 0.9 to 1.2 s ([`docs/load-test.md`](../load-test.md)). Drawing the first signal rows and hosts only halves the drawing on a load bench (0.10 to 0.05 s cold).
+- **The overview's first visit at 100 hosts:** a visit the background reads do not cover (the first in 10 quiet minutes on a scope) still takes 0.9 to 1.2 s ([`docs/load-test.md`](../load-test.md)).
