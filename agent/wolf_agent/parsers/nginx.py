@@ -1,11 +1,16 @@
-"""nginx access log parser: per-site request/5xx/502 counters plus aggregated 5xx events."""
+"""nginx access log parser: per-site request/5xx/502 counters plus aggregated 5xx events.
+
+Counts and aggregates are kept per minute of the log line's own time, not of the time the
+agent reads it: a backlog read after a restart, a rotation or a spool replay lands in the
+minutes it happened, not as one spike at read time.
+"""
 
 import ipaddress
 import os
 import re
 from datetime import datetime
 
-from ..util import event, fingerprint, metric, utc_iso
+from ..util import event, fingerprint, log_minute, metric, utc_iso
 from . import web_attacks
 
 # combined / common, optionally prefixed by `$host` (vhost_combined style) and
@@ -111,9 +116,9 @@ class NginxParser:
 		self._reset()
 
 	def _reset(self):
-		self.counts = {}  # site -> [requests, 5xx, 502]
-		self.errors = {}
-		self.probes = {}  # (site, client, exposed) -> aggregate
+		self.counts = {}  # (minute, site) -> [requests, 5xx, 502, newest line timestamp]
+		self.errors = {}  # (minute, site, status, method, route) -> aggregate
+		self.probes = {}  # (minute, site, client, exposed) -> aggregate
 
 	def _site_from_path(self, path):
 		if not path:
@@ -147,16 +152,19 @@ class NginxParser:
 		if not parsed:
 			return
 		site = self.resolve_site(parsed)
-		counts = self.counts.setdefault(site, [0, 0, 0])
+		minute = log_minute(parsed["timestamp"])
+		counts = self.counts.setdefault((minute, site), [0, 0, 0, None])
 		counts[0] += 1
+		if parsed["timestamp"] and (counts[3] is None or parsed["timestamp"] > counts[3]):
+			counts[3] = parsed["timestamp"]
 		status = parsed["status"]
-		self._probe(site, parsed, line)
+		self._probe(minute, site, parsed, line)
 		if status < 500:
 			return
 		counts[1] += 1
 		if status == 502:
 			counts[2] += 1
-		key = (site, status, parsed["method"], parsed["route"])
+		key = (minute, site, status, parsed["method"], parsed["route"])
 		err = self.errors.get(key)
 		if not err:
 			err = self.errors[key] = {"count": 0, "timestamp": parsed["timestamp"], "samples": []}
@@ -164,12 +172,12 @@ class NginxParser:
 		if len(err["samples"]) < MAX_SAMPLES:
 			err["samples"].append(line.strip()[:1000])
 
-	def _probe(self, site, parsed, line):
+	def _probe(self, minute, site, parsed, line):
 		rules = web_attacks.classify(parsed["method"], parsed["target"], parsed["status"], parsed["user_agent"])
 		if not rules:
 			return
 		client = client_address(parsed)
-		key = (site, client, web_attacks.exposed(rules, parsed["status"], parsed["target"]))
+		key = (minute, site, client, web_attacks.exposed(rules, parsed["status"], parsed["target"]))
 		g = self.probes.get(key)
 		if g is None:
 			if len(self.probes) >= MAX_PROBE_GROUPS:
@@ -193,7 +201,7 @@ class NginxParser:
 
 	def _probe_events(self, ts):
 		events = []
-		for (site, client, is_exposed), g in self.probes.items():
+		for (_, site, client, is_exposed), g in self.probes.items():
 			rules = sorted(g["rules"], key=lambda r: (-g["rules"][r], r))
 			if is_exposed:
 				category = "web_sensitive_file_exposed"
@@ -235,17 +243,23 @@ class NginxParser:
 	def drain(self, now=None):
 		ts = utc_iso(now)
 		metrics, events = [], []
-		sites = set(self.counts) | set(self.site_benches)
-		if self.default_site:
-			sites.add(self.default_site)
-		for site in sorted(sites, key=lambda s: s or ""):
-			requests, e5xx, e502 = self.counts.get(site, (0, 0, 0))
+		# one sample per minute with traffic, stamped with its newest line; a known site with
+		# no traffic in this interval still reports zeros, stamped now
+		buckets = dict(self.counts)
+		quiet = set(self.site_benches) | ({self.default_site} if self.default_site else set())
+		quiet -= {site for _, site in buckets}
+		for site in quiet:
+			buckets[(None, site)] = [0, 0, 0, None]
+		for (_, site), (requests, e5xx, e502, newest) in sorted(
+			buckets.items(), key=lambda kv: (kv[0][0] or "", kv[0][1] or "")
+		):
 			bench = self.bench_for(site)
-			metrics.append(metric("http_requests", requests, ts, self.host, bench, site))
-			metrics.append(metric("http_5xx", e5xx, ts, self.host, bench, site))
-			metrics.append(metric("http_502", e502, ts, self.host, bench, site))
+			at = newest or ts
+			metrics.append(metric("http_requests", requests, at, self.host, bench, site))
+			metrics.append(metric("http_5xx", e5xx, at, self.host, bench, site))
+			metrics.append(metric("http_502", e502, at, self.host, bench, site))
 
-		for (site, status, method, route), err in self.errors.items():
+		for (_, site, status, method, route), err in self.errors.items():
 			events.append(
 				event(
 					"error",

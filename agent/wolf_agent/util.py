@@ -18,6 +18,15 @@ def utc_iso(dt=None):
 	return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def log_minute(ts):
+	"""`YYYY-MM-DDTHH:MM` of a UTC ISO timestamp; None when the line had none (read time).
+
+	Parsers aggregate per minute of the line's own time, so a backlog read at once (a restart,
+	a rotation, a new bench read from its start) keeps when things happened.
+	"""
+	return ts[:16] if ts else None
+
+
 def parse_log_timestamp(line, now=None):
 	"""Best-effort timestamp from the start of a log line, as a UTC ISO string.
 

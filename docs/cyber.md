@@ -124,7 +124,7 @@ logs the agent already tails):
 - Requests that probe for secrets (`.env`, `.git/`, `site_config.json`, keys, dumps), CMS and
   admin panels, path traversal, SQL/command/template injection or XSS, or that come from a
   scanner User-Agent. Each (site, client) pair gets one `security` / `web_attack_probe` event
-  per push interval, with the rules hit, the statuses, up to 10 targets and the ATT&CK IDs. The
+  per minute of log time, with the rules hit, the statuses, up to 10 targets and the ATT&CK IDs. The
   event is critical once a client sends 50 or more probes.
 - `web_sensitive_file_exposed` (critical): a secret-bearing file answered with a 2xx. The file
   was probably leaked.

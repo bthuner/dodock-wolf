@@ -24,7 +24,7 @@ import ipaddress
 import json
 from datetime import datetime
 
-from ..util import event, fingerprint, utc_iso
+from ..util import event, fingerprint, log_minute, utc_iso
 
 MAX_GROUPS = 500
 LOOP_GROUP = "dodock_wolf"
@@ -89,7 +89,7 @@ class WazuhParser:
 			return
 		ip = source_ip(alert)
 		origin = host_of(alert)
-		key = (rule.get("id"), ip or origin)
+		key = (log_minute(timestamp(alert.get("timestamp"))), rule.get("id"), ip or origin)
 		g = self.groups.get(key)
 		if g is None:
 			if len(self.groups) >= MAX_GROUPS:
@@ -113,7 +113,7 @@ class WazuhParser:
 	def drain(self, now=None):
 		ts = utc_iso(now)
 		events = []
-		for (rule_id, subject), g in self.groups.items():
+		for (_, rule_id, subject), g in self.groups.items():
 			title = f"Wazuh: {g['description'] or f'rule {rule_id}'}"
 			if g["ip"]:
 				title += f" from {g['ip']}"

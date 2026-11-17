@@ -81,7 +81,8 @@ class TestNginx(unittest.TestCase):
 		self.assertEqual(by_name["http_502"]["value"], 14)
 		self.assertEqual(by_name["http_502"]["site"], "a.example.com")
 		self.assertEqual(by_name["http_502"]["bench"], "main")
-		self.assertEqual(by_name["http_502"]["timestamp"], "2026-10-29T02:01:00Z")
+		# stamped with the newest line of the minute, not with the drain time
+		self.assertEqual(by_name["http_502"]["timestamp"], "2026-10-29T02:00:17Z")
 
 		self.assertEqual(len(events), 3)
 		e502 = next(e for e in events if e["category"] == "http_502")
@@ -101,6 +102,33 @@ class TestNginx(unittest.TestCase):
 		metrics, events = parser.drain(NOW)
 		self.assertEqual(events, [])
 		self.assertEqual({m["value"] for m in metrics}, {0})
+
+	def test_backlog_lands_in_its_own_minutes(self):
+		# a backlog read at once (restart, rotation): each minute keeps its own counts and time
+		parser = nginx.NginxParser("h1", site_benches={"a.example.com": "main"}, default_site="a.example.com", default_bench="main")
+		line = '10.0.0.5 - - [29/Oct/2026:{t} +0000] "GET /app HTTP/1.1" {status} 1 "-" "x"'
+		for t, status, n in (("01:10:05", 200, 3), ("01:10:50", 502, 2), ("01:42:00", 502, 4), ("01:42:30", 500, 1)):
+			for _ in range(n):
+				parser.feed(line.format(t=t, status=status))
+		metrics, events = parser.drain(NOW)
+		series = {
+			(m["metric_name"], m["timestamp"]): m["value"] for m in metrics if m["metric_name"] != "http_requests"
+		}
+		self.assertEqual(series, {
+			("http_5xx", "2026-10-29T01:10:50Z"): 2, ("http_502", "2026-10-29T01:10:50Z"): 2,
+			("http_5xx", "2026-10-29T01:42:30Z"): 5, ("http_502", "2026-10-29T01:42:30Z"): 4,
+		})  # fmt: skip
+		self.assertNotIn("2026-10-29T02:01:00Z", {m["timestamp"] for m in metrics})  # not the read time
+		e502 = sorted((e["timestamp"], e["payload"]["count"]) for e in events if e["category"] == "http_502")
+		self.assertEqual(e502, [("2026-10-29T01:10:50Z", 2), ("2026-10-29T01:42:00Z", 4)])
+
+	def test_line_without_time_and_quiet_site(self):
+		parser = nginx.NginxParser("h1", site_benches={"a.example.com": "main", "b.example.com": "main"})
+		parser.feed('a.example.com 10.0.0.5 - - [not a time] "GET / HTTP/1.1" 200 1 "-" "x"')
+		metrics, _ = parser.drain(NOW)
+		req = {(m["site"], m["timestamp"]): m["value"] for m in metrics if m["metric_name"] == "http_requests"}
+		# no parsable time: counted at read time; a quiet known site reports zero at read time
+		self.assertEqual(req, {("a.example.com", "2026-10-29T02:01:00Z"): 1, ("b.example.com", "2026-10-29T02:01:00Z"): 0})
 
 	def test_site_resolution_multi_site(self):
 		benches = {"a.example.com": "main", "b.example.com": "other"}
@@ -245,17 +273,50 @@ class TestScheduler(unittest.TestCase):
 		parser.feed("2026-10-29 02:00:13,123 INFO scheduler Scheduled Job Failed: erpnext.x.nightly for a.example.com")
 		parser.feed("2026-10-29 02:05:13,123 INFO scheduler Scheduled Job Failed: erpnext.x.nightly for a.example.com")
 		parser.feed("2026-10-29 02:05:13,123 INFO scheduler Scheduled Job Failed: erpnext.y.other")
+		parser.feed("2026-10-29 02:05:40,123 INFO scheduler Scheduled Job Failed: erpnext.x.nightly for a.example.com")
 		_, events = parser.drain(NOW)
-		self.assertEqual(len(events), 2)
+		self.assertEqual(len(events), 3)
+		# grouped per minute of log time: 02:00 and 02:05 stay two failures, each at its own time
+		nightly = sorted((e["timestamp"], e["payload"]["count"]) for e in events if e["payload"]["method"] == "erpnext.x.nightly")
+		utc = lambda h, m: datetime(2026, 10, 29, h, m, 13).astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")  # noqa: E731
+		self.assertEqual(nightly, [(utc(2, 0), 1), (utc(2, 5), 2)])  # naive log times are local
 		e = next(e for e in events if e["payload"]["method"] == "erpnext.x.nightly")
 		self.assertEqual((e["type"], e["category"], e["severity"]), ("cron_failure", "scheduled_job", "critical"))
-		self.assertEqual(e["payload"]["count"], 2)
 		self.assertEqual(e["payload"]["job"], "nightly")
 		self.assertEqual(e["bench"], "main")
 		# site falls back to the per-site log's site
 		other = next(e for e in events if e["payload"]["method"] == "erpnext.y.other")
 		self.assertEqual(other["site"], "a.example.com")
 		self.assertEqual(parser.drain(NOW)[1], [])
+
+
+class TestBacklog(unittest.TestCase):
+	"""A backlog read at once keeps when things happened: one group per minute of log time."""
+
+	def test_auth(self):
+		parser = auth.AuthParser("h1")
+		for t in ("02:00:01", "02:00:30", "05:10:00"):
+			parser.feed(f"Oct 29 {t} bench-01 sshd[1]: Failed password for root from 198.51.100.7 port 1 ssh2")
+		_, events = parser.drain(NOW)
+		got = sorted((e["timestamp"][11:16], e["payload"]["count"]) for e in events)
+		local = lambda hm: datetime(2026, 10, 29, *hm).astimezone(timezone.utc).strftime("%H:%M")  # noqa: E731
+		self.assertEqual(got, sorted([(local((2, 0)), 2), (local((5, 10)), 1)]))
+
+	def test_worker(self):
+		parser = worker.WorkerParser("h1", bench="main")
+		for t in ("02:00:13", "03:30:13"):
+			parser.feed(f"2026-10-29 {t},001 WARNING rq.worker Moving job to FailedJobRegistry (Work-horse terminated unexpectedly; waitpid returned 9 (signal 9); )")
+		_, events = parser.drain(NOW)
+		self.assertEqual(len(events), 2)
+		self.assertEqual(len({e["timestamp"] for e in events}), 2)
+
+	def test_traceback(self):
+		parser = traceback.TracebackParser("h1", bench="main")
+		for line in (TRACEBACK_WEB + "\n" + TRACEBACK_WEB.replace("02:00:1", "04:00:1")).splitlines():
+			parser.feed(line)
+		_, events = parser.drain(NOW)
+		self.assertEqual(len(events), 2)
+		self.assertEqual({e["payload"]["count"] for e in events}, {1})
 
 
 class TestWorker(unittest.TestCase):

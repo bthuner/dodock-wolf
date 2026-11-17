@@ -143,15 +143,15 @@ Categories added with the infrastructure signals:
 | `email_queue_error` | site, every 5 min | Email Queue rows that went to `Error` in the last 15 min | `errors`, `latest` |
 | `ssh_login_after_failures` | agent (`source`: `sshd`) | a successful SSH login from an address with 5+ failures in the hour before; `critical` | `ip`, `users`, `failures_before` |
 | `sudo_failure` / `account_created` / `admin_group_change` | agent (`source`: `auth`) | failed sudo or user not in sudoers / `useradd` / user added to an admin group (`critical`) | `users`, `count`, `uid` / `group` |
-| `web_attack_probe` | agent (`source`: `nginx`) | requests matching probe rules, per (site, client) and push interval; `critical` from 50 | `ip`, `count`, `rules`, `statuses`, `targets`, `user_agents` |
+| `web_attack_probe` | agent (`source`: `nginx`) | requests matching probe rules, per (site, client) and minute of log time; `critical` from 50 | `ip`, `count`, `rules`, `statuses`, `targets`, `user_agents` |
 | `web_sensitive_file_exposed` | agent (`source`: `nginx`) | a secret-bearing file (`.env`, `.git/`, keys, dumps) answered with a 2xx; `critical` | as `web_attack_probe` |
 | `server_script_change` / `client_script_change` | site (doc events) | a script created, enabled, or its code, type or trigger changed; `critical` for API / Scheduler Event Server Scripts and guest access | `script`, `change`, `script_type`, `reference_doctype`, `api_method`, `allow_guest`, `by`, `excerpt` |
 | `console_execution` | site (Console Log) | a System Console run | `console_log`, `by`, `type`, `committed`, `excerpt` |
 | `permission_change` | site (Role Permission Manager request, Role Profile, Custom DocPerm, User Permission, User) | a permission rule added, changed, removed or reset; a Role Profile created or granting more roles; a User Permission letting its user see more; a Website user given desk access | `doctype`, `role`, `action`, `ptype`, `value` / `role_profile`, `roles`, `added` / `kind` (`custom_docperm`, `user_permission`, `desk_access`), `granted`, `revoked`, `everyone`, `user`, `allow`, `for_value`, `previous`, `via` |
 | `security_settings_weakened` | site (System Settings) | a save that lowers a defence; `critical` | `changes` (`field`, `label`, `old`, `new`), `by` |
 | `api_key_generated` | site (User) | a new API secret; `critical` for privileged users | `user`, `api_key`, `privileged`, `by` |
-| `hids_alert` | agent on the Wazuh manager's host (`alerts.json`, #72) | one per rule and subject (source IP, else host) per push interval; level 12+ critical, 7–11 warning; `sca` excluded by default, `dodock_wolf` always | `ip`, `user`, `count`, `rule_id`, `level`, `description`, `groups`, `wazuh_agent`, `location`, `decoder`, `sample_lines`, `wazuh_alert_id`, `attack_techniques` |
-| `network_ids_alert` | agent (Suricata `eve.json`, #72) | one per signature and remote address per push interval; severity from the rule priority (1 critical, 2 warning, 3 info) | `ip` (remote address), `count`, `signature`, `sid`, `rev`, `rule_category`, `priority`, `action`, `src_ip`/`dest_ip`/ports, `proto`, `app_proto`, `flow_id`, `community_id`, `targets`, `attack_techniques`, `http_hostname`, `url`, `http_method`, `http_status`, `http_user_agent`, `tls_sni`, `dns_query` |
+| `hids_alert` | agent on the Wazuh manager's host (`alerts.json`, #72) | one per rule and subject (source IP, else host) per minute of log time; level 12+ critical, 7–11 warning; `sca` excluded by default, `dodock_wolf` always | `ip`, `user`, `count`, `rule_id`, `level`, `description`, `groups`, `wazuh_agent`, `location`, `decoder`, `sample_lines`, `wazuh_alert_id`, `attack_techniques` |
+| `network_ids_alert` | agent (Suricata `eve.json`, #72) | one per signature and remote address per minute of log time; severity from the rule priority (1 critical, 2 warning, 3 info) | `ip` (remote address), `count`, `signature`, `sid`, `rev`, `rule_category`, `priority`, `action`, `src_ip`/`dest_ip`/ports, `proto`, `app_proto`, `flow_id`, `community_id`, `targets`, `attack_techniques`, `http_hostname`, `url`, `http_method`, `http_status`, `http_user_agent`, `tls_sni`, `dns_query` |
 | `api_key_new_ip` | site (`after_request`) | a successful API-key request from an address outside every /24 or /64 the key was used from, once the key's first 24 h are past; `critical` for privileged users | `user`, `api_key`, `ip`, `privileged`, `path`, `user_agent`, `known_ips` (last 10), `known_count`, `key_first_seen` |
 | `data_exfiltration` | site (`after_request`) | a user's exports and list reads this hour past the floor and the factor times their largest hour of 14 days; `critical` at 20x or without history | `user`, `hour_bytes`, `hour_requests`, `hour_rows`, `baseline_bytes`, `ratio`, `factor`, `floor_bytes`, `last_request` (`kind`, `label`, `method`, `doctype`, `bytes`), `ip` |
 | `service_exposed` | agent (`source`: `exposure`) | a bench port starts listening beyond loopback (or its addresses change); `critical` for Redis | `port`, `service`, `addresses`, `note` |
@@ -175,9 +175,9 @@ the Wolf Entity Alias rows (#72 step 3). Agents do not send it: the site compute
 | `disk_used_percent`  | %        | host, `labels.mount`              |
 | `load_1m` / `load_5m` / `load_15m` | — | host                        |
 | `load_per_core`      | —        | host (load_1m / cpu count)        |
-| `http_requests`      | count per push interval | host, bench, site  |
-| `http_5xx`           | count per push interval | host, bench, site  |
-| `http_502`           | count per push interval | host, bench, site  |
+| `http_requests`      | count per minute of log time | host, bench, site  |
+| `http_5xx`           | count per minute of log time | host, bench, site  |
+| `http_502`           | count per minute of log time | host, bench, site  |
 | `queue_length`       | jobs     | host, bench, `labels.queue`       |
 | `rq_failed_jobs`     | jobs     | host, bench, `labels.queue`: size of RQ's failed-job registry (`rq:failed:<queue>`) |
 | `rq_failed_jobs_added` | jobs per push interval | host, bench, `labels.queue`: increase of that registry since the previous push (never negative; none on the agent's first cycle) |

@@ -64,8 +64,9 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   `bench.log`; failed scheduled jobs from `scheduler.log`; worker crashes, OOM kills
   and failed jobs from `worker.log` / `worker.error.log`. Site-scoped
   `sites/<site>/logs/frappe.web.log` and `scheduler.log` are tailed too.
-- **nginx** access log: `http_requests`, `http_5xx`, `http_502` per site per push
-  interval, plus one aggregated event per (site, status, route). The site comes
+- **nginx** access log: `http_requests`, `http_5xx`, `http_502` per site per minute
+  of the log line's own time (a backlog lands in the minutes it happened), plus one
+  aggregated event per (site, status, route) and minute. The site comes
   from `$host` when the log format includes it (leading vhost field or a trailing
   quoted field), else from a per-site log file name, else the bench's only site.
   The same lines feed **web attack detection**: requests probing for `.env`, `.git/`,
@@ -99,7 +100,7 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
 - **Suricata** (optional, #72): when Suricata writes an EVE log (`suricata.eve_log`, else
   `/var/log/suricata/eve.json` if it exists), the agent tails it like the other logs.
   - Only `alert` records are read. Each (signature, remote address) pair gives one
-    `network_ids_alert` event per push interval, with a count; past 500 pairs, alerts are only
+    `network_ids_alert` event per minute of log time, with a count; past 500 pairs, alerts are only
     counted.
   - Severity follows the rule's priority: 1 is critical, 2 warning, 3 info. Priorities above
     `suricata.max_priority` are skipped.
@@ -115,7 +116,7 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   (`wazuh.alerts_log`, else `/var/ossec/logs/alerts/alerts.json` if it exists). The agent's
   user must be able to read it: add it to the `wazuh` group.
   - Alerts at or above `wazuh.min_level` (7) become `hids_alert` events, one per rule and
-    subject (source IP, else host) per push interval, with a count. Level 12 and above is
+    subject (source IP, else host) per minute of log time, with a count. Level 12 and above is
     critical, 7 to 11 warning.
   - The `sca` group (configuration assessment) is excluded by default (`exclude_groups`). The
     `dodock_wolf` group, Wazuh's alerts on Wolf's own SIEM export, is always excluded, so
