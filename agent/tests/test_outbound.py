@@ -329,5 +329,95 @@ class TestOutbound(unittest.TestCase):
 		self.assertIsNone(outbound.OutboundWatcher("h", None, helper="/nonexistent/wolf-outbound-log").helper)
 
 
+	def test_installed_after_learning_kernel_only_destinations_learn_first(self):
+		w = self.kwatcher()
+		w.learn_seconds = 7 * DAY
+		w.state["users"][str(self.uid)] = {"since": 0, "seen": {}}  # learned long ago, from /proc
+		w.collect(self.benches, epoch=30 * DAY, sockets=[])  # the helper is applied now
+		self.source.lines = [self.OUT.format(dst="185.199.110.66", port=4444, uid=self.uid)]
+		self.assertEqual(w.collect(self.benches, epoch=31 * DAY, sockets=[])[1], [], "its own learning week")
+		self.source.lines = [self.OUT.format(dst="151.101.1.99", port=4444, uid=self.uid)]  # another network
+		self.assertEqual(len(w.collect(self.benches, epoch=38 * DAY, sockets=[])[1]), 1, "then reported")
+
+	def test_turned_off_removes_the_table_once(self):
+		helper = os.path.join(self.tmp.name, "wolf-outbound-log")
+		open(helper, "w").close()
+		calls = []
+		w = self.cwatcher(kernel_log=False, helper=helper, run=lambda cmd, **kw: calls.append(cmd) or mock.Mock(returncode=0))
+		w.collect(self.benches, epoch=0, sockets=[])
+		w.collect(self.benches, epoch=60, sockets=[])
+		self.assertEqual(calls, [["sudo", "-n", helper, "--off"]])
+
+	def test_a_failed_reapply_says_which_users_are_still_covered(self):
+		w = self.kwatcher()
+		w.collect(self.benches, epoch=0, sockets=[])
+		other = os.path.join(self.tmp.name, "other-bench")
+		os.makedirs(other)
+		os.chown(other, 4343, 4343) if os.geteuid() == 0 else None
+		w.run = lambda cmd, **kw: mock.Mock(returncode=1, stderr="nope")
+		if os.stat(other).st_uid == self.uid:
+			self.skipTest("cannot give the second bench another owner here")
+		with self.assertLogs("wolf_agent.outbound", "WARNING") as logs:
+			w.collect(self.benches + [{"name": "other", "path": other}], epoch=60, sockets=[])
+		self.assertIn("still covers", logs.output[0])
+
+	def test_the_kernel_journal_resumes_after_a_restart(self):
+		from wolf_agent.tailer import JournalTailer
+
+		with mock.patch.object(JournalTailer, "supports_cursor_file", return_value=True):
+			cmd = JournalTailer(("kernel",), cursor_file="/var/lib/wolf-agent/spool/outbound-journal.cursor").cmd
+		self.assertEqual(cmd[cmd.index("--cursor-file") + 1], "/var/lib/wolf-agent/spool/outbound-journal.cursor")
+		with mock.patch.object(JournalTailer, "supports_cursor_file", return_value=False):
+			self.assertNotIn("--cursor-file", JournalTailer(("kernel",), cursor_file="/x").cmd, "systemd before 242")
+
+	def test_the_collector_closes_the_watcher(self):
+		from wolf_agent.collector import InfraChecks
+
+		infra = InfraChecks({"outbound": {"kernel_log": False}}, "h")
+		infra.outbound_watcher = mock.Mock()
+		infra.close()
+		infra.outbound_watcher.close.assert_called_once()
+
+
+class TestHelperScript(unittest.TestCase):
+	"""agent/wolf-outbound-log.sh with a fake nft that records what it would apply."""
+
+	SCRIPT = os.path.join(os.path.dirname(__file__), "..", "wolf-outbound-log.sh")
+
+	def run_helper(self, *args, listed=True):
+		import subprocess
+
+		with tempfile.TemporaryDirectory() as tmp:
+			record = os.path.join(tmp, "nft-calls")
+			with open(os.path.join(tmp, "nft"), "w") as f:
+				f.write(f"#!/bin/sh\necho \"$*\" >> {record}\n[ \"$1\" = list ] && exit {0 if listed else 1}\n"
+				        f"[ \"$1\" = -f ] && cat >> {record}\nexit 0\n")  # only `nft -f -` reads a ruleset
+			os.chmod(os.path.join(tmp, "nft"), 0o755)
+			done = subprocess.run(["sh", self.SCRIPT, *args], capture_output=True, text=True, timeout=30,
+			                      stdin=subprocess.DEVNULL, env={"PATH": f"{tmp}:/usr/bin:/bin"})  # fmt: skip
+			calls = open(record).read() if os.path.exists(record) else ""
+		return done.returncode, calls, done.stderr
+
+	def test_uids_and_rules(self):
+		rc, calls, _ = self.run_helper("1000", "1001")
+		self.assertEqual(rc, 0)
+		self.assertIn("elements = { 1000, 1001 }", calls)
+		self.assertIn('limit wolf_rate { rate 50/second burst 200 packets }', calls)
+		self.assertEqual(calls.count('limit name "wolf_rate"'), 10, "every rule shares one budget")
+		self.assertEqual(calls.count("meta l4proto tcp"), 10, "TCP only")
+		self.assertIn("flags skuid", calls)
+
+	def test_refusals(self):
+		for args in (["0"], ["00"], ["abc"], ["1000;", "x"], ["-1"]):
+			rc, calls, _ = self.run_helper(*args)
+			self.assertEqual((rc, calls), (2, ""), args)
+
+	def test_containers_only_and_off(self):
+		rc, calls, _ = self.run_helper()
+		self.assertEqual(rc, 0)
+		self.assertNotIn("skuid", calls, "no bench user: the forward rules only")
+		self.assertEqual(self.run_helper("--off")[1], "list table inet wolf_outbound\ndelete table inet wolf_outbound\n")
+		self.assertEqual(self.run_helper("--off", listed=False)[:2], (0, "list table inet wolf_outbound\n"))
+
 if __name__ == "__main__":
 	unittest.main()

@@ -9,9 +9,11 @@
 #   install -m 0755 -o root -g root wolf-outbound-log.sh /usr/local/sbin/wolf-outbound-log
 #   echo 'wolf-agent ALL=(root) NOPASSWD: /usr/local/sbin/wolf-outbound-log' > /etc/sudoers.d/wolf-outbound-log
 # The agent runs it with the uids of the bench folders' owners when they change. Lines start with
-# "wolf-out: " (a bench user, with UID=) or "wolf-fwd: " (a container, with SRC=). Private,
-# loopback and link-local destinations are left out, and each rule logs at most 20 new
-# connections a second. `nft list table inet wolf_outbound` shows it.
+# "wolf-out: " (a bench user, with UID=) or "wolf-fwd: " (a container, with SRC=). TCP only (a
+# DNS or NTP query would use up the budget); private, loopback and link-local destinations are
+# left out; every rule shares one limit, 50 new connections a second for the whole host, so the
+# journal cannot be flooded. Matching on `ct state new` turns connection tracking on for the
+# host's traffic. `nft list table inet wolf_outbound` shows the counters.
 set -eu
 
 if [ "${1:-}" = "--off" ]; then
@@ -34,11 +36,11 @@ for uid in "$@"; do
 	uids="${uids:+$uids, }$uid"
 done
 
-limit='limit rate 20/second burst 100 packets'
+limit='limit name "wolf_rate"'
 if [ -n "$uids" ]; then
 	elements="elements = { $uids }"
-	out4="ct state new meta skuid @bench_uids ip daddr != @private4 $limit counter log prefix \"wolf-out: \" level info flags skuid"
-	out6="ct state new meta skuid @bench_uids ip6 daddr != @private6 $limit counter log prefix \"wolf-out: \" level info flags skuid"
+	out4="ct state new meta l4proto tcp meta skuid @bench_uids ip daddr != @private4 $limit counter log prefix \"wolf-out: \" level info flags skuid"
+	out6="ct state new meta l4proto tcp meta skuid @bench_uids ip6 daddr != @private6 $limit counter log prefix \"wolf-out: \" level info flags skuid"
 else
 	elements=""
 	out4=""
@@ -48,8 +50,8 @@ fi
 fwd=""
 for bridge in docker0 'br-*' 'podman*' 'cni*'; do
 	fwd="$fwd
-		ct state new iifname \"$bridge\" ip daddr != @private4 $limit counter log prefix \"wolf-fwd: \" level info
-		ct state new iifname \"$bridge\" ip6 daddr != @private6 $limit counter log prefix \"wolf-fwd: \" level info"
+		ct state new meta l4proto tcp iifname \"$bridge\" ip daddr != @private4 $limit counter log prefix \"wolf-fwd: \" level info
+		ct state new meta l4proto tcp iifname \"$bridge\" ip6 daddr != @private6 $limit counter log prefix \"wolf-fwd: \" level info"
 done
 
 # "add, then delete, then define" replaces the whole table in one transaction
@@ -57,6 +59,7 @@ nft -f - <<NFT
 add table inet wolf_outbound
 delete table inet wolf_outbound
 table inet wolf_outbound {
+	limit wolf_rate { rate 50/second burst 200 packets }
 	set bench_uids { type uid; $elements }
 	set private4 {
 		type ipv4_addr; flags interval;

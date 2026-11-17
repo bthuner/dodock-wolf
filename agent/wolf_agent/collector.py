@@ -275,6 +275,7 @@ class Collector:
 	def close(self):
 		for source in self.sources:
 			source.tailer.close()
+		self.infra.close()
 
 
 class InfraChecks:
@@ -323,6 +324,10 @@ class InfraChecks:
 		self.tls_lock = threading.Lock()
 		self.tls_pending = []
 		self.tls_thread = None
+
+	def close(self):
+		if self.outbound_watcher:
+			self.outbound_watcher.close()
 
 	def _due(self, name, interval):
 		now = self.clock()

@@ -191,7 +191,8 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   native format; the installer adds the agent's user to the `proxy` group to read it). A client of
   the proxy that is neither a bench's container nor the host itself is left out.
   Read from `/proc`, a connection that opens and closes between two samples is missed; with the
-  optional helper below, every new connection is read from the kernel log instead.
+  optional helper ("Every outbound connection" below), every new TCP connection is read from the
+  kernel log too.
 - **TLS**: `tls_days_left` for every public site name and custom domain (`site_config.json`
   `domains`), every `tls.interval` (1 h), in a background thread. The agent connects to
   `<domain>:443` with SNI (or to `tls.connect_host`, e.g. `127.0.0.1`, to check the local nginx),
@@ -327,22 +328,6 @@ reason, so the manager knows it was not applied.
 
 ### With fail2ban instead of nftables
 
-### Every outbound connection (optional, root)
-
-`wolf-outbound-log` logs every new outbound connection of the bench users and of the containers
-behind a Docker, Podman or CNI bridge to the kernel log (nftables, at most 20 a second per rule,
-private destinations left out), so the outbound watch misses nothing between two `/proc` samples:
-
-```bash
-install -m 0755 -o root -g root agent/wolf-outbound-log.sh /usr/local/sbin/wolf-outbound-log
-echo 'wolf-agent ALL=(root) NOPASSWD: /usr/local/sbin/wolf-outbound-log' > /etc/sudoers.d/wolf-outbound-log
-chmod 0440 /etc/sudoers.d/wolf-outbound-log
-```
-
-The agent runs it with the bench users' uids (`outbound.kernel_log`, `"auto"`), reads the lines
-from `journalctl -t kernel` (or `/var/log/kern.log`) and refuses uid 0. `nft list table inet
-wolf_outbound` shows the counters; `wolf-outbound-log --off` removes it.
-
 Where fail2ban already manages the firewall, `wolf-block-fail2ban` bans in a jail of its own
 (`wolf`), with your usual ban action:
 
@@ -372,6 +357,32 @@ block Wolf asks for (7 days), and the helper unbans each address when its own du
 `fail2ban-client get wolf banip` lists the addresses; `fail2ban-client set wolf unbanip IP`
 lifts one early. Without the jail, the helper refuses and says so, and the action comes back
 *Failed*.
+
+## Every outbound connection (optional, root)
+
+Read from `/proc` every minute, the outbound watch misses a connection that opens and closes
+between two samples. `wolf-outbound-log` logs every new outbound **TCP** connection of the bench
+users and of the containers behind a Docker, Podman or CNI bridge (`docker0`, `br-*`, `podman*`,
+`cni*`) to the kernel log, through nftables:
+
+```bash
+install -m 0755 -o root -g root agent/wolf-outbound-log.sh /usr/local/sbin/wolf-outbound-log
+echo 'wolf-agent ALL=(root) NOPASSWD: /usr/local/sbin/wolf-outbound-log' > /etc/sudoers.d/wolf-outbound-log
+chmod 0440 /etc/sudoers.d/wolf-outbound-log
+```
+
+- The agent runs it with the bench users' uids whenever they change (`outbound.kernel_log`,
+  `"auto"`), reads the lines from `journalctl -t kernel` (resuming after a restart with a cursor
+  file, systemd 242 and later) or `/var/log/kern.log`, and refuses uid 0.
+- Every rule shares one limit: 50 new connections a second for the whole host, so the journal
+  cannot be flooded; past that, only what a `/proc` sample sees is counted. UDP (DNS, NTP) is not
+  logged, and neither are private, loopback and link-local destinations (`outbound.include_private`
+  does not apply here).
+- Matching new connections turns connection tracking on for the host's traffic.
+- Destinations only this log sees get a learning week of their own, from when the helper is first
+  applied.
+- `nft list table inet wolf_outbound` shows the counters. `"kernel_log": false` makes the agent
+  remove the table; to uninstall, run `wolf-outbound-log --off` and delete the two files.
 
 ## Watchdog
 

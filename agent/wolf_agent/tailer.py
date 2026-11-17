@@ -108,8 +108,11 @@ class JournalTailer:
 	its offset on each line, as in auth.log, so the same parser reads both.
 	"""
 
-	def __init__(self, identifiers=JOURNAL_IDENTIFIERS):
+	def __init__(self, identifiers=JOURNAL_IDENTIFIERS, cursor_file=None):
 		self.cmd = ["journalctl", "-f", "-n", "0", "-o", "short-iso"]
+		if cursor_file and self.supports_cursor_file():
+			# resumes after the last line read before a restart (written when journalctl stops)
+			self.cmd += ["--cursor-file", cursor_file]
 		for identifier in identifiers:
 			self.cmd += ["-t", identifier]
 		self.path = "journal:" + ",".join(identifiers)
@@ -119,6 +122,15 @@ class JournalTailer:
 	@staticmethod
 	def available():
 		return shutil.which("journalctl") is not None
+
+	@staticmethod
+	def supports_cursor_file():
+		"""--cursor-file exists since systemd 242."""
+		try:
+			out = subprocess.run(["journalctl", "--version"], capture_output=True, text=True, timeout=5).stdout
+			return int(out.split()[1]) >= 242
+		except (OSError, subprocess.SubprocessError, IndexError, ValueError):
+			return False
 
 	def _start(self):
 		self.proc = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)

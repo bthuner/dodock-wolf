@@ -359,10 +359,13 @@ class OutboundWatcher:
 		self.absent = set()  # proxy logs missing at a scan: read from their start once they appear
 		self.unreadable = set()  # proxy logs already warned about
 		# every new connection, when the operator installed the helper (wolf-outbound-log.sh)
-		self.helper = helper if kernel_log and os.path.exists(helper) else None
+		installed = os.path.exists(helper)
+		self.helper = helper if kernel_log and installed else None
+		self.turn_off = helper if not kernel_log and installed else None  # remove the table once
 		self.kernel_source = kernel_source
 		self.run = run or subprocess.run
 		self.applied = None  # the bench uids the helper was last run with
+		self._epoch = time.time()
 		self.helper_failed = set()
 
 	def _load(self):
@@ -423,10 +426,8 @@ class OutboundWatcher:
 				conns.update(found)
 			add(f"bench:{name}", [name], conns, "container")
 		for key, conns in self._kernel(users, owner_of).items():
-			if key in merged:
+			if key in merged:  # a bench user, or a container already read: the kernel adds what /proc missed
 				add(key, merged[key][0], conns, merged[key][2])
-			elif key.startswith("bench:"):
-				add(key, [key.split(":", 1)[1]], conns, "container")
 		host_names = sorted({n for key in order if merged[key][2] == "host" for n in merged[key][0]})
 		host_addresses = local_addresses(self.proc_root) | {"127.0.0.1", "::1"}
 		for key, conns in sorted(self._proxied(owner_of, host_addresses).items()):
@@ -439,6 +440,12 @@ class OutboundWatcher:
 		"""{subject: {destination: (ip, port, None, "kernel")}}: every new connection the helper
 		logged since the last scan, of a bench user (by its uid) or a bench's container (by its
 		address). The helper is (re)applied when the bench users change."""
+		if self.turn_off:  # `kernel_log: false` with the helper installed: stop the host's logging
+			try:
+				self.run(["sudo", "-n", self.turn_off, "--off"], capture_output=True, text=True, timeout=15)
+			except (OSError, subprocess.SubprocessError):
+				pass
+			self.turn_off = None
 		if not self.helper:
 			return {}
 		uids = sorted(users)
@@ -451,13 +458,19 @@ class OutboundWatcher:
 				ok, why = False, str(e)
 			if ok:
 				self.applied = uids
+				self.state.setdefault("kernel_since", self._epoch)  # its own learning period starts now
 			else:
 				self.helper_failed.add(tuple(uids))
-				log.warning("outbound: %s did not run (%s); sampling /proc only", self.helper, why or "sudo refused")
+				if self.applied is None:
+					log.warning("outbound: %s did not run (%s); sampling /proc only", self.helper, why or "sudo refused")
+				else:
+					log.warning("outbound: %s did not run for the bench users %s (%s); the kernel log still covers %s",
+					            self.helper, uids, why or "sudo refused", self.applied)  # fmt: skip
 		if self.applied is None:
 			return {}
 		if self.kernel_source is None:
-			self.kernel_source = (JournalTailer(("kernel",)) if JournalTailer.available()
+			cursor = os.path.join(os.path.dirname(self.state_path), "outbound-journal.cursor") if self.state_path else None
+			self.kernel_source = (JournalTailer(("kernel",), cursor_file=cursor) if JournalTailer.available()
 			                      else FileTailer(KERN_LOG, self.state["tail"]))  # fmt: skip
 		try:
 			lines = self.kernel_source.read_lines()
@@ -512,9 +525,15 @@ class OutboundWatcher:
 	def collect(self, benches, now=None, epoch=None, sockets=None):
 		ts = utc_iso(now)
 		epoch = (now.timestamp() if now else time.time()) if epoch is None else epoch
+		self._epoch = epoch
 		cutoff = epoch - FORGET_DAYS * 86400
 		metrics, events, active = [], [], set()
-		for key, names, conns, how in self.subjects(benches, sockets):
+		subjects = self.subjects(benches, sockets)
+		since = self.state.get("kernel_since")
+		# what only the kernel log sees (connections shorter than a sample) gets its own learning
+		# period from when the helper was installed: not a burst of alerts on a host learned long ago
+		kernel_learning = since is not None and epoch - float(since) < self.learn_seconds
+		for key, names, conns, how in subjects:
 			active.add(key)
 			record = self.state["users"].setdefault(key, {"since": epoch, "seen": {}})
 			record["last"] = epoch
@@ -522,6 +541,10 @@ class OutboundWatcher:
 			since = record.get("since")
 			learning = epoch - float(epoch if since is None else since) < self.learn_seconds
 			bench = names[0] if len(names) == 1 else None
+			if kernel_learning:
+				for dest, value in conns.items():
+					if value[3] == "kernel" and dest not in seen:
+						seen[dest] = epoch
 			new = sorted(d for d in conns if d not in seen)
 			unusual = [d for d in new if conns[d][1] not in self.usual_ports]
 			usual = [d for d in new if conns[d][1] in self.usual_ports]
