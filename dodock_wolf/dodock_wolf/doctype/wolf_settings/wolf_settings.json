@@ -1,0 +1,763 @@
+{
+ "actions": [],
+ "creation": "2026-10-29 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "mode_section",
+  "mode",
+  "central_url",
+  "verify_tls",
+  "satellite_id",
+  "satellite_secret",
+  "cb_mode",
+  "last_forward_at",
+  "last_forward_status",
+  "last_forward_error",
+  "forward_retry_at",
+  "forward_failures",
+  "agents_section",
+  "registration_token",
+  "push_interval",
+  "agent_silence_minutes",
+  "max_clock_skew_seconds",
+  "cb_agents",
+  "max_events_per_push",
+  "max_metrics_per_push",
+  "max_pushes_per_minute",
+  "ingest_mode",
+  "correlation_section",
+  "deployment_window_minutes",
+  "timeline_padding_minutes",
+  "correlate_by_entity",
+  "entity_correlation_minutes",
+  "detectors_section",
+  "web_detection_mode",
+  "cb_detectors",
+  "host_detection_mode",
+  "detector_match_minutes",
+  "local_section",
+  "capture_scheduler_failures",
+  "capture_error_logs",
+  "cb_local",
+  "capture_login_failures",
+  "capture_admin_logins",
+  "capture_privileged_users",
+  "privileged_roles",
+  "capture_app_security",
+  "capture_exfiltration",
+  "exfiltration_floor_mb",
+  "exfiltration_factor",
+  "signals_section",
+  "capture_email_queue",
+  "email_queue_stale_minutes",
+  "cb_signals",
+  "capture_admin_countries",
+  "geoip_database",
+  "threat_section",
+  "ip_reputation_enabled",
+  "ip_reputation_sources",
+  "check_security_advisories",
+  "cb_threat",
+  "honeytoken_users",
+  "honeytoken_api_keys",
+  "honeytoken_paths",
+  "crowdsec_section",
+  "crowdsec_enabled",
+  "crowdsec_url",
+  "crowdsec_bouncer_key",
+  "crowdsec_machine_id",
+  "crowdsec_password",
+  "cb_crowdsec",
+  "crowdsec_send_detections",
+  "crowdsec_min_severity",
+  "crowdsec_detection_remediation",
+  "crowdsec_apply_blocks",
+  "siem_section",
+  "siem_enabled",
+  "siem_host",
+  "siem_port",
+  "siem_transport",
+  "siem_verify_tls",
+  "siem_ca_file",
+  "siem_framing",
+  "siem_header",
+  "cb_siem",
+  "siem_format",
+  "siem_min_severity",
+  "siem_event_types",
+  "siem_journal",
+  "retention_section",
+  "raw_retention_hours",
+  "minute_retention_days",
+  "cb_retention",
+  "hour_retention_days",
+  "event_retention_days",
+  "journal_retention_days",
+  "links_section",
+  "public_url",
+  "action_link_hours"
+ ],
+ "fields": [
+  {
+   "fieldname": "mode_section",
+   "fieldtype": "Section Break",
+   "label": "Mode"
+  },
+  {
+   "default": "central",
+   "description": "central: this site stores events, evaluates rules and opens incidents. satellite: this site only captures its local signals and forwards them to a central Wolf site.",
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "central\nsatellite"
+  },
+  {
+   "depends_on": "eval:doc.mode=='satellite'",
+   "description": "Set by Register with central site.",
+   "fieldname": "central_url",
+   "fieldtype": "Data",
+   "label": "Central URL",
+   "options": "URL"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.mode=='satellite'",
+   "fieldname": "verify_tls",
+   "fieldtype": "Check",
+   "label": "Verify TLS"
+  },
+  {
+   "depends_on": "eval:doc.mode=='satellite'",
+   "description": "Wolf Agent name of this site on the central site.",
+   "fieldname": "satellite_id",
+   "fieldtype": "Data",
+   "label": "Satellite ID",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.mode=='satellite'",
+   "fieldname": "satellite_secret",
+   "fieldtype": "Password",
+   "label": "Satellite Secret",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cb_mode",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.mode=='satellite'",
+   "description": "Last successful push to the central site.",
+   "fieldname": "last_forward_at",
+   "fieldtype": "Datetime",
+   "label": "Last Forward At",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.mode=='satellite'",
+   "fieldname": "last_forward_status",
+   "fieldtype": "Data",
+   "label": "Last Forward Status",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.mode=='satellite'",
+   "fieldname": "last_forward_error",
+   "fieldtype": "Small Text",
+   "label": "Last Forward Error",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.mode=='satellite'",
+   "fieldname": "forward_retry_at",
+   "fieldtype": "Datetime",
+   "label": "Next Retry At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "forward_failures",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Forward Failures",
+   "read_only": 1
+  },
+  {
+   "fieldname": "agents_section",
+   "fieldtype": "Section Break",
+   "label": "Agents"
+  },
+  {
+   "description": "Shared secret that `wolf-agent register --token` must present. Leave empty to disable new registrations.",
+   "fieldname": "registration_token",
+   "fieldtype": "Password",
+   "label": "Registration Token"
+  },
+  {
+   "default": "30",
+   "description": "Seconds between agent pushes (sent back to agents).",
+   "fieldname": "push_interval",
+   "fieldtype": "Int",
+   "label": "Push Interval"
+  },
+  {
+   "default": "5",
+   "description": "Raise a warning event when an agent has not pushed for this long.",
+   "fieldname": "agent_silence_minutes",
+   "fieldtype": "Int",
+   "label": "Agent Silence Minutes"
+  },
+  {
+   "default": "300",
+   "description": "Timestamps further in the future than this are clamped to the server time on ingest. 0 disables.",
+   "fieldname": "max_clock_skew_seconds",
+   "fieldtype": "Int",
+   "label": "Max Clock Skew (seconds)"
+  },
+  {
+   "fieldname": "cb_agents",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1000",
+   "fieldname": "max_events_per_push",
+   "fieldtype": "Int",
+   "label": "Max Events Per Push"
+  },
+  {
+   "default": "5000",
+   "fieldname": "max_metrics_per_push",
+   "fieldtype": "Int",
+   "label": "Max Metrics Per Push"
+  },
+  {
+   "default": "120",
+   "description": "Per agent (and satellite). Pushes over the limit get HTTP 429 and the agent retries with backoff. 0 turns the limit off.",
+   "fieldname": "max_pushes_per_minute",
+   "fieldtype": "Int",
+   "label": "Max Pushes Per Minute",
+   "non_negative": 1
+  },
+  {
+   "default": "async",
+   "description": "async: a push is validated, queued on the short queue and stored by a worker (inline when the queue is unreachable). sync: stored during the request.",
+   "fieldname": "ingest_mode",
+   "fieldtype": "Select",
+   "label": "Ingest Mode",
+   "options": "async\nsync"
+  },
+  {
+   "fieldname": "correlation_section",
+   "fieldtype": "Section Break",
+   "label": "Correlation"
+  },
+  {
+   "default": "30",
+   "description": "Deployments this recent are linked to new incidents.",
+   "fieldname": "deployment_window_minutes",
+   "fieldtype": "Int",
+   "label": "Deployment Window Minutes"
+  },
+  {
+   "default": "30",
+   "description": "Events this long before an incident started are shown in its timeline.",
+   "fieldname": "timeline_padding_minutes",
+   "fieldtype": "Int",
+   "label": "Timeline Padding Minutes"
+  },
+  {
+   "default": "1",
+   "description": "A security event joins the open incident holding an event that names the same IP or e-mail user, whatever its source, host or site. Off: events are attached by site, bench or host only.",
+   "fieldname": "correlate_by_entity",
+   "fieldtype": "Check",
+   "label": "Group Incidents by IP or User"
+  },
+  {
+   "default": "60",
+   "depends_on": "correlate_by_entity",
+   "description": "How recent that event must be.",
+   "fieldname": "entity_correlation_minutes",
+   "fieldtype": "Int",
+   "label": "Entity Correlation Minutes"
+  },
+  {
+   "fieldname": "detectors_section",
+   "fieldtype": "Section Break",
+   "label": "Overlapping detectors",
+   "description": "Where Wolf's own detection and Suricata or Wazuh see the same thing. own: Wolf's detector, as when it works alone. both: keep both; an event and the other source's alert about the same IP and technique are one finding (the later one is marked as such and not sent again to CrowdSec or the SIEM). external: drop Wolf's own events of that detector while the other source reports from the host; if it is quiet for an hour, Wolf's come back."
+  },
+  {
+   "default": "own",
+   "description": "nginx web probes (web_attack_probe) vs Suricata alerts (network_ids_alert).",
+   "fieldname": "web_detection_mode",
+   "fieldtype": "Select",
+   "label": "Web Attacks",
+   "options": "own\nboth\nexternal"
+  },
+  {
+   "fieldname": "cb_detectors",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "own",
+   "description": "auth.log signals (SSH, sudo, accounts) vs Wazuh alerts (hids_alert).",
+   "fieldname": "host_detection_mode",
+   "fieldtype": "Select",
+   "label": "Host Logins and Accounts",
+   "options": "own\nboth\nexternal"
+  },
+  {
+   "default": "10",
+   "description": "In both mode, how close in time two events must be to be one finding.",
+   "fieldname": "detector_match_minutes",
+   "fieldtype": "Int",
+   "label": "Detector Match Minutes"
+  },
+  {
+   "fieldname": "local_section",
+   "fieldtype": "Section Break",
+   "label": "Local signals (this site)"
+  },
+  {
+   "default": "1",
+   "fieldname": "capture_scheduler_failures",
+   "fieldtype": "Check",
+   "label": "Capture failed Scheduled Job Logs"
+  },
+  {
+   "default": "1",
+   "fieldname": "capture_error_logs",
+   "fieldtype": "Check",
+   "label": "Capture Error Logs"
+  },
+  {
+   "fieldname": "cb_local",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "capture_login_failures",
+   "fieldtype": "Check",
+   "label": "Capture failed logins"
+  },
+  {
+   "default": "1",
+   "fieldname": "capture_admin_logins",
+   "fieldtype": "Check",
+   "label": "Flag privileged logins from new IPs"
+  },
+  {
+   "default": "1",
+   "fieldname": "capture_privileged_users",
+   "fieldtype": "Check",
+   "label": "Flag users granted privileged roles"
+  },
+  {
+   "default": "System Manager\nAdministrator\nWolf Manager",
+   "description": "One role per line.",
+   "fieldname": "privileged_roles",
+   "fieldtype": "Small Text",
+   "label": "Privileged Roles"
+  },
+  {
+   "default": "1",
+   "description": "Server and Client Scripts that can run new code, System Console runs, permission rule and Role Profile changes, weakened System Settings (2FA, password policy, lockout, sessions), API keys generated and Webhooks to a new host.",
+   "fieldname": "capture_app_security",
+   "fieldtype": "Check",
+   "label": "Flag risky application changes"
+  },
+  {
+   "default": "1",
+   "description": "Report exports, Data Export, bulk PDFs and list reads, counted per user and hour. An event when a user's hour is far above their largest hour of the last 14 days (critical at 20x, or without any history), once past the floor below.",
+   "fieldname": "capture_exfiltration",
+   "fieldtype": "Check",
+   "label": "Flag unusual data exports"
+  },
+  {
+   "default": "50",
+   "depends_on": "capture_exfiltration",
+   "description": "Below this volume in an hour (MB of responses), nothing is compared.",
+   "fieldname": "exfiltration_floor_mb",
+   "fieldtype": "Int",
+   "label": "Export Floor (MB per hour)"
+  },
+  {
+   "default": "5",
+   "depends_on": "capture_exfiltration",
+   "description": "Warning when a user's hour is this many times their largest hour of the last 14 days.",
+   "fieldname": "exfiltration_factor",
+   "fieldtype": "Float",
+   "label": "Export Factor"
+  },
+  {
+   "fieldname": "signals_section",
+   "fieldtype": "Section Break",
+   "label": "Email queue and login geography (this site)"
+  },
+  {
+   "default": "1",
+   "description": "Every 5 minutes: an event while emails wait in the Email Queue longer than the limit below, and while sending errors keep appearing.",
+   "fieldname": "capture_email_queue",
+   "fieldtype": "Check",
+   "label": "Watch the Email Queue"
+  },
+  {
+   "default": "30",
+   "depends_on": "capture_email_queue",
+   "description": "Not Sent / Sending emails older than this (and due) count as a backlog.",
+   "fieldname": "email_queue_stale_minutes",
+   "fieldtype": "Int",
+   "label": "Email Queue Stale Minutes"
+  },
+  {
+   "fieldname": "cb_signals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "description": "With a GeoIP database below: flag privileged logins from a country none of the user's earlier logins came from.",
+   "fieldname": "capture_admin_countries",
+   "fieldtype": "Check",
+   "label": "Flag privileged logins from new countries"
+  },
+  {
+   "depends_on": "capture_admin_countries",
+   "description": "Path to an offline database on this server: a MaxMind-format .mmdb (GeoLite2-Country, DB-IP Lite, IPinfo Lite) or a CSV of start_ip,end_ip,country ranges. Relative paths are read from the site directory. No online lookup is ever made.",
+   "fieldname": "geoip_database",
+   "fieldtype": "Data",
+   "label": "GeoIP Database"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "threat_section",
+   "fieldtype": "Section Break",
+   "label": "Threat intelligence and deception"
+  },
+  {
+   "default": "0",
+   "description": "Download the lists below once a day and tag security events whose IP is on one (one severity step more). Only the lists are downloaded; nothing is sent.",
+   "fieldname": "ip_reputation_enabled",
+   "fieldtype": "Check",
+   "label": "Use IP reputation lists"
+  },
+  {
+   "default": "firehol_level1 https://iplists.firehol.org/files/firehol_level1.netset\nspamhaus_drop https://www.spamhaus.org/drop/drop.txt",
+   "depends_on": "eval:doc.ip_reputation_enabled",
+   "description": "One list per line: a name, then a URL or a file path (relative to the site). One address or CIDR per line in each list.",
+   "fieldname": "ip_reputation_sources",
+   "fieldtype": "Small Text",
+   "label": "IP reputation lists"
+  },
+  {
+   "default": "1",
+   "description": "Download the Frappe and ERPNext security advisories from GitHub once a day and compare them with the versions the agents report (Security posture). An unauthenticated read of public data: nothing about this installation is sent.",
+   "fieldname": "check_security_advisories",
+   "fieldtype": "Check",
+   "label": "Check versions against GitHub Security Advisories"
+  },
+  {
+   "fieldname": "cb_threat",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Decoy accounts nobody uses (one email per line): any login attempt on them is critical.",
+   "fieldname": "honeytoken_users",
+   "fieldtype": "Small Text",
+   "label": "Decoy users"
+  },
+  {
+   "description": "Decoy API keys (one per line), e.g. left in an old backup or a repository: any request using one is critical. Do not create them on a real user.",
+   "fieldname": "honeytoken_api_keys",
+   "fieldtype": "Small Text",
+   "label": "Decoy API keys"
+  },
+  {
+   "description": "Paths linked from nowhere (one per line, e.g. /app/backup-admin): any request for one is critical.",
+   "fieldname": "honeytoken_paths",
+   "fieldtype": "Small Text",
+   "label": "Decoy paths"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "crowdsec_section",
+   "fieldtype": "Section Break",
+   "label": "CrowdSec",
+   "description": "Read the decisions of a CrowdSec Local API, send it Wolf's detections and the blocks a Wolf Manager approved. See docs/cyber.md (step 4)."
+  },
+  {
+   "default": "0",
+   "fieldname": "crowdsec_enabled",
+   "fieldtype": "Check",
+   "label": "Use CrowdSec"
+  },
+  {
+   "depends_on": "eval:doc.crowdsec_enabled",
+   "description": "The Local API, e.g. http://127.0.0.1:8080.",
+   "fieldname": "crowdsec_url",
+   "fieldtype": "Data",
+   "label": "Local API URL"
+  },
+  {
+   "depends_on": "eval:doc.crowdsec_enabled",
+   "description": "From `cscli bouncers add dodock-wolf`: lets Wolf read the decisions. Security events whose IP is under one are tagged and raised one severity step.",
+   "fieldname": "crowdsec_bouncer_key",
+   "fieldtype": "Password",
+   "label": "Bouncer API key"
+  },
+  {
+   "depends_on": "eval:doc.crowdsec_enabled",
+   "description": "From `cscli machines add dodock-wolf --password ...`: lets Wolf send alerts and decisions.",
+   "fieldname": "crowdsec_machine_id",
+   "fieldtype": "Data",
+   "label": "Machine ID"
+  },
+  {
+   "depends_on": "eval:doc.crowdsec_enabled",
+   "fieldname": "crowdsec_password",
+   "fieldtype": "Password",
+   "label": "Machine password"
+  },
+  {
+   "fieldname": "cb_crowdsec",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.crowdsec_enabled",
+   "description": "Security events with an IP, as CrowdSec alerts (scenario dodock-wolf/<category>). Past events are not replayed.",
+   "fieldname": "crowdsec_send_detections",
+   "fieldtype": "Check",
+   "label": "Send detections"
+  },
+  {
+   "default": "warning",
+   "depends_on": "eval:doc.crowdsec_enabled && doc.crowdsec_send_detections",
+   "fieldname": "crowdsec_min_severity",
+   "fieldtype": "Select",
+   "label": "Minimum severity sent",
+   "options": "info\nwarning\ncritical"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.crowdsec_enabled && doc.crowdsec_send_detections",
+   "description": "Off: CrowdSec records Wolf's alerts and decides nothing. On: its profiles decide, and the default profile bans the IP for 4 h, without a human approving it.",
+   "fieldname": "crowdsec_detection_remediation",
+   "fieldtype": "Check",
+   "label": "Let CrowdSec decide on detections"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.crowdsec_enabled",
+   "description": "A block a Wolf Manager approves also goes to CrowdSec as a ban for the approved duration, so every bouncer applies it.",
+   "fieldname": "crowdsec_apply_blocks",
+   "fieldtype": "Check",
+   "label": "Apply approved blocks"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "siem_section",
+   "fieldtype": "Section Break",
+   "label": "SIEM export (syslog)",
+   "description": "Send security events, and the journal, to UniSOC, Wazuh, Graylog or any syslog collector: RFC 5424 carrying CEF or OCSF JSON."
+  },
+  {
+   "default": "0",
+   "fieldname": "siem_enabled",
+   "fieldtype": "Check",
+   "label": "Export to a SIEM"
+  },
+  {
+   "depends_on": "eval:doc.siem_enabled",
+   "fieldname": "siem_host",
+   "fieldtype": "Data",
+   "label": "Collector host"
+  },
+  {
+   "default": "514",
+   "depends_on": "eval:doc.siem_enabled",
+   "fieldname": "siem_port",
+   "fieldtype": "Int",
+   "label": "Port"
+  },
+  {
+   "default": "tcp",
+   "depends_on": "eval:doc.siem_enabled",
+   "description": "UDP may drop or cut messages, and Wolf cannot tell: prefer TCP or TLS.",
+   "fieldname": "siem_transport",
+   "fieldtype": "Select",
+   "label": "Transport",
+   "options": "tcp\ntls\nudp"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.siem_enabled && doc.siem_transport == 'tls'",
+   "fieldname": "siem_verify_tls",
+   "fieldtype": "Check",
+   "label": "Verify the collector's certificate"
+  },
+  {
+   "depends_on": "eval:doc.siem_enabled && doc.siem_transport == 'tls' && doc.siem_verify_tls",
+   "description": "PEM file of the CA that signed the collector's certificate, when it is not a public one (an absolute path, or relative to the site, e.g. private/files/collector-ca.pem). Empty: the system's CAs.",
+   "fieldname": "siem_ca_file",
+   "fieldtype": "Data",
+   "label": "Collector CA file"
+  },
+  {
+   "default": "octet-counting",
+   "depends_on": "eval:doc.siem_enabled && doc.siem_transport != 'udp'",
+   "description": "How messages are separated on TCP and TLS (RFC 6587): octet counting (rsyslog, syslog-ng, Graylog), or one message per line (Wazuh, most line-based collectors).",
+   "fieldname": "siem_framing",
+   "fieldtype": "Select",
+   "label": "Framing",
+   "options": "octet-counting\nnewline"
+  },
+  {
+   "default": "rfc5424",
+   "depends_on": "eval:doc.siem_enabled",
+   "description": "rfc5424: a syslog header before each message (rsyslog, syslog-ng, Graylog). none: the bare JSON or CEF, which Wazuh decodes (OCSF, newline framing over TCP; see docs/siem.md).",
+   "fieldname": "siem_header",
+   "fieldtype": "Select",
+   "label": "Message header",
+   "options": "rfc5424\nnone"
+  },
+  {
+   "fieldname": "cb_siem",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "ocsf",
+   "depends_on": "eval:doc.siem_enabled",
+   "fieldname": "siem_format",
+   "fieldtype": "Select",
+   "label": "Format",
+   "options": "ocsf\ncef"
+  },
+  {
+   "default": "warning",
+   "depends_on": "eval:doc.siem_enabled",
+   "fieldname": "siem_min_severity",
+   "fieldtype": "Select",
+   "label": "Minimum severity",
+   "options": "info\nwarning\ncritical"
+  },
+  {
+   "default": "security",
+   "depends_on": "eval:doc.siem_enabled",
+   "description": "Comma-separated: security, error, cron_failure, worker_failure, host_metric_alert, deployment.",
+   "fieldname": "siem_event_types",
+   "fieldtype": "Data",
+   "label": "Event types"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval:doc.siem_enabled",
+   "description": "Also send every signed journal entry (seq, digest, mac): an external copy of the chain.",
+   "fieldname": "siem_journal",
+   "fieldtype": "Check",
+   "label": "Send the journal"
+  },
+  {
+   "fieldname": "retention_section",
+   "fieldtype": "Section Break",
+   "label": "Retention"
+  },
+  {
+   "default": "48",
+   "description": "Raw metric samples are kept this long, then only their 1-minute and 1-hour rollups. Samples not rolled up yet are never purged.",
+   "fieldname": "raw_retention_hours",
+   "fieldtype": "Int",
+   "label": "Raw Metric Retention (hours)",
+   "non_negative": 1
+  },
+  {
+   "default": "30",
+   "description": "1-minute rollups (charts up to 2 days, long rule windows).",
+   "fieldname": "minute_retention_days",
+   "fieldtype": "Int",
+   "label": "1-Minute Rollup Retention (days)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "cb_retention",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "365",
+   "description": "1-hour rollups (7-day charts and longer).",
+   "fieldname": "hour_retention_days",
+   "fieldtype": "Int",
+   "label": "1-Hour Rollup Retention (days)",
+   "non_negative": 1
+  },
+  {
+   "default": "90",
+   "fieldname": "event_retention_days",
+   "fieldtype": "Int",
+   "label": "Event Retention Days"
+  },
+  {
+   "default": "0",
+   "description": "Tamper-evident journal entries older than this are removed every night, after a signed purge record that verification checks. 0 keeps them forever. Entries the SIEM export has not sent yet are kept.",
+   "fieldname": "journal_retention_days",
+   "fieldtype": "Int",
+   "label": "Journal Retention Days",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "links_section",
+   "fieldtype": "Section Break",
+   "label": "Notifications"
+  },
+  {
+   "description": "Base URL used in alert links. Defaults to this site's URL.",
+   "fieldname": "public_url",
+   "fieldtype": "Data",
+   "label": "Public Url",
+   "options": "URL"
+  },
+  {
+   "default": "24",
+   "description": "Acknowledge/resolve links in alerts stay valid this long. 0 disables them.",
+   "fieldname": "action_link_hours",
+   "fieldtype": "Int",
+   "label": "Action Link Hours"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-11-17 12:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Dodock Wolf",
+ "name": "Wolf Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Wolf Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

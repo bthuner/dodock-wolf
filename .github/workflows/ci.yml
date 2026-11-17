@@ -28,7 +28,7 @@ jobs:
           pip install ruff==0.17.3
           ruff check --output-format=github .
       - name: shellcheck
-        run: shellcheck agent/install.sh agent/wolf-block.sh agent/wolf-block-fail2ban.sh agent/wazuh/custom-frappe-wolf ci/integration.sh
+        run: shellcheck agent/install.sh agent/wolf-block.sh agent/wolf-block-fail2ban.sh agent/wazuh/custom-dodock-wolf ci/integration.sh
 
   app-tests:
     name: App unit tests (Python 3.12)
@@ -80,7 +80,7 @@ jobs:
       - run: yarn test
       - run: yarn build
       - name: Build output
-        run: test -s ../frappe_wolf/www/wolf.html && test -s ../frappe_wolf/public/frontend/index.html
+        run: test -s ../dodock_wolf/www/wolf.html && test -s ../dodock_wolf/public/frontend/index.html
 
   browser:
     name: Wolf UI in a browser (Playwright + axe)
@@ -112,6 +112,27 @@ jobs:
             frontend/playwright-report
             frontend/test-results
           retention-days: 7
+
+  docs:
+    name: Docs site (generate + links)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: docs-site
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: yarn
+          cache-dependency-path: docs-site/yarn.lock
+      - run: yarn install --frozen-lockfile --non-interactive
+      - run: yarn lint
+      # every page in both languages; a page that 404s or a link to a missing page fails here
+      - run: yarn generate
+      # every internal link and #anchor of the generated HTML
+      - run: yarn check:links
 
   integration:
     name: Bench integration (${{ matrix.db }})
@@ -157,7 +178,7 @@ jobs:
           done
           docker logs db
           exit 1
-      - name: Install frappe_wolf and run db_smoke.py
+      - name: Install dodock_wolf and run db_smoke.py
         run: |
           docker run --rm --network wolf-ci --entrypoint bash \
             -v "$GITHUB_WORKSPACE:/src:ro" "$BENCH_IMAGE" /src/ci/integration.sh "${{ matrix.db }}"

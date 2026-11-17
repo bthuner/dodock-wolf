@@ -1,4 +1,4 @@
-"""agent/wazuh/custom-frappe-wolf.py: the script Wazuh's integration daemon runs per alert."""
+"""agent/wazuh/custom-dodock-wolf.py: the script Wazuh's integration daemon runs per alert."""
 
 import importlib.util
 import io
@@ -9,7 +9,7 @@ import unittest
 import urllib.error
 
 HERE = os.path.dirname(__file__)
-spec = importlib.util.spec_from_file_location("wolf_wazuh_integration", os.path.join(HERE, "..", "wazuh", "custom-frappe-wolf.py"))
+spec = importlib.util.spec_from_file_location("wolf_wazuh_integration", os.path.join(HERE, "..", "wazuh", "custom-dodock-wolf.py"))
 integration = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(integration)
 
@@ -34,10 +34,10 @@ class TestIntegration(unittest.TestCase):
 		ok, detail = integration.send(ALERTS["5404"], "wazuh-mgr:s3cret", "https://wolf.example.com/", opener=wolf)
 		self.assertEqual((ok, detail), (True, "stored as ev1"))
 		req = wolf.requests[0]
-		self.assertEqual(req.full_url, "https://wolf.example.com/api/method/frappe_wolf.api.wazuh.alert")
+		self.assertEqual(req.full_url, "https://wolf.example.com/api/method/dodock_wolf.api.wazuh.alert")
 		self.assertEqual((req.get_header("X-wolf-agent-id"), req.get_header("X-wolf-agent-secret")), ("wazuh-mgr", "s3cret"))
 		self.assertEqual(json.loads(req.data)["rule"]["id"], "5404")  # the alert as it is
-		full = "https://wolf.example.com/api/method/frappe_wolf.api.wazuh.alert"
+		full = "https://wolf.example.com/api/method/dodock_wolf.api.wazuh.alert"
 		self.assertEqual(integration.url_for(full), full)
 
 	def test_refusals(self):

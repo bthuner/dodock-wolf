@@ -1,5 +1,5 @@
 [project]
-name = "frappe_wolf"
+name = "dodock_wolf"
 authors = [{ name = "Théo Hunerblaes", email = "theohunerblaes@me.com" }]
 description = "First-class observability for Frappe benches, ERPNext/Dokos sites and Linux hosts"
 requires-python = ">=3.10"

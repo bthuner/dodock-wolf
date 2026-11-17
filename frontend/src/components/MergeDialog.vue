@@ -29,7 +29,7 @@ async function load({ withCandidates = false } = {}) {
   loading.value = true
   error.value = null
   try {
-    const answer = await call('frappe_wolf.api.incident_view.merge_preview', {
+    const answer = await call('dodock_wolf.api.incident_view.merge_preview', {
       source: props.incident,
       target: target.value || null,
       with_candidates: withCandidates ? 1 : 0,
@@ -64,7 +64,7 @@ async function merge() {
   merging.value = true
   error.value = null
   try {
-    const res = await call('frappe_wolf.api.incident.merge', { source: props.incident, target: target.value }, { post: true })
+    const res = await call('dodock_wolf.api.incident.merge', { source: props.incident, target: target.value }, { post: true })
     open.value = false
     emit('merged', res.target)
   } catch (e) {

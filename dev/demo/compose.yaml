@@ -1,4 +1,4 @@
-# Frappe Wolf demo stack: one Dokos bench, one site with frappe_wolf, nginx, the Wolf agent
+# Dodock Wolf demo stack: one Dokos bench, one site with dodock_wolf, nginx, the Wolf agent
 # and a webhook sink. See dev/demo/README.md.
 name: wolfdemo
 
@@ -70,7 +70,7 @@ services:
         if [ ! -d sites/wolf.localhost ]; then
           bench new-site wolf.localhost --mariadb-user-host-login-scope='%' \
             --admin-password=admin --db-root-username=root --db-root-password=admin \
-            --install-app frappe_wolf --set-default
+            --install-app dodock_wolf --set-default
           bench --site wolf.localhost set-config enable_frappe_logger 1
         else
           bench --site wolf.localhost migrate
@@ -79,7 +79,7 @@ services:
         # Skip the setup wizard: the demo only needs Desk.
         bench --site wolf.localhost execute frappe.db.set_single_value --args '["System Settings", "setup_complete", 1]'
         bench --site wolf.localhost execute frappe.db.set_value \
-          --args '["Installed Application", {"app_name": ["in", ["frappe", "frappe_wolf"]]}, "is_setup_complete", 1]'
+          --args '["Installed Application", {"app_name": ["in", ["frappe", "dodock_wolf"]]}, "is_setup_complete", 1]'
         bench --site wolf.localhost execute frappe.db.set_default --args '["desktop:home_page", "workspace"]'
         # Hand the registration token to the demo agent (it never runs bench itself).
         bench --site wolf.localhost execute frappe.utils.password.get_decrypted_password \

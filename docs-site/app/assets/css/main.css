@@ -1,0 +1,65 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@source "../../../content/**/*";
+
+/* Tokens from docs/making-of/brand.md. Brand blue #035AEC is the only saturated brand colour;
+   the neutrals are "Os" (light) and "Nuit" (dark). */
+@theme static {
+  --container-8xl: 90rem;
+  --font-sans: 'Inter Tight', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
+
+  --color-wolf-50: #EEF4FF;
+  --color-wolf-100: #D9E6FF;
+  --color-wolf-200: #BCD3FF;
+  --color-wolf-300: #9DBEFF;
+  --color-wolf-400: #7FA8FF;
+  --color-wolf-500: #2F74F5;
+  --color-wolf-600: #035AEC;
+  --color-wolf-700: #0347BD;
+  --color-wolf-800: #083B97;
+  --color-wolf-900: #0D3577;
+  --color-wolf-950: #0B214A;
+}
+
+:root {
+  --ui-container: var(--container-8xl);
+  --ui-primary: #035AEC;
+  --ui-bg: #F4F2EC;
+  --ui-bg-muted: #EDEAE2;
+  --ui-bg-elevated: #FFFFFF;
+  --ui-bg-accented: #E4E0D6;
+  --ui-border: #DCD8CE;
+  --ui-border-muted: #E6E2D9;
+  --ui-text: #121725;
+  --ui-text-highlighted: #121725;
+  --ui-text-muted: #565D6B;
+  --ui-text-toned: #3A4150;
+}
+
+.dark {
+  --ui-primary: #7FA8FF;
+  --ui-bg: #0A0F1C;
+  --ui-bg-muted: #10172A;
+  --ui-bg-elevated: #131A2A;
+  --ui-bg-accented: #1B2338;
+  --ui-border: #283147;
+  --ui-border-muted: #1F273B;
+  --ui-text: #ECEEF3;
+  --ui-text-highlighted: #FFFFFF;
+  --ui-text-muted: #A2AABA;
+  --ui-text-toned: #C7CCD6;
+}
+
+/* Brand fills (buttons) keep #035AEC in both themes: white on it is 5.7:1. */
+.dark .bg-primary { background-color: #035AEC; }
+
+.font-serif { font-family: var(--font-serif); }
+
+/* Mermaid draws at its natural size; let it use the column width instead. */
+.mermaid-diagram svg { width: 100%; height: auto; max-width: 100% !important; }
+
+/* Display face from the brand guide, for the landing hero only. */
+.wolf-hero-title { font-family: 'Instrument Serif', ui-serif, Georgia, serif; font-weight: 400; letter-spacing: -0.01em; line-height: 1.05; }

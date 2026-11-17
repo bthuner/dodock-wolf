@@ -5,7 +5,7 @@ import { onMounted, ref, watch } from 'vue'
 import { call } from '@/services/api'
 import { full } from '@/services/time'
 
-// Response actions (frappe_wolf/api/response.py): Wolf proposes, a Wolf Manager confirms each
+// Response actions (dodock_wolf/api/response.py): Wolf proposes, a Wolf Manager confirms each
 // one with a second click, and the result is recorded. Nothing runs on its own.
 const props = defineProps({
   incident: { type: String, required: true },
@@ -25,7 +25,7 @@ const STATUS = { Approved: 'Approved, waiting for the agent', Applied: 'Applied'
 async function load() {
   error.value = null
   try {
-    const answer = await call('frappe_wolf.api.response.get_response', { incident: props.incident })
+    const answer = await call('dodock_wolf.api.response.get_response', { incident: props.incident })
     // an answer without the expected lists shows nothing rather than breaking the incident page
     data.value = { ...answer, proposals: answer?.proposals || [], actions: answer?.actions || [] }
     hours.value = answer?.default_hours || 24
@@ -39,7 +39,7 @@ async function confirm(p) {
   error.value = null
   try {
     await call(
-      'frappe_wolf.api.response.approve',
+      'dodock_wolf.api.response.approve',
       { incident: props.incident, action: p.action, target: p.target, agent: p.agent, duration_hours: hours.value, reason: p.reason },
       { post: true },
     )

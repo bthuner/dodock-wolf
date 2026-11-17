@@ -1,0 +1,136 @@
+app_name = "dodock_wolf"
+app_title = "Dodock Wolf"
+app_publisher = "Dodock Wolf contributors"
+app_description = "Observability for Frappe benches, ERPNext/Dokos sites and Linux hosts"
+app_email = "theohunerblaes@me.com"
+app_license = "MIT"
+
+required_apps = ["frappe"]
+
+app_include_js = "/assets/dodock_wolf/js/wolf.js"
+app_include_css = "/assets/dodock_wolf/css/wolf.css"
+
+add_to_apps_screen = [
+	{
+		"name": "dodock_wolf",
+		"logo": "/assets/dodock_wolf/images/wolf.png",
+		"title": "Wolf",
+		# stays on Desk until the Wolf UI (/wolf) has its overview (#19)
+		"route": "/app/wolf-overview",
+	}
+]
+
+# Public, opt-in status pages (Wolf Status Page): www/wolf_status.py
+# The Wolf UI (frontend/, www/wolf.py) owns /wolf and every route under it.
+website_route_rules = [
+	{"from_route": "/wolf-status/<slug>", "to_route": "wolf_status"},
+	{"from_route": "/wolf/<path:app_path>", "to_route": "wolf"},
+]
+
+boot_session = "dodock_wolf.api.spa.boot_session"
+
+after_install ="dodock_wolf.install.after_install"
+after_migrate = "dodock_wolf.install.after_migrate"
+
+override_doctype_class = {
+	"Scheduled Job Type": "dodock_wolf.overrides.scheduled_job_type.WolfScheduledJobType",
+}
+
+# Wolf User Scope: restricted Wolf Users only see their sites/benches/hosts (wolf/access.py)
+permission_query_conditions = {
+	"Wolf Event": "dodock_wolf.wolf.access.event_query",
+	"Wolf Metric Sample": "dodock_wolf.wolf.access.metric_query",
+	"Wolf Metric Rollup": "dodock_wolf.wolf.access.rollup_query",
+	"Wolf Incident": "dodock_wolf.wolf.access.incident_query",
+	"Wolf Silence": "dodock_wolf.wolf.access.silence_query",
+	"Wolf Agent": "dodock_wolf.wolf.access.agent_query",
+	"Wolf Response Action": "dodock_wolf.wolf.access.response_query",
+}
+has_permission = {
+	doctype: "dodock_wolf.wolf.access.has_permission"
+	for doctype in ("Wolf Event", "Wolf Metric Sample", "Wolf Metric Rollup", "Wolf Incident", "Wolf Silence", "Wolf Agent",
+	                "Wolf Response Action")  # fmt: skip
+}
+
+doc_events = {
+	"Error Log": {"after_insert": "dodock_wolf.wolf.local_signals.on_error_log"},
+	"Activity Log": {"after_insert": "dodock_wolf.wolf.local_signals.on_activity_log"},
+	"User": {
+		"before_save": "dodock_wolf.wolf.local_signals.on_user_before_save",
+		"on_update": "dodock_wolf.wolf.local_signals.on_user_update",
+	},
+	# Frappe application security (Wolf Settings → Flag risky application changes)
+	"Server Script": {"on_update": "dodock_wolf.wolf.local_signals.on_server_script"},
+	"Client Script": {"on_update": "dodock_wolf.wolf.local_signals.on_client_script"},
+	"Console Log": {"after_insert": "dodock_wolf.wolf.local_signals.on_console_log"},
+	"Role Profile": {"on_update": "dodock_wolf.wolf.local_signals.on_role_profile"},
+	# permission drift outside the Role Permission Manager (Data Import, REST, code)
+	"Custom DocPerm": {
+		"on_update": "dodock_wolf.wolf.local_signals.on_custom_docperm",
+		"on_trash": "dodock_wolf.wolf.local_signals.on_custom_docperm_trash",
+	},
+	"User Permission": {
+		"on_update": "dodock_wolf.wolf.local_signals.on_user_permission",
+		"on_trash": "dodock_wolf.wolf.local_signals.on_user_permission_trash",
+	},
+	"System Settings": {"on_update": "dodock_wolf.wolf.local_signals.on_system_settings"},
+	"Webhook": {"on_update": "dodock_wolf.wolf.local_signals.on_webhook"},
+	# live updates for the Wolf UI (wolf/live.py): invalidations only, never telemetry;
+	# tamper-evident journal (api/journal.py): unsigned entries, chained every minute
+	"Wolf Incident": {
+		"after_insert": "dodock_wolf.wolf.live.on_incident",
+		"on_update": ["dodock_wolf.wolf.live.on_incident", "dodock_wolf.api.journal.on_incident"],
+		"on_trash": "dodock_wolf.wolf.live.on_incident",
+	},
+	"Wolf Event": {"after_insert": ["dodock_wolf.wolf.live.on_event", "dodock_wolf.api.journal.on_event"]},
+	"Wolf Delivery": {"after_insert": "dodock_wolf.wolf.live.on_delivery"},
+	"Wolf Response Action": {"on_update": "dodock_wolf.api.journal.on_response_action"},
+	"Wolf Settings": {"on_update": "dodock_wolf.api.journal.on_settings"},
+	"Comment": {
+		"after_insert": ["dodock_wolf.wolf.live.on_comment", "dodock_wolf.api.journal.on_comment"],
+		"on_update": "dodock_wolf.wolf.live.on_comment",
+		"on_trash": "dodock_wolf.wolf.live.on_comment",
+	},
+}
+
+# Role Permission Manager changes bypass doc events (raw SQL): read from the request;
+# data exports and list reads counted per user (api/exfiltration.py); API keys used from a
+# new address (api/api_keys.py)
+after_request = [
+	"dodock_wolf.wolf.local_signals.after_request",
+	"dodock_wolf.api.exfiltration.after_request",
+	"dodock_wolf.api.api_keys.after_request",
+]
+# decoy API keys and paths, checked before Frappe validates the token (api/threat.py)
+before_request = ["dodock_wolf.api.threat.before_request"]
+
+scheduler_events = {
+	"cron": {
+		"* * * * *": [
+			"dodock_wolf.tasks.evaluate_rules",
+			"dodock_wolf.tasks.check_incidents",
+			"dodock_wolf.tasks.forward_outbox",
+			"dodock_wolf.tasks.rollup_metrics",
+			"dodock_wolf.tasks.flush_live_updates",
+			"dodock_wolf.api.journal.chain_journal",
+			"dodock_wolf.api.siem.export_siem",
+			"dodock_wolf.api.crowdsec.sync_crowdsec",
+			"dodock_wolf.wolf.read_cache.refresh_active",
+		],
+		"0 * * * *": [
+			"dodock_wolf.tasks.send_digests",
+			"dodock_wolf.api.security.record_security_scores",
+			"dodock_wolf.api.response.expire_actions",
+			"dodock_wolf.api.exfiltration.flush_volumes",
+		],
+		"23 * * * *": ["dodock_wolf.tasks.purge_metrics"],
+		"*/5 * * * *": [
+			"dodock_wolf.tasks.check_agents",
+			"dodock_wolf.tasks.check_email_queue",
+			"dodock_wolf.api.compliance.check_deadlines",
+		],
+		"17 3 * * *": ["dodock_wolf.tasks.purge_old_data", "dodock_wolf.api.journal.purge_journal"],
+		"41 4 * * *": ["dodock_wolf.api.threat.refresh_reputation"],
+		"47 4 * * *": ["dodock_wolf.api.advisories.refresh_advisories"],
+	},
+}

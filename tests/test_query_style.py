@@ -4,7 +4,7 @@ import pathlib
 import re
 import unittest
 
-APP = pathlib.Path(__file__).resolve().parent.parent / "frappe_wolf"
+APP = pathlib.Path(__file__).resolve().parent.parent / "dodock_wolf"
 # frappe.get_all / get_list refuse backticks in order_by over HTTP ("invalid backtick notation"),
 # found on the demo bench: raw SQL may quote columns, the ORM's order_by may not
 ORDER_BY = re.compile(r"order_by\s*=\s*[\"'][^\"']*`")

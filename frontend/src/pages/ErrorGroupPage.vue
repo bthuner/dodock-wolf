@@ -19,7 +19,7 @@ async function load() {
   error.value = null
   group.value = null // another fingerprint: never show the previous group under it
   try {
-    group.value = await call('frappe_wolf.api.explore.get_error_group', { fingerprint: route.params.fingerprint })
+    group.value = await call('dodock_wolf.api.explore.get_error_group', { fingerprint: route.params.fingerprint })
   } catch (e) {
     group.value = null
     error.value = e.status === 404 ? 'No error group with this fingerprint that you can see.' : failure(e, 'this error group')

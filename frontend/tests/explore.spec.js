@@ -36,7 +36,7 @@ afterEach(() => vi.unstubAllGlobals())
 describe('EventsPage', () => {
   it('passes the URL filters to the server and shows a record as one row with its count', async () => {
     const fetchFn = server({
-      'frappe_wolf.api.explore.list_events': () => ({ events: [EVENT], paging: { has_more: false } }),
+      'dodock_wolf.api.explore.list_events': () => ({ events: [EVENT], paging: { has_more: false } }),
     })
     const { page } = await open(EventsPage, '/events?type=error&severity=critical&host=h1&bench=b1&q=Key&range=7d')
     const url = fetchFn.mock.calls[0][0]
@@ -46,7 +46,7 @@ describe('EventsPage', () => {
   })
 
   it('falls back to 24h for a range the controls do not offer, in the request and on screen', async () => {
-    const fetchFn = server({ 'frappe_wolf.api.explore.list_events': () => ({ events: [], paging: { has_more: false } }) })
+    const fetchFn = server({ 'dodock_wolf.api.explore.list_events': () => ({ events: [], paging: { has_more: false } }) })
     const { page } = await open(EventsPage, '/events?range=48h&type=gossip')
     expect(fetchFn.mock.calls[0][0]).toContain('range=24h')
     expect(fetchFn.mock.calls[0][0]).not.toContain('event_type')
@@ -54,15 +54,15 @@ describe('EventsPage', () => {
   })
 
   it('drops a bench without its host', async () => {
-    const fetchFn = server({ 'frappe_wolf.api.explore.list_events': () => ({ events: [], paging: { has_more: false } }) })
+    const fetchFn = server({ 'dodock_wolf.api.explore.list_events': () => ({ events: [], paging: { has_more: false } }) })
     await open(EventsPage, '/events?bench=b1')
     expect(fetchFn.mock.calls[0][0]).not.toContain('bench=')
   })
 
   it('shows a payload as text when a row opens', async () => {
     server({
-      'frappe_wolf.api.explore.list_events': () => ({ events: [EVENT], paging: { has_more: false } }),
-      'frappe_wolf.api.explore.get_event': () => ({ ...EVENT, payload: { traceback: '<script>alert(1)</script>' } }),
+      'dodock_wolf.api.explore.list_events': () => ({ events: [EVENT], paging: { has_more: false } }),
+      'dodock_wolf.api.explore.get_event': () => ({ ...EVENT, payload: { traceback: '<script>alert(1)</script>' } }),
     })
     const { page } = await open(EventsPage, '/events')
     await page.findAll('button').find((b) => b.text() === 'Details').trigger('click')
@@ -75,7 +75,7 @@ describe('EventsPage', () => {
 describe('ErrorsPage', () => {
   it('keeps records and reported occurrences apart, and says occurrences are not a window count', async () => {
     server({
-      'frappe_wolf.api.explore.list_error_groups': () => ({
+      'dodock_wolf.api.explore.list_error_groups': () => ({
         groups: [{ fingerprint: 'fp1', title: 'KeyError', severity: 'critical', records: 8, records_in_window: 3, occurrences: 47, sites: 2, host_wide: false,
           incidents: 1, first_seen: AT, last_seen: AT, latest: { site: 'a.example.com' } }],
         paging: { has_more: false },
@@ -92,7 +92,7 @@ describe('ErrorsPage', () => {
 describe('ErrorGroupPage', () => {
   it('shows the newest traceback as text and the scopes it hit', async () => {
     server({
-      'frappe_wolf.api.explore.get_error_group': () => ({
+      'dodock_wolf.api.explore.get_error_group': () => ({
         fingerprint: 'fp1', title: 'KeyError', severity: 'critical', records: 8, occurrences: 47, first_seen: AT, last_seen: AT,
         scopes: [{ site: 'a.example.com', bench: 'b1', host: 'h1', records: 2, occurrences: 41, first_seen: AT, last_seen: AT }],
         incidents: [], incidents_not_visible: 1,
@@ -108,7 +108,7 @@ describe('ErrorGroupPage', () => {
   })
 
   it('says when the group is not visible', async () => {
-    server({ 'frappe_wolf.api.explore.get_error_group': () => new Response('{}', { status: 404 }) })
+    server({ 'dodock_wolf.api.explore.get_error_group': () => new Response('{}', { status: 404 }) })
     const { page } = await open(ErrorGroupPage, '/errors/nope')
     expect(page.text()).toContain('No error group with this fingerprint that you can see.')
   })

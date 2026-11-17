@@ -1,4 +1,4 @@
-# Making Frappe Wolf
+# Making Dodock Wolf
 
 > *The night shift never sleeps.*
 > The full, art-directed version of this story is in [`index.html`](index.html). The identity tokens are in [`brand.md`](brand.md).
@@ -22,14 +22,14 @@ every event.
 
 ## 03 · Naming and voice
 
-The product is *Frappe Wolf*, made of the *Wolf Agent* on the host and the *Wolf App* on the
+The product is *Dodock Wolf*, made of the *Wolf Agent* on the host and the *Wolf App* on the
 site. The DocTypes keep sober names, because operators type them at 2AM. The voice is that of a
 good on-call colleague: state facts, lead with scope, prefer numbers to adjectives, put the link
 last, and use one wolf metaphor per screen at most.
 
 ## 04 · Identity
 
-<img src="assets/logo-192.png" width="96" height="96" alt="Frappe Wolf logo">
+<img src="assets/logo-192.png" width="96" height="96" alt="Dodock Wolf logo">
 
 The founder's mark is used as supplied: a wolf head in profile drawn as a single white line, with
 an angular eye slit, on an electric blue (`#035AEC`) rounded square. The palette is rebuilt
@@ -247,7 +247,11 @@ they are grouped by day.
 - **2026-11-02 · CrowdSec**: decisions in, detections and approved blocks out, tried against CrowdSec 1.6.4. By default Wolf's detections carry no remediation: CrowdSec records them and decides nothing.
 - **2026-11-02 · Suricata and Wazuh as optional sources** (#72): the agent reads Suricata's `eve.json` and the Wazuh manager's `alerts.json`; without an agent on the manager's host, Wazuh posts its alerts to Wolf. Tried against Suricata 7 with ET Open and a Wazuh 4.9.2 manager. Wolf alone stays the baseline.
 - **2026-11-03 · Entities**: at ingest, each security event's IP, hosts, sites and users are normalised and resolved through aliases Wolf learns by itself. A Suricata address on the server becomes the host, a Wazuh agent name resolves to it, and one filter finds Wolf's, Suricata's and Wazuh's events together. Wolf never overwrites a manual alias.
-- **2026-11-17 · This page**: redesigned, with chapters for security and the load test, the log grouped by day, and links moved to the repository's new address.
+- **2026-11-17 · Name**: Frappe Wolf becomes Dodock Wolf. The app, its API paths and the making-of take the new name. Wolf Agent, Wolf App and the DocTypes keep theirs.
+- **2026-11-17 · One incident per attacker, across sources** (#72): a security event joins the open incident that names the same public remote IP, whatever its source, host or site. Sequence rules fire when one event follows another on the same IP, user or host: a scan, then a login from that address. A user ties events together only when it is an e-mail address: `root` on two hosts is not one person.
+- **2026-11-17 · One story per incident; overlapping detectors** (#72): an incident that took events from other scopes also shows their deployments and health events, for the users allowed to see both. Where Wolf's own detector and Suricata or Wazuh overlap, the operator picks: Wolf's own, both as one finding, or the external one only.
+- **2026-11-17 · Documentation site**: user documentation in `docs-site/`, in English and French, the same page at the same path in both.
+- **2026-11-17 · This page**: redesigned, with chapters for security and the load test, and the log grouped by day.
 
 ## 12 · Trade-offs
 
@@ -262,7 +266,6 @@ they are grouped by day.
 
 ## Next
 
-- **The correlation console:** incidents grouped by entity across sources, and sequence rules (a scan, then a login from the same IP, then a large export).
 - **Standalone parity:** file integrity on the bench and outbound connections of bench processes, for benches without Suricata or Wazuh.
 - **Log search:** waits for raw-line storage, which Wolf deliberately doesn't have yet.
 - **A real Press server and Pilot host:** the integrations still need to run on one.

@@ -82,7 +82,7 @@ test('incident: acknowledge posts once and the header follows', async ({ page })
   await page.goto('/wolf/incidents/WINC-00001')
   await page.getByRole('button', { name: 'Acknowledge' }).click()
   await expect(page.getByText('Acknowledged').first()).toBeVisible()
-  const acts = calls.filter((c) => c.method === 'frappe_wolf.api.incident_view.act')
+  const acts = calls.filter((c) => c.method === 'dodock_wolf.api.incident_view.act')
   expect(acts.map((c) => c.args)).toEqual([{ incident: 'WINC-00001', action: 'acknowledge' }])
   await expect(page.getByRole('button', { name: 'Acknowledge' })).toHaveCount(0)
   await page.waitForLoadState('networkidle') // the timeline reload after the action
@@ -114,9 +114,9 @@ const focused = (page) =>
   })
 
 test('focus: a button that works for a moment keeps the focus', async ({ page }) => {
-  const slow = fixtures()['frappe_wolf.api.incident_view.get_timeline']
+  const slow = fixtures()['dodock_wolf.api.incident_view.get_timeline']
   await mockApi(page, {
-    'frappe_wolf.api.incident_view.get_timeline': async (args) => {
+    'dodock_wolf.api.incident_view.get_timeline': async (args) => {
       await new Promise((r) => setTimeout(r, 300)) // long enough for Chromium to drop the focus
       return slow(args)
     },
@@ -141,7 +141,7 @@ test('focus: an action that goes away hands the focus to the next one', async ({
 })
 
 test('focus: after a comment the box keeps the focus', async ({ page }) => {
-  const calls = await mockApi(page, { 'frappe_wolf.api.incident.add_comment': () => ({}) })
+  const calls = await mockApi(page, { 'dodock_wolf.api.incident.add_comment': () => ({}) })
   await page.goto('/wolf/incidents/WINC-00001')
   const box = page.getByRole('textbox', { name: 'Comment' })
   await box.fill('Restarted the workers')
@@ -149,7 +149,7 @@ test('focus: after a comment the box keeps the focus', async ({ page }) => {
   await page.keyboard.press('Enter')
   await expect(box).toHaveValue('')
   await expect(box).toBeFocused()
-  expect(calls.filter((c) => c.method === 'frappe_wolf.api.incident.add_comment')).toHaveLength(1)
+  expect(calls.filter((c) => c.method === 'dodock_wolf.api.incident.add_comment')).toHaveLength(1)
 })
 
 test('focus: a new page focuses its title; a filter or the first load does not', async ({ page }) => {
@@ -177,14 +177,14 @@ test('merge: the dialog says what moves, passes axe, gives focus back, and merge
   const card = (name) => ({ name, title: `incident ${name}`, status: 'Open', severity: 'warning',
     scope: { site: 'a.example.com', bench: 'frappe-bench', host: 'bench-01' }, started_at: INCIDENT.started_at }) // prettier-ignore
   const calls = await mockApi(page, {
-    'frappe_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, can: { ...INCIDENT.can, merge: true, split: true } }),
-    'frappe_wolf.api.incident_view.merge_preview': (args) => ({
+    'dodock_wolf.api.incident_view.get_incident': () => ({ ...INCIDENT, can: { ...INCIDENT.can, merge: true, split: true } }),
+    'dodock_wolf.api.incident_view.merge_preview': (args) => ({
       source: card('WINC-00001'), candidates: [card('WINC-00002')], more_candidates: false,
       preview: args.target ? { error: null, target: card('WINC-00002'), events: 2, comments: 1,
         target_after: { severity: 'critical', started_at: INCIDENT.started_at, status: 'Open' },
         source_after: { status: 'Resolved', merged_into: 'WINC-00002' } } : null,
     }), // prettier-ignore
-    'frappe_wolf.api.incident.merge': () => ({ target: 'WINC-00002', events: 2, comments: 1 }),
+    'dodock_wolf.api.incident.merge': () => ({ target: 'WINC-00002', events: 2, comments: 1 }),
   })
   await page.goto('/wolf/incidents/WINC-00001')
   const trigger = page.getByRole('button', { name: 'Merge…' })
@@ -198,12 +198,12 @@ test('merge: the dialog says what moves, passes axe, gives focus back, and merge
   await dialog.getByRole('button', { name: 'Cancel' }).click()
   await expect(dialog).toHaveCount(0)
   await expect(trigger).toBeFocused()
-  expect(calls.filter((c) => c.method === 'frappe_wolf.api.incident.merge')).toEqual([])
+  expect(calls.filter((c) => c.method === 'dodock_wolf.api.incident.merge')).toEqual([])
   await trigger.click()
   await page.getByRole('dialog').getByRole('combobox').selectOption('WINC-00002')
   await page.getByRole('button', { name: 'Merge into WINC-00002' }).click()
   await expect(page).toHaveURL(/\/wolf\/incidents\/WINC-00002$/)
-  expect(calls.filter((c) => c.method === 'frappe_wolf.api.incident.merge').map((c) => c.args)).toEqual([
+  expect(calls.filter((c) => c.method === 'dodock_wolf.api.incident.merge').map((c) => c.args)).toEqual([
     { source: 'WINC-00001', target: 'WINC-00002' },
   ])
 })

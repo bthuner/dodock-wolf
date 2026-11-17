@@ -1,7 +1,7 @@
 // Boot data from www/wolf.py (window.wolf, embedded in the page). The Vite dev server has no
-// Jinja, so there it is fetched from frappe_wolf.api.spa.get_boot with the session cookie.
+// Jinja, so there it is fetched from dodock_wolf.api.spa.get_boot with the session cookie.
 
-const BOOT_METHOD = '/api/method/frappe_wolf.api.spa.get_boot'
+const BOOT_METHOD = '/api/method/dodock_wolf.api.spa.get_boot'
 
 export async function loadBoot({ win = window, fetchFn = win.fetch?.bind(win) } = {}) {
   if (win.wolf) return win.wolf
@@ -13,7 +13,7 @@ export async function loadBoot({ win = window, fetchFn = win.fetch?.bind(win) } 
   }
   if (response.status === 403) {
     // signed in without a Wolf role: sending them to /login would bounce straight back
-    throw new Error('you need the Wolf User or Wolf Manager role to open Frappe Wolf')
+    throw new Error('you need the Wolf User or Wolf Manager role to open Dodock Wolf')
   }
   if (!response.ok) throw new Error(`Wolf boot failed: HTTP ${response.status}`)
   win.wolf = (await response.json()).message

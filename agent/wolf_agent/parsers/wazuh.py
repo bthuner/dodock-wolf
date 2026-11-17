@@ -7,7 +7,7 @@ agent user must be able to read it (the file belongs to the `wazuh` group).
 - **Floor:** only alerts at or above `wazuh.min_level` (7 by default) are read, so Wolf does
   not copy Wazuh's noise (configuration assessment, logins that worked). Level 12 and above is
   critical, 7 to 11 warning, below 7 info.
-- **Loop guard:** alerts of the `frappe_wolf` group (the rules that read Wolf's own SIEM export,
+- **Loop guard:** alerts of the `dodock_wolf` group (the rules that read Wolf's own SIEM export,
   docs/siem.md) are always skipped.
 - **Excluded groups:** `wazuh.exclude_groups`, `["sca"]` by default. Configuration assessment
   failures are posture, not intrusions: a fresh CIS scan gives dozens of level 7 alerts.
@@ -27,7 +27,7 @@ from datetime import datetime
 from ..util import event, fingerprint, utc_iso
 
 MAX_GROUPS = 500
-LOOP_GROUP = "frappe_wolf"
+LOOP_GROUP = "dodock_wolf"
 
 
 def timestamp(text):

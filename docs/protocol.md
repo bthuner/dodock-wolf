@@ -6,7 +6,7 @@ All traffic is HTTPS + JSON. All timestamps are ISO-8601 **UTC** strings
 ## 1. Registration
 
 ```
-POST /api/method/frappe_wolf.api.agent.register
+POST /api/method/dodock_wolf.api.agent.register
 Content-Type: application/json
 
 {
@@ -31,7 +31,7 @@ cannot show the secret again. Re-registering the same hostname, or **Rotate secr
 Wolf Agent form (which shows the new secret once), replaces it.
 
 Optional `"kind"`: `"agent"` (default) or `"satellite"`. A satellite is another Frappe site
-running `frappe_wolf` in satellite mode; it registers with `hostname` set to its site name and
+running `dodock_wolf` in satellite mode; it registers with `hostname` set to its site name and
 one bench entry carrying its real `host`:
 
 ```json
@@ -46,7 +46,7 @@ all registrations (register with its central site instead).
 ## 2. Telemetry push
 
 ```
-POST /api/method/frappe_wolf.api.ingest.push
+POST /api/method/dodock_wolf.api.ingest.push
 Content-Type: application/json
 X-Wolf-Agent-Id: WAG-0001
 X-Wolf-Agent-Secret: <secret>
@@ -150,7 +150,7 @@ Categories added with the infrastructure signals:
 | `permission_change` | site (Role Permission Manager request, Role Profile, Custom DocPerm, User Permission, User) | a permission rule added, changed, removed or reset; a Role Profile created or granting more roles; a User Permission letting its user see more; a Website user given desk access | `doctype`, `role`, `action`, `ptype`, `value` / `role_profile`, `roles`, `added` / `kind` (`custom_docperm`, `user_permission`, `desk_access`), `granted`, `revoked`, `everyone`, `user`, `allow`, `for_value`, `previous`, `via` |
 | `security_settings_weakened` | site (System Settings) | a save that lowers a defence; `critical` | `changes` (`field`, `label`, `old`, `new`), `by` |
 | `api_key_generated` | site (User) | a new API secret; `critical` for privileged users | `user`, `api_key`, `privileged`, `by` |
-| `hids_alert` | agent on the Wazuh manager's host (`alerts.json`, #72) | one per rule and subject (source IP, else host) per push interval; level 12+ critical, 7–11 warning; `sca` excluded by default, `frappe_wolf` always | `ip`, `user`, `count`, `rule_id`, `level`, `description`, `groups`, `wazuh_agent`, `location`, `decoder`, `sample_lines`, `wazuh_alert_id`, `attack_techniques` |
+| `hids_alert` | agent on the Wazuh manager's host (`alerts.json`, #72) | one per rule and subject (source IP, else host) per push interval; level 12+ critical, 7–11 warning; `sca` excluded by default, `dodock_wolf` always | `ip`, `user`, `count`, `rule_id`, `level`, `description`, `groups`, `wazuh_agent`, `location`, `decoder`, `sample_lines`, `wazuh_alert_id`, `attack_techniques` |
 | `network_ids_alert` | agent (Suricata `eve.json`, #72) | one per signature and remote address per push interval; severity from the rule priority (1 critical, 2 warning, 3 info) | `ip` (remote address), `count`, `signature`, `sid`, `rev`, `rule_category`, `priority`, `action`, `src_ip`/`dest_ip`/ports, `proto`, `app_proto`, `flow_id`, `community_id`, `targets`, `attack_techniques`, `http_hostname`, `url`, `http_method`, `http_status`, `http_user_agent`, `tls_sni`, `dns_query` |
 | `api_key_new_ip` | site (`after_request`) | a successful API-key request from an address outside every /24 or /64 the key was used from, once the key's first 24 h are past; `critical` for privileged users | `user`, `api_key`, `ip`, `privileged`, `path`, `user_agent`, `known_ips` (last 10), `known_count`, `key_first_seen` |
 | `data_exfiltration` | site (`after_request`) | a user's exports and list reads this hour past the floor and the factor times their largest hour of 14 days; `critical` at 20x or without history | `user`, `hour_bytes`, `hour_requests`, `hour_rows`, `baseline_bytes`, `ratio`, `factor`, `floor_bytes`, `last_request` (`kind`, `label`, `method`, `doctype`, `bytes`), `ip` |
@@ -207,7 +207,7 @@ server change is needed to receive them; the presets only need the samples to ex
 ## 3. Deployment marker
 
 ```
-POST /api/method/frappe_wolf.api.ingest.deployment
+POST /api/method/dodock_wolf.api.ingest.deployment
 X-Wolf-Agent-Id / X-Wolf-Agent-Secret headers
 {"bench": "main", "site": null, "note": "bench update", "source": "manual", "timestamp": "...",
  "silence_minutes": 15}
@@ -230,7 +230,7 @@ without silence support and should warn.
 ## 4. Wolf health (heartbeat)
 
 ```
-GET|POST /api/method/frappe_wolf.api.ingest.status
+GET|POST /api/method/dodock_wolf.api.ingest.status
 X-Wolf-Agent-Id / X-Wolf-Agent-Secret headers
 ```
 
@@ -276,7 +276,7 @@ alert is raised by the agent watchdog through its own fallback channel (see `age
 ## 4b. Wazuh integration (Wazuh → app)
 
 ```
-POST /api/method/frappe_wolf.api.wazuh.alert
+POST /api/method/dodock_wolf.api.wazuh.alert
 X-Wolf-Agent-Id: WAG-0005
 X-Wolf-Agent-Secret: <secret>
 Content-Type: application/json
@@ -287,11 +287,11 @@ Content-Type: application/json
 - **Credentials:** a Wolf Agent registered with `"kind": "integration"` (same registration as
   §1). It is never reported silent, since it only pushes when Wazuh has an alert.
 - **What Wolf keeps:** the alert becomes a `hids_alert` event, mapped like the agent's
-  `alerts.json` reader. The `frappe_wolf` group (Wazuh's alerts on Wolf's own export) and the
+  `alerts.json` reader. The `dodock_wolf` group (Wazuh's alerts on Wolf's own export) and the
   `sca` group are not stored, and the answer says why: `{"stored": false, "reason": ...}`.
 - **Repeats:** the same rule and subject within 10 minutes bump the event's count.
 - **Rate limit:** up to 600 calls a minute per integration.
-- **Sender:** `agent/wazuh/custom-frappe-wolf` is the script Wazuh's integration daemon runs
+- **Sender:** `agent/wazuh/custom-dodock-wolf` is the script Wazuh's integration daemon runs
   (agent/README.md).
 
 ## 5. Incident action links (alerts → app)
@@ -299,7 +299,7 @@ Content-Type: application/json
 Email, Raven and webhook alerts for unresolved incidents carry signed links:
 
 ```
-GET /api/method/frappe_wolf.api.actions.incident_action
+GET /api/method/dodock_wolf.api.actions.incident_action
     ?incident=WINC-00012&action=ack|resolve&expires=<unix seconds>[&actor=<email>]&sig=<hex>
 ```
 
@@ -322,7 +322,7 @@ links. Matrix, Gotify and SMS carry the incident URL only.
 Response links, one per action Wolf proposes on the incident (up to 5):
 
 ```
-GET /api/method/frappe_wolf.api.actions.response_action
+GET /api/method/dodock_wolf.api.actions.response_action
     ?incident=WINC-00012&action=block_ip|disable_user|logout_sessions|revoke_api_keys&target=<ip or user>
     [&agent=<Wolf Agent>&hours=<1..168>]&expires=<unix seconds>[&actor=<email>]&sig=<hex>
 ```
@@ -336,7 +336,7 @@ carries none.
 
 ## 6. Native channels (app → services)
 
-Each native channel is a pure builder in `frappe_wolf/wolf/channels/` that maps a notification to
+Each native channel is a pure builder in `dodock_wolf/wolf/channels/` that maps a notification to
 the documented format of the service (the module docstrings cite the reference pages):
 
 | Channel | Request |

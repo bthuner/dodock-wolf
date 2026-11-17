@@ -1,7 +1,7 @@
 import unittest
 from urllib.parse import parse_qs, urlparse
 
-from frappe_wolf.wolf import links
+from dodock_wolf.wolf import links
 
 SECRET = "s3cret"
 NOW = 1_800_000_000

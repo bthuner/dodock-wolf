@@ -43,9 +43,9 @@ def main():
 	# the checks write and read straight after: the overview's short read cache would hide their
 	# writes. "read cache" turns it on for itself.
 	frappe.local.conf["wolf_read_cache_seconds"] = 0
-	from frappe_wolf import tasks
-	from frappe_wolf.api import ui
-	from frappe_wolf.wolf import conditions, events, incidents, rules, schema
+	from dodock_wolf import tasks
+	from dodock_wolf.api import ui
+	from dodock_wolf.wolf import conditions, events, incidents, rules, schema
 
 	print(f"site {SITE} on {frappe.conf.db_type or 'mariadb'}")
 	tz, now = events.system_tz(), now_datetime()
@@ -186,7 +186,7 @@ def main():
 		return f"{len(data['open_incidents'])} open, {len(data['events'])} events, series={sorted(series)}"
 
 	def presets_and_signal_rules():
-		from frappe_wolf.wolf.presets import PRESETS, install_presets
+		from dodock_wolf.wolf.presets import PRESETS, install_presets
 
 		install_presets()
 		missing = [p["rule_name"] for p in PRESETS if not frappe.db.exists("Wolf Alert Rule", p["rule_name"])]
@@ -209,7 +209,7 @@ def main():
 		return f"{len(PRESETS)} presets installed; fired {fired}"
 
 	def email_queue_signals():
-		from frappe_wolf.wolf import email_queue
+		from dodock_wolf.wolf import email_queue
 
 		names = []
 		for status, age in (("Not Sent", 120), ("Error", 1), ("Sent", 120)):
@@ -263,7 +263,7 @@ def main():
 
 	def scoped_user():
 		"""A Wolf User restricted to one site sees only that site, in lists, forms and Wolf APIs."""
-		from frappe_wolf.wolf import access
+		from dodock_wolf.wolf import access
 
 		user = "smoke-scoped@example.com"
 		if not frappe.db.exists("User", user):
@@ -306,9 +306,9 @@ def main():
 		from frappe.utils.password import get_decrypted_password, set_encrypted_password
 		from werkzeug.test import EnvironBuilder
 
-		from frappe_wolf.api import agent as agent_api
-		from frappe_wolf.api import ingest
-		from frappe_wolf.patches import hash_agent_secrets
+		from dodock_wolf.api import agent as agent_api
+		from dodock_wolf.api import ingest
+		from dodock_wolf.patches import hash_agent_secrets
 
 		def request(agent_id=None, secret=None, body=None):
 			headers = {"X-Wolf-Agent-Id": agent_id, "X-Wolf-Agent-Secret": secret} if agent_id else {}
@@ -390,7 +390,7 @@ def main():
 
 	def channels():
 		"""Native channels against a local fake: secrets encrypted, deliveries recorded, never leaked."""
-		from frappe_wolf.wolf import notify
+		from dodock_wolf.wolf import notify
 
 		received = []
 
@@ -471,10 +471,10 @@ def main():
 		return f"resolved {res['resolved']}"
 
 	# --- storage: rollups, resolution selection, async ingest, retention -------------------
-	from frappe_wolf.api import ingest as ingest_api
-	from frappe_wolf.wolf import rollups, storage
-	from frappe_wolf.wolf.series import bucket_series
-	from frappe_wolf.wolf.storage import HOUR, MINUTE, RAW
+	from dodock_wolf.api import ingest as ingest_api
+	from dodock_wolf.wolf import rollups, storage
+	from dodock_wolf.wolf.series import bucket_series
+	from dodock_wolf.wolf.storage import HOUR, MINUTE, RAW
 
 	base = storage.floor(now, HOUR) - timedelta(hours=5)  # 3 closed hours of samples from here
 	roll_end = base + timedelta(hours=3)
@@ -704,7 +704,7 @@ def main():
 		assert frappe.db.count("Wolf Metric Rollup", {"host": ROLL_HOST, "metric_name": "smoke_roll"}), "recent rollups purged"
 		return f"expired raw/1m/1h purged, unrolled raw kept unless satellite (cutoffs {', '.join(f'{k}<{v}' for k, v in cutoffs.items())})"
 
-	from frappe_wolf.api import incident as inc_api
+	from dodock_wolf.api import incident as inc_api
 
 	wf = {}
 
@@ -735,7 +735,7 @@ def main():
 		return f"{a}, {b}: assigned, acknowledged, {len(activity)} activity entries"
 
 	def merge_split():
-		from frappe_wolf.api import incident_view as view
+		from dodock_wolf.api import incident_view as view
 
 		a, b, e = wf["a"], wf["b"], wf["events"]
 		# the Wolf UI's dry runs: what would move, before anything does
@@ -793,8 +793,8 @@ def main():
 		return f"{pm} for {c}, {doc.duration_minutes} min"
 
 	def metrics():
-		from frappe_wolf.frappe_wolf.report.wolf_incident_metrics import wolf_incident_metrics as report
-		from frappe_wolf.wolf import stats
+		from dodock_wolf.dodock_wolf.report.wolf_incident_metrics import wolf_incident_metrics as report
+		from dodock_wolf.wolf import stats
 
 		today = now.date()
 		out = {}
@@ -814,7 +814,7 @@ def main():
 		from frappe.utils import set_request
 		from frappe.website.serve import get_response
 
-		from frappe_wolf.wolf.status_page import get_public_status
+		from dodock_wolf.wolf.status_page import get_public_status
 
 		slug = "smoke-status"
 		page = frappe.get_doc("Wolf Status Page", slug) if frappe.db.exists("Wolf Status Page", slug) else frappe.new_doc("Wolf Status Page")
@@ -847,7 +847,7 @@ def main():
 
 	def ui_counts():
 		"""Exact KPI counts past list limits, bench-under-host, and the same access rules for a scoped user."""
-		from frappe_wolf.api import scope as scope_api
+		from dodock_wolf.api import scope as scope_api
 
 		kpi_host, kpi_site = "smoke-kpi-host", "kpi.localhost"
 		frappe.db.delete("Wolf Incident", {"host": kpi_host})
@@ -873,7 +873,7 @@ def main():
 			raise AssertionError("bench without host accepted")
 		except frappe.ValidationError:
 			pass
-		from frappe_wolf.wolf import window
+		from dodock_wolf.wolf import window
 
 		since_utc = window.to_utc(now - timedelta(minutes=10), tz)
 		explicit = scope_api.get_counts(since=since_utc, host=kpi_host)
@@ -902,7 +902,7 @@ def main():
 		frappe.db.delete("Wolf User Scope", {"user": user})
 		for site in (kpi_site, quiet):
 			frappe.get_doc({"doctype": "Wolf User Scope", "user": user, "scope_type": "site", "value": site}).insert()
-		from frappe_wolf.wolf import access
+		from dodock_wolf.wolf import access
 
 		access.clear_cache()
 		frappe.set_user(user)
@@ -926,9 +926,9 @@ def main():
 
 	def incident_view():
 		"""Incident page APIs: detail, timeline pages with ties, families, access, actions, deleted deployment."""
-		from frappe_wolf.api import incident as inc_api
-		from frappe_wolf.api import incident_view as view
-		from frappe_wolf.wolf import access
+		from dodock_wolf.api import incident as inc_api
+		from dodock_wolf.api import incident_view as view
+		from dodock_wolf.wolf import access
 
 		site, other = "tl.localhost", "tl-other.localhost"
 		at = now - timedelta(minutes=20)
@@ -1055,23 +1055,31 @@ def main():
 			pass
 		assert frappe.db.get_value("Wolf Incident", inc.name, "status") == "Resolved"
 
-		# an incident without any scope has evidence only: "same scope" would be every site
+		# an incident without any scope has no context of its own ("same scope" would be every site),
+		# only the health events of the scopes its events came from: here the linked event's site
 		bare = frappe.get_doc({"doctype": "Wolf Incident", "title": "tl bare", "severity": "warning", "status": "Open",
 		                       "started_at": at}).insert()
 		frappe.db.set_value("Wolf Event", linked[0], "incident", bare.name)
 		bare_rows = view.get_timeline(bare.name, families="evidence,context")["rows"]
-		assert [r["id"] for r in bare_rows] == [f"event:{linked[0]}"], [r["id"] for r in bare_rows]
+		assert [r["id"] for r in bare_rows if r["relation"] == "linked"] == [f"event:{linked[0]}"], bare_rows
+		assert {r["scope"]["site"] for r in bare_rows} == {site}, [r["scope"] for r in bare_rows]  # not `other`
+		assert {r["event_type"] for r in bare_rows} <= set(incidents.HEALTH_TYPES), [r["event_type"] for r in bare_rows]
+		empty = frappe.get_doc({"doctype": "Wolf Incident", "title": "tl empty", "severity": "warning", "status": "Open",
+		                        "started_at": at}).insert()  # fmt: skip
+		assert not view.get_timeline(empty.name, families="evidence,context")["rows"], "context from every site"
+		assert not incidents.get_timeline(empty.name), "Desk context from every site"
+		frappe.delete_doc("Wolf Incident", empty.name, force=True)
 		frappe.delete_doc("Wolf Incident", bare.name, force=True)
 		frappe.db.delete("Wolf Event", {"name": ("in", linked + context + [hidden])})
 		frappe.db.commit()
 		return (f"{inc.name}: {len(ids)} rows identical at page sizes 1/2/3/7, deployment outside the window shown, "
 		        f"other site hidden, comments as text, 2 accepted + 1 failed deliveries, Wolf User denied, "
-		        f"acknowledged and assigned, stale acknowledge refused, deleted deployment kept, bare incident has no context")
+		        f"acknowledged and assigned, stale acknowledge refused, deleted deployment kept, bare incident has only its linked site's health")
 
 	def dashboards():
 		"""Signals with honest states, HTTP series with gaps and deployments, monitoring."""
-		from frappe_wolf.api import dashboard
-		from frappe_wolf.wolf import access
+		from dodock_wolf.api import dashboard
+		from dodock_wolf.wolf import access
 
 		dash, dsite = "smoke-dash", "dash.localhost"
 
@@ -1161,9 +1169,9 @@ def main():
 
 	def read_cache_check():
 		"""The overview's cached reads: one value for every caller, filtered by each caller's grants."""
-		from frappe_wolf.api import dashboard
-		from frappe_wolf.api import scope as scope_api
-		from frappe_wolf.wolf import access, read_cache
+		from dodock_wolf.api import dashboard
+		from dodock_wolf.api import scope as scope_api
+		from dodock_wolf.wolf import access, read_cache
 
 		mine, theirs, late = "smoke-cache-mine", "smoke-cache-theirs", "smoke-cache-late"
 
@@ -1242,8 +1250,8 @@ def main():
 
 	def explorers():
 		"""Event list paging and search, error groups across sites, a scoped user's view of a group."""
-		from frappe_wolf.api import explore
-		from frappe_wolf.wolf import access
+		from dodock_wolf.api import explore
+		from dodock_wolf.wolf import access
 
 		xhost, sa, sb = "smoke-explore", "xa.localhost", "xb.localhost"
 		fp = "smoke-explore-fp"
@@ -1320,8 +1328,8 @@ def main():
 
 	def metrics_explorer():
 		"""Catalog rules, groups by label, interval sums, gaps, clipping and a scoped user."""
-		from frappe_wolf.api import metrics
-		from frappe_wolf.wolf import access
+		from dodock_wolf.api import metrics
+		from dodock_wolf.wolf import access
 
 		mhost = "smoke-metrics"
 
@@ -1365,7 +1373,7 @@ def main():
 			except frappe.ValidationError:
 				pass
 		assert metrics.query_metric("disk_used_percent", range="400d", host=mhost)["retention"]["clipped"], "clipping"
-		from frappe_wolf.wolf import window as win_mod
+		from dodock_wolf.wolf import window as win_mod
 
 		past = metrics.query_metric("disk_used_percent", host=mhost, since=win_mod.to_utc(now - timedelta(minutes=40), tz),
 		                            until=win_mod.to_utc(now - timedelta(minutes=20), tz))
@@ -1392,7 +1400,7 @@ def main():
 		        f"custom metric listed, 400d clipped, scoped user sees nothing of {mhost}")
 
 	def live_updates():
-		from frappe_wolf.wolf import live
+		from dodock_wolf.wolf import live
 
 		sent = []
 		original = frappe.publish_realtime
@@ -1453,7 +1461,7 @@ def main():
 	def app_security():
 		from types import SimpleNamespace
 
-		from frappe_wolf.wolf import local_signals
+		from dodock_wolf.wolf import local_signals
 
 		frappe.db.set_single_value("Wolf Settings", "capture_app_security", 1)
 		frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
@@ -1627,7 +1635,7 @@ def main():
 
 		import redis
 
-		from frappe_wolf.api import exfiltration as exfil
+		from dodock_wolf.api import exfiltration as exfil
 
 		frappe.db.set_single_value("Wolf Settings", {"capture_exfiltration": 1, "exfiltration_floor_mb": 1, "exfiltration_factor": 5})
 		frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
@@ -1704,7 +1712,7 @@ def main():
 		import base64
 		from types import SimpleNamespace
 
-		from frappe_wolf.api import api_keys
+		from dodock_wolf.api import api_keys
 
 		since = now_datetime() - timedelta(seconds=1)
 		frappe.cache.delete_keys(api_keys.CACHE_PREFIX)
@@ -1767,7 +1775,7 @@ def main():
 
 	def suricata_events():
 		"""A Suricata alert as the agent ships it: ATT&CK from the rule, a block to propose, the preset."""
-		from frappe_wolf.wolf import response
+		from dodock_wolf.wolf import response
 
 		name = events.insert_event(schema.normalize_event({
 			"type": "security", "category": "network_ids_alert", "severity": "critical", "host": HOST, "source": "suricata",
@@ -1808,9 +1816,9 @@ def main():
 		from frappe.utils.password import get_decrypted_password
 		from werkzeug.test import EnvironBuilder
 
-		from frappe_wolf import tasks
-		from frappe_wolf.api import agent as agent_api
-		from frappe_wolf.api import wazuh as wazuh_api
+		from dodock_wolf import tasks
+		from dodock_wolf.api import agent as agent_api
+		from dodock_wolf.api import wazuh as wazuh_api
 
 		def post(body, headers=None):
 			frappe.local.request = EnvironBuilder(method="POST", json=body, headers=headers or {}).get_request()
@@ -1838,9 +1846,9 @@ def main():
 			ev = frappe.get_doc("Wolf Event", names.pop())
 			assert (ev.category, ev.host, ev.count, ev.agent) == ("hids_alert", "erp-web02", 3, creds["agent_id"]), ev.as_dict()
 			assert [t["id"] for t in json.loads(ev.payload)["mitre_attack"]] == ["T1548.003"]
-			post({**alert, "rule": {**alert["rule"], "id": "100903", "groups": ["frappe_wolf"]}}, headers)
+			post({**alert, "rule": {**alert["rule"], "id": "100903", "groups": ["dodock_wolf"]}}, headers)
 			skipped = wazuh_api.alert()
-			assert not skipped["stored"] and "frappe_wolf" in skipped["reason"], skipped  # no loop back into Wolf
+			assert not skipped["stored"] and "dodock_wolf" in skipped["reason"], skipped  # no loop back into Wolf
 			post(alert, {**headers, "X-Wolf-Agent-Secret": "wrong"})
 			try:
 				wazuh_api.alert()
@@ -1858,8 +1866,8 @@ def main():
 
 	def entities_check():
 		"""One IP and one host across Wolf, Suricata and Wazuh events (#72 step 3)."""
-		from frappe_wolf.api import entities as entities_api
-		from frappe_wolf.api import explore
+		from dodock_wolf.api import entities as entities_api
+		from dodock_wolf.api import explore
 
 		ip = "45.33.32.201"
 		alias = frappe.get_doc({"doctype": "Wolf Entity Alias", "kind": "host", "alias": "WAZUH-ERP02", "canonical": "erp-web02"})
@@ -1902,12 +1910,320 @@ def main():
 		alias.delete(ignore_permissions=True)
 		return f"{sources_of(by_ip)} by IP, {sources_of(by_host)} by host under 3 names, site by domain, purge"
 
+	def entity_correlation():
+		"""Events of other scopes and sources join the incident naming the same IP (#72 step 5)."""
+		from dodock_wolf.api import incident_view
+		from dodock_wolf.wolf import access
+
+		ip, site, tz = "45.33.32.202", "corr.localhost", events.system_tz()
+		at = now_datetime()
+
+		def ev(raw, minutes=0):
+			e = schema.normalize_event({"type": "security", "severity": "warning", **raw}, tz, at + timedelta(minutes=minutes))
+			return events.insert_event(e), e
+
+		def attach(raw, minutes=0):
+			return incidents.attach_to_open_incident(*ev(raw, minutes))
+
+		def ids(title, src, **kw):
+			return {"category": "network_ids_alert", "source": "suricata", "host": "corr-ids", "title": title,
+			        "payload": {"ip": src, "src_ip": src, "dest_ip": "10.77.0.1"}, **kw}  # fmt: skip
+
+		def incident(title, **scope):
+			return frappe.get_doc({"doctype": "Wolf Incident", "title": title, "severity": "warning", "status": "Open",
+			                       "started_at": at - timedelta(minutes=20), **scope}).insert(ignore_permissions=True)  # fmt: skip
+
+		probe, _ = ev({"category": "web_attack_probe", "source": "nginx", "host": "corr-web", "site": site,
+		               "title": "corr probe", "payload": {"ip": ip, "users": ["Jane@Corr.example"]}}, -20)  # fmt: skip
+		inc = incident("corr incident", site=site)
+		incidents.link_events(inc.name, [probe])
+		first, first_event = ev(ids("corr ids", ip))
+		assert incidents.attach_to_open_incident(first, first_event) == inc.name, "same IP on another host not grouped"
+		# a repeat folded into a linked event stays where it is
+		assert incidents.attach_to_open_incident(first, first_event) == inc.name
+		assert attach({"category": "new_admin_ip", "source": "frappe", "host": "corr-other", "site": "corr-b.localhost",
+		               "title": "corr admin", "payload": {"user": "jane@corr.example"}}) == inc.name, "same e-mail user not grouped"  # fmt: skip
+		kept_out = {
+			"another attacker hitting the same server": ids("corr other attacker", "45.33.32.203"),
+			"a private address": ids("corr private", "10.20.0.9"),
+			"a login name": {"category": "ssh_accepted", "source": "auth", "host": "corr-hids", "title": "corr root",
+			                 "payload": {"user": "root"}},
+			"a failed login naming the user": {"category": "frappe_failed_login", "source": "frappe", "host": "corr-other",
+			                                   "site": "corr-c.localhost", "title": "corr failed",
+			                                   "payload": {"user": "jane@corr.example", "ip": "198.51.100.40"}},
+		}  # fmt: skip
+		for why, raw in kept_out.items():
+			got = attach(raw)
+			assert got is None, f"{why} grouped into {got}"
+		assert attach(ids("corr late", ip), 200) is None, "an IP seen 3 hours later grouped"
+
+		# an open incident of the event's own site comes first
+		own = incident("corr own site", site="corr-d.localhost")
+		assert attach(ids("corr own", ip, site="corr-d.localhost")) == own.name, "own site's incident not preferred"
+		frappe.db.set_value("Wolf Incident", own.name, "status", "Resolved")  # it holds an event of the IP now
+		# a rule's evidence is its own: its events come back from the incident that took them by IP
+		taken, taken_event = ev(ids("corr taken", ip, host="corr-e"))
+		assert incidents.attach_to_open_incident(taken, taken_event) == inc.name
+		host_inc = incident("corr host", host="corr-e")
+		incidents.link_events(host_inc.name, [taken, probe])
+		assert frappe.db.get_value("Wolf Event", taken, "incident") == host_inc.name, "rule evidence left elsewhere"
+		assert frappe.db.get_value("Wolf Event", probe, "incident") == inc.name, "in-scope evidence moved"
+		assert frappe.db.get_value("Wolf Incident", inc.name, "event_count") == 3, "count not refreshed"
+
+		frappe.db.set_single_value("Wolf Settings", "correlate_by_entity", 0)
+		frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+		try:
+			off = attach(ids("corr off", ip))
+		finally:
+			frappe.db.set_single_value("Wolf Settings", "correlate_by_entity", 1)
+			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+		assert off is None, f"grouped by IP with the setting off: {off}"
+		assert frappe.db.get_single_value("Wolf Settings", "correlate_by_entity") == 1, "not on by default"
+
+		timeline = {r.title for r in incidents.get_timeline(inc.name)}
+		assert {"corr probe", "corr ids", "corr admin"} <= timeline, timeline
+		# a user of the incident's site does not see the events it took from other scopes
+		user = "smoke-corr@example.com"
+		if not frappe.db.exists("User", user):
+			frappe.get_doc({"doctype": "User", "email": user, "first_name": "Corr", "send_welcome_email": 0,
+			                "roles": [{"role": "Wolf User"}]}).insert(ignore_permissions=True)  # fmt: skip
+		frappe.db.delete("Wolf User Scope", {"user": user})
+		frappe.get_doc({"doctype": "Wolf User Scope", "user": user, "scope_type": "site", "value": site}).insert()
+		access.clear_cache()
+		frappe.set_user(user)
+		try:
+			desk = {r["title"] for r in ui.get_incident_timeline(inc.name)["events"]}
+			spa = {r["summary"] for r in incident_view.get_timeline(inc.name)["rows"] if r["kind"] == "event"}
+		finally:
+			frappe.set_user("Administrator")
+			frappe.db.delete("Wolf User Scope", {"user": user})
+			access.clear_cache()
+		assert desk == spa == {"corr probe"}, (desk, spa)
+
+		for name in (inc.name, host_inc.name):  # host_inc holds an event of the IP too
+			frappe.db.set_value("Wolf Incident", name, "status", "Resolved")
+		assert attach(ids("corr after", ip)) is None, "attached to a resolved incident"
+		return (f"{inc.name}: probe + Suricata on another host + e-mail user; other attacker, private IP, login name, "
+		        "failed login, late IP, setting off, resolved kept out; own site first; rule evidence returned; "
+		        "scoped user sees its site only")  # fmt: skip
+
+	def detector_modes():
+		"""Wolf's own detectors next to Suricata and Wazuh: own, both (one finding), external (#72 step 4)."""
+		from dodock_wolf.api import detectors as detectors_api
+		from dodock_wolf.api import entities as entities_api
+		from dodock_wolf.api import ingest as ingest_api
+		from dodock_wolf.api import siem as siem_api
+
+		tz, at = events.system_tz(), now_datetime()
+
+		def mode(**values):
+			for field, value in values.items():
+				frappe.db.set_single_value("Wolf Settings", field, value)
+			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+
+		def ev(category, source, ip, minutes=0, technique="T1190", host="dm-web", payload=None, **kw):
+			# as the agent sends them: techniques in attack_techniques, normalize turns them into mitre_attack
+			data = {"ip": ip, **({"attack_techniques": [technique]} if technique else {}), **(payload or {})} if ip else payload or {}
+			return schema.normalize_event({"type": "security", "severity": "warning", "category": category, "source": source,
+			                               "host": host, "title": f"dm {category} {ip}", "payload": data, **kw}, tz,
+			                              at + timedelta(minutes=minutes))  # fmt: skip
+
+		def dup(name):
+			return frappe.db.get_value("Wolf Event", name, "duplicate_of")
+
+		agent = frappe.get_doc({"doctype": "Wolf Agent", "hostname": "dm-agent", "kind": "agent"}).insert(ignore_permissions=True)
+		try:
+			mode(web_detection_mode="both", host_detection_mode="own")
+			ids = events.insert_event(ev("network_ids_alert", "suricata", "45.33.32.240", -3))
+			probe = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.240"))
+			assert dup(probe) == ids, "the probe is not the same finding as the Suricata alert"
+			assert not dup(ids)
+			other_technique = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.240", technique="T1110"))
+			other_ip = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.241"))
+			late = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.240", 30))
+			assert not any(map(dup, (other_technique, other_ip, late))), "linked across techniques, IPs or time"
+			# a critical alert linked to a warning one still reaches a collector that takes critical only
+			critical = events.insert_event(ev("network_ids_alert", "suricata", "45.33.32.241", 1, severity="critical"))
+			assert dup(critical) == other_ip, "the critical alert is not linked"
+			since = {"event_creation": str(at - timedelta(minutes=1))}
+			_scanned, kept = siem_api._event_rows(since, ["security"], 0, now_datetime() + timedelta(minutes=1))
+			assert ids in {r.name for r in kept} and probe not in {r.name for r in kept}, "the same finding sent twice"
+			_scanned, kept = siem_api._event_rows(since, ["security"], 2, now_datetime() + timedelta(minutes=1))
+			assert critical in {r.name for r in kept}, "a critical duplicate of a warning event lost"
+			mode(web_detection_mode="own")
+			again = events.insert_event(ev("web_attack_probe", "nginx", "45.33.32.240", 1))
+			assert not dup(again), "linked in own mode"
+
+			# external: auth.log signals give way to Wazuh alerts about the host, under its Wazuh name too,
+			# when they watch logins; a file-integrity alert does not stand in for SSH detection
+			mode(host_detection_mode="external")
+			entities_api.learn("host", "dm-wazuh-name", "dm-host.example.com", "smoke")
+			ssh = ev("ssh_failed_login", "sshd", "45.33.32.242", technique=None, host="dm-host.example.com")
+			assert ingest_api.store_batch(agent.name, [], [ssh], correlate=False)["dropped"] == 0, "dropped while Wazuh is quiet"
+			events.insert_event(ev("hids_alert", "wazuh", None, host="dm-wazuh-name",
+			                       payload={"groups": ["ossec", "syscheck"], "attack_techniques": ["T1565.001"]}))  # fmt: skip
+			assert ingest_api.store_batch(agent.name, [], [ssh], correlate=False)["dropped"] == 0, "a FIM alert stood in"
+			events.insert_event(ev("hids_alert", "wazuh", "45.33.32.243", technique=None, host="dm-wazuh-name",
+			                       payload={"groups": ["syslog", "sshd", "authentication_failed"]}))  # fmt: skip
+			got = ingest_api.store_batch(agent.name, [], [ssh, ev("ssh_failed_login", "sshd", "45.33.32.242", host="dm-other")],
+			                             correlate=False)  # fmt: skip
+			assert (got["events"], got["dropped"]) == (1, 1), f"Wazuh covers dm-host only: {got}"
+			assert frappe.db.get_value("Wolf Agent", agent.name, "own_events_dropped") == 1, "the drop is not counted"
+		finally:
+			mode(web_detection_mode="own", host_detection_mode="own")
+			frappe.db.delete("Wolf Entity Alias", {"seen_from": "smoke", "alias": "dm-wazuh-name"})
+			frappe.cache.delete_value(entities_api.CACHE_KEY)
+		frappe.db.delete("Wolf Event", {"title": ("like", "dm %")})
+		frappe.delete_doc("Wolf Agent", agent.name, ignore_permissions=True, force=True)
+		assert detectors_api.original_severities([]) == {}
+		return ("both: probe and Suricata alert one finding, sent to the SIEM once, a critical duplicate still sent; other "
+		        "technique, IP, time and own mode apart; external: auth.log kept while Wazuh is quiet or only checks files, "
+		        "dropped under the host's Wazuh name, counted on the agent")  # fmt: skip
+
+	def timeline_related():
+		"""An incident's timeline shows the changes and health of the scopes its events came from."""
+		from dodock_wolf.api import incident_view
+		from dodock_wolf.wolf import access
+
+		ip, site, tz, at = "45.33.32.230", "story.localhost", events.system_tz(), now_datetime()
+
+		def ev(title, minutes, raw):
+			e = schema.normalize_event({"severity": "warning", "title": title, **raw}, tz, at + timedelta(minutes=minutes))
+			return events.insert_event(e), e
+
+		probe, _ = ev("story probe", -15, {"type": "security", "category": "web_attack_probe", "host": "story-web",
+		                                   "site": site, "payload": {"ip": ip}})  # fmt: skip
+		inc = frappe.get_doc({"doctype": "Wolf Incident", "title": "story incident", "site": site, "severity": "warning",
+		                      "status": "Open", "started_at": at - timedelta(minutes=15)}).insert(ignore_permissions=True)  # fmt: skip
+		incidents.link_events(inc.name, [probe])
+		ids = incidents.attach_to_open_incident(*ev("story ids", -10, {"type": "security", "category": "network_ids_alert",
+		                                                               "host": "story-db", "payload": {"ip": ip}}))  # fmt: skip
+		assert ids == inc.name, ids
+		ev("story deploy", -12, {"type": "deployment", "severity": "info", "host": "story-db", "bench": "db-bench"})
+		ev("story cron", -5, {"type": "cron_failure", "host": "story-db", "bench": "db-bench", "site": "db.localhost"})
+		ev("story site error", -5, {"type": "error", "host": "story-db", "bench": "db-bench", "site": "db.localhost"})
+		ev("story noise", -5, {"type": "security", "category": "web_attack_probe", "host": "story-db", "payload": {"ip": "45.33.32.231"}})
+		ev("story elsewhere", -5, {"type": "cron_failure", "host": "story-other", "bench": "x"})
+		ev("story old deploy", -200, {"type": "deployment", "severity": "info", "host": "story-db", "bench": "db-bench"})
+		desk = {r.title for r in incidents.get_timeline(inc.name)}
+		spa = {r["summary"] for r in incident_view.get_timeline(inc.name)["rows"] if r["kind"] in ("event", "deployment")}
+		want = {"story probe", "story ids", "story deploy", "story cron"}
+		assert desk == spa == want, (desk, spa)
+		one_by_one, cursor = [], None
+		while True:  # the same rows whatever the page size
+			page = incident_view.get_timeline(inc.name, limit=1, cursor=cursor, families="evidence,context")
+			one_by_one += [r["id"] for r in page["rows"]]
+			cursor = page["paging"].get("next_cursor")
+			if not cursor:
+				break
+		assert one_by_one == [r["id"] for r in incident_view.get_timeline(inc.name, families="evidence,context")["rows"]]
+		# a user of the incident's site sees neither the other host's events nor its changes
+		user = "smoke-story@example.com"
+		if not frappe.db.exists("User", user):
+			frappe.get_doc({"doctype": "User", "email": user, "first_name": "Story", "send_welcome_email": 0,
+			                "roles": [{"role": "Wolf User"}]}).insert(ignore_permissions=True)  # fmt: skip
+		frappe.db.delete("Wolf User Scope", {"user": user})
+		frappe.get_doc({"doctype": "Wolf User Scope", "user": user, "scope_type": "site", "value": site}).insert()
+		access.clear_cache()
+		frappe.set_user(user)
+		try:
+			scoped = {r["summary"] for r in incident_view.get_timeline(inc.name)["rows"] if r["kind"] in ("event", "deployment")}
+			scoped_desk = {r.title for r in ui.get_incident_timeline(inc.name)["events"]}
+		finally:
+			frappe.set_user("Administrator")
+			frappe.db.delete("Wolf User Scope", {"user": user})
+			access.clear_cache()
+		assert scoped == scoped_desk == {"story probe"}, (scoped, scoped_desk)
+		frappe.db.delete("Wolf Event", {"title": ("like", "story %")})
+		frappe.delete_doc("Wolf Incident", inc.name, force=True, ignore_permissions=True)
+		return f"{inc.name}: story-db's deployment and failed cron beside the attack; its probes, its sites' errors, other hosts, older events left out; paged alike; a site user sees its site in Desk and the Wolf UI"
+
+	def sequence_rules():
+		"""A then B on the same IP, user or host, from the three presets (#72 step 5)."""
+		from dodock_wolf.wolf.presets import PRESETS
+
+		tz, at = events.system_tz(), now_datetime()
+		names = {}
+
+		def ev(key, minutes, raw):
+			e = schema.normalize_event({"type": "security", "severity": "warning", "bench": "seqb", **raw}, tz,
+			                           at + timedelta(minutes=minutes))  # fmt: skip
+			names[key] = events.insert_event(e)
+
+		web = {"host": "seq-web", "site": "seq.localhost"}
+		# ip: a probe, then a privileged login from the same address 28 min later
+		ev("probe", -30, {**web, "category": "web_attack_probe", "source": "nginx", "title": "seq probe",
+		                  "payload": {"ip": "45.33.32.210"}})  # fmt: skip
+		ev("login", -2, {**web, "category": "new_admin_ip", "source": "frappe", "title": "seq login",
+		                 "payload": {"ip": "45.33.32.210", "user": "Boss@Seq.example"}})  # fmt: skip
+		for m in range(31, 60):  # a burst of older probes from the same address: the newest first event is linked
+			ev(f"burst {m}", -m, {**web, "category": "web_attack_probe", "title": "seq burst", "payload": {"ip": "45.33.32.210"}})
+		ev("alone", -2, {**web, "category": "new_admin_ip", "title": "seq no probe", "payload": {"ip": "45.33.32.211"}})
+		ev("old probe", -90, {**web, "category": "web_attack_probe", "title": "seq old", "payload": {"ip": "45.33.32.212"}})
+		ev("late login", -1, {**web, "category": "new_admin_ip", "title": "seq late", "payload": {"ip": "45.33.32.212"}})
+		ev("login first", -5, {**web, "category": "new_admin_ip", "title": "seq before", "payload": {"ip": "45.33.32.213"}})
+		ev("probe after", -1, {**web, "category": "web_attack_probe", "title": "seq after", "payload": {"ip": "45.33.32.213"}})
+		# user: that login, then an export by the same user on the same site (not on another site)
+		ev("export", -1, {**web, "category": "data_exfiltration", "title": "seq export", "payload": {"user": "boss@seq.example"}})
+		ev("key", -1, {**web, "category": "api_key_generated", "title": "seq key",
+		               "payload": {"user": "someone@seq.example", "by": "boss@seq.example"}})  # fmt: skip
+		ev("other site", -1, {"host": "seq-web", "site": "seq2.localhost", "category": "data_exfiltration",
+		                      "title": "seq export elsewhere", "payload": {"user": "boss@seq.example"}})  # fmt: skip
+		# host: a Suricata alert on the host, then a Server Script change on a site of that host
+		ev("ids", -20, {"host": "seq-web", "bench": None, "severity": "critical", "category": "network_ids_alert", "source": "suricata", "title": "seq ids",
+		                "payload": {"ip": "45.33.32.220"}})  # fmt: skip
+		ev("script", -2, {**web, "category": "server_script_change", "title": "seq script", "payload": {"user": "boss@seq.example"}})
+		ev("quiet ids", -20, {"host": "seq-quiet", "severity": "warning", "category": "network_ids_alert", "title": "seq info ids"})
+		ev("quiet script", -2, {"host": "seq-quiet", "site": "seq3.localhost", "category": "server_script_change",
+		                        "title": "seq script after info"})  # fmt: skip
+
+		expected = {
+			"Scan then login from the same IP": ("ip=45.33.32.210", {"probe", "login"}),
+			# the login stays in the IP sequence's incident: an event has one incident (timeline below)
+			"New-IP login then export or new key": ("user=boss@seq.example", {"export", "key"}),
+			"IDS alert then risky change on the host": ("host=seq-web", {"ids", "script"}),
+		}
+		out = []
+		for preset in (p for p in PRESETS if p["rule_name"] in expected):
+			key, linked = expected[preset["rule_name"]]
+			name = f"smoke seq {preset['sequence_entity']}"
+			doc = frappe.get_doc("Wolf Alert Rule", name) if frappe.db.exists("Wolf Alert Rule", name) else frappe.new_doc("Wolf Alert Rule")
+			doc.update({**preset, "rule_name": name, "enabled": 1, "is_preset": 0, "channels": [], "filter_bench": "seqb"})
+			doc.save()
+			res = rules.evaluate(doc)
+			fired = frappe.get_all("Wolf Incident", filters={"alert_rule": name, "status": "Open"}, fields=["name", "group_key", "title", "site"])
+			assert [i.group_key for i in fired] == [key], (name, res, fired)
+			got = set(frappe.get_all("Wolf Event", filters={"incident": fired[0].name}, pluck="name"))
+			assert got == {names[k] for k in linked}, (name, got)
+			# the incident starts at the first event: its timeline shows both, linked or not
+			first, then = {"ip": ("probe", "login"), "user": ("login", "export"), "host": ("ids", "script")}[preset["sequence_entity"]]
+			shown = {r.name for r in incidents.get_timeline(fired[0].name)}
+			assert {names[first], names[then]} <= shown, (name, first, then, shown)
+			assert fired[0].title == f"{name}: {key.replace('=', ' ')}", fired[0].title
+			assert not rules.evaluate(doc)["fired"], "fired twice"
+			# the host-level Suricata alert is another scope than the site's incident: not named
+			named = {"ip": "web_attack_probe then", "user": "new_admin_ip then", "host": "an earlier event then"}
+			summary = frappe.db.get_value("Wolf Incident", fired[0].name, "summary")
+			assert summary.startswith(named[preset["sequence_entity"]]), summary
+			assert [g["group"] for g in doc.preview()["groups"]] == [key.replace("=", " ")]
+			incidents.resolve(fired[0].name, "smoke")
+			out.append(f"{preset['sequence_entity']}: {fired[0].name}")
+		try:
+			bad = frappe.get_doc({**next(p for p in PRESETS if p["rule_name"] in expected), "doctype": "Wolf Alert Rule",
+			                      "rule_name": "smoke seq bad", "then_categories": " "})  # fmt: skip
+			bad.insert()
+			raise AssertionError("a sequence without then categories was saved")
+		except frappe.ValidationError:
+			frappe.clear_messages()
+		frappe.db.set_value("Wolf Alert Rule", {"rule_name": ("like", "smoke seq %")}, "enabled", 0)  # incidents link them
+		return ", ".join(out) + "; probe burst, key by the user; no probe, 88 min apart, wrong order, other site, warning IDS kept out"
+
 	def crowdsec_check():
 		"""CrowdSec LAPI (a local stand-in): decisions tag events, detections and approved blocks go out."""
 		from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 		from types import SimpleNamespace
 
-		from frappe_wolf.api import crowdsec as cs_api
+		from dodock_wolf.api import crowdsec as cs_api
 
 		seen = {"alerts": [], "streams": [], "agents": set()}
 
@@ -1975,7 +2291,7 @@ def main():
 			assert seen["streams"][-1] == "/v1/decisions/stream", "changes only, after the first full read"
 			sent = {a["source"]["ip"]: a for a in seen["alerts"]}
 			assert set(sent) == {"45.33.32.156", "203.0.113.70"} and not any(a["remediation"] for a in sent.values()), sent
-			assert sent["203.0.113.70"]["scenario"] == "frappe-wolf/web_attack_probe" and "decisions" not in sent["203.0.113.70"]
+			assert sent["203.0.113.70"]["scenario"] == "dodock-wolf/web_attack_probe" and "decisions" not in sent["203.0.113.70"]
 			assert cs_api.sync_crowdsec()["alerts_sent"] == 0, "the cursor moved"
 
 			note = cs_api.apply_block(SimpleNamespace(name="WRA-SMOKE", target="198.51.100.77", duration_hours=6,
@@ -1983,7 +2299,7 @@ def main():
 			assert note and "6 h ban" in note, note
 			block = seen["alerts"][-1]
 			assert block["decisions"] == [{"type": "ban", "duration": "6h", "scope": "Ip", "value": "198.51.100.77",
-			                               "origin": "frappe-wolf", "scenario": "frappe-wolf/approved_block"}], block  # fmt: skip
+			                               "origin": "dodock-wolf", "scenario": "dodock-wolf/approved_block"}], block  # fmt: skip
 			assert all("/" in a for a in seen["agents"]), seen["agents"]  # the LAPI refuses other User-Agents
 
 			settings.reload()
@@ -2005,7 +2321,7 @@ def main():
 		return f"{len(seen['alerts'])} alerts sent, banned IP tagged and raised, approved block sent as a 6 h ban"
 
 	def posture_score():
-		from frappe_wolf.api import security
+		from dodock_wolf.api import security
 
 		host = events.local_scope()["host"]
 		now = now_datetime()
@@ -2020,8 +2336,8 @@ def main():
 		]
 		events.insert_metrics(samples)
 		# GitHub Security Advisories, from a fake source: CI must not depend on api.github.com
-		from frappe_wolf.api import advisories as advisory_store
-		from frappe_wolf.wolf import advisories
+		from dodock_wolf.api import advisories as advisory_store
+		from dodock_wolf.wolf import advisories
 
 		fixture = [{"ghsa_id": "GHSA-smok-e000-0001", "severity": "critical", "summary": "smoke SSTI", "state": "published",
 		            "published_at": "2026-10-15T00:00:00Z", "html_url": "https://github.com/advisories/x",
@@ -2096,7 +2412,7 @@ def main():
 		assert next(c for c in security.get_posture(remote)["checks"] if c["id"] == "two_factor")["status"] == "unknown"
 
 		# HSTS from the agent's samples, per domain; SPF / DMARC from DNS for the outgoing mail domains
-		from frappe_wolf.wolf import dns_txt
+		from dodock_wolf.wolf import dns_txt
 
 		for domain, days in (("erp.smoke.example.org", 365), ("shop.smoke.example.org", 0)):
 			events.insert_metrics([schema.normalize_metric({"metric_name": "hsts_max_age_days", "value": days, "host": host,
@@ -2132,8 +2448,8 @@ def main():
 		return f"score {result['score']} (coverage {result['coverage']}%), {status}; hsts, spf, dmarc, advisories, another site's settings read"
 
 	def regulatory_deadlines():
-		from frappe_wolf.api import compliance as compliance_api
-		from frappe_wolf.api import incident_view
+		from dodock_wolf.api import compliance as compliance_api
+		from dodock_wolf.api import incident_view
 
 		aware = now_datetime() - timedelta(hours=70)
 		inc = frappe.get_doc({"doctype": "Wolf Incident", "title": "smoke NIS2", "severity": "critical",
@@ -2181,7 +2497,7 @@ def main():
 	def threat_intel():
 		from types import SimpleNamespace
 
-		from frappe_wolf.api import threat
+		from dodock_wolf.api import threat
 
 		path = frappe.get_site_path("private", "files", "wolf_smoke_list.txt")
 		with open(path, "w") as f:
@@ -2229,8 +2545,8 @@ def main():
 		return f"reputation tagged {name} critical; honeytokens {seen}"
 
 	def response_actions():
-		from frappe_wolf.api import ingest as ingest_api
-		from frappe_wolf.api import response as response_api
+		from dodock_wolf.api import ingest as ingest_api
+		from dodock_wolf.api import response as response_api
 
 		agent = frappe.get_doc({"doctype": "Wolf Agent", "hostname": "smoke-responder", "status": "Active",
 		                        "kind": "agent"}).insert(ignore_permissions=True).name  # fmt: skip
@@ -2282,8 +2598,8 @@ def main():
 		from types import SimpleNamespace
 		from urllib.parse import parse_qs, urlsplit
 
-		from frappe_wolf.api import actions as actions_api
-		from frappe_wolf.wolf import notify
+		from dodock_wolf.api import actions as actions_api
+		from dodock_wolf.wolf import notify
 
 		user = frappe.get_doc({"doctype": "User", "email": "wolf-link-target@example.com", "first_name": "Target",
 		                       "send_welcome_email": 0}).insert(ignore_permissions=True).name  # fmt: skip
@@ -2308,7 +2624,7 @@ def main():
 			frappe.set_user(as_user)
 			frappe.local.session.data.csrf_token = "smoke-csrf"  # a request has one; a script cannot make one
 			frappe.local.response = frappe._dict()
-			frappe.local.request = SimpleNamespace(method=method, full_path="/api/method/frappe_wolf.api.actions.response_action?x=1")
+			frappe.local.request = SimpleNamespace(method=method, full_path="/api/method/dodock_wolf.api.actions.response_action?x=1")
 			try:
 				actions_api.response_action(**{**params, **override})
 			finally:
@@ -2341,7 +2657,7 @@ def main():
 		return seen
 
 	def journal_chain():
-		from frappe_wolf.api import journal as journal_api
+		from dodock_wolf.api import journal as journal_api
 
 		ev = events.insert_event(schema.normalize_event(
 			{"type": "security", "category": "ssh_failed_login", "host": HOST, "payload": {"ip": "45.33.32.1"}},
@@ -2384,9 +2700,9 @@ def main():
 	def siem_export():
 		import socketserver
 
-		from frappe_wolf.api import journal as journal_api
-		from frappe_wolf.api import siem as siem_api
-		from frappe_wolf.wolf import siem as siem_fmt
+		from dodock_wolf.api import journal as journal_api
+		from dodock_wolf.api import siem as siem_api
+		from dodock_wolf.wolf import siem as siem_fmt
 
 		received = []
 
@@ -2491,8 +2807,8 @@ def main():
 		"""Purge after a signed record; verification checks the journal starts where it stopped."""
 		from frappe.utils import add_days
 
-		from frappe_wolf.api import journal as journal_api
-		from frappe_wolf.api import siem as siem_api
+		from dodock_wolf.api import journal as journal_api
+		from dodock_wolf.api import siem as siem_api
 
 		DT = "Wolf Journal Entry"
 		for i in range(4):  # a few more entries to purge
@@ -2582,6 +2898,10 @@ def main():
 	                 ("wazuh events", wazuh_events),
 	                 ("wazuh integration", wazuh_integration),
 	                 ("entities", entities_check),
+	                 ("entity correlation", entity_correlation),
+	                 ("sequence rules", sequence_rules),
+	                 ("timeline related scopes", timeline_related),
+	                 ("detector modes", detector_modes),
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
 	                 ("response actions", response_actions), ("response links", response_links), ("journal", journal_chain),

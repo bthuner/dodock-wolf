@@ -14,10 +14,10 @@ from .util import utc_iso
 log = logging.getLogger(__name__)
 SKEW_WARN_SECONDS = 60
 
-PUSH_METHOD = "/api/method/frappe_wolf.api.ingest.push"
-DEPLOYMENT_METHOD = "/api/method/frappe_wolf.api.ingest.deployment"
-STATUS_METHOD = "/api/method/frappe_wolf.api.ingest.status"
-REGISTER_METHOD = "/api/method/frappe_wolf.api.agent.register"
+PUSH_METHOD = "/api/method/dodock_wolf.api.ingest.push"
+DEPLOYMENT_METHOD = "/api/method/dodock_wolf.api.ingest.deployment"
+STATUS_METHOD = "/api/method/dodock_wolf.api.ingest.status"
+REGISTER_METHOD = "/api/method/dodock_wolf.api.agent.register"
 MAX_METRICS = 5000
 MAX_EVENTS = 1000
 SPOOL_CAP_BYTES = 50 * 1024 * 1024

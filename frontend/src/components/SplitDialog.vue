@@ -32,7 +32,7 @@ async function load({ withEvents = false } = {}) {
   try {
     const args = { incident: props.incident, with_events: withEvents ? 1 : 0 }
     if (selected.value.length) args.events = JSON.stringify(selected.value)
-    const answer = await call('frappe_wolf.api.incident_view.split_preview', args)
+    const answer = await call('dodock_wolf.api.incident_view.split_preview', args)
     if (mine === request) data.value = withEvents ? answer : { ...data.value, preview: answer.preview }
   } catch (e) {
     if (mine === request) {
@@ -75,7 +75,7 @@ async function split() {
   error.value = null
   try {
     const name = await call(
-      'frappe_wolf.api.incident.split',
+      'dodock_wolf.api.incident.split',
       { incident: props.incident, events: JSON.stringify(selected.value), title: title.value.trim() || null },
       { post: true },
     )

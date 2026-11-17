@@ -1,6 +1,6 @@
 import unittest
 
-from frappe_wolf.wolf import app_security as appsec
+from dodock_wolf.wolf import app_security as appsec
 
 SETTINGS = {
 	"enable_two_factor_auth": 1, "enable_password_policy": 1, "minimum_password_score": "3",

@@ -2,7 +2,7 @@ import json
 import unittest
 from datetime import datetime
 
-from frappe_wolf.wolf import inventory, scopes
+from dodock_wolf.wolf import inventory, scopes
 
 T1, T2 = datetime(2026, 10, 30, 10, 0), datetime(2026, 10, 30, 11, 0)
 

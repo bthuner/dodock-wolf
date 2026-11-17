@@ -2,7 +2,7 @@ import base64
 import json
 import unittest
 
-from frappe_wolf.wolf import reputation
+from dodock_wolf.wolf import reputation
 
 FIREHOL = """# FireHOL level 1
 #

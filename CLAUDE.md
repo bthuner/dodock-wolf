@@ -1,4 +1,4 @@
-Frappe Wolf Observability — MVP
+Dodock Wolf Observability — MVP
 One-line summary
 
 First-class observability for Frappe benches, ERPNext sites, Linux hosts, and internal services — owned by Dokos, not Datadog.
@@ -26,7 +26,7 @@ MVP goals
 
         Suspicious access patterns (multiple failed logins, admin login from unusual IP, unexpected new users with high roles).
 
-    Provide a single UI inside Frappe ("Frappe Wolf") that shows:
+    Provide a single UI inside Frappe ("Dodock Wolf") that shows:
 
         Timeline of incidents for a given site/bench.
 
@@ -59,7 +59,7 @@ The MVP focuses on:
 Architecture sketch
 Components
 
-    Frappe Wolf App (server-side):
+    Dodock Wolf App (server-side):
 
         Frappe app installed on Dokos/Frappe sites.
 
@@ -260,7 +260,7 @@ Wolf MVP will not copy all features but will:
 
 MVP backlog (high-level)
 
-    Frappe Wolf App
+    Dodock Wolf App
 
         Define DocTypes: Wolf Event, Wolf Metric Sample, Wolf Alert Rule, Wolf Incident.
 
@@ -321,6 +321,18 @@ First demo scenario
         Incident timeline in Wolf.
 
         Alerts emitted to email/Raven.
+
+Documentation site
+
+    The user documentation lives in docs-site/ (Nuxt UI + Nuxt Content, the same stack as doc.dokos.io), in two languages: content/en/ and content/fr/, with the same file at the same path in both. docs-site/CONTRIBUTING.md has the page map and conventions, docs-site/scripts/TRANSLATING.md the French glossary and typography.
+
+    When a change affects what users see or do, update the docs in the same pull request, in English and in French. This covers a setting, field, command, config key, event type, metric, preset, API, channel, default value, behaviour or install step that is added, renamed, changed or removed. Purely internal changes (refactors, tests, CI) need no docs.
+
+    - Edit the English page, then mirror the change in its French twin. Never leave one language behind.
+    - A new page gets a twin with the same file name in the other language.
+    - When presets change in frappe_wolf/wolf/presets.py, run `yarn presets` in docs-site/ and paste the tables into both content/en/4.alerts/2.presets.md and content/fr/4.alerts/2.presets.md (translating the conditions).
+    - Keep the repository docs (README.md, agent/README.md, docs/*.md) consistent with the site when they cover the same thing.
+    - Check with `yarn generate && yarn check:links` in docs-site/ (Node 24, see .nvmrc). The docs CI job runs the same checks, so a broken page or link fails the PR.
 
 Commit and PR attribution
 

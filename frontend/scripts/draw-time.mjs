@@ -32,8 +32,8 @@ for (const s of series) { counts[s.group] ||= {}; counts[s.group][s.state] = (co
 const hosts = Array.from({ length: empty ? 1 : 101 }, (_, i) => ({ host: `host-${String(i).padStart(3, '0')}`, sources: ['agent', 'metrics'],
   benches: [{ bench: 'frappe-bench', sites: [{ site: `s${i}.example.com` }, { site: `t${i}.example.com` }] }] }))
 const overrides = {
-  'frappe_wolf.api.dashboard.get_signals': () => ({ series, counts, missing: [], caveats: {}, email: {}, lookback_days: 7, truncated: true, total_series: 1500 }),
-  'frappe_wolf.api.scope.get_inventory': () => ({ hosts, note: '' }),
+  'dodock_wolf.api.dashboard.get_signals': () => ({ series, counts, missing: [], caveats: {}, email: {}, lookback_days: 7, truncated: true, total_series: 1500 }),
+  'dodock_wolf.api.scope.get_inventory': () => ({ hosts, note: '' }),
 }
 
 const browser = await chromium.launch(process.env.WOLF_CHROMIUM ? { executablePath: process.env.WOLF_CHROMIUM } : {})

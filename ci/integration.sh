@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Integration check, run inside a Dokos bench image (registry.gitlab.com/dokos/dokos).
-# Installs the checked-out frappe_wolf (mounted read-only at /src) into the image's bench,
+# Installs the checked-out dodock_wolf (mounted read-only at /src) into the image's bench,
 # creates a site on the given database and runs ci/db_smoke.py on it.
 #
 #   ci/integration.sh mariadb|postgres
@@ -14,11 +14,11 @@ BENCH="${BENCH_DIR:-/home/frappe/frappe-bench}"
 SITE="ci.localhost"
 
 cd "$BENCH"
-echo "::group::Install frappe_wolf into the bench"
-mkdir -p apps/frappe_wolf
-cp -r "$SRC/pyproject.toml" "$SRC/README.md" "$SRC/LICENSE" "$SRC/frappe_wolf" apps/frappe_wolf/
-env/bin/pip install --quiet --no-cache-dir -e apps/frappe_wolf
-ln -sfn "$BENCH/apps/frappe_wolf/frappe_wolf/public" assets/frappe_wolf
+echo "::group::Install dodock_wolf into the bench"
+mkdir -p apps/dodock_wolf
+cp -r "$SRC/pyproject.toml" "$SRC/README.md" "$SRC/LICENSE" "$SRC/dodock_wolf" apps/dodock_wolf/
+env/bin/pip install --quiet --no-cache-dir -e apps/dodock_wolf
+ln -sfn "$BENCH/apps/dodock_wolf/dodock_wolf/public" assets/dodock_wolf
 ls -1 apps > sites/apps.txt
 [ -e sites/assets ] || ln -s "$BENCH/assets" sites/assets
 # The CI MariaDB has no TLS; newer mariadb clients require it by default.
@@ -38,12 +38,12 @@ case "$DB_TYPE" in
 	mariadb)
 		bench new-site "$SITE" --db-type mariadb --mariadb-user-host-login-scope='%' \
 			--db-root-username root --db-root-password admin --admin-password admin \
-			--install-app frappe_wolf
+			--install-app dodock_wolf
 		;;
 	postgres)
 		bench new-site "$SITE" --db-type postgres \
 			--db-root-username postgres --db-root-password admin --admin-password admin \
-			--install-app frappe_wolf
+			--install-app dodock_wolf
 		;;
 	*)
 		echo "unknown database type: $DB_TYPE" >&2

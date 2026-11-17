@@ -1,29 +1,29 @@
-<p align="center"><img src="docs/logo.png" width="96" alt="Frappe Wolf"></p>
+<p align="center"><img src="docs/logo.png" width="96" alt="Dodock Wolf"></p>
 
-# Frappe Wolf
+# Dodock Wolf
 
-[![CI](https://github.com/bthuner/frappe-wolf/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/bthuner/frappe-wolf/actions/workflows/ci.yml)
+[![CI](https://github.com/bthuner/dodock-wolf/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/bthuner/dodock-wolf/actions/workflows/ci.yml)
 
 Self-hosted observability for Frappe benches, ERPNext/Dokos sites and Linux hosts.
 It catches 502 windows, failed nightly crons, worker crashes and suspicious logins
 before customers notice, and keeps all data on your own Frappe site.
 
-- **Wolf App** (`frappe_wolf/`): a Frappe app that stores events, metrics, rules and incidents as
+- **Wolf App** (`dodock_wolf/`): a Frappe app that stores events, metrics, rules and incidents as
   DocTypes, evaluates alert rules at each scheduler tick (every minute once configured, see
   [Install the app](#install-the-app)), and shows a timeline in Desk.
 - **Wolf Agent** (`agent/`): a stdlib-only Python daemon on each host. It tails nginx, bench and
   auth logs, reads `/proc`, and ships batches over HTTPS.
 - **Security**: web attack and host intrusion detection, MITRE ATT&CK tags on every security
   event, and a roadmap towards a Frappe-native SOC layer: [`docs/cyber.md`](docs/cyber.md).
-- Wire protocol: [`docs/protocol.md`](docs/protocol.md). The design story is in the [making-of](https://bthuner.github.io/frappe-wolf/).
+- Wire protocol: [`docs/protocol.md`](docs/protocol.md). The design story is in the [making-of](https://bthuner.github.io/dodock-wolf/).
 
 ## Install the app
 
 ```bash
 cd ~/frappe-bench
-bench get-app https://github.com/bthuner/frappe-wolf
-bench --site wolf.example.com install-app frappe_wolf
-bench build --app frappe_wolf   # links the static assets and builds the Wolf UI (/wolf)
+bench get-app https://github.com/bthuner/dodock-wolf
+bench --site wolf.example.com install-app dodock_wolf
+bench build --app dodock_wolf   # links the static assets and builds the Wolf UI (/wolf)
 bench set-config -g scheduler_tick_interval 60   # run scheduled jobs every minute, then restart the scheduler
 ```
 
@@ -38,7 +38,7 @@ the Dokos preset rules. Open **Wolf Settings → Agent install command** to copy
 ## Install the agent on a host
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/bthuner/frappe-wolf/main/agent/install.sh \
+curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/main/agent/install.sh \
   | sudo WOLF_URL=https://wolf.example.com WOLF_TOKEN=<registration token> bash
 ```
 
@@ -57,7 +57,7 @@ A rule reads like the brief: *when X > Y for Z minutes, send alert*.
 
 | Field | Meaning |
 |---|---|
-| Signal | `metric` (aggregate metric samples, or their rollups for windows over 3 h, see [Metric storage](#metric-storage)) or `event` (count Wolf Events) |
+| Signal | `metric` (aggregate metric samples, or their rollups for windows over 3 h, see [Metric storage](#metric-storage)), `event` (count Wolf Events) or `sequence` (see below) |
 | Aggregation | `avg`, `min`, `max`, `sum`, `count`, `last`. Use `min` for "stayed above for Z minutes" and `sum` for counters such as `http_5xx` |
 | Window | look-back in minutes |
 | Group by | `host`, `bench`, `site`, `host_label` (for example per disk mount) or `none`: one incident per group |
@@ -69,6 +69,21 @@ A rule reads like the brief: *when X > Y for Z minutes, send alert*.
 | Channels | Email, Webhook, Raven, Slack, Mattermost, Matrix, ntfy, Gotify, SMS, PagerDuty (see [Channels](#channels)). Each channel can use an **hourly digest**: info/warning alerts are batched into one message per destination; critical alerts are always immediate |
 | Notify on resolve | also tell the channels when the incident resolves, automatically or by hand (default on). PagerDuty channels always hear it |
 | Escalate after minutes | if still Open (not acknowledged) this long after the first alert, notify the escalation channels once |
+
+**Sequence rules** fire when an event of one list of categories follows an event of another on the
+same entity: **First / Then Event Categories**, **Same** (`ip`, `user` or `host`) and **Within
+Minutes**, the longest gap between them. The threshold counts the second events seen in the window,
+and there is one incident per entity value (`ip 203.0.113.5`), scoped like its newest second event.
+
+- `ip` is the second event's remote address (`payload.ip`), public only, named by a first event
+  of any source: a Suricata alert, a web probe, a Frappe login.
+- `user` is the same user on the same site; `host` the same host under any of its names (Wolf
+  Entity Alias).
+- **First Event Min Severity** filters the first events only. The scope filters apply to the second.
+- The gap runs from the first event's last occurrence to the second's latest, so repeats folded
+  into one record count. A brute force of thousands of first events is one candidate.
+- The incident links both events. An event already in another incident stays there, and the
+  incident's timeline, which starts at the first event, shows it anyway.
 
 Alerts for unresolved incidents carry signed **Acknowledge / Resolve** links (valid 24 h, see Wolf
 Settings → Action Link Hours). Opening a link shows a confirmation page; only its button acts, so
@@ -94,8 +109,9 @@ process down · Email queue backlog · Email sending errors · Admin login from 
 SSH login after brute force · Repeated sudo failures · New system account · User added to admin
 group · Web attack scan · Sensitive file served · Server Script can run new code · Client Script can
 run new code · System Console used · Security settings weakened · Permission rules changed · API key
-generated · Webhook to a new host · Security score low · Bench service exposed · Development
-settings in production.
+generated · Webhook to a new host · Scan then login from the same IP · New-IP login then export or
+new key · IDS alert then risky change on the host · Security score low · Bench service exposed ·
+Development settings in production.
 
 | Preset | Signal (source) | Fires when |
 |---|---|---|
@@ -125,6 +141,9 @@ settings in production.
 | API key generated | `security` / `api_key_generated` (site) | a new API secret written for a user (the event is critical for privileged users) |
 | Webhook to a new host | `security` / `webhook_external` (site) | a Webhook created, enabled or pointed at another host |
 | Unusual data export | `security` / `data_exfiltration` (site) | a user's exports and list reads this hour above 50 MB and 5x their largest hour of the last 14 days (critical at 20x, or without any history) |
+| Scan then login from the same IP | sequence, same `ip` | a web probe or Suricata alert, then within 60 min an SSH login after failures or as root, a privileged Frappe login from a new IP, or an API key used from a new IP, from that address (critical) |
+| New-IP login then export or new key | sequence, same `user` | a privileged login from a new IP or country, or an API key used from a new IP, then within 2 h an unusual export, a new API key or an outside Webhook by that user on that site (critical) |
+| IDS alert then risky change on the host | sequence, same `host` | a critical Suricata or Wazuh alert on a host, then within 60 min a Server/Client Script, System Console run, permission change, weaker security settings, privileged user, API key or outside Webhook on a site of that host (critical) |
 | Security score low | `security_score` (app, hourly) | a site's score below 60 (see **Wolf → Security**) |
 | Bench service exposed | `exposed_services` (agent) | MariaDB, a bench Redis, socket.io or gunicorn listening beyond loopback (critical) |
 | Development settings in production | `site_config_risks` (agent) | `developer_mode`, `allow_tests`, plain-HTTP `host_name` or `allow_cors: "*"` |
@@ -206,6 +225,12 @@ On a **Wolf Incident** (Wolf Manager):
 - **Add comment** on the timeline. Comments, assignments and status changes (who acknowledged or
   resolved, from Version history; auto-resolves from the incident's own fields) are interleaved
   with the events. Wolf Users can comment too.
+- **The timeline** shows the incident's events, every event of its scope (site, bench, host) in its
+  window, whatever the source, and, when it took events from other scopes (by IP or user, or a
+  sequence rule), the deployments and health events of those scopes too: a Suricata alert on the
+  database host comes with that host's deployment and failed crons (not the Error Logs of every
+  site it serves). Each user sees only the scopes they may read. An incident with no site, bench
+  or host shows only that.
 - **Manual incidents**: create one in Desk, or **Open incident from this event** on a Wolf Event.
   They have no rule, so the rules engine never auto-resolves them.
 - **Merge into…** (Desk: **Actions**; Wolf UI: **Merge…**) moves events and comments to the target,
@@ -246,6 +271,26 @@ oldest entries are purged every night after a signed purge record that verificat
 **SIEM export** (Wolf Settings → SIEM export, off by default): security events and the journal
 go every minute to a syslog collector (UniSOC, Wazuh, Graylog...) as RFC 5424 carrying OCSF JSON
 or CEF, over TCP, TLS or UDP. Nothing is skipped while the collector is down.
+
+**Overlapping detectors** (Wolf Settings → Overlapping detectors): where Wolf's own detection and
+Suricata or Wazuh see the same thing, one mode each, **Web Attacks** (the agent's nginx web probes
+vs Suricata) and **Host Logins and Accounts** (auth.log signals vs Wazuh):
+
+- `own` (default): as when Wolf works alone; both are stored and counted on their own.
+- `both`: a Wolf event and the other source's alert about the same remote IP, with an ATT&CK
+  technique in common when both name some, within **Detector Match Minutes** (10), are one
+  finding. The later one is stored as **Same Finding As** the first: it stays on the timeline
+  ("same finding as …") and in its own rules, and is not sent again to CrowdSec or the SIEM
+  when the first was (a critical alert linked to a warning one still goes to a collector that
+  takes critical only).
+- `external`: Wolf's own events of that detector are dropped at ingest while Suricata or Wazuh
+  has sent, in the last hour, an alert about the same host (under any of its names) that watches
+  the same thing: for Wazuh an authentication, SSH, sudo or account rule, or an ATT&CK technique
+  of the auth signals; for Suricata an alert with HTTP context or a web technique. A Wazuh
+  file-integrity alert does not stand in for SSH detection. When it goes quiet, Wolf's come back.
+  Each Wolf Agent counts the events it sent that gave way (**Own Events Given Way**).
+
+Every timeline row says who raised the event: the Wolf agent, the Wolf site, Suricata or Wazuh.
 
 **Public status pages** (opt-in): a **Wolf Status Page** (title, slug, site, optional bench,
 history days, minimum severity) is served to guests at `/wolf-status/<slug>` once **Enabled** is
@@ -314,7 +359,7 @@ a few hundred hosts, the Frappe tables above are enough and keep Wolf a plain Fr
 
 ## Signals captured on the Wolf site itself
 
-Without any agent, the site running Frappe Wolf records failed Scheduled Job Logs (`cron_failure`),
+Without any agent, the site running Dodock Wolf records failed Scheduled Job Logs (`cron_failure`),
 Error Logs (failed backups as `backup_failed`), failed desk logins, privileged logins from a new IP
 or a new country, privileged role grants, Email Queue backlogs and sending errors, each
 `bench migrate` (as a deployment) and risky application changes: Server/Client Scripts that can
@@ -341,12 +386,12 @@ nothing is flagged until a first public login is known.
 
 Some signals can only be seen from inside a site. Frappe logs "Scheduled Job Failed" at INFO,
 which the default logger level drops, and it often writes no Scheduled Job Log, so the agent
-cannot see a failing cron on a site from `scheduler.log`. Install `frappe_wolf` on every site
+cannot see a failing cron on a site from `scheduler.log`. Install `dodock_wolf` on every site
 and keep one of them as the **central** Wolf site. Set the others to **satellite** mode:
 
 ```bash
-bench --site b.example.com install-app frappe_wolf
-bench --site b.example.com execute frappe_wolf.satellite.register \
+bench --site b.example.com install-app dodock_wolf
+bench --site b.example.com execute dodock_wolf.satellite.register \
   --kwargs '{"url": "https://wolf.example.com", "token": "<central registration token>"}'
 # add "verify_tls": 0 for a self-signed central site
 ```
@@ -390,7 +435,7 @@ searches, the Wolf Overview page, charts and incident timelines. Rows are OR-ed.
 records (CPU, disk, SSH logins: no site) need a `host` row. A Wolf User without any row is not
 restricted. Frappe's own User Permissions cannot do this, because site/bench/host are plain
 Data fields, so Wolf uses `permission_query_conditions` and `has_permission` hooks
-(`frappe_wolf/wolf/access.py`). Alert rule definitions stay readable by every Wolf User.
+(`dodock_wolf/wolf/access.py`). Alert rule definitions stay readable by every Wolf User.
 
 **Agent secrets.** Wolf stores only a salted HMAC-SHA256 hash of each agent's secret; the
 secret is shown once, at registration or when you click **Rotate secret** on the Wolf Agent
@@ -418,7 +463,7 @@ python3 -m unittest discover -s agent/tests          # agent tests
 ### Wolf UI
 
 The operator UI at `/wolf` is a Vue app built on [frappe-ui](https://ui.frappe.io) in
-[`frontend/`](frontend/) ([#19](https://github.com/bthuner/frappe-wolf/issues/19)). Desk keeps the
+[`frontend/`](frontend/) ([#19](https://github.com/bthuner/dodock-wolf/issues/19)). Desk keeps the
 configuration DocTypes and stays usable for everything the Wolf UI does not show yet; its views are
 added one by one, and a view that is not built says so and links to Desk. It reuses the Frappe
 session: guests are sent to the login page, users without the Wolf User or Wolf Manager role get a
@@ -434,7 +479,7 @@ cd frontend
 yarn install
 yarn dev        # Vite on the bench port + 80 (8080 for 8000), proxied to the bench
 yarn test       # unit and component tests (Vitest)
-yarn build      # writes frappe_wolf/public/frontend and frappe_wolf/www/wolf.html
+yarn build      # writes dodock_wolf/public/frontend and dodock_wolf/www/wolf.html
 yarn e2e        # browser tests of that build (Playwright + axe), after `yarn build`
 ```
 
@@ -448,7 +493,7 @@ partial, stale and disconnected: a view never claims "nothing" before it has rea
 read failed, and a refusal says what may not be seen. They need Chromium: `npx playwright
 install chromium`, or point `WOLF_CHROMIUM` at an installed one.
 
-Node 20.19 or newer is required. The build output is not committed; `bench build --app frappe_wolf`
+Node 20.19 or newer is required. The build output is not committed; `bench build --app dodock_wolf`
 produces it on the bench.
 
 ### CI checks

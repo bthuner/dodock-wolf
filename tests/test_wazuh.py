@@ -5,7 +5,7 @@ import json
 import os
 import unittest
 
-from frappe_wolf.wolf import schema, wazuh
+from dodock_wolf.wolf import schema, wazuh
 
 DATA = os.path.join(os.path.dirname(__file__), "..", "agent", "tests", "data", "wazuh_alerts.json")
 
@@ -30,7 +30,7 @@ class TestWazuhMapping(unittest.TestCase):
 
 	def test_skipped(self):
 		by_id = alerts()
-		self.assertIn("frappe_wolf", wazuh.skip_reason(by_id["100903"]))  # Wolf's own export: no loop
+		self.assertIn("dodock_wolf", wazuh.skip_reason(by_id["100903"]))  # Wolf's own export: no loop
 		self.assertIn("sca", wazuh.skip_reason(by_id["19007"]))
 		self.assertIsNone(wazuh.event_for(by_id["19007"], schema.fingerprint))
 		self.assertEqual(wazuh.skip_reason({"x": 1}), "not a Wazuh alert")

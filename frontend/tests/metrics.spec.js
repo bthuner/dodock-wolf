@@ -22,9 +22,9 @@ const RESULT = {
 
 function server(overrides = {}) {
   const handlers = {
-    'frappe_wolf.api.metrics.get_metric_catalog': () => ({ metrics: CATALOG }),
-    'frappe_wolf.api.metrics.get_labels': () => ({ labels: ['mount=/', 'mount=/data'] }),
-    'frappe_wolf.api.metrics.query_metric': () => RESULT,
+    'dodock_wolf.api.metrics.get_metric_catalog': () => ({ metrics: CATALOG }),
+    'dodock_wolf.api.metrics.get_labels': () => ({ labels: ['mount=/', 'mount=/data'] }),
+    'dodock_wolf.api.metrics.query_metric': () => RESULT,
     ...overrides,
   }
   const fetchFn = vi.fn(async (url) => {
@@ -76,7 +76,7 @@ describe('MetricsPage', () => {
   })
 
   it('does not call a past window stale', async () => {
-    server({ 'frappe_wolf.api.metrics.query_metric': () => ({ ...RESULT, live: false, series: [{ ...RESULT.series[0], stale: false }] }) })
+    server({ 'dodock_wolf.api.metrics.query_metric': () => ({ ...RESULT, live: false, series: [{ ...RESULT.series[0], stale: false }] }) })
     const { page } = await open(`/metrics?metric=disk_used_percent&since=${T[0]}&until=${T[2]}`)
     expect(page.text()).not.toContain('no new data')
     expect(page.text()).toContain('last sample in this window at')

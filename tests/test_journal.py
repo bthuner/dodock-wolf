@@ -1,6 +1,6 @@
 import unittest
 
-from frappe_wolf.wolf import journal
+from dodock_wolf.wolf import journal
 
 KEY = "k" * 64
 

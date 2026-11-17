@@ -7,9 +7,9 @@ dist/
 node_modules/
 .claude/
 
-# Wolf UI build output (frontend/, written by `bench build --app frappe_wolf`)
-frappe_wolf/public/frontend/
-frappe_wolf/www/wolf.html
+# Wolf UI build output (frontend/, written by `bench build --app dodock_wolf`)
+dodock_wolf/public/frontend/
+dodock_wolf/www/wolf.html
 # browser tests (frontend/e2e)
 frontend/test-results/
 frontend/playwright-report/

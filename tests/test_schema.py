@@ -2,7 +2,7 @@ import json
 import unittest
 from datetime import datetime
 
-from frappe_wolf.wolf import schema
+from dodock_wolf.wolf import schema
 
 NOW = datetime(2026, 10, 29, 3, 0, 0)
 

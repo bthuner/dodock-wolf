@@ -8,7 +8,7 @@ settings that work with each collector. Each recipe below was tried against the 
 | Collector | Format | Message header | Transport | Framing | What you get |
 |---|---|---|---|---|---|
 | rsyslog 8.2404 | OCSF or CEF | rfc5424 | UDP, TCP or TLS | octet-counting (TCP/TLS) | messages written as sent; MSGID is the event category |
-| Wazuh 4.9.2 manager | OCSF | none | TCP | newline | one Wazuh alert per finding, level by severity, with the [rules file](siem/wazuh_frappe_wolf_rules.xml) |
+| Wazuh 4.9.2 manager | OCSF | none | TCP | newline | one Wazuh alert per finding, level by severity, with the [rules file](siem/wazuh_dodock_wolf_rules.xml) |
 | Graylog 6.1 | CEF | none | TCP | newline | the CEF input extracts every field (source address, ATT&CK, site, severity) |
 | Graylog 6.1 | OCSF or CEF | rfc5424 | UDP, TCP or TLS | octet-counting | the Syslog input stores the messages, but does not split the JSON into fields |
 
@@ -17,7 +17,7 @@ settings that work with each collector. Each recipe below was tried against the 
 - **Format**: OCSF (JSON, Detection Finding class 2004) or CEF.
 - **Message header**:
   - `rfc5424`: a syslog header before each message: priority, timestamp, the site as host
-    name, `frappe-wolf` as application and the category as MSGID.
+    name, `dodock-wolf` as application and the category as MSGID.
   - `none`: the bare JSON or CEF. Use it for collectors that decode the message itself, such as
     Wazuh's JSON decoder and Graylog's CEF input.
 - **Transport**:
@@ -64,7 +64,7 @@ input(type="imudp" port="514")
    </remote>
    ```
 
-2. Copy [`siem/wazuh_frappe_wolf_rules.xml`](siem/wazuh_frappe_wolf_rules.xml) to
+2. Copy [`siem/wazuh_dodock_wolf_rules.xml`](siem/wazuh_dodock_wolf_rules.xml) to
    `/var/ossec/etc/rules/` and restart the manager. It needs Wazuh 4.6 or later.
 3. Set Wolf to: format OCSF, message header none, transport TCP, framing newline.
 

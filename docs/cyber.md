@@ -1,6 +1,6 @@
 # Wolf cyber: benchmark and roadmap
 
-Frappe Wolf started as an observability tool (5xx windows, failed crons, workers, hosts) with a
+Dodock Wolf started as an observability tool (5xx windows, failed crons, workers, hosts) with a
 few security signals. This page compares it with a French sovereign SOC offer, SYLink / UniSOC,
 says what Wolf should take from it, and sets out the roadmap that gives Wolf a strong security
 focus. The first slice is built (see [What is built](#what-is-built)).
@@ -144,7 +144,7 @@ logs the agent already tails):
 - The journal follower now reads `sshd`, `sshd-session` (OpenSSH 9.8+), `sudo` and the
   shadow-utils tools, in `short-iso` format, so lines carry their real timestamps.
 
-**App: ATT&CK enrichment** (`frappe_wolf/wolf/attack.py`): at ingest, every `security` event
+**App: ATT&CK enrichment** (`dodock_wolf/wolf/attack.py`): at ingest, every `security` event
 gets a `mitre_attack` list of `{id, name, tactic}` in its payload. It merges the category's
 mapping with the technique IDs the agent sent. Events forwarded by satellites keep theirs.
 
@@ -235,7 +235,7 @@ Limits of export counting:
 ### Step 3: posture score and exposure (built)
 
 **Wolf → Security** (`/wolf/security`) shows a score out of 100 per site, with every check,
-what Wolf read and the fix (`frappe_wolf/wolf/posture.py`, `api/security.py`):
+what Wolf read and the fix (`dodock_wolf/wolf/posture.py`, `api/security.py`):
 
 | Check | Weight | Read from |
 |---|---|---|
@@ -300,7 +300,7 @@ proof of reachability: a firewall may block it.
 
 ### Step 4: deception and threat intelligence (built)
 
-Wolf Settings → **Threat intelligence and deception** (`frappe_wolf/api/threat.py`,
+Wolf Settings → **Threat intelligence and deception** (`dodock_wolf/api/threat.py`,
 `wolf/reputation.py`):
 
 - **Honeytokens**, each touch a critical `honeytoken_triggered` event (preset *Honeytoken
@@ -328,7 +328,7 @@ Wolf Settings → **Threat intelligence and deception** (`frappe_wolf/api/threat
     blocks get the tag but no raise.
   - **Detections out** (machine login from `cscli machines add`): security events with an IP,
     at or above the minimum severity (warning), become LAPI alerts with the scenario
-    `frappe-wolf/<category>`, sent once after a minute through a cursor, like the SIEM
+    `dodock-wolf/<category>`, sent once after a minute through a cursor, like the SIEM
     export. Past events are not replayed.
     - By default they carry `remediation: false`: CrowdSec records them (`cscli alerts list`)
       and decides nothing.
@@ -336,14 +336,14 @@ Wolf Settings → **Threat intelligence and deception** (`frappe_wolf/api/threat
       decide, and the default profile bans the IP for 4 h, with no human approval: that is
       CrowdSec's choice, not Wolf's.
   - **Approved blocks out**: when a Wolf Manager approves a `block_ip`, the same block goes to
-    the LAPI as a `ban` decision for the approved duration (origin `frappe-wolf`), so every
+    the LAPI as a `ban` decision for the approved duration (origin `dodock-wolf`), so every
     bouncer of that LAPI applies it (firewall, nginx, Cloudflare). The Wolf agent still applies
     its own block when its responder is on, and the incident comment says what was sent.
   - The LAPI refuses a login whose User-Agent is not `name/version`. Wolf sends
-    `frappe-wolf/<version>`.
+    `dodock-wolf/<version>`.
   - Tried against CrowdSec 1.6.4: a `cscli` ban tagged and raised a Wolf event, Wolf's
     detections appeared as alerts without a decision, and an approved block became a 6 h
-    `frappe-wolf` ban.
+    `dodock-wolf` ban.
 
 ### Step 5: human-validated response (built)
 
@@ -412,7 +412,7 @@ result; read-only for everyone) and a comment on the incident.
   - **Personal data breach (GDPR)** starts one clock: the notification to the supervisory
     authority (CNIL) within 72 h.
   - Ticking a flag sets *Aware since* to now; it can be corrected. The sending times and the
-    authority's reference are recorded on the incident (`frappe_wolf/wolf/compliance.py`,
+    authority's reference are recorded on the incident (`dodock_wolf/wolf/compliance.py`,
     `api/compliance.py`).
   - Every 5 minutes `check_deadlines` records one `regulatory_deadline` event per obligation
     when it is due within 6 h, and again when it is overdue, linked to the incident (so it is
@@ -486,7 +486,7 @@ Built: Wazuh as an optional source. The Wolf agent on the manager's host reads `
 into `hids_alert` events, from level 7, without configuration assessment and without Wazuh's
 alerts on Wolf's own export, and the "Host intrusion alert (critical)" preset alerts from
 level 12. Without a Wolf agent on the manager's host, a Wazuh custom integration
-(`agent/wazuh/custom-frappe-wolf`) posts each alert to `frappe_wolf.api.wazuh.alert` with the
+(`agent/wazuh/custom-dodock-wolf`) posts each alert to `dodock_wolf.api.wazuh.alert` with the
 credentials of a Wolf Agent of kind `integration`. Tried against a Wazuh 4.9.2 manager, both
 ways: sshd and sudo lines it received by syslog came out under the host that logged them, with
 Wazuh's ATT&CK techniques, and three alerts sent by its integration daemon became one event
@@ -506,10 +506,70 @@ Built: entities shared by every source (`wolf/entities.py`, `api/entities.py`).
 - **Search:** the event list's `entity=` filter (`ip:…`, `host:…`, `site:…`, `user:…`) finds
   Wolf's, Suricata's and Wazuh's events together.
 
-Planned: incidents grouped by entity across sources, sequence rules ("scan, then
-a login from the same IP, then a large export"), and standalone parity for benches without
-them: file integrity and outbound connections of bench processes. Wolf alone stays fully
-supported.
+Built: incidents grouped by entity across sources (`wolf/incidents.py`, `entity_incident`).
+- A security event joins the open incident holding an event that names the same remote IP,
+  whatever its source, host, bench or site, if that event was seen within **Entity Correlation
+  Minutes** (Wolf Settings → Correlation, 60 by default). A Suricata scan on one host, a Wazuh
+  SSH alert on another and a web probe on a site, all from one address, read as one incident.
+  **Group Incidents by IP or User** (on by default) turns it off.
+- Only the remote address (`payload.ip`) counts, and only a public one: a server's own address
+  (Suricata's `dest_ip`), private, loopback and documentation ranges would tie unrelated
+  attacks together.
+- A user ties events together only when it is an e-mail address (`root` on two hosts or
+  `Administrator` on two sites are not one person), and not from failed logins or `sudo`
+  failures, whose user the attacker chose.
+- Order: an open incident of the event's own site, then one sharing an IP or user, then one of
+  its bench or host. Only incidents started in the last 24 hours take events by entity, so a
+  scanner coming back every hour does not keep one incident growing.
+- A rule's evidence is its own: when a rule fires on events another incident took by IP, they
+  move to the rule's incident.
+- The incident's timeline shows the events of other scopes it gathered, to users who may read
+  those scopes; a user restricted to some sites sees only theirs.
+
+Built: sequence rules (`wolf/sequences.py`, `rules.query_sequence`). A Wolf Alert Rule of type
+`sequence` fires when an event of its **Then** categories follows one of its **First** categories
+on the same IP, user or host, within **Within Minutes**. Three presets:
+- **Scan then login from the same IP**: a web probe or a Suricata alert, then an SSH login after
+  failures or as root, a privileged Frappe login from a new IP or an API key used from a new IP,
+  from that address, within the hour.
+- **New-IP login then export or new key**: a privileged login from a new IP or country, or an API
+  key used from a new IP, then an unusual export, a new API key or an outside Webhook by the same
+  user on the same site, within 2 hours.
+- **IDS alert then risky change on the host**: a critical Suricata or Wazuh alert on a host, then new code or more
+  access on a site of that host (Server or Client Script, System Console, permissions, weaker
+  settings, privileged user, API key, Webhook), within the hour.
+
+The IP is the second event's public remote address, as for grouping. A one-off typo before a
+login is not a scan, so failed Frappe logins are not first events; a critical alert is required
+on the host, because warning-level Suricata and Wazuh alerts are constant on exposed hosts. The
+`by` of site signals (who created the key or the Webhook) is a user entity too. The first event
+often belongs to an earlier incident already; it stays there, and the sequence incident's
+timeline, which starts at the first event, shows it.
+
+Built: overlapping detectors (`wolf/detectors.py`, `api/detectors.py`). Wolf Settings has one
+mode for the agent's nginx web probes against Suricata, and one for its auth.log signals against
+Wazuh: `own` (default, as alone), `both` (an event and the other source's alert about the same
+remote IP, sharing an ATT&CK technique when both name some, within 10 minutes, are one finding:
+the later is marked **Same Finding As** the first and not sent again to CrowdSec or the SIEM) or
+`external` (Wolf's own events of that detector are dropped while the other source sends alerts
+about that host, under any of its names, that watch the same thing: Wazuh authentication, SSH,
+sudo or account rules, Suricata alerts with HTTP context or a web technique. They come back when
+it has been quiet for an hour, and each Wolf Agent counts what gave way). sudo, account and group events carry
+no IP, so in `both` mode they are never linked. Each timeline row names its source. Blocking
+(nftables against Wazuh active response) is left to step 6, where an approved block can be
+handed to Wazuh.
+
+Built: one story per incident. Its timeline already held every source's events of its scope with
+the deployments and health events there (failed crons, errors, the events metric rules emit for
+5xx spikes or a full disk). When it took events from other scopes, by IP or user or through a
+sequence rule, it now also shows the deployments and health events of those scopes in its window
+(`incidents.related_clause`), not their other security events. On a related host that is its
+host-wide events and its benches' deployments and failed crons and workers, not the Error Logs of
+every site it serves. An attack on one host and an
+outage on another read as one story, for the users allowed to see both.
+
+Planned: standalone parity for benches without Suricata or Wazuh: file integrity and outbound
+connections of bench processes. Wolf alone stays fully supported.
 
 ## 5. Mapping reference
 

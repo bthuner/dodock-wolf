@@ -4,7 +4,7 @@ import unittest
 import urllib.error
 from datetime import datetime, timedelta, timezone
 
-from frappe_wolf.wolf import crowdsec
+from dodock_wolf.wolf import crowdsec
 
 NOW = datetime(2026, 11, 2, 15, 0)
 EVENT = {"name": "ev1", "event_type": "security", "category": "web_attack_probe", "severity": "warning", "title": "probes",
@@ -15,7 +15,7 @@ EVENT = {"name": "ev1", "event_type": "security", "category": "web_attack_probe"
 class TestAlerts(unittest.TestCase):
 	def test_detection_alert(self):
 		a = crowdsec.detection_alert(EVENT)
-		self.assertEqual(a["scenario"], "frappe-wolf/web_attack_probe")
+		self.assertEqual(a["scenario"], "dodock-wolf/web_attack_probe")
 		self.assertEqual(a["source"], {"scope": "Ip", "value": "203.0.113.50", "ip": "203.0.113.50"})
 		self.assertEqual((a["remediation"], a["events_count"], a["start_at"]), (False, 12, "2026-11-02T14:00:00Z"))
 		self.assertNotIn("decisions", a)  # CrowdSec's profiles decide, if anything
@@ -26,7 +26,7 @@ class TestAlerts(unittest.TestCase):
 	def test_block_alert_carries_the_decision(self):
 		a = crowdsec.block_alert("198.51.100.7", 24, "WRA-1 approved by ops@x", datetime(2026, 11, 2, 15, 0))
 		self.assertEqual(a["decisions"], [{"type": "ban", "duration": "24h", "scope": "Ip", "value": "198.51.100.7",
-		                                   "origin": "frappe-wolf", "scenario": "frappe-wolf/approved_block"}])  # fmt: skip
+		                                   "origin": "dodock-wolf", "scenario": "dodock-wolf/approved_block"}])  # fmt: skip
 		self.assertEqual(a["start_at"], "2026-11-02T15:00:00Z")
 
 	def test_wanted(self):
@@ -71,12 +71,12 @@ class TestDecisions(unittest.TestCase):
 	def test_tag(self):
 		d = crowdsec.Decisions().apply({"new": [
 			{"scope": "Ip", "value": "203.0.113.50", "type": "ban", "origin": "crowdsec", "scenario": "crowdsecurity/http-probing", "duration": "4h"},
-			{"scope": "Ip", "value": "203.0.113.60", "type": "ban", "origin": "frappe-wolf", "scenario": "frappe-wolf/approved_block", "duration": "4h"},
+			{"scope": "Ip", "value": "203.0.113.60", "type": "ban", "origin": "dodock-wolf", "scenario": "dodock-wolf/approved_block", "duration": "4h"},
 		]}, NOW)  # fmt: skip
 		payload, severity = crowdsec.tag({"ip": "203.0.113.50"}, "warning", d, NOW)
 		self.assertEqual((payload["crowdsec"]["scenario"], severity), ("crowdsecurity/http-probing", "critical"))
 		payload, severity = crowdsec.tag({"ip": "203.0.113.60"}, "warning", d, NOW)
-		self.assertEqual((payload["crowdsec"]["origin"], severity), ("frappe-wolf", "warning"))  # Wolf's own block: no raise
+		self.assertEqual((payload["crowdsec"]["origin"], severity), ("dodock-wolf", "warning"))  # Wolf's own block: no raise
 		same = {"ip": "192.0.2.1"}
 		self.assertIs(crowdsec.tag(same, "info", d, NOW)[0], same)
 		self.assertIs(crowdsec.tag(same, "info", None, NOW)[0], same)

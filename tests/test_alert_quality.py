@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime, timedelta
 
-from frappe_wolf.wolf import conditions as c
+from dodock_wolf.wolf import conditions as c
 
 
 def run(steps, fire_after=1, resolve_after=1, auto_resolve=True, threshold=90, resolve_threshold=None):

@@ -50,15 +50,15 @@ async function load() {
   loading.value = true
   const args = { ...scope.value, range: range.value }
   const jobs = {
-    counts: call('frappe_wolf.api.scope.get_counts', args),
-    http: call('frappe_wolf.api.dashboard.get_http', args),
-    signals: call('frappe_wolf.api.dashboard.get_signals', scope.value),
+    counts: call('dodock_wolf.api.scope.get_counts', args),
+    http: call('dodock_wolf.api.dashboard.get_http', args),
+    signals: call('dodock_wolf.api.dashboard.get_signals', scope.value),
   }
   if (hasIncidents.value) {
-    jobs.incidents = call('frappe_wolf.api.incident_view.list_incidents', { ...scope.value, status: 'unresolved', limit: 10 })
+    jobs.incidents = call('dodock_wolf.api.incident_view.list_incidents', { ...scope.value, status: 'unresolved', limit: 10 })
   }
-  if (isOverview.value || scope.value.host) jobs.inventory = call('frappe_wolf.api.scope.get_inventory', {})
-  if (isOverview.value) jobs.monitoring = call('frappe_wolf.api.dashboard.get_monitoring', {})
+  if (isOverview.value || scope.value.host) jobs.inventory = call('dodock_wolf.api.scope.get_inventory', {})
+  if (isOverview.value) jobs.monitoring = call('dodock_wolf.api.dashboard.get_monitoring', {})
   const settled = await Promise.allSettled(Object.values(jobs))
   if (mine !== ticket) return // a newer range or scope is loading
   const next = {}

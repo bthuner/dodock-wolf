@@ -13,7 +13,7 @@ import { full } from '@/services/time'
 
 const boot = inject('boot')
 const tz = boot.time_zone
-const list = useExplore('frappe_wolf.api.explore.list_error_groups', 'groups', { itemKey: (g) => g.fingerprint })
+const list = useExplore('dodock_wolf.api.explore.list_error_groups', 'groups', { itemKey: (g) => g.fingerprint })
 
 // new events never reshuffle the list under the reader: a button offers them
 const hub = inject('live', null)
