@@ -202,6 +202,8 @@ class NginxParser:
 	def _probe_events(self, ts):
 		events = []
 		for (_, site, client, is_exposed), g in self.probes.items():
+			if not is_exposed and web_attacks.below_rate(g["rules"]):
+				continue
 			rules = sorted(g["rules"], key=lambda r: (-g["rules"][r], r))
 			if is_exposed:
 				category = "web_sensitive_file_exposed"

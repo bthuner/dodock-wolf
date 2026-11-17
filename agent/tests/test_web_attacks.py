@@ -134,5 +134,84 @@ class TestNginxProbes(unittest.TestCase):
 		self.assertEqual(len(p.drain(NOW)[1]), nginx.MAX_PROBE_GROUPS)
 
 
+
+class TestNewProbes(unittest.TestCase):
+	def test_appliances_secrets_and_scanners(self):
+		cases = {
+			"/remote/fgt_lang?lang=/../../../..//////////dev/cmdb/sslvpn_websession": "appliance_probe",  # Fortinet
+			"/global-protect/login.esp": "appliance_probe",
+			"/dana-na/auth/url_default/welcome.cgi": "appliance_probe",  # Ivanti / Pulse
+			"/vpn/../vpns/cfg/smb.conf": "appliance_probe",  # Citrix
+			"/+CSCOE+/logon.html": "appliance_probe",
+			"/mgmt/tm/util/bash": "appliance_probe",  # F5
+			"/autodiscover/autodiscover.json?@zdi/Powershell": "appliance_probe",  # Exchange ProxyShell
+			"/pages/createpage-entervariables.action": "appliance_probe",  # Confluence
+			"/index.action": "appliance_probe",  # Struts
+			"/geoserver/web/": "appliance_probe",
+			"/.git-credentials": "secret_file",
+			"/.npmrc": "secret_file",
+			"/docker-compose.yml": "secret_file",
+			"/.vscode/sftp.json": "secret_file",
+			"/storage/logs/laravel.log": "secret_file",
+		}
+		for target, rule in cases.items():
+			with self.subTest(target):
+				self.assertIn(rule, web_attacks.classify("GET", target))
+		for ua in ("Fuzz Faster U Fool v2.1.0", "Mozilla/5.0 (l9explore/1.2.2)", "dirsearch", "Katana/1.0"):
+			self.assertIn("scanner_user_agent", web_attacks.classify("GET", "/", user_agent=ua), ua)
+
+	def test_frappe_paths_and_files_are_not_probes(self):
+		for target in ("/assets/frappe/css/fonts/fontawesome/svgs/brands/joomla.svg", "/files/citrix/notes.pdf",
+		               "/api/v2/document/User/a@b.c", "/app/sales-invoice/new", "/api/method/frappe.client.get_list"):  # fmt: skip
+			self.assertEqual(web_attacks.classify("GET", target, 200), [], target)
+
+	def test_frappe_rules(self):
+		reset = "/api/method/frappe.core.doctype.user.user.reset_password"
+		self.assertEqual(web_attacks.classify("POST", reset, 200), ["frappe_auth_abuse"])
+		self.assertEqual(web_attacks.classify("POST", "/api/method/frappe.integrations.oauth2.get_token", 401), ["frappe_auth_abuse"])
+		self.assertEqual(web_attacks.classify("POST", "/api/method/frappe.client.insert", 403), ["frappe_api_forbidden"])
+		self.assertEqual(web_attacks.classify("POST", "/api/method/frappe.client.insert", 200), [])
+		self.assertEqual(web_attacks.classify("GET", "/api/resource/User", 401), ["frappe_api_forbidden"])
+
+
+class TestFrappeRates(unittest.TestCase):
+	def parser(self):
+		return nginx.NginxParser("h1", site_benches={"a.example.com": "main"}, default_site="a.example.com",
+		                         default_bench="main")  # fmt: skip
+
+	def probes(self, p):
+		return [e for e in p.drain(NOW)[1] if e["category"] == "web_attack_probe"]
+
+	def test_one_reset_or_a_stale_tab_is_not_a_probe(self):
+		p = self.parser()
+		p.feed(line("/api/method/frappe.core.doctype.user.user.reset_password", status=200))
+		for _ in range(5):
+			p.feed(line("/api/method/frappe.desk.form.load.getdoc?doctype=User&name=x", status=403, addr="203.0.113.9"))
+		self.assertEqual(self.probes(p), [])
+
+	def test_a_burst_is(self):
+		p = self.parser()
+		for i in range(12):  # enumerating accounts through the password reset
+			p.feed(line(f"/api/method/frappe.core.doctype.user.user.reset_password?user=u{i}@example.com", status=200))
+		for _ in range(25):  # trying methods without the right to
+			p.feed(line("/api/method/frappe.client.get_list?doctype=User", status=403, addr="203.0.113.9"))
+		got = {e["payload"]["ip"]: e["payload"]["rules"] for e in self.probes(p)}
+		self.assertEqual(got, {"198.51.100.7": {"frappe_auth_abuse": 12}, "203.0.113.9": {"frappe_api_forbidden": 25}})
+		(ev,) = [e for e in self.parser_events_with_techniques()]
+		self.assertEqual(ev, ["T1110"])
+
+	def parser_events_with_techniques(self):
+		p = self.parser()
+		for i in range(10):
+			p.feed(line(f"/api/method/frappe.integrations.oauth2.get_token?n={i}", status=401))
+		return [e["payload"]["attack_techniques"] for e in self.probes(p)]
+
+	def test_with_another_probe_it_counts_at_once(self):
+		p = self.parser()
+		p.feed(line("/api/method/frappe.core.doctype.user.user.reset_password", status=200))
+		p.feed(line("/.env"))
+		(ev,) = self.probes(p)
+		self.assertEqual(ev["payload"]["rules"], {"frappe_auth_abuse": 1, "env_file": 1})
+
 if __name__ == "__main__":
 	unittest.main()

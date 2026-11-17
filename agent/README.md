@@ -70,9 +70,12 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   from `$host` when the log format includes it (leading vhost field or a trailing
   quoted field), else from a per-site log file name, else the bench's only site.
   The same lines feed **web attack detection**: requests probing for `.env`, `.git/`,
-  `site_config.json`, keys or dumps, CMS/admin panels (`wp-login.php`, `phpmyadmin`...), path
-  traversal, SQL/command/template injection, XSS, or sent by a scanner User-Agent (sqlmap,
-  nuclei...) become one `web_attack_probe` event per (site, client) and interval, with the
+  `.git-credentials`, `.npmrc`, `docker-compose.yml`, `site_config.json`, keys or dumps,
+  CMS/admin panels (`wp-login.php`, `phpmyadmin`...), edge appliances (Fortinet, Palo Alto,
+  Ivanti, Citrix, Cisco ASA, F5, Exchange, Confluence/Struts, GeoServer, Jenkins), path traversal,
+  SQL/command/template injection, XSS, or sent by a scanner User-Agent (sqlmap, nuclei, ffuf,
+  dirsearch, katana, LeakIX...) become one `web_attack_probe` event per (site, client) and minute,
+  with the
   rules hit, statuses, targets and MITRE ATT&CK technique IDs. A secret-bearing file answered
   with a 2xx is a separate critical `web_sensitive_file_exposed` event. Attachments
   (`/files`, `/private/files`) and authorized backup downloads (`/backups`) are not probes.
@@ -80,6 +83,10 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   right-most public address of the `X-Forwarded-For` list logged after it (the one your proxy
   appended; the left-most entries are written by the client). A 2xx under a route that answers
   any sub-path with a page (`/app/`, `/wolf/`, `/api/`...) is not counted as a served file.
+  Two Frappe rules count only in bursts from one client in one minute: 10 calls to the guest
+  endpoints that check an account or take a credential (password reset, login link, sign-up,
+  data deletion confirmation, OAuth2 token, LDAP, key or token login: `frappe_auth_abuse`), and 20
+  `/api/method` or `/api/resource` calls answered 401/403 (`frappe_api_forbidden`).
 - **Auth log** (`/var/log/auth.log`, `/var/log/secure`, or `journalctl -o short-iso -t sshd
   -t sshd-session -t sudo -t useradd -t usermod -t gpasswd`): failed SSH logins aggregated per
   source IP, root logins, a successful login from an address that failed 5+ times in the hour

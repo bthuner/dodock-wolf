@@ -11,6 +11,20 @@ request matches. The nginx parser aggregates matches per (site, client address) 
 
 Patterns are deliberately conservative: a Frappe site never serves these paths, so a match
 is a probe, not a false positive from normal traffic.
+
+Two Frappe rules are rates, not single requests (RATE_RULES): one call is normal, a burst from one
+client in one minute is not.
+
+- `frappe_auth_abuse`: the guest endpoints that tell whether an account exists or take a
+  credential outside the login page: password reset (GHSA-3vqc-c545-w7jg), login links, sign-up,
+  personal data deletion confirmation (GHSA-c2xv-c53h-qvr5), the OAuth2 token endpoint (whose
+  password grant skipped two-factor authentication, GHSA-h3mh-9vmc-cpfg), LDAP and key or token
+  logins. Failed logins on the login page are the site's own `frappe_failed_login`.
+- `frappe_api_forbidden`: `/api/method` or `/api/resource` answered 401 or 403: methods tried
+  without the right to call them.
+
+A SQL injection carried in a header (GHSA-vp4r-5v6w-r962, `X-Frappe-Request-Id`) or a request body
+is not in an access log: Suricata sees those.
 """
 
 import re
@@ -22,13 +36,25 @@ _RULES = [
 	("env_file", r"(?:^|/)\.env(?:\.[\w-]+)?(?:$|[?#])"),
 	("vcs_metadata", r"(?:^|/)\.(?:git|svn|hg)(?:/|$)"),
 	("secret_file", r"(?:^|/)(?:id_(?:rsa|dsa|ecdsa|ed25519)|\.htpasswd|\.aws/credentials|\.ssh/|"
-	 r"site_config\.json|common_site_config\.json|wp-config\.php(?:\.bak|~)?|\.ds_store)(?:$|[?#])"),
+	 r"site_config\.json|common_site_config\.json|wp-config\.php(?:\.bak|~)?|\.ds_store|"
+	 r"\.git-credentials|\.npmrc|\.pypirc|\.netrc|\.docker/config\.json|docker-compose\.ya?ml|"
+	 r"\.vscode/sftp\.json|sftp-config\.json|\.kube/config|credentials\.json|secrets\.ya?ml|"
+	 r"storage/logs/laravel\.log)(?:$|[?#])"),
 	("backup_dump", r"(?:^|/)[\w.-]*\.(?:sql|sql\.gz|sqlite3?|bak|old|tar\.gz|tgz|zip)(?:$|[?#])"),
 	# CMS / admin panels that do not exist on a Frappe bench
 	("cms_probe", r"(?:^|/)(?:wp-(?:login|admin|includes|content)|xmlrpc\.php|wordpress/|joomla|"
 	 r"administrator/index\.php|phpmyadmin|pma/|adminer(?:\.php)?|phpinfo\.php|server-status|"
 	 r"vendor/phpunit|cgi-bin/|boaform|hnap1|actuator/|solr/admin|manager/html|console/|"
 	 r"_ignition/|telescope/|owa/|autodiscover/autodiscover\.xml)"),
+	# edge appliances and servers scanned for their known vulnerabilities (Fortinet, Palo Alto,
+	# Ivanti/Pulse, Citrix, Cisco ASA, F5, Exchange, Confluence/Struts, GeoServer, Jenkins, .NET
+	# debug pages): none is a Frappe route
+	("appliance_probe", r"(?:^|/)(?:remote/(?:login|fgt_lang|logincheck)|api/v2/cmdb/|global-protect/|ssl-vpn/|"
+	 r"dana-na/|dana-cached/|vpns?/(?:index\.html|\.\./)|citrix/|nf/auth/|[+ ]cscoe[+ ]/|[+ ]cscol[+ ]/|mgmt/tm/|tmui/|"
+	 r"ecp/default\.aspx|mapi/nspi|ews/exchange\.asmx|autodiscover/autodiscover\.json|"
+	 r"pages/createpage-entervariables\.action|setup/setupadministrator\.action|[\w-]+\.action(?:$|[?;])|"
+	 r"geoserver/|jenkins/|elmah\.axd|trace\.axd|_profiler/|debug/pprof|web\.config(?:$|[?#])|"
+	 r"gponform/|setup\.cgi|shell\?cd|wls-wsat/|_wpeprivate/|\.well-known/security\.txt\.php)"),
 	("path_traversal", r"(?:\.\./|\.\.\\|/etc/(?:passwd|shadow|hosts)|c:\\windows|/proc/self/)"),
 	("sql_injection", r"(?:union(?:\s|/\*.*?\*/)+(?:all\s+)?select|"
 	 r"'\s*(?:or|and)\s*'?\d+'?\s*=\s*'?\d+|\bsleep\s*\(\s*\d+\s*\)|benchmark\s*\(|"
@@ -40,10 +66,25 @@ _RULES = [
 ]
 _COMPILED = [(name, re.compile(rx, re.IGNORECASE)) for name, rx in _RULES]
 
+# Frappe's guest endpoints that check an account or take a credential, outside the login page
+_FRAPPE_AUTH = re.compile(
+	r"^/api/method/(?:"
+	r"frappe\.core\.doctype\.user\.user\.(?:reset_password|sign_up|update_password)|"
+	r"frappe\.www\.login\.(?:send_login_link|login_via_key|login_via_token)|"
+	r"frappe\.website\.doctype\.personal_data_deletion_request\.personal_data_deletion_request\.confirm_deletion|"
+	r"frappe\.integrations\.oauth2\.get_token|"
+	r"frappe\.integrations\.doctype\.ldap_settings\.ldap_settings\.login"
+	r")(?:$|[?/])"
+)
+_FRAPPE_API = re.compile(r"^/api/(?:method|resource|v2)/")
+# rule -> requests from one client in one minute before it is a probe (one call is normal)
+RATE_RULES = {"frappe_auth_abuse": 10, "frappe_api_forbidden": 20}
+
 # Known offensive tooling identifying itself in the User-Agent.
 _SCANNER_UA = re.compile(
 	r"(?:sqlmap|nikto|nmap|masscan|zgrab|nuclei|wpscan|dirbuster|gobuster|feroxbuster|ffuf|"
-	r"wfuzz|acunetix|nessus|openvas|qualys|hydra|jaeles|whatweb|httpx|interactsh)",
+	r"fuzz faster u fool|wfuzz|acunetix|nessus|openvas|qualys|hydra|jaeles|whatweb|httpx|interactsh|"
+	r"dirsearch|katana|arachni|skipfish|commix|xsstrike|projectdiscovery|l9explore|l9tcpid|w3af)",
 	re.IGNORECASE,
 )
 
@@ -51,6 +92,7 @@ _SCANNER_UA = re.compile(
 # (/backups, System Manager only): a .zip or .sql.gz there is normal traffic.
 _DUMP_ALLOWED_PREFIXES = ("/files/", "/private/files/", "/backups/", "/assets/")
 SENSITIVE_RULES = {"env_file", "vcs_metadata", "secret_file", "backup_dump"}
+_FILE_PREFIXES = ("/assets/", "/files/", "/private/files/")
 CRITICAL_THRESHOLD = 50
 MAX_TARGET = 300
 
@@ -67,6 +109,9 @@ ATTACK_TECHNIQUES = {
 	"command_injection": "T1190",
 	"template_injection": "T1190",
 	"scanner_user_agent": "T1595.002",
+	"appliance_probe": "T1595.002",
+	"frappe_auth_abuse": "T1110",
+	"frappe_api_forbidden": "T1190",
 }
 
 
@@ -94,10 +139,23 @@ def classify(method, target, status=None, user_agent=None):
 			continue
 		if name == "backup_dump" and path.startswith(_DUMP_ALLOWED_PREFIXES):
 			continue
+		# static assets and user files are named freely (Font Awesome's joomla.svg)
+		if name in ("cms_probe", "appliance_probe") and path.startswith(_FILE_PREFIXES):
+			continue
 		matched.append(name)
 	if user_agent and _SCANNER_UA.search(user_agent):
 		matched.append("scanner_user_agent")
+	if _FRAPPE_AUTH.search(path):
+		matched.append("frappe_auth_abuse")
+	elif status in (401, 403) and _FRAPPE_API.search(path):
+		matched.append("frappe_api_forbidden")
 	return matched
+
+
+def below_rate(rule_counts):
+	"""True when a client's requests in one minute only match rate rules, none of them often enough:
+	a user resetting a password, or one stale tab answered 403, is not a probe."""
+	return bool(rule_counts) and all(r in RATE_RULES and n < RATE_RULES[r] for r, n in rule_counts.items())
 
 
 # Frappe routes that answer 200 with a page for any sub-path (Desk, the Wolf UI, the API's own
