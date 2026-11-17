@@ -27,10 +27,11 @@ server checks they match and calls the site back at `Origin` (here `frontend:808
 1. Keeps the site time zone if it is already night there; otherwise switches to a real zone
    where it is between 01:00 and 04:00 (e.g. Asia/Shanghai). This moves the site clock "into
    the night" without faking the system clock. It picks a zone ahead of the current one when
-   one is at night, so stored rows stay in the past. When none is (from UTC, roughly 04:00 to
-   11:00 UTC), it moves back the least and marks every Scheduled Job Type as just run:
-   otherwise Frappe's scheduler, Wolf's rule evaluation included, finds no job due for hours
-   (see Setup wizard below).
+   one is at night, so stored rows stay in the past. An empty time zone counts as Frappe's
+   fallback, Asia/Kolkata: `create-site` skips the setup wizard, so a fresh site has none. When
+   no zone ahead is at night, it moves back the least. Either way it then marks every Scheduled
+   Job Type whose last run is in the future as just run: otherwise Frappe's scheduler, Wolf's
+   rule evaluation included, finds no job due for hours (see Setup wizard below).
 2. Adds a webhook channel (`http://catcher:9999/`) to the 502 and scheduler preset rules.
 3. Marks a deployment with `wolf-agent mark-deployment`.
 4. Stops the backend for 60 s while sending traffic, so nginx answers 502. nginx resolves

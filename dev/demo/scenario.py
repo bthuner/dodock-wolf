@@ -19,6 +19,9 @@ from zoneinfo import ZoneInfo
 URL = "http://localhost:8099"
 SITE = "wolf.localhost"
 WEBHOOK = "http://catcher:9999/"
+# What Frappe uses when System Settings has no time zone (frappe.utils.get_system_timezone).
+# create-site skips the setup wizard, so a fresh demo site has none.
+FRAPPE_DEFAULT_TZ = "Asia/Kolkata"
 RULES = ["502 spike after deployment", "Nightly cron failure (01:00-04:00)", "Scheduler failure"]
 # Candidate zones (one per hour of offset): the demo picks one where it is between 01:00 and 03:59.
 ZONES = [
@@ -60,7 +63,7 @@ def night_zone(current):
 	in the future, and Frappe's scheduler then finds no job due until real time catches up.
 	"""
 	now = datetime.now(timezone.utc)
-	base = utc_offset(current or "UTC", now)  # an unset time zone is the server's, UTC here
+	base = utc_offset(current, now)
 	night = [z for z in ZONES if 1 <= now.astimezone(ZoneInfo(z)).hour < 4]
 	if not night:
 		sys.exit("no zone found")
@@ -90,21 +93,23 @@ def main():
 	api("POST", "/api/method/login", {"usr": "Administrator", "pwd": "admin"})
 
 	current = api("GET", "/api/resource/System Settings/System Settings")["data"].get("time_zone")
-	if current and 1 <= datetime.now(ZoneInfo(current)).hour < 4:
+	current = current or FRAPPE_DEFAULT_TZ
+	if 1 <= datetime.now(ZoneInfo(current)).hour < 4:
 		zone, moved_back = current, False
 	else:
 		zone, moved_back = night_zone(current)
 	step(f"Move the site clock to the night: System Settings time zone = {zone} "
 	     f"(local time {datetime.now(ZoneInfo(zone)):%H:%M})")
 	api("PUT", "/api/resource/System Settings/System Settings", {"time_zone": zone, "language": "en"})
+	# After a move back, every job's last run is in the future, so Frappe's scheduler (and Wolf's
+	# rule evaluation with it) would wait hours for real time to catch up. Run the fix every time:
+	# it changes nothing when no last run is in the future, and covers a zone guessed wrong.
 	if moved_back:
-		# no zone ahead is at night now: every job's last run is now in the future, so Frappe's
-		# scheduler (and Wolf's rule evaluation with it) would wait hours for real time to catch up
 		step("The clock moved back: jobs whose last run is now in the future are marked as run now")
-		local_now = f"{datetime.now(ZoneInfo(zone)):%Y-%m-%d %H:%M:%S}"
-		compose("exec", "-T", "backend", "bench", "--site", SITE, "execute", "frappe.db.sql", "--args", json.dumps([
-			"update `tabScheduled Job Type` set last_execution = %s"
-			" where coalesce(last_execution, creation) > %s", [local_now, local_now]]))
+	local_now = f"{datetime.now(ZoneInfo(zone)):%Y-%m-%d %H:%M:%S}"
+	compose("exec", "-T", "backend", "bench", "--site", SITE, "execute", "frappe.db.sql", "--args", json.dumps([
+		"update `tabScheduled Job Type` set last_execution = %s"
+		" where coalesce(last_execution, creation) > %s", [local_now, local_now]]))
 
 	step("Route the demo rules to the webhook sink")
 	for rule in RULES:
