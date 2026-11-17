@@ -1,0 +1,47 @@
+# Every site on a bench
+
+> Install the Wolf App on the bench's other sites as satellites that forward to the central site.
+
+Some signals can only be seen from inside a site. Frappe logs "Scheduled Job Failed" at INFO, which
+the default logger level drops, and it often writes no Scheduled Job Log. So the agent cannot see a
+failing cron on a site from `scheduler.log`.
+
+Install `dodock_wolf` on every site. Keep one **central** Wolf site, and set the others to
+**satellite** mode.
+
+## Register a satellite
+
+```bash [bench]
+bench --site b.example.com install-app dodock_wolf
+bench --site b.example.com execute dodock_wolf.satellite.register \
+  --kwargs '{"url": "https://wolf.example.com", "token": "<central registration token>"}'
+```
+
+Add `"verify_tls": 0` to the kwargs for a self-signed central site.
+
+In Desk: **Wolf Settings → Register with central site**.
+
+## What a satellite does
+
+- It captures its local signals, with the same **Wolf Settings** switches: failed scheduled jobs,
+Error Logs and failed backups, logins (including new IPs and countries), privileged role grants,
+Email Queue backlog and errors, and `bench migrate`.
+- It stores them in **Wolf Outbox** and pushes them every minute to the central site through the
+agent ingest API, with the same host, bench and site scope. Central rules and incidents see them
+like any other event.
+- While the central site is unreachable, it retries with backoff (1, 2, 4, 8, then every 15
+minutes) and keeps at most 10,000 pending events, dropping the oldest.
+- It shows the forwarding status on **Wolf Overview** and **Wolf Settings**. **Forward now** pushes
+at once.
+- It evaluates no rules, opens no incidents and stores no Wolf Events.
+
+## On the central site
+
+The satellite is a **Wolf Agent** of kind `satellite`, named after its site. It pushes every minute
+even with nothing to send, so the **Agent silent** preset also fires when a satellite's scheduler
+stops.
+
+- Disable the Wolf Agent to stop accepting its events.
+- Set **Mode** back to `central` on the satellite to make it a standalone Wolf again.
+- The satellite keeps its secret encrypted in its Wolf Settings, since it has to send it. The
+central site stores only the hash.

@@ -1,0 +1,190 @@
+# Introduction
+
+> What Dodock Wolf is, what it watches, and how its two parts fit together.
+
+Dodock Wolf is self-hosted observability for Frappe benches, ERPNext and Dokos sites and their
+Linux hosts. It catches 502 windows, failed nightly crons, worker crashes and suspicious logins
+before customers notice, and it keeps all data on a Frappe site you run.
+
+<screenshot alt="The Wolf UI overview on the demo bench" caption="The Wolf UI overview after the demo bench's 2AM scenario." name="overview">
+
+
+
+</screenshot>
+
+## Two parts
+
+<card-group>
+<card icon="i-lucide-app-window" title="Wolf App" to="/install/wolf-app">
+
+A Frappe app (`dodock_wolf`). It stores events, metrics, rules and incidents as DocTypes,
+evaluates alert rules at each scheduler tick and shows the timeline in the Wolf UI at `/wolf`
+and in Desk.
+
+</card>
+
+<card icon="i-lucide-server" title="Wolf Agent" to="/install/wolf-agent">
+
+A Python daemon on each host, using only the standard library (Python 3.9 or later). It tails
+nginx, bench and auth logs, reads `/proc`, Redis, MariaDB and TLS certificates, and pushes
+batches over HTTPS.
+
+</card>
+</card-group>
+
+The site running the Wolf App also watches itself, with no agent: failed scheduled jobs, Error
+Logs, failed logins, privileged role grants and risky changes such as new Server Scripts. Other
+sites on a bench can forward the same signals as [satellites](/install/every-site).
+
+## What it is for
+
+<table>
+<thead>
+  <tr>
+    <th>
+      Signal
+    </th>
+    
+    <th>
+      Example
+    </th>
+    
+    <th>
+      Where it comes from
+    </th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr>
+    <td>
+      5xx and 502 spikes
+    </td>
+    
+    <td>
+      14 × 502 on <code>
+        a.example.com
+      </code>
+      
+       in 5 min, after a deployment at 01:47
+    </td>
+    
+    <td>
+      nginx access log (agent)
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Cron and scheduler failures
+    </td>
+    
+    <td>
+      The nightly job failed at 02:00, or the scheduler stalled
+    </td>
+    
+    <td>
+      <code>
+        scheduler.log
+      </code>
+      
+       (agent), Scheduled Job Log (site)
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Worker problems
+    </td>
+    
+    <td>
+      Worker OOM-killed, RQ queue backlog, no live worker
+    </td>
+    
+    <td>
+      <code>
+        worker.log
+      </code>
+      
+      , Redis (agent)
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Host resources
+    </td>
+    
+    <td>
+      Disk at 93 % on <code>
+        /
+      </code>
+      
+      , load per core above 2
+    </td>
+    
+    <td>
+      <code>
+        /proc
+      </code>
+      
+       (agent)
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Security
+    </td>
+    
+    <td>
+      SSH brute force, admin login from a new country, a web attack scan
+    </td>
+    
+    <td>
+      auth log, nginx (agent); login and audit hooks (site)
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Operations
+    </td>
+    
+    <td>
+      No backup for 26 h, TLS certificate expiring in 3 days, replication stopped
+    </td>
+    
+    <td>
+      backups, TLS, MariaDB (agent)
+    </td>
+  </tr>
+</tbody>
+</table>
+
+Every signal becomes a **Wolf Event** or a **Wolf Metric Sample**. **Wolf Alert Rules** turn them
+into **Wolf Incidents**, which notify your channels when they open, reopen and resolve. See
+[Concepts](/getting-started/concepts).
+
+## What it is not
+
+Dodock Wolf is not a full Datadog replacement. It does no LLM observability, data observability,
+real-user monitoring or SLO dashboards. It covers operational safety for Frappe (errors, cron,
+workers, hosts) and the security signals around it, using open formats (JSON logs, syslog,
+OCSF) and storage you own.
+
+## Next
+
+<card-group>
+<card icon="i-lucide-timer" title="Quickstart" to="/getting-started/quickstart">
+
+From nothing to a first alert, on one bench.
+
+</card>
+
+<card icon="i-lucide-shapes" title="Concepts" to="/getting-started/concepts">
+
+Events, metrics, rules, incidents and scopes.
+
+</card>
+</card-group>

@@ -1,0 +1,79 @@
+# Wolf App
+
+> Install the Frappe app that stores Wolf's data, evaluates rules and serves the Wolf UI.
+
+The Wolf App (`dodock_wolf`) runs on a Frappe or Dokos site. That site becomes the **central** Wolf
+site: agents push to it, rules run on it, and the Wolf UI is served from it at `/wolf`.
+
+## Requirements
+
+- Frappe 15 or Dokos (Dodock 5). Tested on Dodock 5.18, MariaDB 10.6 and Postgres 16 and 17.
+- Node 20.19 or later on the bench, for `bench build` of the Wolf UI.
+- A scheduler running every minute (below).
+
+## Install
+
+```bash [bench]
+cd ~/frappe-bench
+bench get-app https://github.com/bthuner/dodock-wolf
+bench --site wolf.example.com install-app dodock_wolf
+bench build --app dodock_wolf   # links the static assets and builds the Wolf UI (/wolf)
+bench set-config -g scheduler_tick_interval 60
+```
+
+Then restart the scheduler process.
+
+Installing creates:
+
+- the roles **Wolf Manager** (sees and configures everything) and **Wolf User** (read-only);
+- a random **registration token** in **Wolf Settings**, used by agents to register;
+- the [preset alert rules](/alerts/presets), with no channels.
+
+## Scheduler pace
+
+Wolf's alert rules, rollups and satellite pushes are scheduled every minute. Frappe 15 and Dodock
+tick every 4 minutes by default.
+
+<warning>
+
+Without `scheduler_tick_interval` set to `60`, an alert can come up to 4 minutes late, and "fire
+after 3 evaluations" means 12 minutes. The Wolf UI's **Monitoring** page shows the pace in use.
+
+</warning>
+
+## The Wolf UI
+
+`https://<site>/wolf` is the operator UI, a Vue app built on frappe-ui. It reuses the Frappe
+session: guests go to the login page, users without **Wolf User** or **Wolf Manager** get a 403.
+Desk keeps the configuration DocTypes; a view the Wolf UI does not have yet links to Desk.
+
+<screenshot alt="An incident in the Wolf UI" caption="An incident: timeline, deployment marker, and the events grouped under it." name="incident">
+
+
+
+</screenshot>
+
+## Signals with no agent
+
+The Wolf site watches itself as soon as the app is installed: failed Scheduled Job Logs, Error Logs
+and failed backups, failed desk logins, privileged logins from a new IP or country, role grants,
+Email Queue backlogs and risky application changes. Each can be turned off in **Wolf Settings**.
+See [Site signals](/security/site-signals).
+
+To get the same signals from the bench's other sites, install the app there too, as
+[satellites](/install/every-site).
+
+## Upgrade
+
+```bash [bench]
+bench update --apps dodock_wolf   # or: cd apps/dodock_wolf && git pull
+bench --site wolf.example.com migrate
+bench build --app dodock_wolf
+```
+
+Migrations never overwrite presets you edited. A `bench migrate` is recorded as a deployment on
+the Wolf timeline.
+
+## Next
+
+[Install the agent](/install/wolf-agent) on each host.

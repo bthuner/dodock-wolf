@@ -1,0 +1,218 @@
+# Development
+
+> Run the tests, build the Wolf UI, reproduce the CI checks and preview this documentation site.
+
+## Status
+
+MVP, tested on a Dokos (Dodock 5.18) bench, on MariaDB 10.6 and on Postgres 17 (see
+[`ci/db_smoke.py`](https://github.com/bthuner/dodock-wolf/blob/main/ci/db_smoke.py)).
+
+## Python tests
+
+```bash [repository root]
+python3 -m unittest discover -s tests -t .           # app pure-python tests
+python3 -m unittest discover -s agent/tests          # agent tests
+```
+
+## Wolf UI
+
+The operator UI at `/wolf` is a Vue app built on [frappe-ui](https://ui.frappe.io) in
+[`frontend/`](https://github.com/bthuner/dodock-wolf/blob/main/frontend/)
+([#19](https://github.com/bthuner/dodock-wolf/issues/19)).
+
+- Desk keeps the configuration DocTypes and stays usable for everything the Wolf UI does not show
+yet.
+- Its views are added one by one. A view that is not built says so and links to Desk.
+- It reuses the Frappe session: guests are sent to the login page, users without the Wolf User or
+Wolf Manager role get a 403.
+
+Screenshots, light and dark, all taken on the demo bench after its 2AM scenario, are in
+[`docs/screenshots`](https://github.com/bthuner/dodock-wolf/blob/main/docs/screenshots/README.md).
+
+```bash [frontend/]
+cd frontend
+yarn install
+yarn dev        # Vite on the bench port + 80 (8080 for 8000), proxied to the bench
+yarn test       # unit and component tests (Vitest)
+yarn build      # writes dodock_wolf/public/frontend and dodock_wolf/www/wolf.html
+yarn e2e        # browser tests of that build (Playwright + axe), after `yarn build`
+```
+
+<note>
+
+Node 20.19 or newer is required. The build output is not committed:
+`bench build --app dodock_wolf` produces it on the bench.
+
+</note>
+
+### Browser tests
+
+The browser tests (`frontend/e2e/`) serve the production build as a bench would
+(`e2e/server.mjs`) and answer every API call in the page (`e2e/api.js`), so no Frappe is needed.
+
+Each view must:
+
+- render with no console error and no unanswered call;
+- pass axe with no serious or critical WCAG 2 A/AA finding, in the light and the dark theme.
+
+Keyboard navigation, reduced motion, acknowledging an incident and where keyboard focus goes are
+checked too.
+
+`e2e/states.spec.js` walks every view through loading, empty, filtered-empty, error, forbidden,
+partial, stale and disconnected. A view never claims "nothing" before it has read, or after a
+read failed, and a refusal says what may not be seen.
+
+The tests need Chromium: run `npx playwright install chromium`, or point `WOLF_CHROMIUM` at an
+installed one.
+
+The APIs the UI reads are in [UI API](/reference/ui-api).
+
+## CI checks
+
+Every pull request and every push to `main` runs
+[`.github/workflows/ci.yml`](https://github.com/bthuner/dodock-wolf/blob/main/.github/workflows/ci.yml):
+
+<table>
+<thead>
+  <tr>
+    <th>
+      Job
+    </th>
+    
+    <th>
+      Runs on
+    </th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr>
+    <td>
+      Lint (ruff, shellcheck)
+    </td>
+    
+    <td>
+      
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      App tests
+    </td>
+    
+    <td>
+      Python 3.12
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Agent tests
+    </td>
+    
+    <td>
+      Python 3.9 and 3.14
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Wolf UI tests and build
+    </td>
+    
+    <td>
+      Node 20.19 and 24
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Wolf UI browser tests
+    </td>
+    
+    <td>
+      Playwright + axe
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Bench integration
+    </td>
+    
+    <td>
+      MariaDB 10.6 and Postgres 16
+    </td>
+  </tr>
+</tbody>
+</table>
+
+To run the same checks locally:
+
+```bash [repository root]
+pip install ruff==0.17.3                             # ruff rules are in pyproject.toml
+ruff check .
+shellcheck agent/install.sh ci/integration.sh
+python3 -m unittest discover -s tests -t .
+python3.9 -m unittest discover -s agent/tests        # the agent must keep working on 3.9
+```
+
+### Integration job
+
+The integration job installs this checkout into the public Dokos image, creates a site and runs
+[`ci/db_smoke.py`](https://github.com/bthuner/dodock-wolf/blob/main/ci/db_smoke.py), which
+exercises every Wolf SQL path.
+
+<tabs>
+<tabs-item label="MariaDB">
+
+```bash [repository root]
+docker network create wolf-ci
+docker run -d --name db --network wolf-ci -e MARIADB_ROOT_PASSWORD=admin mariadb:10.6 \
+  --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+docker run -d --name redis --network wolf-ci redis:6.2-alpine
+docker run --rm --network wolf-ci --entrypoint bash -v "$PWD:/src:ro" \
+  registry.gitlab.com/dokos/dokos:latest /src/ci/integration.sh mariadb
+```
+
+</tabs-item>
+
+<tabs-item label="Postgres">
+
+Start `postgres:16` as `db` with `-e POSTGRES_PASSWORD=admin`, and pass `postgres` to
+`integration.sh` instead of `mariadb`. The `redis` container and the network are the same.
+
+</tabs-item>
+
+<tabs-item label="Existing bench">
+
+```bash [sites/]
+../env/bin/python /path/to/ci/db_smoke.py <site>
+```
+
+</tabs-item>
+</tabs>
+
+To add the load test to the same container run, see
+[Performance](/reference/performance#in-the-ci-container).
+
+## This documentation site
+
+The site is Nuxt 4 + Nuxt UI 4 + Nuxt Content 3, in `docs-site/`.
+
+```bash [docs-site/]
+nvm use            # Node 24 (.nvmrc)
+yarn install
+yarn dev           # http://localhost:3000, French at /fr
+yarn generate      # static site in .output/public
+```
+
+- English pages are in `content/en/`, served at `/`. French pages are in `content/fr/`, served at
+`/fr`, with the same file names.
+- The number prefix of a file or folder orders pages and is dropped from the URL.
+- Every English page has a French twin at the same path, so the language switch lands on the
+same page.
+
+The page map, front matter, components and voice are in
+[`docs-site/CONTRIBUTING.md`](https://github.com/bthuner/dodock-wolf/blob/main/docs-site/CONTRIBUTING.md).

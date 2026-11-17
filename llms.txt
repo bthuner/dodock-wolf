@@ -1,0 +1,57 @@
+# Dodock Wolf
+
+> Self-hosted observability and security for Frappe benches, ERPNext and Dokos sites, and their Linux hosts.
+
+## Documentation Sets
+
+- [Dodock Wolf: full documentation](https://bthuner.github.io/dodock-wolf/llms-full.txt): Every page of the Dodock Wolf documentation, in English.
+
+## Getting started
+
+- [Introduction](https://bthuner.github.io/dodock-wolf/raw/getting-started.md): What Dodock Wolf is, what it watches, and how its two parts fit together.
+- [Quickstart](https://bthuner.github.io/dodock-wolf/raw/getting-started/quickstart.md): Install the Wolf App, put an agent on the host and get a first alert, on one bench.
+- [Concepts](https://bthuner.github.io/dodock-wolf/raw/getting-started/concepts.md): The few objects Dodock Wolf is made of, and how a log line becomes an alert.
+
+## Install
+
+- [Wolf App](https://bthuner.github.io/dodock-wolf/raw/install/wolf-app.md): Install the Frappe app that stores Wolf's data, evaluates rules and serves the Wolf UI.
+- [Wolf Agent](https://bthuner.github.io/dodock-wolf/raw/install/wolf-agent.md): Install the host daemon, register it with the Wolf site and check what it collects.
+- [Every site on a bench](https://bthuner.github.io/dodock-wolf/raw/install/every-site.md): Install the Wolf App on the bench's other sites as satellites that forward to the central site.
+- [Press servers](https://bthuner.github.io/dodock-wolf/raw/install/press.md): Run the Wolf Agent on a self-hosted Press app server and get deploy-correlated incidents from its benches.
+- [Pilot benches](https://bthuner.github.io/dodock-wolf/raw/install/pilot.md): Run the Wolf Agent on a Frappe Pilot host and turn Pilot tasks into deployment events.
+
+## Wolf Agent
+
+- [What is collected](https://bthuner.github.io/dodock-wolf/raw/agent/collected.md): Every metric and event the Wolf Agent sends, and where it reads it.
+- [Configuration](https://bthuner.github.io/dodock-wolf/raw/agent/configuration.md): The agent's config.json, key by key.
+- [Commands](https://bthuner.github.io/dodock-wolf/raw/agent/commands.md): The wolf-agent command line.
+- [Scrubbing](https://bthuner.github.io/dodock-wolf/raw/agent/scrubbing.md): How the agent removes personal data and secrets from events before they leave the host.
+- [Watchdog](https://bthuner.github.io/dodock-wolf/raw/agent/watchdog.md): How the agent alerts you when the Wolf site itself is down.
+- [Response actions](https://bthuner.github.io/dodock-wolf/raw/agent/response-actions.md): Block an attacking IP on the host, disable a user or revoke sessions, after a Wolf Manager approves. Off by default.
+
+## Alerts and incidents
+
+- [Alert rules](https://bthuner.github.io/dodock-wolf/raw/alerts/rules.md): Write a rule that reads like the brief - when X > Y for Z minutes, send alert.
+- [Preset rules](https://bthuner.github.io/dodock-wolf/raw/alerts/presets.md): The rules installed with the app, what each one watches, and when it fires.
+- [Channels](https://bthuner.github.io/dodock-wolf/raw/alerts/channels.md): Send alerts to email, chat, push, SMS or PagerDuty, and set up each destination.
+- [Incidents](https://bthuner.github.io/dodock-wolf/raw/alerts/incidents.md): Acknowledge, assign, merge, split and close incidents, and write the postmortem.
+- [Status pages](https://bthuner.github.io/dodock-wolf/raw/alerts/status-pages.md): Publish a public status page for a site, with no internal detail.
+
+## Security
+
+- [Security overview](https://bthuner.github.io/dodock-wolf/raw/security.md): What Dodock Wolf detects, where each security signal comes from, and how every event is tagged with MITRE ATT&CK.
+- [Site signals](https://bthuner.github.io/dodock-wolf/raw/security/site-signals.md): Turn on the security signals the Wolf site captures by itself, with no agent, and set up the GeoIP database for new-country logins.
+- [Web and host detection](https://bthuner.github.io/dodock-wolf/raw/security/detection.md): What the Wolf Agent detects in nginx access logs and the auth log, which bench services and site settings it reports as exposed, and which presets alert on them.
+- [Access and secrets](https://bthuner.github.io/dodock-wolf/raw/security/access.md): Give people the right Wolf role, limit a Wolf User to some sites, benches or hosts, and manage agent secrets and the push rate limit.
+- [Journal and deception](https://bthuner.github.io/dodock-wolf/raw/security/journal.md): Verify the tamper-evident journal, set up decoy users, API keys and paths, and tag events from IPs on reputation lists.
+- [Compliance and posture](https://bthuner.github.io/dodock-wolf/raw/security/compliance.md): Track NIS2, DORA and GDPR reporting deadlines on incidents, draft the regulatory report, and read each site's security score.
+- [SIEM export](https://bthuner.github.io/dodock-wolf/raw/security/siem-export.md): Send Wolf's security events and signed journal to a syslog collector in OCSF or CEF, with the settings that work for rsyslog, Wazuh and Graylog.
+- [Wazuh and Suricata](https://bthuner.github.io/dodock-wolf/raw/security/wazuh-suricata.md): Feed Suricata and Wazuh alerts into Dodock Wolf, through the agent or the Wazuh integration, and find every source's events for one IP, host, site or user.
+
+## Reference
+
+- [Agent protocol](https://bthuner.github.io/dodock-wolf/raw/reference/protocol.md): Every endpoint, field and status code the Wolf Agent, satellites and integrations use to talk to the Wolf App (protocol v1).
+- [UI API](https://bthuner.github.io/dodock-wolf/raw/reference/ui-api.md): The read and action APIs behind the Wolf UI at /wolf, their arguments, answers and access rules.
+- [Metric storage](https://bthuner.github.io/dodock-wolf/raw/reference/metric-storage.md): How Wolf stores metrics at three resolutions, rolls them up, purges them and ingests pushes.
+- [Performance](https://bthuner.github.io/dodock-wolf/raw/reference/performance.md): Load test results at 100 hosts for 7 days, what changed to reach them, and how to run the test again.
+- [Development](https://bthuner.github.io/dodock-wolf/raw/reference/development.md): Run the tests, build the Wolf UI, reproduce the CI checks and preview this documentation site.
