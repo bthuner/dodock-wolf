@@ -1,5 +1,5 @@
 ---
-title: Frappe Wolf
+title: Dodock Wolf
 description: Self-hosted observability and security for Frappe benches, ERPNext and Dokos sites, and their Linux hosts.
 ---
 
@@ -16,7 +16,7 @@ ui:
 The team wakes up to an [incident timeline]{.text-primary}, not a customer email.
 
 #description
-Frappe Wolf catches 502 windows, failed nightly crons, worker crashes and suspicious logins on Frappe, ERPNext and Dokos benches. All data stays on your own Frappe site.
+Dodock Wolf catches 502 windows, failed nightly crons, worker crashes and suspicious logins on Frappe, ERPNext and Dokos benches. All data stays on your own Frappe site.
 
 #links
   :::u-button
@@ -45,7 +45,7 @@ Frappe Wolf catches 502 windows, failed nightly crons, worker crashes and suspic
   code: |
     # On the bench: the Wolf App
     bench get-app https://github.com/bthuner/dodock-wolf
-    bench --site wolf.example.com install-app frappe_wolf
+    bench --site wolf.example.com install-app dodock_wolf
 
     # On each host: the Wolf Agent
     curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/main/agent/install.sh \
@@ -56,7 +56,7 @@ Frappe Wolf catches 502 windows, failed nightly crons, worker crashes and suspic
   ```bash [Terminal]
   # On the bench: the Wolf App
   bench get-app https://github.com/bthuner/dodock-wolf
-  bench --site wolf.example.com install-app frappe_wolf
+  bench --site wolf.example.com install-app dodock_wolf
 
   # On each host: the Wolf Agent
   curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/main/agent/install.sh \
@@ -198,7 +198,7 @@ What it catches
       variant: subtle
       icon: i-simple-icons-github
   title: Open formats, self-hosted storage, no usage-based pricing.
-  description: Frappe Wolf is MIT-licensed and runs on the Frappe site you already operate.
+  description: Dodock Wolf is MIT-licensed and runs on the Frappe site you already operate.
   ---
   :::
 ::

@@ -1,4 +1,4 @@
-# Writing the Frappe Wolf docs
+# Writing the Dodock Wolf docs
 
 The site is Nuxt 4 + Nuxt UI 4 + Nuxt Content 3, the same stack as doc.dokos.io.
 
@@ -129,7 +129,7 @@ From `docs/making-of/brand.md`:
 1. State, don't dramatise. Numbers over adjectives: "count ≥ 10 in 5 min", not "many errors".
 2. Lead with scope: site, then bench, then host.
 3. One wolf metaphor per page at most. The product is a tool.
-4. Names: *Frappe Wolf* (the product), *Wolf Agent* (the host daemon), *Wolf App* (the Frappe
+4. Names: *Dodock Wolf* (the product), *Wolf Agent* (the host daemon), *Wolf App* (the Frappe
    app). DocTypes keep their technical names (**Wolf Alert Rule**).
 5. Short sentences. Tables for settings and fields. Settings paths in bold:
    **Wolf Settings → Retention**.

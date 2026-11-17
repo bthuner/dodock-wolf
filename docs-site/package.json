@@ -1,8 +1,8 @@
 {
-  "name": "frappe-wolf-docs",
+  "name": "dodock-wolf-docs",
   "private": true,
   "type": "module",
-  "description": "Frappe Wolf documentation site (Nuxt UI + Nuxt Content, same stack as doc.dokos.io)",
+  "description": "Dodock Wolf documentation site (Nuxt UI + Nuxt Content, same stack as doc.dokos.io)",
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",

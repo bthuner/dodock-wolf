@@ -1,4 +1,4 @@
-"""Print the preset rules of frappe_wolf/wolf/presets.py as Markdown tables, grouped.
+"""Print the preset rules of dodock_wolf/wolf/presets.py as Markdown tables, grouped.
 
 Run from the repository root with `python3 -I docs-site/scripts/presets-table.py`, and paste
 the output into content/{en,fr}/4.alerts/2.presets.md when presets change.
@@ -30,6 +30,9 @@ GROUPS = [
 		"Security settings weakened", "Permission rules changed", "API key generated",
 		"API key used from a new IP", "Webhook to a new host", "Unusual data export",
 		"Security score low", "Regulatory deadline"]),
+	("Sequences across sources", [
+		"Scan then login from the same IP", "New-IP login then export or new key",
+		"IDS alert then risky change on the host"]),
 ]
 GLYPH = {"info": "○ info", "warning": "◐ warning", "critical": "● critical"}
 
@@ -54,6 +57,11 @@ def condition(d):
 	thr = d.get("threshold") or 0
 	thr = int(thr) if float(thr).is_integer() else thr
 	win = d.get("window_minutes")
+	if d.get("signal_type") == "sequence":
+		def names(field):
+			return " or ".join(f"`{c}`" for c in d[field].split())
+		first = names("first_categories") + (f" ({d['first_min_severity']})" if d.get("first_min_severity") else "")
+		return f"{first}, then {names('then_categories')} within {d['sequence_minutes']} min"
 	if d.get("signal_type") == "metric":
 		what = f"`{d.get('aggregation', 'avg')}({d['metric_name']})`"
 	else:
@@ -70,14 +78,15 @@ def condition(d):
 
 
 def main():
-	p = presets("frappe_wolf/wolf/presets.py")
+	p = presets("dodock_wolf/wolf/presets.py")
 	seen = set()
 	for title, names in GROUPS:
 		print(f"## {title}\n\n| Preset | Fires when | Per | Severity |\n|---|---|---|---|")
 		for n in names:
 			d = p[n]
 			seen.add(n)
-			print(f"| {n} | {condition(d)} | `{d.get('group_by', 'host')}` | {GLYPH[d.get('severity', 'warning')]} |")
+			per = f"same `{d['sequence_entity']}`" if d.get("signal_type") == "sequence" else f"`{d.get('group_by', 'host')}`"
+			print(f"| {n} | {condition(d)} | {per} | {GLYPH[d.get('severity', 'warning')]} |")
 		print()
 	missing = set(p) - seen
 	if missing:

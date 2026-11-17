@@ -102,11 +102,11 @@ export default defineNuxtConfig({
 
   llms: {
     domain: 'https://wolf.dokos.io',
-    title: 'Frappe Wolf',
+    title: 'Dodock Wolf',
     description: 'Self-hosted observability and security for Frappe benches, ERPNext and Dokos sites, and their Linux hosts.',
     full: {
-      title: 'Frappe Wolf: full documentation',
-      description: 'Every page of the Frappe Wolf documentation, in English.'
+      title: 'Dodock Wolf: full documentation',
+      description: 'Every page of the Dodock Wolf documentation, in English.'
     },
     sections: [
       { title: 'Getting started', contentCollection: 'docs_en', contentFilters: [{ field: 'path', operator: 'LIKE', value: '/getting-started%' }] },

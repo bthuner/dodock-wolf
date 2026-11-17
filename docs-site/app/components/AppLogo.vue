@@ -8,6 +8,6 @@
       height="28"
       class="size-7 rounded-md"
     >
-    <span class="font-semibold text-highlighted tracking-tight">Frappe Wolf</span>
+    <span class="font-semibold text-highlighted tracking-tight">Dodock Wolf</span>
   </span>
 </template>
