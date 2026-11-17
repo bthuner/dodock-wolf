@@ -595,7 +595,9 @@ names the destination in `remote_ip`, not `ip`: the IP reputation lists check it
 groups incidents by IP, feeds sequence rules, goes to CrowdSec as an attacker or gets a block
 proposal. Benches in containers (Docker, Press) are found without root through `/proc`, each
 read in its own network; behind an outbound proxy, the proxy's access log (Squid) gives every
-destination by host name. Read from `/proc`, a connection between two samples is missed.
+destination by host name. Read from `/proc`, a connection between two samples is missed; the
+optional `wolf-outbound-log` helper (root, one sudoers line) logs every new connection of the bench
+users and containers through nftables, and the agent reads them from the kernel log.
 
 Wolf alone stays fully supported.
 

@@ -53,6 +53,7 @@ class TestOutbound(unittest.TestCase):
 	def watcher(self, **kw):
 		kw.setdefault("proc", self.fake_proc)
 		kw.setdefault("proxy_logs", [])
+		kw.setdefault("kernel_log", False)
 		return outbound.OutboundWatcher("bench-01", self.state, proc_root=self.proc, **kw)
 
 	def conn(self, ip, port, n=0, uid=None):
@@ -108,7 +109,7 @@ class TestOutbound(unittest.TestCase):
 		self.assertEqual({m["metric_name"]: m["value"] for m in w.collect(self.benches, epoch=120)[0]}["bench_new_outbound_usual"], 0)
 		# reported at info when asked, and a port of the operator's own is usual
 		w2 = outbound.OutboundWatcher("bench-01", None, learn_days=0, proc_root=self.proc, usual_ports=[5432],
-		                              report_usual_ports=True, proc=self.fake_proc, proxy_logs=[])  # fmt: skip
+		                              report_usual_ports=True, proc=self.fake_proc, proxy_logs=[], kernel_log=False)  # fmt: skip
 		w2.collect(self.benches, epoch=0, sockets=[])
 		self.proc_net([self.conn("185.199.111.5", 587, 1), self.conn("35.180.1.1", 5432, 2)])
 		self.assertEqual(sorted(e["severity"] for e in w2.collect(self.benches, epoch=60)[1]), ["info", "info"])
@@ -257,6 +258,7 @@ class TestOutbound(unittest.TestCase):
 		# the container's request is its bench's; the host's own is its benches'; a LAN client of a shared proxy is not a bench's
 		self.assertEqual(got, [("c2.evil.example", "proxy", ("frappe-bench",)), ("pastebin.example", "proxy", ("frappe-bench",))])
 		self.assertEqual(w.collect(self.benches, epoch=120, sockets=[])[1], [], "the log is read from where it stopped")
+		w.close()
 
 	def test_a_bad_proxy_entry_does_not_stop_detection(self):
 		self.assertEqual(outbound.proxy_specs(["/var/log/squid/access.log", {"path": "/x", "format": "nginx"}, 42]),
@@ -264,6 +266,68 @@ class TestOutbound(unittest.TestCase):
 		w = self.cwatcher(learn_days=0, proxy_logs=[42])
 		self.proc_net([self.conn("185.199.110.66", 4444)])
 		self.assertEqual(len(w.collect(self.benches, epoch=0)[1]), 1)
+
+	# --- every new connection, from the kernel log (wolf-outbound-log) ---
+
+	OUT = ("2026-11-17T23:59:01+0100 web-01 kernel: wolf-out: IN= OUT=eth0 SRC=10.0.0.5 DST={dst} LEN=60 TOS=0x00 "
+	       "PREC=0x00 TTL=64 ID=4242 DF PROTO=TCP SPT=51234 DPT={port} WINDOW=64240 RES=0x00 SYN URGP=0 UID={uid} GID={uid}")
+	FWD = ("Nov 17 23:59:02 web-01 kernel: [12345.678] wolf-fwd: IN=br-1a2b OUT=eth0 MAC=02:42:ac:12:00:05 SRC={src} "
+	       "DST={dst} LEN=60 TTL=63 ID=1 DF PROTO=TCP SPT=40000 DPT={port} WINDOW=64240 RES=0x00 SYN URGP=0")
+
+	def test_parse_kernel(self):
+		self.assertEqual(outbound.parse_kernel(self.OUT.format(dst="185.199.110.66", port=4444, uid=1000)),
+		                 ("out", "10.0.0.5", "185.199.110.66", 4444, 1000))  # fmt: skip
+		self.assertEqual(outbound.parse_kernel(self.FWD.format(src="172.18.0.5", dst="2606:4700::1111", port=8443)),
+		                 ("fwd", "172.18.0.5", "2606:4700::1111", 8443, None))  # fmt: skip
+		self.assertIsNone(outbound.parse_kernel("kernel: [  1.0] usb 1-1: new device"))
+		self.assertIsNone(outbound.parse_kernel("kernel: wolf-out: IN= OUT=eth0 SRC=10.0.0.5 DST=1.1.1.1 PROTO=ICMP TYPE=8"))
+
+	class Source:
+		def __init__(self):
+			self.lines = []
+
+		def read_lines(self):
+			lines, self.lines = self.lines, []
+			return lines
+
+	def kwatcher(self, returncode=0):
+		helper = os.path.join(self.tmp.name, "wolf-outbound-log")
+		with open(helper, "w") as f:
+			f.write("#!/bin/sh\n")
+		self.calls, self.source = [], self.Source()
+
+		def run(cmd, **kw):
+			self.calls.append(cmd)
+			return mock.Mock(returncode=returncode, stderr="sudo: a password is required" if returncode else "")
+
+		return self.cwatcher(learn_days=0, kernel_log="auto", helper=helper, kernel_source=self.source, run=run)
+
+	def test_every_new_connection_from_the_kernel_log(self):
+		self.container(4242, self.bench + "/sites")
+		w = self.kwatcher()
+		w.collect(self.benches, epoch=0, sockets=[])
+		self.assertEqual(self.calls, [["sudo", "-n", w.helper, str(self.uid)]], "applied with the bench users")
+		self.source.lines = [
+			self.OUT.format(dst="185.199.110.66", port=4444, uid=self.uid),  # closed long before the next sample
+			self.OUT.format(dst="185.199.110.67", port=4444, uid=self.uid + 7),  # not a bench user
+			self.FWD.format(src="172.18.0.5", dst="185.199.110.68", port=5555),  # the bench's container
+			self.FWD.format(src="172.18.0.99", dst="185.199.110.69", port=5555),  # another container
+		]
+		events = w.collect(self.benches, epoch=60, sockets=[])[1]
+		got = sorted((e["payload"]["remote_ip"], e["payload"]["seen_by"], e["bench"]) for e in events)
+		self.assertEqual(got, [("185.199.110.66", "kernel", "frappe-bench"), ("185.199.110.68", "kernel", "frappe-bench")])
+		w.collect(self.benches, epoch=120, sockets=[])
+		self.assertEqual(len(self.calls), 1, "applied again only when the bench users change")
+
+	def test_without_sudo_it_samples_proc_and_says_so_once(self):
+		w = self.kwatcher(returncode=1)
+		with self.assertLogs("wolf_agent.outbound", "WARNING") as logs:
+			w.collect(self.benches, epoch=0, sockets=[])
+		self.assertIn("sampling /proc only", logs.output[0])
+		w.collect(self.benches, epoch=60, sockets=[])
+		self.assertEqual(len(self.calls), 1, "not retried every minute")
+		self.assertIsNone(outbound.OutboundWatcher("h", None, helper="/nonexistent/wolf-outbound-log").helper)
+
 
 if __name__ == "__main__":
 	unittest.main()

@@ -190,7 +190,8 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   by host name (`outbound.proxy_logs`, `/var/log/squid/access.log` by default when it exists; Squid's
   native format; the installer adds the agent's user to the `proxy` group to read it). A client of
   the proxy that is neither a bench's container nor the host itself is left out.
-  Read from `/proc`, a connection that opens and closes between two samples is missed.
+  Read from `/proc`, a connection that opens and closes between two samples is missed; with the
+  optional helper below, every new connection is read from the kernel log instead.
 - **TLS**: `tls_days_left` for every public site name and custom domain (`site_config.json`
   `domains`), every `tls.interval` (1 h), in a background thread. The agent connects to
   `<domain>:443` with SNI (or to `tls.connect_host`, e.g. `127.0.0.1`, to check the local nginx),
@@ -325,6 +326,22 @@ list of arguments, never through a shell. `response.command` replaces the comman
 reason, so the manager knows it was not applied.
 
 ### With fail2ban instead of nftables
+
+### Every outbound connection (optional, root)
+
+`wolf-outbound-log` logs every new outbound connection of the bench users and of the containers
+behind a Docker, Podman or CNI bridge to the kernel log (nftables, at most 20 a second per rule,
+private destinations left out), so the outbound watch misses nothing between two `/proc` samples:
+
+```bash
+install -m 0755 -o root -g root agent/wolf-outbound-log.sh /usr/local/sbin/wolf-outbound-log
+echo 'wolf-agent ALL=(root) NOPASSWD: /usr/local/sbin/wolf-outbound-log' > /etc/sudoers.d/wolf-outbound-log
+chmod 0440 /etc/sudoers.d/wolf-outbound-log
+```
+
+The agent runs it with the bench users' uids (`outbound.kernel_log`, `"auto"`), reads the lines
+from `journalctl -t kernel` (or `/var/log/kern.log`) and refuses uid 0. `nft list table inet
+wolf_outbound` shows the counters; `wolf-outbound-log --off` removes it.
 
 Where fail2ban already manages the firewall, `wolf-block-fail2ban` bans in a jail of its own
 (`wolf`), with your usual ban action:
