@@ -390,6 +390,42 @@ PRESETS = [
 		"operator": ">=", "threshold": 1, "window_minutes": 60, "group_by": "site",
 		"severity": "warning", "auto_resolve": 0, "cooldown_minutes": 60,
 	},
+	# --- cyber: sequences across sources (#72 step 5, wolf/sequences.py) ---
+	{
+		"rule_name": "Scan then login from the same IP",
+		"description": "An address that probed a site, set off Suricata or failed Frappe logins then logged "
+		"in within the hour: SSH after failures or as root, a privileged Frappe login from a new IP, or an "
+		"API key used from a new IP (MITRE T1595 then T1078). Frappe reports successful logins of "
+		"privileged users only.",
+		"signal_type": "sequence", "sequence_entity": "ip", "sequence_minutes": 60,
+		"first_categories": "web_attack_probe\nnetwork_ids_alert\nfrappe_failed_login",
+		"then_categories": "ssh_login_after_failures\nssh_root_login\nnew_admin_ip\nadmin_login_new_country\napi_key_new_ip",
+		"operator": ">=", "threshold": 1, "window_minutes": 10, "group_by": "none",
+		"severity": "critical", "auto_resolve": 0, "cooldown_minutes": 60,
+	},
+	{
+		"rule_name": "New-IP login then export or new key",
+		"description": "A privileged user logged in from a new address or country, or an API key was used "
+		"from a new address, and within 2 hours the same user on the same site exported unusual volumes, "
+		"generated an API key or pointed a Webhook outside (MITRE T1078 then T1567, T1098.001).",
+		"signal_type": "sequence", "sequence_entity": "user", "sequence_minutes": 120,
+		"first_categories": "new_admin_ip\nadmin_login_new_country\napi_key_new_ip",
+		"then_categories": "data_exfiltration\napi_key_generated\nwebhook_external",
+		"operator": ">=", "threshold": 1, "window_minutes": 15, "group_by": "none",
+		"severity": "critical", "auto_resolve": 0, "cooldown_minutes": 60,
+	},
+	{
+		"rule_name": "IDS alert then risky change on the host",
+		"description": "Suricata or Wazuh alerted on a host (warning or above), then within the hour a "
+		"site on that host got new code or more access: a Server or Client Script, a System Console run, "
+		"permission rules, weaker security settings, a privileged user, an API key or an outside Webhook.",
+		"signal_type": "sequence", "sequence_entity": "host", "sequence_minutes": 60, "first_min_severity": "warning",
+		"first_categories": "network_ids_alert\nhids_alert",
+		"then_categories": "server_script_change\nclient_script_change\nconsole_execution\npermission_change\n"
+		"security_settings_weakened\nprivileged_user\napi_key_generated\nwebhook_external",
+		"operator": ">=", "threshold": 1, "window_minutes": 10, "group_by": "none",
+		"severity": "critical", "auto_resolve": 0, "cooldown_minutes": 60,
+	},
 	# --- cyber: posture (hourly score, api/security.py) ---
 	{
 		"rule_name": "Security score low",

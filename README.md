@@ -57,7 +57,7 @@ A rule reads like the brief: *when X > Y for Z minutes, send alert*.
 
 | Field | Meaning |
 |---|---|
-| Signal | `metric` (aggregate metric samples, or their rollups for windows over 3 h, see [Metric storage](#metric-storage)) or `event` (count Wolf Events) |
+| Signal | `metric` (aggregate metric samples, or their rollups for windows over 3 h, see [Metric storage](#metric-storage)), `event` (count Wolf Events) or `sequence` (see below) |
 | Aggregation | `avg`, `min`, `max`, `sum`, `count`, `last`. Use `min` for "stayed above for Z minutes" and `sum` for counters such as `http_5xx` |
 | Window | look-back in minutes |
 | Group by | `host`, `bench`, `site`, `host_label` (for example per disk mount) or `none`: one incident per group |
@@ -69,6 +69,19 @@ A rule reads like the brief: *when X > Y for Z minutes, send alert*.
 | Channels | Email, Webhook, Raven, Slack, Mattermost, Matrix, ntfy, Gotify, SMS, PagerDuty (see [Channels](#channels)). Each channel can use an **hourly digest**: info/warning alerts are batched into one message per destination; critical alerts are always immediate |
 | Notify on resolve | also tell the channels when the incident resolves, automatically or by hand (default on). PagerDuty channels always hear it |
 | Escalate after minutes | if still Open (not acknowledged) this long after the first alert, notify the escalation channels once |
+
+**Sequence rules** fire when an event of one list of categories follows an event of another on the
+same entity: **First / Then Event Categories**, **Same** (`ip`, `user` or `host`) and **Within
+Minutes**, the longest gap between them. The threshold counts the second events seen in the window,
+and there is one incident per entity value (`ip 203.0.113.5`), scoped like its newest second event.
+
+- `ip` is the remote address of both events (`payload.ip`), public only, whatever the source: a
+  Suricata alert, a web probe, a Frappe login.
+- `user` is the same user on the same site; `host` the same host under any of its names (Wolf
+  Entity Alias).
+- **First Event Min Severity** filters the first events only. The scope filters apply to the second.
+- The incident links both events. An event already in another incident stays there, and the
+  incident's timeline, which starts at the first event, shows it anyway.
 
 Alerts for unresolved incidents carry signed **Acknowledge / Resolve** links (valid 24 h, see Wolf
 Settings → Action Link Hours). Opening a link shows a confirmation page; only its button acts, so
@@ -94,8 +107,9 @@ process down · Email queue backlog · Email sending errors · Admin login from 
 SSH login after brute force · Repeated sudo failures · New system account · User added to admin
 group · Web attack scan · Sensitive file served · Server Script can run new code · Client Script can
 run new code · System Console used · Security settings weakened · Permission rules changed · API key
-generated · Webhook to a new host · Security score low · Bench service exposed · Development
-settings in production.
+generated · Webhook to a new host · Scan then login from the same IP · New-IP login then export or
+new key · IDS alert then risky change on the host · Security score low · Bench service exposed ·
+Development settings in production.
 
 | Preset | Signal (source) | Fires when |
 |---|---|---|
@@ -125,6 +139,9 @@ settings in production.
 | API key generated | `security` / `api_key_generated` (site) | a new API secret written for a user (the event is critical for privileged users) |
 | Webhook to a new host | `security` / `webhook_external` (site) | a Webhook created, enabled or pointed at another host |
 | Unusual data export | `security` / `data_exfiltration` (site) | a user's exports and list reads this hour above 50 MB and 5x their largest hour of the last 14 days (critical at 20x, or without any history) |
+| Scan then login from the same IP | sequence, same `ip` | a web probe, Suricata alert or failed Frappe login, then within 60 min an SSH login after failures or as root, a privileged Frappe login from a new IP, or an API key used from a new IP, from that address (critical) |
+| New-IP login then export or new key | sequence, same `user` | a privileged login from a new IP or country, or an API key used from a new IP, then within 2 h an unusual export, a new API key or an outside Webhook by that user on that site (critical) |
+| IDS alert then risky change on the host | sequence, same `host` | a Suricata or Wazuh alert (warning or above) on a host, then within 60 min a Server/Client Script, System Console run, permission change, weaker security settings, privileged user, API key or outside Webhook on a site of that host (critical) |
 | Security score low | `security_score` (app, hourly) | a site's score below 60 (see **Wolf → Security**) |
 | Bench service exposed | `exposed_services` (agent) | MariaDB, a bench Redis, socket.io or gunicorn listening beyond loopback (critical) |
 | Development settings in production | `site_config_risks` (agent) | `developer_mode`, `allow_tests`, plain-HTTP `host_name` or `allow_cors: "*"` |

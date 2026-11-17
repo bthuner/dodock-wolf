@@ -6,7 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, now_datetime
 
-from dodock_wolf.wolf import conditions
+from dodock_wolf.wolf import conditions, sequences
 
 
 class WolfAlertRule(Document):
@@ -19,6 +19,8 @@ class WolfAlertRule(Document):
 		if self.signal_type == "metric":
 			if self.aggregation not in conditions.AGGREGATIONS:
 				frappe.throw(_("Unknown aggregation {0}").format(self.aggregation))
+		elif self.signal_type == "sequence":
+			self.validate_sequence()
 		elif not self.event_type:
 			frappe.throw(_("Event rules need an event type"))
 		if bool(self.active_from) != bool(self.active_to):
@@ -37,6 +39,17 @@ class WolfAlertRule(Document):
 		# not write back stale ones.
 		if not self.is_new():
 			self.evaluation_state = frappe.db.get_value(self.doctype, self.name, "evaluation_state")
+
+	def validate_sequence(self):
+		if not sequences.categories(self.first_categories) or not sequences.categories(self.then_categories):
+			frappe.throw(_("Sequence rules need first and then event categories"))
+		if self.sequence_entity not in sequences.KINDS:
+			frappe.throw(_("Same must be one of {0}").format(", ".join(sequences.KINDS)))
+		if cint(self.sequence_minutes) < 1:
+			frappe.throw(_("Within Minutes must be at least one minute"))
+		# one per line, as the form shows them
+		for field in ("first_categories", "then_categories"):
+			self.set(field, "\n".join(sequences.categories(self.get(field))))
 
 	def validate_channels(self):
 		from dodock_wolf.wolf import channels as wolf_channels
@@ -66,12 +79,12 @@ class WolfAlertRule(Document):
 		frappe.only_for(("System Manager", "Wolf Manager"))
 		now = now_datetime()
 		since = frappe.utils.add_to_date(now, minutes=-max(cint(self.window_minutes), 1))
-		rows = rules.query_metric(self, since) if self.signal_type == "metric" else rules.query_events(self, since)
+		rows = rules.query(self, since)
 		return {
 			"active": conditions.in_active_window(now.time(), self.active_from, self.active_to),
 			"groups": [
 				{
-					"group": conditions.describe_group(self.group_by, row),
+					"group": row["label"] if self.signal_type == "sequence" else conditions.describe_group(self.group_by, row),
 					"value": conditions.format_value(row.get("value")),
 					"samples": row.get("samples"),
 					"breached": conditions.is_breached(row, self.operator, self.threshold, cint(self.min_samples) or 1),

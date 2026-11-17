@@ -526,9 +526,26 @@ Built: incidents grouped by entity across sources (`wolf/incidents.py`, `entity_
 - The incident's timeline shows the events of other scopes it gathered, to users who may read
   those scopes; a user restricted to some sites sees only theirs.
 
-Planned: sequence rules ("scan, then a login from the same IP, then a large export"), and
-standalone parity for benches without them: file integrity and outbound connections of bench
-processes. Wolf alone stays fully supported.
+Built: sequence rules (`wolf/sequences.py`, `rules.query_sequence`). A Wolf Alert Rule of type
+`sequence` fires when an event of its **Then** categories follows one of its **First** categories
+on the same IP, user or host, within **Within Minutes**. Three presets:
+- **Scan then login from the same IP**: a web probe, a Suricata alert or failed Frappe logins,
+  then an SSH login after failures or as root, a privileged Frappe login from a new IP or an API
+  key used from a new IP, from that address, within the hour.
+- **New-IP login then export or new key**: a privileged login from a new IP or country, or an API
+  key used from a new IP, then an unusual export, a new API key or an outside Webhook by the same
+  user on the same site, within 2 hours.
+- **IDS alert then risky change on the host**: Suricata or Wazuh on a host, then new code or more
+  access on a site of that host (Server or Client Script, System Console, permissions, weaker
+  settings, privileged user, API key, Webhook), within the hour.
+
+The IP is the remote address of both events and public only, as for grouping. The first event
+often belongs to an earlier incident already; it stays there, and the sequence incident's
+timeline, which starts at the first event, shows it.
+
+Planned: the timeline interleaving every source with deployments and health events, and
+standalone parity for benches without Suricata or Wazuh: file integrity and outbound connections
+of bench processes. Wolf alone stays fully supported.
 
 ## 5. Mapping reference
 
