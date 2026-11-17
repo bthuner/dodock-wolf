@@ -101,7 +101,7 @@ Wolf alone is covered.
 | | Wolf alone | + Suricata | + Wazuh |
 |---|---|---|---|
 | Web attacks | nginx access logs: probes, injections, secret files served | signatures on the HTTP traffic (after TLS termination), with packet context | — |
-| Network | exposed bench services; outbound connections of bench processes (planned, #72) | **read by the agent** (`network_ids_alert`, #72 step 1): C2, scans, exploits, DNS, TLS, with the rules' ATT&CK techniques | — |
+| Network | exposed bench services; new outbound destinations of the bench users (sampled from `/proc/net/tcp`) | **read by the agent** (`network_ids_alert`, #72 step 1): C2, scans, exploits, DNS, TLS, with the rules' ATT&CK techniques | — |
 | Host | `auth.log`/journal: SSH brute force then login, sudo, new accounts, admin groups; file integrity on the bench (code, site configs, nginx and supervisor) | — | **read by the agent on the manager's host** (`hids_alert`, #72 step 2): full HIDS, more log sources, rootkits, integrity, Windows/macOS endpoints |
 | Frappe application | permissions, scripts, settings, API keys, exfiltration, honeytokens | — (HTTPS, and no notion of DocTypes or users) | — (log lines, no Frappe semantics) |
 | Posture | Frappe settings per site, versions vs advisories, bench exposure, TLS/HSTS, SPF/DMARC | — | OS configuration assessment |
@@ -586,8 +586,16 @@ scan, 0.8 s for the daily full scan. A config
 change is `bench_config_changed` (warning), with only the names of the keys that changed. Presets:
 *Bench code changed outside a deployment*, *Bench or server config changed*.
 
-Planned: outbound connections of bench processes, for benches without Suricata. Wolf alone stays
-fully supported.
+Built: outbound connections, for benches without Suricata (`agent/wolf_agent/outbound.py`). Every
+minute the agent reads `/proc/net/tcp{,6}` and keeps the established client connections of each
+bench folder's user to public addresses. After a 7-day learning period, each new destination
+(remote /24 or /48 and port) on an unusual port is a `bench_new_outbound` event (warning), which
+the preset *Bench connects somewhere new* fires on; new ones on usual ports are counted. The event
+names the destination in `remote_ip`, not `ip`: the IP reputation lists check it, but it never
+groups incidents by IP, feeds sequence rules, goes to CrowdSec as an attacker or gets a block
+proposal. It samples, so a short connection between two reads is missed.
+
+Wolf alone stays fully supported.
 
 ## 5. Mapping reference
 
@@ -603,6 +611,7 @@ fully supported.
 | `web_sensitive_file_exposed` | agent (nginx) | T1552.001 Credentials In Files |
 | `bench_code_changed` | agent (file integrity) | T1505.003 Web Shell, T1565.001 Stored Data Manipulation; none for a deployment |
 | `bench_config_changed` | agent (file integrity) | T1565.001 Stored Data Manipulation |
+| `bench_new_outbound` | agent (outbound connections) | T1071 Application Layer Protocol, T1041 Exfiltration Over C2 Channel |
 | `frappe_failed_login` | site | T1110 |
 | `new_admin_ip`, `admin_login_new_country` | site | T1078 Valid Accounts |
 | `privileged_user` | site | T1098 |

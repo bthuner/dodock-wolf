@@ -54,6 +54,9 @@ class TestIndex(unittest.TestCase):
 		self.assertIs(reputation.tag(same, "warning", self.index)[0], same)
 		self.assertEqual(reputation.tag(None, "warning", self.index), (None, "warning"))
 		self.assertEqual(reputation.tag({"ip": "192.0.2.9"}, "warning", None), ({"ip": "192.0.2.9"}, "warning"))
+		# a destination the bench connected to (agent outbound): a listed one is raised too
+		dest, severity = reputation.tag({"remote_ip": "192.0.2.9", "remote_port": 4444}, "warning", self.index)
+		self.assertEqual((dest["reputation"]["listed"], severity), (True, "critical"))
 
 
 class TestSettingsHelpers(unittest.TestCase):

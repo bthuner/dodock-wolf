@@ -335,6 +335,15 @@ PRESETS = [
 		"operator": ">=", "threshold": 1, "window_minutes": 30, "group_by": "host",
 		"severity": "warning", "auto_resolve": 0, "cooldown_minutes": 60,
 	},
+	{
+		"rule_name": "Bench connects somewhere new",
+		"description": "After its learning week, a bench's user opened a connection to a public network and port "
+		"it had never used, on a port other than web, mail, DNS, NTP, SSH/git or LDAP: a hint of command-and-control or "
+		"exfiltration (MITRE T1071, T1041). Sampled every minute from /proc/net/tcp, not packet inspection.",
+		"signal_type": "event", "event_type": "security", "event_category": "bench_new_outbound", "min_severity": "warning",
+		"operator": ">=", "threshold": 1, "window_minutes": 15, "group_by": "host",
+		"severity": "warning", "auto_resolve": 0, "cooldown_minutes": 60,
+	},
 	# --- cyber: Frappe application security (site signals, Wolf Settings → Flag risky application changes) ---
 	{
 		"rule_name": "Server Script can run new code",

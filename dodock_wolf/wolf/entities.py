@@ -20,7 +20,9 @@ import ipaddress
 
 KINDS = ("ip", "host", "site", "user")
 MAX_PER_KIND = 10
-_IP_KEYS = ("ip", "src_ip", "dest_ip")
+# `remote_ip`: a destination the host connected to (agent outbound.py). It is searchable, but only
+# `ip` (the remote party) groups incidents, feeds sequence rules, CrowdSec and block proposals
+_IP_KEYS = ("ip", "src_ip", "dest_ip", "remote_ip")
 _USER_KEYS = ("user", "by", "suser", "username", "srcuser", "dstuser")  # by: who acted (site signals)
 _SITE_KEYS = ("http_hostname", "tls_sni")
 _NO_USER = {"", "-", "unknown", "none", "null", "guest", "(none)"}

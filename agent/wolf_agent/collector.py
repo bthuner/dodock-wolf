@@ -14,6 +14,7 @@ from .metrics import HostMetrics
 from .parsers import PARSERS, NginxParser
 from .exposure import ExposureWatcher
 from .integrity import STATE_FILE as INTEGRITY_STATE, IntegrityWatcher
+from .outbound import STATE_FILE as OUTBOUND_STATE, OutboundWatcher
 from .processes import ProcessWatcher
 from .redis_queue import RedisError, RedisProbe
 from .scrub import Scrubber
@@ -307,6 +308,12 @@ class InfraChecks:
 			host, os.path.join(state_dir, INTEGRITY_STATE) if state_dir else None, self.integrity.get("server_paths"),
 			float(self.integrity.get("full_scan_interval") or 86400),
 		) if self.integrity.get("enabled", True) else None  # fmt: skip
+		self.outbound = section(cfg, "outbound")
+		self.outbound_watcher = OutboundWatcher(
+			host, os.path.join(state_dir, OUTBOUND_STATE) if state_dir else None, self.outbound.get("learn_days", 7),
+			bool(self.outbound.get("include_private")), usual_ports=self.outbound.get("usual_ports"),
+			report_usual_ports=bool(self.outbound.get("report_usual_ports")),
+		) if self.outbound.get("enabled", True) else None  # fmt: skip
 		self.redis = {}  # (bench, url) -> RedisProbe, kept so counters survive rediscovery
 		self.db_probes = None
 		self.db_key = None
@@ -328,6 +335,7 @@ class InfraChecks:
 		for name, fn in (
 			("redis", self._redis), ("backups", self._backups), ("tls", self._tls),
 			("mariadb", self._mariadb), ("processes", self._processes), ("exposure", self._exposure), ("integrity", self._integrity),
+			("outbound", self._outbound),
 			("versions", self._versions), ("site_settings", self._site_settings),
 		):
 			try:
@@ -411,6 +419,11 @@ class InfraChecks:
 		if not self.watcher:
 			return [], []
 		return self.watcher.collect(benches, now)
+
+	def _outbound(self, benches, now):
+		if not self.outbound_watcher or not self._due("outbound", self.outbound.get("interval")):
+			return [], []
+		return self.outbound_watcher.collect(benches, now)
 
 	def _integrity(self, benches, now):
 		if not self.integrity_watcher or not self._due("integrity", self.integrity.get("interval")):

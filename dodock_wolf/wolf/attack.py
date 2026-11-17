@@ -34,6 +34,8 @@ TECHNIQUES = {
 	"T1565.001": ("Data Manipulation: Stored Data Manipulation", "impact"),
 	"T1567": ("Exfiltration Over Web Service", "exfiltration"),
 	"T1030": ("Data Transfer Size Limits", "exfiltration"),
+	"T1041": ("Exfiltration Over C2 Channel", "exfiltration"),
+	"T1071": ("Application Layer Protocol", "command-and-control"),
 	"T1595.002": ("Active Scanning: Vulnerability Scanning", "reconnaissance"),
 	"T1595.003": ("Active Scanning: Wordlist Scanning", "reconnaissance"),
 }
@@ -76,6 +78,8 @@ CATEGORIES = {
 	# change (none for a deployment)
 	"bench_code_changed": [],
 	"bench_config_changed": [],
+	# outbound connections of the bench users (agent, #72 step 7): sent by the agent
+	"bench_new_outbound": [],
 	# deception (api/threat.py): the payload adds the technique of the decoy kind
 	"honeytoken_triggered": [],
 	# compliance reminders (api/compliance.py): no attack technique
