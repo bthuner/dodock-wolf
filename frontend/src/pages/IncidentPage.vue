@@ -82,6 +82,8 @@ const items = computed(() => {
   return out
 })
 const filtered = computed(() => show.value !== 'all' || query.value.trim() !== '')
+// rows a "same finding as" can point at: the ones on the page
+const shownIds = computed(() => new Set(visible.value.map((r) => r.id)))
 
 const scope = computed(() => {
   const s = incident.value?.scope || {}
@@ -406,6 +408,7 @@ watch(name, () => {
             :row="item.row"
             :time-zone="tz"
             :anchor="anchor(item.row)"
+            :duplicate-anchor="item.row.duplicate_of && shownIds.has(`event:${item.row.duplicate_of}`) ? anchor({ id: `event:${item.row.duplicate_of}` }) : ''"
             :targeted="route.hash === `#${anchor(item.row)}`"
             :expanded="expanded.has(item.row.id)"
             @toggle="toggle(item.row.id)"

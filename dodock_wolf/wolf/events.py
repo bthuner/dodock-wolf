@@ -90,6 +90,8 @@ def insert_event(data, agent=None, dedupe_minutes=None):
 	if data.get("event_type") == "security":
 		data, found = _with_entities(data)
 	data.setdefault("last_seen", data.get("timestamp"))  # window queries filter on it
+	if found:  # an IP, so maybe the same finding as another source's event (#72 step 4)
+		data = {**data, "duplicate_of": _duplicate_of(data)}
 	doc = frappe.get_doc({"doctype": "Wolf Event", "agent": agent, **data})
 	doc.flags.ignore_permissions = True
 	doc.flags.ignore_links = True
@@ -99,6 +101,18 @@ def insert_event(data, agent=None, dedupe_minutes=None):
 
 		entities.index(doc.name, found, data.get("timestamp"))
 	return doc.name
+
+
+def _duplicate_of(data):
+	import json
+
+	from dodock_wolf.api import detectors
+
+	try:
+		return detectors.duplicate_of(data, json.loads(data["payload"]) if data.get("payload") else {})
+	except Exception:
+		frappe.logger("dodock_wolf").exception("could not match an event with another source's")
+		return None
 
 
 def _with_entities(data):

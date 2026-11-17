@@ -14,6 +14,8 @@
   "last_seen",
   "last_ip",
   "clock_skew_seconds",
+  "own_events_dropped",
+  "own_events_dropped_at",
   "agent_version",
   "os",
   "benches_section",
@@ -93,6 +95,20 @@
    "read_only": 1
   },
   {
+   "default": "0",
+   "description": "Events of Wolf's own detectors this agent sent that were dropped because Suricata or Wazuh covers them (Wolf Settings: overlapping detectors in external mode).",
+   "fieldname": "own_events_dropped",
+   "fieldtype": "Int",
+   "label": "Own Events Given Way",
+   "read_only": 1
+  },
+  {
+   "fieldname": "own_events_dropped_at",
+   "fieldtype": "Datetime",
+   "label": "Last Given Way",
+   "read_only": 1
+  },
+  {
    "fieldname": "agent_version",
    "fieldtype": "Data",
    "label": "Agent Version",
@@ -126,7 +142,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-03 00:30:00.000000",
+ "modified": "2026-11-17 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Agent",
