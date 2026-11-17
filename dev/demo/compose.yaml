@@ -136,10 +136,10 @@ services:
     entrypoint: [bash, /etc/wolf/agent-init.sh]
     depends_on: [frontend]
 
-  # Press demo (README "Press demo"): docker compose --profile press up -d
-  # A second agent reads a simulated Press app server that `bench generate-demo-press` writes
-  # into the demo-press volume: history first, then live traffic and incidents.
-  press-agent:
+  # Live demos (README "Live demos"): docker compose --profile press|multi|single up -d
+  # Each runs a second agent on a simulated server that `bench generate-demo-<kind>` writes into
+  # the demo-<kind> volume: history first, then live traffic and incidents.
+  press-agent: &demo-agent
     image: wolf-demo:local
     profiles: [press]
     hostname: f1-demo-press
@@ -150,22 +150,60 @@ services:
     volumes:
       - sites:/home/frappe/frappe-bench/sites:ro
       - demo-press:/home/frappe/demo-press
-      - ./press-agent-init.sh:/etc/wolf/press-agent-init.sh:ro
-    entrypoint: [bash, /etc/wolf/press-agent-init.sh]
+      - ./demo-agent-init.sh:/etc/wolf/demo-agent-init.sh:ro
+    entrypoint: [bash, /etc/wolf/demo-agent-init.sh]
+    command: [press, f1-demo-press]
     depends_on: [frontend]
-  press-demo:
+  press-demo: &demo-writer
     <<: *bench
     profiles: [press]
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
       - demo-press:/home/frappe/demo-press
-    entrypoint: [bash, -c]
-    command:
-      - |
-        until [ -f /home/frappe/demo-press/agent-config.json ]; do echo "waiting for press-agent"; sleep 3; done
-        exec bench --site wolf.localhost generate-demo-press --webhook http://catcher:9999/
+    entrypoint: [bash, -c, 'until [ -f "/home/frappe/demo-$$0/agent-config.json" ]; do echo "waiting for $$0-agent"; sleep 3; done; exec bench --site wolf.localhost generate-demo-$$0 --webhook http://catcher:9999/']
+    command: [press]
     depends_on: [press-agent]
+  multi-agent:
+    <<: *demo-agent
+    profiles: [multi]
+    hostname: dokos-multi-1
+    environment:
+      WOLF_AGENT_CONFIG: /home/frappe/demo-multi/agent-config.json
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites:ro
+      - demo-multi:/home/frappe/demo-multi
+      - ./demo-agent-init.sh:/etc/wolf/demo-agent-init.sh:ro
+    command: [multi, dokos-multi-1]
+  multi-demo:
+    <<: *demo-writer
+    profiles: [multi]
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+      - demo-multi:/home/frappe/demo-multi
+    command: [multi]
+    depends_on: [multi-agent]
+  single-agent:
+    <<: *demo-agent
+    profiles: [single]
+    hostname: dokos-single-1
+    environment:
+      WOLF_AGENT_CONFIG: /home/frappe/demo-single/agent-config.json
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites:ro
+      - demo-single:/home/frappe/demo-single
+      - ./demo-agent-init.sh:/etc/wolf/demo-agent-init.sh:ro
+    command: [single, dokos-single-1]
+  single-demo:
+    <<: *demo-writer
+    profiles: [single]
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+      - demo-single:/home/frappe/demo-single
+    command: [single]
+    depends_on: [single-agent]
 
   # Optional Postgres for portability checks: docker compose --profile postgres up -d pgdb
   pgdb:
@@ -198,3 +236,5 @@ volumes:
   nginx-logs:
   agent-state:
   demo-press:
+  demo-multi:
+  demo-single:

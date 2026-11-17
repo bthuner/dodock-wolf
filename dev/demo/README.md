@@ -59,30 +59,37 @@ in the old time zone, so the agent looks hours stale for one check.
 
 ![Incident timeline after the scenario](incident-timeline.jpg)
 
-## Press demo
+## Live demos
 
-A simulated Press app server, watched by a second agent through the real Press code path
-(discovery, `jobs.sqlite3`, nginx `main` format, custom domains):
+Three profiles add a simulated server each, watched by an agent of its own through the real code
+path for its platform. They can run together, next to the 2AM scenario:
 
 ```bash
-WOLF_DEMO_BASE=registry.gitlab.com/dokos/dokos:latest docker compose --profile press up -d --build
-docker compose logs -f press-demo     # "history written up to ...", then live
-docker compose logs catcher           # the alerts
+WOLF_DEMO_BASE=registry.gitlab.com/dokos/dokos:latest docker compose --profile press --profile multi --profile single up -d --build
+docker compose --profile multi logs -f multi-demo   # "history written up to ...", then live
+docker compose logs catcher                         # the alerts
 ```
 
-- `press-agent` registers as `f1-demo-press`, then `wolf-agent demo press --configure` points it at
-  the `demo-press` volume, in Press mode, with the checks that have nothing behind them off (TLS,
-  MariaDB, backups...).
-- `press-demo` runs `bench --site wolf.localhost generate-demo-press --webhook http://catcher:9999/`.
-  It lays out 3 benches and 8 sites with empty logs, waits until the agent tracks them, writes
-  7 days of history (the agent reads it from the start; past host metrics go through its spool),
-  then live traffic with an incident cycle every 30 minutes: a Press migrate and 4 minutes of 502s,
-  a traceback, a failed scheduled job, a killed worker, an SSH brute force, a web attack scan and,
-  every other cycle, a failed Patch App job. The code is in `agent/wolf_agent/demo/`.
-- Incidents open for live cycles only: rules look at the last minutes. Restarting `press-demo`
+| Profile | Host | Server | Deployments |
+|---|---|---|---|
+| `press` | `f1-demo-press` | Press app server: 3 benches, 8 sites, `jobs.sqlite3`, nginx `main` format | Press jobs |
+| `multi` | `dokos-multi-1` | plain benches: 2 benches, 6 sites, nginx with `$host` first | deployment endpoint |
+| `single` | `dokos-single-1` | one bench, one site | deployment endpoint |
+
+- `<kind>-agent` runs `demo-agent-init.sh <kind> <host>`: it registers the host without benches
+  (`--bench` names the empty demo root), then `wolf-agent demo <kind> --configure` points it at the
+  `demo-<kind>` volume with the checks that have nothing behind them off (TLS, MariaDB, backups...).
+- `<kind>-demo` runs `bench --site wolf.localhost generate-demo-<kind> --webhook http://catcher:9999/`.
+  It lays out the server with empty logs, waits until the agent tracks them, writes 7 days of
+  history (the agent reads it from the start; past host metrics go through its spool), then live
+  traffic with an incident cycle every 30 minutes: a deployment and 4 minutes of 502s, a traceback,
+  a failed scheduled job, a killed worker, an SSH brute force, a web attack scan and, every other
+  cycle, a failed bench operation. The code is in `agent/wolf_agent/demo/`.
+- Incidents open for live cycles only: rules look at the last minutes. Restarting `<kind>-demo`
   fills the gap since it stopped, then goes live again.
-- Reset just the Press demo: `docker compose --profile press rm -sf press-agent press-demo &&
-  docker volume rm wolfdemo_demo-press`. Its host and data stay on the site until the full reset.
+- Reset one demo: `docker compose --profile <kind> rm -sf <kind>-agent <kind>-demo &&
+  docker volume rm wolfdemo_demo-<kind>`. Its host and data stay on the site until the full reset,
+  which needs every profile: `docker compose --profile press --profile multi --profile single down -v`.
 
 ## Setup wizard
 
@@ -140,4 +147,4 @@ docker compose exec backend bench new-site pg.localhost --db-type postgres --db-
 docker compose exec backend bash -c 'cd sites && ../env/bin/python /etc/wolf/db_smoke.py pg.localhost'
 ```
 
-Reset: `docker compose down -v`.
+Reset: `docker compose --profile press --profile multi --profile single down -v` (the profiles you used, so their containers and volumes go too).

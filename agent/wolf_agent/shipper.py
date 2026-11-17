@@ -231,8 +231,9 @@ class Shipper:
 		self.results = []  # delivered (or spooled with their batch)
 		return True
 
-	def mark_deployment(self, bench, site=None, note=None, source="manual", silence_minutes=None):
-		body = {"bench": bench, "site": site, "note": note, "source": source, "timestamp": utc_iso()}
+	def mark_deployment(self, bench, site=None, note=None, source="manual", silence_minutes=None, timestamp=None):
+		"""`timestamp` (UTC ISO) defaults to now; the demos mark past deployments with theirs."""
+		body = {"bench": bench, "site": site, "note": note, "source": source, "timestamp": timestamp or utc_iso()}
 		if silence_minutes:
 			body["silence_minutes"] = int(silence_minutes)
 		return post_json(self.url + DEPLOYMENT_METHOD, body, self.headers, self.verify_tls)
