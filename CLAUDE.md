@@ -322,6 +322,18 @@ First demo scenario
 
         Alerts emitted to email/Raven.
 
+Documentation site
+
+    The user documentation lives in docs-site/ (Nuxt UI + Nuxt Content, the same stack as doc.dokos.io), in two languages: content/en/ and content/fr/, with the same file at the same path in both. docs-site/CONTRIBUTING.md has the page map and conventions, docs-site/scripts/TRANSLATING.md the French glossary and typography.
+
+    When a change affects what users see or do, update the docs in the same pull request, in English and in French. This covers a setting, field, command, config key, event type, metric, preset, API, channel, default value, behaviour or install step that is added, renamed, changed or removed. Purely internal changes (refactors, tests, CI) need no docs.
+
+    - Edit the English page, then mirror the change in its French twin. Never leave one language behind.
+    - A new page gets a twin with the same file name in the other language.
+    - When presets change in frappe_wolf/wolf/presets.py, run `yarn presets` in docs-site/ and paste the tables into both content/en/4.alerts/2.presets.md and content/fr/4.alerts/2.presets.md (translating the conditions).
+    - Keep the repository docs (README.md, agent/README.md, docs/*.md) consistent with the site when they cover the same thing.
+    - Check with `yarn generate && yarn check:links` in docs-site/ (Node 24, see .nvmrc). The docs CI job runs the same checks, so a broken page or link fails the PR.
+
 Commit and PR attribution
 
     Every commit message, pull request description, issue body, and issue, pull request or review comment ends with the single line "Co-authored with AI".
