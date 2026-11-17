@@ -106,13 +106,13 @@ Wolf alone is covered.
 | Frappe application | permissions, scripts, settings, API keys, exfiltration, honeytokens | — (HTTPS, and no notion of DocTypes or users) | — (log lines, no Frappe semantics) |
 | Posture | Frappe settings per site, versions vs advisories, bench exposure, TLS/HSTS, SPF/DMARC | — | OS configuration assessment |
 | Health | 5xx, crons, workers, backups, certificates, database | — | — |
-| Response | block IP (nftables, fail2ban), disable user, revoke sessions and API keys, human-approved | — | active response, as an option for approved blocks (#72) |
+| Response | block IP (nftables, fail2ban), disable user, revoke sessions and API keys, human-approved | — | active response for approved blocks, instead of or with the Wolf Agent (#72) |
 | Correlation, incidents, NIS2/GDPR, signed journal | Wolf | feeds Wolf's incidents | feeds Wolf's incidents |
 
 Where Wolf's own detector and an external one overlap (web probes and Suricata's HTTP rules,
-`auth.log` signals and Wazuh, nftables blocks and Wazuh active response), the operator picks
-per detector: Wolf's own (the default), both (one finding with two sources, not two), or the
-external one only (#72, step 4).
+`auth.log` signals and Wazuh), the operator picks per detector: Wolf's own (the default), both
+(one finding with two sources, not two), or the external one only (#72, step 4). Approved blocks
+go to the Wolf Agent, Wazuh active response, or both (step 6).
 
 ## 3. What is built
 
@@ -353,12 +353,17 @@ nothing runs on its own. Every approval is a **Wolf Response Action** row (who, 
 result; read-only for everyone) and a comment on the incident.
 
 - **Block IP for N hours** (1 to 168, default 24): proposed for the public addresses of the
-  incident's security events, for the agent that saw each one. The agent receives it with its
-  next push, runs `sudo -n /usr/local/sbin/wolf-block IP SECONDS` (`agent/wolf-block.sh`: an
+  incident's security events, whatever their source, for the attacked host. The Wolf Agent on
+  that host receives it with its next push, runs `sudo -n /usr/local/sbin/wolf-block IP SECONDS` (`agent/wolf-block.sh`: an
   nftables `inet wolf` set whose entries expire by themselves) and reports the result. The agent
   only does this with `response.enabled` in its own config (off by default) and the helper
   installed with a one-line sudoers rule (agent/README.md). It refuses private, loopback and
   reserved addresses and durations over a week, whatever the site sends.
+- **Wazuh active response** (Wolf Settings → Blocking, `wazuh` or `both`; #72 step 6): the
+  approved block also, or instead, runs on the attacked host's Wazuh agent through the manager's
+  API (`api/wazuh_ar.py`), as a named command whose timeout Wazuh enforces (`firewall-drop86400`).
+  Wolf finds the agent by the host's names and addresses; the action is Applied or Failed at once.
+  Tried against a Wazuh 4.9.2 manager and agent.
 - **Disable user / log out all sessions / revoke API keys**: proposed for the users named by
   the site's own security events (failed logins, new IP or country, role granted, API key
   generated), applied at once on the Wolf site. Administrator, Guest and the approver's own
@@ -556,9 +561,9 @@ the later is marked **Same Finding As** the first and not sent again to CrowdSec
 about that host, under any of its names, that watch the same thing: Wazuh authentication, SSH,
 sudo or account rules, Suricata alerts with HTTP context or a web technique. They come back when
 it has been quiet for an hour, and each Wolf Agent counts what gave way). sudo, account and group events carry
-no IP, so in `both` mode they are never linked. Each timeline row names its source. Blocking
-(nftables against Wazuh active response) is left to step 6, where an approved block can be
-handed to Wazuh.
+no IP, so in `both` mode they are never linked. Each timeline row names its source. Blocking is
+separate: Wolf Settings → Blocking hands an approved block to the Wolf Agent, Wazuh active
+response, or both (step 6).
 
 Built: one story per incident. Its timeline already held every source's events of its scope with
 the deployments and health events there (failed crons, errors, the events metric rules emit for

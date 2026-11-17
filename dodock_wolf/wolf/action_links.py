@@ -61,6 +61,8 @@ def response_links(incident, status, actor=None):
 		params = links.build_response_params(
 			link_secret(), incident, p["action"], p["target"], hours * 3600,
 			agent=p["agent"] if p["action"] == "block_ip" else None, hours=duration, actor=actor,
+			host=p["host"] if p["action"] == "block_ip" else None,
 		)  # fmt: skip
-		out.append({"label": response.label(p["action"], p["target"], duration, p.get("host")), "url": f"{base}?{urlencode(params)}"})
+		out.append({"label": p.get("label") or response.label(p["action"], p["target"], duration, p.get("host")),
+		            "url": f"{base}?{urlencode(params)}"})  # fmt: skip
 	return out

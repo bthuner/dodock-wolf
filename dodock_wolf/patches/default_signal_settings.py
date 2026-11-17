@@ -23,6 +23,9 @@ DEFAULTS = {
 	"web_detection_mode": "own",
 	"host_detection_mode": "own",
 	"detector_match_minutes": 10,
+	"block_with": "wolf_agent",
+	"wazuh_ar_command": "firewall-drop86400",
+	"wazuh_verify_tls": 1,
 }
 
 

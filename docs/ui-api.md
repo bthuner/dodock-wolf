@@ -442,13 +442,17 @@ cause, lessons and action items. Read permission on the incident is enough. Noth
 ### `dodock_wolf.api.response.get_response`
 
 Argument: `incident`. Returns `proposals` (`{action, target, agent, host, bench, site, reason,
-label}`, from the incident's security events, without the ones already approved or applied),
+label, executors}`; a block names the attacked `host`, its Wolf Agent in `agent` when it applies it,
+and `executors`: `wolf_agent`, `wazuh`; from the incident's security events, without the ones already approved or applied),
 `actions` (the incident's Wolf Response Action rows), `can_approve`, `default_hours`, `max_hours`.
 
 ### `dodock_wolf.api.response.approve` (POST)
 
 Arguments: `incident`, `action` (`block_ip`, `disable_user`, `logout_sessions`,
-`revoke_api_keys`), `target`, `agent` (block_ip), `duration_hours` (block_ip, 1 to 168), `reason`.
+`revoke_api_keys`), `target`, `host` (block_ip: the attacked host as proposed; `agent` instead, from
+older links), `duration_hours` (the Wolf Agent's block, 1 to 168; a Wazuh block lasts its command's
+timeout), `reason`.
 Wolf Manager / System Manager only. Refused targets (private or reserved address, Administrator,
 Guest, yourself) are a validation error and nothing is recorded. Returns the Wolf Response Action;
-user actions come back `Applied` or `Failed`, blocks `Approved` until the agent reports.
+user actions come back `Applied` or `Failed`, blocks `Approved` until the agent reports, and a
+Wazuh block `Applied` or `Failed` at once. With Block With `both`, `also` holds the second row.

@@ -11,6 +11,8 @@
   "incident",
   "cb_1",
   "agent",
+  "executor",
+  "wazuh_agent_id",
   "host",
   "bench",
   "site",
@@ -69,6 +71,22 @@
    "label": "Agent",
    "options": "Wolf Agent",
    "description": "block_ip: the agent that applies it on its host."
+  },
+  {
+   "default": "wolf_agent",
+   "description": "Who applies the block: the Wolf Agent on the host, or Wazuh active response.",
+   "fieldname": "executor",
+   "fieldtype": "Select",
+   "label": "Executor",
+   "options": "wolf_agent\nwazuh",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.executor=='wazuh'",
+   "fieldname": "wazuh_agent_id",
+   "fieldtype": "Data",
+   "label": "Wazuh Agent ID",
+   "read_only": 1
   },
   {
    "fieldname": "host",
@@ -139,7 +157,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-01 12:30:00.000000",
+ "modified": "2026-11-17 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Response Action",

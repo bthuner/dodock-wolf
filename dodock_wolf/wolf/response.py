@@ -2,8 +2,11 @@
 
 Wolf proposes; a Wolf Manager confirms each action; nothing runs on its own.
 
-- `block_ip`: proposed for the public addresses in an incident's security events, applied by
-  the agent that saw them, as an nftables entry that expires by itself (1 to 168 hours).
+- `block_ip`: proposed for the public addresses in an incident's security events, whatever
+  their source (Wolf, Suricata, Wazuh), for the attacked host: applied by the Wolf Agent on that
+  host, as an nftables entry that expires by itself (1 to 168 hours), and/or by Wazuh active
+  response on its Wazuh agent (Wolf Settings → Block With; the duration is the Wazuh command's
+  timeout).
   Loopback, private, link-local and reserved addresses are never proposed nor accepted.
 - `disable_user`, `logout_sessions`, `revoke_api_keys`: proposed for the users named by the
   site's own security events, applied on the Wolf site itself. Administrator, Guest and the
@@ -14,6 +17,8 @@ import ipaddress
 
 ACTIONS = ("block_ip", "disable_user", "logout_sessions", "revoke_api_keys")
 USER_ACTIONS = ("disable_user", "logout_sessions", "revoke_api_keys")
+EXECUTORS = ("wolf_agent", "wazuh")
+BLOCK_WITH = {"wolf_agent": ("wolf_agent",), "wazuh": ("wazuh",), "both": ("wolf_agent", "wazuh")}
 LABELS = {
 	"block_ip": "Block {target} for {hours} h on {host}",
 	"disable_user": "Disable user {target}",
@@ -67,28 +72,53 @@ def check(action, target, approver=None, hours=None):
 	return None
 
 
-def suggest(events):
-	"""Proposals `{action, target, agent, host, bench, site, reason}` from an incident's events.
+# alerts that name the host they are about, not the one that read them (a Wazuh manager, a sensor)
+EXTERNAL_CATEGORIES = {"hids_alert", "network_ids_alert"}
 
-	`events`: dicts with event_type, category, agent, host, bench, site and payload (a dict).
+
+def attacked_host(event, sender_kind, sender_hostname):
+	"""The host a block is for. Suricata and Wazuh alerts, and whatever an integration posts, name
+	the host they are about; any other agent's event is about its own host, whatever its `host`
+	says: a compromised agent cannot point a block at another machine."""
+	if sender_kind == "integration" or event.get("category") in EXTERNAL_CATEGORIES or not sender_hostname:
+		return event.get("host")
+	return sender_hostname
+
+
+def executors(block_with, wolf_agent, wazuh):
+	"""Who can apply a block on a host: its Wolf Agent (when it has one) and/or Wazuh (when set
+	up), as Block With asks."""
+	wanted = BLOCK_WITH.get(block_with or "wolf_agent", BLOCK_WITH["wolf_agent"])
+	return [e for e in wanted if (e == "wolf_agent" and wolf_agent) or (e == "wazuh" and wazuh)]
+
+
+def suggest(events, block_with="wolf_agent", wazuh=False):
+	"""Proposals `{action, target, agent, host, bench, site, reason, executors}` from an incident's
+	events.
+
+	`events`: dicts with event_type, category, host, bench, site, payload (a dict), and for blocks
+	`block_host` (the attacked host, canonical) and `block_agent` (the Wolf Agent on it, or None).
+	A block is proposed once per address and host, when someone can apply it there.
 	"""
 	out, seen = [], set()
 
-	def add(action, target, ev, reason):
-		key = (action, target, ev.get("agent") if action == "block_ip" else None)
+	def add(action, target, ev, reason, **extra):
+		key = (action, target, extra.get("host") if action == "block_ip" else None)
 		if key in seen or len(out) >= MAX_PROPOSALS or check(action, target):
 			return
 		seen.add(key)
 		out.append({"action": action, "target": target, "agent": ev.get("agent"), "host": ev.get("host"),
-		            "bench": ev.get("bench"), "site": ev.get("site"), "reason": reason})  # fmt: skip
+		            "bench": ev.get("bench"), "site": ev.get("site"), "reason": reason, **extra})  # fmt: skip
 
 	for ev in events:
 		if ev.get("event_type") != "security":
 			continue
 		payload = ev.get("payload") or {}
 		ip = payload.get("ip")
-		if ip and ev.get("agent"):  # only an agent can apply a block on its host
-			add("block_ip", str(ip), ev, f"{ev.get('category')}: {ev.get('title') or ip}")
+		who = executors(block_with, ev.get("block_agent"), wazuh) if ip and ev.get("block_host") else []
+		if who:
+			add("block_ip", str(ip), ev, f"{ev.get('category')}: {ev.get('title') or ip}", host=ev["block_host"],
+			    agent=ev.get("block_agent") if "wolf_agent" in who else None, executors=who)  # fmt: skip
 		user = payload.get("user")
 		if user and ev.get("category") in USER_CATEGORIES and not ev.get("agent"):
 			for action in USER_ACTIONS:
@@ -96,5 +126,11 @@ def suggest(events):
 	return out
 
 
-def label(action, target, hours=None, host=None):
-	return LABELS[action].format(target=target, hours=hours or DEFAULT_HOURS, host=host or "its host")
+def label(action, target, hours=None, host=None, executors=None, wazuh_hours=None):
+	text = LABELS[action].format(target=target, hours=hours or DEFAULT_HOURS, host=host or "its host")
+	if action == "block_ip" and executors and "wazuh" in executors:
+		if list(executors) == ["wazuh"]:
+			text += " with Wazuh"
+		else:  # each applies its own duration: the hours asked, and Wazuh's command timeout
+			text += f" with the Wolf Agent, and for {wazuh_hours or hours or DEFAULT_HOURS} h with Wazuh"
+	return text

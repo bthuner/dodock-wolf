@@ -63,7 +63,10 @@ RESPONSE_FIELDS = ("incident", "action", "target", "agent", "hours", "expires", 
 
 
 def _response_message(p):
-	return "\n".join(["wolf-response-action", *(str(p.get(f) or "") for f in RESPONSE_FIELDS)]).encode()
+	lines = ["wolf-response-action", *(str(p.get(f) or "") for f in RESPONSE_FIELDS)]
+	if p.get("host"):  # signed when present; links sent before it existed keep their signature
+		lines.append(f"host:{p['host']}")
+	return "\n".join(lines).encode()
 
 
 def sign_response(secret, params):
@@ -71,8 +74,9 @@ def sign_response(secret, params):
 	return hmac.new(key, _response_message(params), hashlib.sha256).hexdigest()
 
 
-def build_response_params(secret, incident, action, target, ttl_seconds, agent=None, hours=None, actor=None, now=None):
-	params = {"incident": incident, "action": action, "target": target, "agent": agent, "hours": hours,
+def build_response_params(secret, incident, action, target, ttl_seconds, agent=None, hours=None, actor=None, now=None,
+                          host=None):  # fmt: skip
+	params = {"incident": incident, "action": action, "target": target, "agent": agent, "host": host, "hours": hours,
 	          "expires": int((time.time() if now is None else now) + ttl_seconds), "actor": actor}  # fmt: skip
 	params = {k: v for k, v in params.items() if v not in (None, "")}
 	params["sig"] = sign_response(secret, params)
