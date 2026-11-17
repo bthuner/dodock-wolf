@@ -47,7 +47,7 @@ echo "==> creating user $USER_NAME"
 if ! id "$USER_NAME" >/dev/null 2>&1; then
 	useradd --system --no-create-home --home-dir "$STATE_DIR" --shell /usr/sbin/nologin "$USER_NAME"
 fi
-for group in adm systemd-journal frappe; do
+for group in adm systemd-journal frappe proxy; do  # proxy: read Squid's access log
 	if getent group "$group" >/dev/null; then
 		usermod -aG "$group" "$USER_NAME"
 	fi

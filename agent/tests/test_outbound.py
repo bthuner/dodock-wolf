@@ -37,6 +37,8 @@ class TestOutbound(unittest.TestCase):
 		self.state = os.path.join(self.tmp.name, outbound.STATE_FILE)
 		self.proc = os.path.join(self.tmp.name, "net")
 		os.makedirs(self.proc)
+		self.fake_proc = os.path.join(self.tmp.name, "proc")  # pids, for containers
+		os.makedirs(self.fake_proc)
 		self.proc_net()
 
 	def tearDown(self):
@@ -49,6 +51,8 @@ class TestOutbound(unittest.TestCase):
 			f.write(HEADER + "".join(v6_lines))
 
 	def watcher(self, **kw):
+		kw.setdefault("proc", self.fake_proc)
+		kw.setdefault("proxy_logs", [])
 		return outbound.OutboundWatcher("bench-01", self.state, proc_root=self.proc, **kw)
 
 	def conn(self, ip, port, n=0, uid=None):
@@ -73,7 +77,7 @@ class TestOutbound(unittest.TestCase):
 			line(v4("0.0.0.0", 8000), v4("0.0.0.0", 0), "0A", self.uid, 1),
 		])  # fmt: skip
 		got = outbound.outbound(outbound.read_sockets(self.proc), {self.uid})
-		self.assertEqual(got, {self.uid: {"45.33.32.0/24:443": ("45.33.32.9", 443)}})
+		self.assertEqual(got, {self.uid: {"45.33.32.0/24:443": ("45.33.32.9", 443, None)}})
 		with_lan = outbound.outbound(outbound.read_sockets(self.proc), {self.uid}, include_private=True)
 		self.assertIn("10.0.0.0/24:3306", with_lan[self.uid])
 
@@ -104,7 +108,7 @@ class TestOutbound(unittest.TestCase):
 		self.assertEqual({m["metric_name"]: m["value"] for m in w.collect(self.benches, epoch=120)[0]}["bench_new_outbound_usual"], 0)
 		# reported at info when asked, and a port of the operator's own is usual
 		w2 = outbound.OutboundWatcher("bench-01", None, learn_days=0, proc_root=self.proc, usual_ports=[5432],
-		                              report_usual_ports=True)  # fmt: skip
+		                              report_usual_ports=True, proc=self.fake_proc, proxy_logs=[])  # fmt: skip
 		w2.collect(self.benches, epoch=0, sockets=[])
 		self.proc_net([self.conn("185.199.111.5", 587, 1), self.conn("35.180.1.1", 5432, 2)])
 		self.assertEqual(sorted(e["severity"] for e in w2.collect(self.benches, epoch=60)[1]), ["info", "info"])
@@ -155,6 +159,111 @@ class TestOutbound(unittest.TestCase):
 		(ev,) = w.collect(benches, epoch=60)[1]
 		self.assertEqual((ev["bench"], ev["payload"]["benches"]), (None, ["frappe-bench", "other-bench"]))
 
+
+	def self_mounts(self, mount_point="/"):
+		"""The agent's own mountinfo: the bench's filesystem mounted at `mount_point`."""
+		path = os.path.join(self.tmp.name, "self-mountinfo")
+		with open(path, "w") as f:
+			f.write(f"25 1 {self.dev} / {mount_point} rw,relatime - ext4 /dev/nvme0n1p2 rw\n")
+		return path
+
+	def container(self, pid, root, v4_lines=(), cid="c" * 64, address="172.18.0.5", dev=None):
+		"""A container process in the fake /proc: its cgroup, a bind mount (`root` inside the
+		filesystem `dev`), its own TCP table and address."""
+		base = os.path.join(self.fake_proc, str(pid))
+		os.makedirs(os.path.join(base, "net"))
+		with open(os.path.join(base, "cgroup"), "w") as f:
+			f.write(f"0::/system.slice/docker-{cid}.scope\n")
+		with open(os.path.join(base, "mountinfo"), "w") as f:
+			f.write(f"3017 3005 {dev or self.dev} {root} /home/frappe/frappe-bench/sites rw,relatime - ext4 /dev/x rw\n")
+		with open(os.path.join(base, "net", "tcp"), "w") as f:
+			f.write(HEADER + "".join(v4_lines))
+		with open(os.path.join(base, "net", "tcp6"), "w") as f:
+			f.write(HEADER)
+		with open(os.path.join(base, "net", "fib_trie"), "w") as f:
+			f.write(f"Local:\n  +-- 0.0.0.0/0 3 0 5\n     |-- {address}\n        /32 host LOCAL\n     |-- 127.0.0.1\n        /32 host LOCAL\n")
+
+	@property
+	def dev(self):
+		st = os.stat(self.bench)
+		return f"{os.major(st.st_dev)}:{os.minor(st.st_dev)}"
+
+	def cwatcher(self, **kw):
+		kw.setdefault("self_mountinfo", self.self_mounts())
+		return self.watcher(**kw)
+
+	def test_a_bench_in_a_container(self):
+		# a Press bench: the container mounts the bench's sites/ from the host, and has its own network
+		self.container(4242, self.bench + "/sites", [line(v4("172.18.0.5", 41000), v4("185.199.110.66", 4444), "01", 1000, 7)])
+		self.container(4300, "/srv/unrelated/data", [line(v4("172.18.0.9", 41000), v4("185.199.110.67", 4444), "01", 1000, 8)],
+		               cid="d" * 64)  # not a bench: left alone
+		w = self.cwatcher(learn_days=0)  # no learning period: the first scan reports
+		(ev,) = w.collect(self.benches, epoch=0, sockets=[])[1]
+		self.assertEqual((ev["bench"], ev["payload"]["remote_ip"], ev["payload"]["seen_by"]), ("frappe-bench", "185.199.110.66", "container"))
+		self.assertEqual(w.collect(self.benches, epoch=60, sockets=[])[1], [])
+
+	def test_same_path_on_another_filesystem_is_not_the_bench(self):
+		self.container(4242, self.bench + "/sites", dev="7:42")  # a crafted mount elsewhere
+		self.assertIsNone(outbound.container_bench(4242, outbound.bench_filesystems(self.benches, self.self_mounts()), self.fake_proc))
+
+	def test_a_separate_partition_matches_by_its_own_path(self):
+		top = "/" + self.bench.strip("/").split("/")[0]  # the bench's filesystem mounted there, like /home
+		filesystems = outbound.bench_filesystems(self.benches, self.self_mounts(top))
+		self.container(4242, self.bench[len(top):] + "/sites")
+		self.assertEqual(outbound.container_bench(4242, filesystems, self.fake_proc), "frappe-bench")
+
+	def test_a_container_on_the_host_network_is_not_counted_twice(self):
+		mine = line(v4("10.0.0.5", 41000), v4("185.199.110.66", 4444), "01", self.uid, 7)
+		self.proc_net([mine])
+		# read a moment later: a socket opened meanwhile, but one shared socket says it is the same network
+		self.container(4242, self.bench + "/sites", [mine, line(v4("10.0.0.5", 41001), v4("185.199.110.70", 4444), "01", 0, 9)])
+		w = self.cwatcher(learn_days=0)
+		w.collect(self.benches, epoch=0)
+		self.assertEqual(list(w.state["users"]), [str(self.uid)])
+
+	def test_two_containers_of_one_bench_are_one_subject(self):
+		self.container(4242, self.bench + "/sites", [line(v4("172.18.0.5", 41000), v4("185.199.110.66", 4444), "01", 1000, 7)])
+		self.container(4243, self.bench + "/sites", [line(v4("172.18.0.6", 41000), v4("185.199.110.88", 5555), "01", 1000, 8)],
+		               cid="e" * 64, address="172.18.0.6")  # fmt: skip
+		metrics, events = self.cwatcher(learn_days=0).collect(self.benches, epoch=0, sockets=[])
+		self.assertEqual(len(events), 2)
+		counts = [m["value"] for m in metrics if m["metric_name"] == "bench_outbound_destinations"
+		          and m["labels"] == {"seen_by": "container"}]  # fmt: skip
+		self.assertEqual(counts, [2], "one series for the bench's containers, both in it")
+
+	def test_container_ids_from_every_layout(self):
+		h = "a" * 64
+		for text in (f"0::/system.slice/docker-{h}.scope", f"12:pids:/docker/{h}", f"0::/kubepods/besteffort/pod1/{h}",
+		             f"0::/default/{h}", f"0::/machine.slice/libpod-{h}.scope"):  # fmt: skip
+			self.assertEqual(outbound.container_id(text + "\n"), h, text)
+		self.assertIsNone(outbound.container_id("0::/user.slice/user-1000.slice/session-3.scope\n"))
+
+	def test_destinations_behind_a_proxy(self):
+		self.assertEqual(outbound.parse_squid("1700000000.1 120 172.18.0.5 TCP_TUNNEL/200 3800 CONNECT api.Stripe.com:443 - HIER_DIRECT/52.1.2.3 -"),
+		                 ("172.18.0.5", "api.stripe.com", 443, "52.1.2.3"))  # fmt: skip
+		self.assertEqual(outbound.parse_squid("1700000000.1 5 10.0.0.5 TCP_MISS/200 512 GET http://evil.example:8081/x - HIER_DIRECT/185.199.110.9 text/plain"),
+		                 ("10.0.0.5", "evil.example", 8081, "185.199.110.9"))  # fmt: skip
+		self.assertIsNone(outbound.parse_squid("garbage"))
+		log_path = os.path.join(self.tmp.name, "access.log")
+		self.container(4242, self.bench + "/sites")
+		w = self.cwatcher(learn_days=0, proxy_logs=[log_path])  # a plain path is a Squid log
+		w.collect(self.benches, epoch=0, sockets=[])  # the log does not exist yet
+		with open(log_path, "w") as f:  # created later: read from its start
+			f.write("1700000000.1 120 172.18.0.5 TCP_TUNNEL/200 3800 CONNECT c2.evil.example:8443 - HIER_DIRECT/185.199.110.9 -\n")
+			f.write("1700000000.2 120 127.0.0.1 TCP_TUNNEL/200 3800 CONNECT pastebin.example:4443 - HIER_DIRECT/185.199.110.10 -\n")
+			f.write("1700000000.3 120 192.168.1.50 TCP_TUNNEL/200 3800 CONNECT lan-laptop.example:4443 - HIER_DIRECT/185.199.110.11 -\n")
+		events = w.collect(self.benches, epoch=60, sockets=[])[1]
+		got = sorted((e["payload"]["remote_host"], e["payload"]["seen_by"], tuple(e["payload"]["benches"])) for e in events)
+		# the container's request is its bench's; the host's own is its benches'; a LAN client of a shared proxy is not a bench's
+		self.assertEqual(got, [("c2.evil.example", "proxy", ("frappe-bench",)), ("pastebin.example", "proxy", ("frappe-bench",))])
+		self.assertEqual(w.collect(self.benches, epoch=120, sockets=[])[1], [], "the log is read from where it stopped")
+
+	def test_a_bad_proxy_entry_does_not_stop_detection(self):
+		self.assertEqual(outbound.proxy_specs(["/var/log/squid/access.log", {"path": "/x", "format": "nginx"}, 42]),
+		                 [{"path": "/var/log/squid/access.log", "format": "squid"}])  # fmt: skip
+		w = self.cwatcher(learn_days=0, proxy_logs=[42])
+		self.proc_net([self.conn("185.199.110.66", 4444)])
+		self.assertEqual(len(w.collect(self.benches, epoch=0)[1]), 1)
 
 if __name__ == "__main__":
 	unittest.main()

@@ -593,7 +593,9 @@ bench folder's user to public addresses. After a 7-day learning period, each new
 the preset *Bench connects somewhere new* fires on; new ones on usual ports are counted. The event
 names the destination in `remote_ip`, not `ip`: the IP reputation lists check it, but it never
 groups incidents by IP, feeds sequence rules, goes to CrowdSec as an attacker or gets a block
-proposal. It samples, so a short connection between two reads is missed.
+proposal. Benches in containers (Docker, Press) are found without root through `/proc`, each
+read in its own network; behind an outbound proxy, the proxy's access log (Squid) gives every
+destination by host name. Read from `/proc`, a connection between two samples is missed.
 
 Wolf alone stays fully supported.
 
