@@ -79,8 +79,10 @@ DEFAULTS = {
 	# `usual_ports` adds ports that are only counted, `report_usual_ports` reports those too (info)
 	# Benches in containers (Docker, Press) are found through /proc without root. `proxy_logs`
 	# null reads /var/log/squid/access.log when it exists; a list sets [{"path", "format": "squid"}]
+	# `kernel_log` "auto": when the operator installed wolf-outbound-log (root, sudo), every new
+	# connection comes from the kernel log, not only what a /proc sample sees; false: never
 	"outbound": {"enabled": True, "interval": 60, "learn_days": 7, "include_private": False, "usual_ports": [],
-	             "report_usual_ports": False, "proxy_logs": None},
+	             "report_usual_ports": False, "proxy_logs": None, "kernel_log": "auto"},
 	# response actions a Wolf Manager approved (responder.py): off unless you turn it on
 	"response": {"enabled": False, "command": ["sudo", "-n", "/usr/local/sbin/wolf-block", "{ip}", "{seconds}"]},
 	# alerts when the Wolf site itself stops working, sent without going through it

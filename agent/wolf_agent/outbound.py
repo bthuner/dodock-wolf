@@ -35,10 +35,11 @@ import json
 import logging
 import os
 import re
+import subprocess
 import sys
 import time
 
-from .tailer import FileTailer
+from .tailer import FileTailer, JournalTailer
 from .util import event, fingerprint, metric, utc_iso
 
 log = logging.getLogger(__name__)
@@ -259,6 +260,31 @@ def parse_squid(line):
 PROXY_PARSERS = {"squid": parse_squid}
 
 
+# --- every new connection: the kernel log, when wolf-outbound-log is installed -------------
+
+HELPER = "/usr/local/sbin/wolf-outbound-log"
+KERN_LOG = "/var/log/kern.log"
+_KV = re.compile(r"\b([A-Z]+)=(\S*)")
+
+
+def parse_kernel(line):
+	"""("out", src, dst, port, uid) for a `wolf-out: ` line, ("fwd", src, dst, port, None) for a
+	`wolf-fwd: ` one, else None. The fields are netfilter's own: SRC=, DST=, DPT=, UID=."""
+	for kind, marker in (("out", "wolf-out: "), ("fwd", "wolf-fwd: ")):
+		at = line.find(marker)
+		if at < 0:
+			continue
+		fields = dict(_KV.findall(line[at + len(marker):]))
+		try:
+			dst, port = str(ipaddress.ip_address(fields["DST"])), int(fields["DPT"])
+			src = str(ipaddress.ip_address(fields["SRC"]))
+			uid = int(fields["UID"]) if kind == "out" and fields.get("UID") else None
+		except (KeyError, ValueError):
+			return None
+		return kind, src, dst, port, uid
+	return None
+
+
 def public(address, include_private=False):
 	ip = ipaddress.ip_address(address)
 	if getattr(ip, "ipv4_mapped", None):
@@ -315,7 +341,8 @@ class OutboundWatcher:
 	(`bench:<name>`), or the host's benches behind a proxy (`proxy:host`)."""
 
 	def __init__(self, host, state_path=None, learn_days=7, include_private=False, proc_root="/proc/net", usual_ports=None,
-	             report_usual_ports=False, proc="/proc", proxy_logs=None, self_mountinfo="/proc/self/mountinfo"):  # fmt: skip
+	             report_usual_ports=False, proc="/proc", proxy_logs=None, self_mountinfo="/proc/self/mountinfo",
+	             kernel_log="auto", helper=HELPER, kernel_source=None, run=None):  # fmt: skip
 		self.host = host
 		self.state_path = state_path
 		self.learn_seconds = float(learn_days) * 86400
@@ -331,6 +358,15 @@ class OutboundWatcher:
 		self.cgroups = {}  # pid -> (start, container id)
 		self.absent = set()  # proxy logs missing at a scan: read from their start once they appear
 		self.unreadable = set()  # proxy logs already warned about
+		# every new connection, when the operator installed the helper (wolf-outbound-log.sh)
+		installed = os.path.exists(helper)
+		self.helper = helper if kernel_log and installed else None
+		self.turn_off = helper if not kernel_log and installed else None  # remove the table once
+		self.kernel_source = kernel_source
+		self.run = run or subprocess.run
+		self.applied = None  # the bench uids the helper was last run with
+		self._epoch = time.time()
+		self.helper_failed = set()
 
 	def _load(self):
 		if not self.state_path or not os.path.exists(self.state_path):
@@ -365,7 +401,8 @@ class OutboundWatcher:
 			if key not in merged:
 				merged[key] = (names, {}, how)
 				order.append(key)
-			merged[key][1].update(conns)  # several containers of one bench: one subject
+			for dest, value in conns.items():  # several containers of one bench: one subject
+				merged[key][1].setdefault(dest, value if len(value) == 4 else (*value, how))
 
 		users = bench_users(benches)
 		host_sockets, host_inodes = read_table(self.proc_root) if sockets is None else (sockets, set())
@@ -388,6 +425,9 @@ class OutboundWatcher:
 			for found in outbound(table, None, self.include_private).values():
 				conns.update(found)
 			add(f"bench:{name}", [name], conns, "container")
+		for key, conns in self._kernel(users, owner_of).items():
+			if key in merged:  # a bench user, or a container already read: the kernel adds what /proc missed
+				add(key, merged[key][0], conns, merged[key][2])
 		host_names = sorted({n for key in order if merged[key][2] == "host" for n in merged[key][0]})
 		host_addresses = local_addresses(self.proc_root) | {"127.0.0.1", "::1"}
 		for key, conns in sorted(self._proxied(owner_of, host_addresses).items()):
@@ -395,6 +435,60 @@ class OutboundWatcher:
 			if names:
 				add(f"proxy:{key}", names, conns, "proxy")
 		return [(key, *merged[key]) for key in order]
+
+	def _kernel(self, users, owner_of):
+		"""{subject: {destination: (ip, port, None, "kernel")}}: every new connection the helper
+		logged since the last scan, of a bench user (by its uid) or a bench's container (by its
+		address). The helper is (re)applied when the bench users change."""
+		if self.turn_off:  # `kernel_log: false` with the helper installed: stop the host's logging
+			try:
+				self.run(["sudo", "-n", self.turn_off, "--off"], capture_output=True, text=True, timeout=15)
+			except (OSError, subprocess.SubprocessError):
+				pass
+			self.turn_off = None
+		if not self.helper:
+			return {}
+		uids = sorted(users)
+		if uids != self.applied and tuple(uids) not in self.helper_failed:
+			try:
+				done = self.run(["sudo", "-n", self.helper, *map(str, uids)], capture_output=True, text=True, timeout=15)
+				ok = done.returncode == 0
+				why = (done.stderr or "").strip()[:200]
+			except (OSError, subprocess.SubprocessError) as e:
+				ok, why = False, str(e)
+			if ok:
+				self.applied = uids
+				self.state.setdefault("kernel_since", self._epoch)  # its own learning period starts now
+			else:
+				self.helper_failed.add(tuple(uids))
+				if self.applied is None:
+					log.warning("outbound: %s did not run (%s); sampling /proc only", self.helper, why or "sudo refused")
+				else:
+					log.warning("outbound: %s did not run for the bench users %s (%s); the kernel log still covers %s",
+					            self.helper, uids, why or "sudo refused", self.applied)  # fmt: skip
+		if self.applied is None:
+			return {}
+		if self.kernel_source is None:
+			cursor = os.path.join(os.path.dirname(self.state_path), "outbound-journal.cursor") if self.state_path else None
+			self.kernel_source = (JournalTailer(("kernel",), cursor_file=cursor) if JournalTailer.available()
+			                      else FileTailer(KERN_LOG, self.state["tail"]))  # fmt: skip
+		try:
+			lines = self.kernel_source.read_lines()
+		except OSError:
+			return {}
+		out = {}
+		for line in lines:
+			got = parse_kernel(line)
+			if not got:
+				continue
+			kind, src, dst, port, uid = got
+			key = str(uid) if kind == "out" and uid in users else owner_of.get(src) if kind == "fwd" else None
+			try:
+				if key and public(dst, self.include_private):
+					out.setdefault(key, {}).setdefault(destination(dst, port), (dst, port, None, "kernel"))
+			except ValueError:
+				continue
+		return out
 
 	def _proxied(self, owner_of, host_addresses):
 		"""{subject: {host:port: (remote ip, port, host)}} read since the last scan from the proxy
@@ -431,9 +525,15 @@ class OutboundWatcher:
 	def collect(self, benches, now=None, epoch=None, sockets=None):
 		ts = utc_iso(now)
 		epoch = (now.timestamp() if now else time.time()) if epoch is None else epoch
+		self._epoch = epoch
 		cutoff = epoch - FORGET_DAYS * 86400
 		metrics, events, active = [], [], set()
-		for key, names, conns, how in self.subjects(benches, sockets):
+		subjects = self.subjects(benches, sockets)
+		since = self.state.get("kernel_since")
+		# what only the kernel log sees (connections shorter than a sample) gets its own learning
+		# period from when the helper was installed: not a burst of alerts on a host learned long ago
+		kernel_learning = since is not None and epoch - float(since) < self.learn_seconds
+		for key, names, conns, how in subjects:
 			active.add(key)
 			record = self.state["users"].setdefault(key, {"since": epoch, "seen": {}})
 			record["last"] = epoch
@@ -441,6 +541,10 @@ class OutboundWatcher:
 			since = record.get("since")
 			learning = epoch - float(epoch if since is None else since) < self.learn_seconds
 			bench = names[0] if len(names) == 1 else None
+			if kernel_learning:
+				for dest, value in conns.items():
+					if value[3] == "kernel" and dest not in seen:
+						seen[dest] = epoch
 			new = sorted(d for d in conns if d not in seen)
 			unusual = [d for d in new if conns[d][1] not in self.usual_ports]
 			usual = [d for d in new if conns[d][1] in self.usual_ports]
@@ -453,16 +557,17 @@ class OutboundWatcher:
 					seen[dest] = epoch
 			for dest in report:
 				seen[dest] = epoch  # the rest stays new and comes out at the next scans
-				ip, port, name = conns[dest]
+				ip, port, name, via = conns[dest]
 				is_usual = port in self.usual_ports
 				payload = {"remote_ip": ip, "remote_port": port, "destination": dest, "benches": names, "usual_port": is_usual,
-				           "seen_by": how, "attack_techniques": ATTACK}  # fmt: skip
+				           "seen_by": via, "attack_techniques": ATTACK}  # fmt: skip
 				if name:
 					payload["remote_host"] = name
 				payload = {k: v for k, v in payload.items() if v is not None}
 				payload["note"] = {"host": "sampled every interval; the process is the bench's user, not one pid",
 				                   "container": "sampled every interval in the bench's container",
-				                   "proxy": "from the proxy's access log: every request through it"}[how]  # fmt: skip
+				                   "proxy": "from the proxy's access log: every request through it",
+				                   "kernel": "every new connection, from the kernel log (wolf-outbound-log)"}[via]  # fmt: skip
 				events.append(event(
 					"security", "bench_new_outbound", "info" if is_usual else "warning", ts, self.host,
 					f"{', '.join(names)}: new outbound connection to {name or ip}:{port}"[:255],
@@ -480,3 +585,9 @@ class OutboundWatcher:
 
 	def read(self):
 		return read_sockets(self.proc_root)
+
+	def close(self):
+		"""Release the proxy logs and the kernel log reader (a journalctl process)."""
+		for tailer in list(self.tailers.values()) + [self.kernel_source]:
+			if hasattr(tailer, "close"):
+				tailer.close()
