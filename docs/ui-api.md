@@ -142,7 +142,7 @@ One page of the timeline, oldest first. Arguments: `incident`, `limit` (default 
 | Family | Rows |
 |---|---|
 | `evidence` | Wolf Events linked to the incident, at any time |
-| `context` | Other events in its scope (site, the same bench on the same host, or host-wide) during its window, if the caller may see them, and the deployment before it even when that is older than the window. An incident with no site, bench or host has no context. |
+| `context` | Other events in its scope (site, the same bench on the same host, or host-wide) during its window, if the caller may see them, and the deployment before it even when that is older than the window. When the incident took events from other scopes (by IP or user, or a sequence rule), also the deployments and health events (`error`, `cron_failure`, `worker_failure`, `host_metric_alert`) of those scopes in the window: of the site, of the bench, or of anything on the host. An incident with no site, bench or host has only that second kind. |
 | `activity` | Status changes, assignments, comments and notes, from Frappe's Version and Comment history |
 | `delivery` | Notification attempts (Wolf Delivery) |
 

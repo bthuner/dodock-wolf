@@ -318,18 +318,57 @@ def incident_window(inc):
 	return start, end, padding
 
 
+# What happened around an incident's events from other scopes: changes and health, not their noise.
+HEALTH_TYPES = ("deployment", "error", "cron_failure", "worker_failure", "host_metric_alert")
+MAX_RELATED_SCOPES = 10
+
+
+def related_scopes(incident):
+	"""(host, bench, site) of the events an incident took from other scopes (by IP or user, or a
+	sequence rule), at most MAX_RELATED_SCOPES."""
+	rows = frappe.db.sql(
+		f"""select distinct e.host, e.bench, e.site from `tabWolf Event` e
+		join `tabWolf Incident` i on i.name = e.incident
+		where e.incident = %(incident)s and {out_of_scope("e")}
+		limit {MAX_RELATED_SCOPES}""",
+		{"incident": incident},
+	)
+	return [tuple(r) for r in rows if any(r)]
+
+
+def related_clause(incident):
+	"""(" or (...)", params): health events and deployments of the related scopes. A site matches
+	itself; a bench, its host's bench; a host, everything on it (a Suricata alert on a host and a
+	deployment of one of its benches belong together)."""
+	parts, params = [], {}
+	for n, (host, bench, site) in enumerate(related_scopes(incident)):
+		if site:
+			parts.append(f"`site` = %(rs_site{n})s")
+		elif bench and host:
+			parts.append(f"(`bench` = %(rs_bench{n})s and `host` = %(rs_host{n})s)")
+		else:
+			parts.append(f"`host` = %(rs_host{n})s")
+		params.update({f"rs_site{n}": site, f"rs_bench{n}": bench, f"rs_host{n}": host})
+	if not parts:
+		return "", {}
+	params["health_types"] = HEALTH_TYPES
+	return f" or (`event_type` in %(health_types)s and ({' or '.join(parts)}))", params
+
+
 def get_timeline(incident, limit=300):
-	"""Events linked to the incident plus everything in the same scope during its window."""
+	"""Events linked to the incident, everything in its scope during its window, and the health
+	events and deployments of the scopes its events came from (related_clause)."""
 	inc = frappe.get_doc("Wolf Incident", incident) if isinstance(incident, str) else incident
 	start, end, _padding = incident_window(inc)
 	clause, params = scope_clause(inc.host, inc.bench, inc.site)
-	params.update(incident=inc.name, start=start, end=end, limit=cint(limit))
+	related, related_params = related_clause(inc.name)
+	params.update(related_params, incident=inc.name, start=start, end=end, limit=cint(limit))
 	return frappe.db.sql(
 		f"""select name, title, event_type, category, severity, source, `timestamp`, last_seen,
 			`count`, host, bench, site, incident, payload
 		from `tabWolf Event`
 		where incident = %(incident)s
-			or (`timestamp` between %(start)s and %(end)s and {clause})
+			or (`timestamp` between %(start)s and %(end)s and ({clause}{related}))
 		order by `timestamp` asc
 		limit %(limit)s""",
 		params,

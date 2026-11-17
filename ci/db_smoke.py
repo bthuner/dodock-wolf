@@ -1055,18 +1055,21 @@ def main():
 			pass
 		assert frappe.db.get_value("Wolf Incident", inc.name, "status") == "Resolved"
 
-		# an incident without any scope has evidence only: "same scope" would be every site
+		# an incident without any scope has no context of its own ("same scope" would be every site),
+		# only the health events of the scopes its events came from: here the linked event's site
 		bare = frappe.get_doc({"doctype": "Wolf Incident", "title": "tl bare", "severity": "warning", "status": "Open",
 		                       "started_at": at}).insert()
 		frappe.db.set_value("Wolf Event", linked[0], "incident", bare.name)
 		bare_rows = view.get_timeline(bare.name, families="evidence,context")["rows"]
-		assert [r["id"] for r in bare_rows] == [f"event:{linked[0]}"], [r["id"] for r in bare_rows]
+		assert [r["id"] for r in bare_rows if r["relation"] == "linked"] == [f"event:{linked[0]}"], bare_rows
+		assert {r["scope"]["site"] for r in bare_rows} == {site}, [r["scope"] for r in bare_rows]  # not `other`
+		assert {r["event_type"] for r in bare_rows} <= set(incidents.HEALTH_TYPES), [r["event_type"] for r in bare_rows]
 		frappe.delete_doc("Wolf Incident", bare.name, force=True)
 		frappe.db.delete("Wolf Event", {"name": ("in", linked + context + [hidden])})
 		frappe.db.commit()
 		return (f"{inc.name}: {len(ids)} rows identical at page sizes 1/2/3/7, deployment outside the window shown, "
 		        f"other site hidden, comments as text, 2 accepted + 1 failed deliveries, Wolf User denied, "
-		        f"acknowledged and assigned, stale acknowledge refused, deleted deployment kept, bare incident has no context")
+		        f"acknowledged and assigned, stale acknowledge refused, deleted deployment kept, bare incident has only its linked site's health")
 
 	def dashboards():
 		"""Signals with honest states, HTTP series with gaps and deployments, monitoring."""
@@ -1999,6 +2002,53 @@ def main():
 		        "failed login, late IP, setting off, resolved kept out; own site first; rule evidence returned; "
 		        "scoped user sees its site only")  # fmt: skip
 
+	def timeline_related():
+		"""An incident's timeline shows the changes and health of the scopes its events came from."""
+		from dodock_wolf.api import incident_view
+		from dodock_wolf.wolf import access
+
+		ip, site, tz, at = "45.33.32.230", "story.localhost", events.system_tz(), now_datetime()
+
+		def ev(title, minutes, raw):
+			e = schema.normalize_event({"severity": "warning", "title": title, **raw}, tz, at + timedelta(minutes=minutes))
+			return events.insert_event(e), e
+
+		probe, _ = ev("story probe", -15, {"type": "security", "category": "web_attack_probe", "host": "story-web",
+		                                   "site": site, "payload": {"ip": ip}})  # fmt: skip
+		inc = frappe.get_doc({"doctype": "Wolf Incident", "title": "story incident", "site": site, "severity": "warning",
+		                      "status": "Open", "started_at": at - timedelta(minutes=15)}).insert(ignore_permissions=True)  # fmt: skip
+		incidents.link_events(inc.name, [probe])
+		ids = incidents.attach_to_open_incident(*ev("story ids", -10, {"type": "security", "category": "network_ids_alert",
+		                                                               "host": "story-db", "payload": {"ip": ip}}))  # fmt: skip
+		assert ids == inc.name, ids
+		ev("story deploy", -12, {"type": "deployment", "severity": "info", "host": "story-db", "bench": "db-bench"})
+		ev("story cron", -5, {"type": "cron_failure", "host": "story-db", "bench": "db-bench", "site": "db.localhost"})
+		ev("story noise", -5, {"type": "security", "category": "web_attack_probe", "host": "story-db", "payload": {"ip": "45.33.32.231"}})
+		ev("story elsewhere", -5, {"type": "cron_failure", "host": "story-other", "bench": "x"})
+		ev("story old deploy", -200, {"type": "deployment", "severity": "info", "host": "story-db", "bench": "db-bench"})
+		desk = {r.title for r in incidents.get_timeline(inc.name)}
+		spa = {r["summary"] for r in incident_view.get_timeline(inc.name)["rows"] if r["kind"] in ("event", "deployment")}
+		want = {"story probe", "story ids", "story deploy", "story cron"}
+		assert desk == spa == want, (desk, spa)
+		# a user of the incident's site sees neither the other host's events nor its changes
+		user = "smoke-story@example.com"
+		if not frappe.db.exists("User", user):
+			frappe.get_doc({"doctype": "User", "email": user, "first_name": "Story", "send_welcome_email": 0,
+			                "roles": [{"role": "Wolf User"}]}).insert(ignore_permissions=True)  # fmt: skip
+		frappe.db.delete("Wolf User Scope", {"user": user})
+		frappe.get_doc({"doctype": "Wolf User Scope", "user": user, "scope_type": "site", "value": site}).insert()
+		access.clear_cache()
+		frappe.set_user(user)
+		try:
+			scoped = {r["summary"] for r in incident_view.get_timeline(inc.name)["rows"] if r["kind"] in ("event", "deployment")}
+		finally:
+			frappe.set_user("Administrator")
+			frappe.db.delete("Wolf User Scope", {"user": user})
+			access.clear_cache()
+		assert scoped == {"story probe"}, scoped
+		frappe.db.set_value("Wolf Incident", inc.name, "status", "Resolved")
+		return f"{inc.name}: story-db's deployment and failed cron beside the attack; its probes, other hosts, older events and a site user's view left out"
+
 	def sequence_rules():
 		"""A then B on the same IP, user or host, from the three presets (#72 step 5)."""
 		from dodock_wolf.wolf.presets import PRESETS
@@ -2761,6 +2811,7 @@ def main():
 	                 ("entities", entities_check),
 	                 ("entity correlation", entity_correlation),
 	                 ("sequence rules", sequence_rules),
+	                 ("timeline related scopes", timeline_related),
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
 	                 ("response actions", response_actions), ("response links", response_links), ("journal", journal_chain),
