@@ -48,6 +48,25 @@ PROBES = [
 ]  # fmt: skip
 
 
+# agent checks that have nothing real behind a simulated server
+CHECKS_OFF = {
+	name: False
+	for name in ("tls", "mariadb", "site_settings", "versions", "backups", "processes", "exposure", "integrity", "suricata", "wazuh", "outbound")
+}
+MIGRATE_TRACEBACK = (
+	"Traceback (most recent call last):\n"
+	'  File "apps/frappe/frappe/migrate.py", line 182, in run\n'
+	"    self.run_schema_updates()\n"
+	'  File "apps/frappe/frappe/model/sync.py", line 44, in sync_for\n'
+	"    frappe.db.updatedb(doctype)\n"
+	"pymysql.err.OperationalError: (1054, \"Unknown column 'wolf_demo' in 'tabGL Entry'\")"
+)
+PATCH_FAILURE = (
+	"error: patch failed: erpnext/stock/stock_ledger.py:412\n"
+	"error: erpnext/stock/stock_ledger.py: patch does not apply"
+)
+
+
 def local(at):
 	"""Naive local time, as Python logging, syslog and peewee write it."""
 	return at.astimezone().replace(tzinfo=None)
@@ -68,6 +87,13 @@ def nginx_main(at, host, client, method, path, status, user_agent, proxy="10.0.0
 		f'{proxy} - - [{stamp}] "{method} {path} HTTP/1.1" {status} {size} "-" "{user_agent}" '
 		f'"{client}" "{host}" {took:.3f}'
 	)
+
+
+def nginx_vhost(at, host, client, method, path, status, user_agent, size=None, took=0.05):
+	"""`vhost_combined`-like: `$host` first, then the combined format; the client is direct."""
+	stamp = at.astimezone().strftime("%d/%b/%Y:%H:%M:%S %z")
+	size = 157 if status == 502 else (size if size is not None else 1800)
+	return f'{host} {client} - - [{stamp}] "{method} {path} HTTP/1.1" {status} {size} "-" "{user_agent}"'
 
 
 def pylog(at, level, logger, message):
@@ -131,7 +157,7 @@ def _client(rng, site):
 	return rng.choice(site.clients)
 
 
-def requests(rng, site, start, end, outage=None):
+def requests(rng, site, start, end, outage=None, line=nginx_main):
 	"""nginx lines for `site` in [start, end). `outage` is the share of requests answered 502
 	(the backend is down); clients retry then, so traffic does not drop below 6 a minute."""
 	minutes = (end - start).total_seconds() / 60
@@ -154,11 +180,11 @@ def requests(rng, site, start, end, outage=None):
 			status = 200
 		host = rng.choice(site.domains) if site.domains and rng.random() < 0.3 else site.name
 		took = rng.uniform(0.02, 0.4) if status != 502 else 0.001
-		lines.append((at, nginx_main(at, host, _client(rng, site), method, path, status, rng.choice(USER_AGENTS), took=took)))
+		lines.append((at, line(at, host, _client(rng, site), method, path, status, rng.choice(USER_AGENTS), took=took)))
 	return lines
 
 
-def web_scan(rng, site, start, minutes, count, attacker):
+def web_scan(rng, site, start, minutes, count, attacker, line=nginx_main):
 	"""`count` probes from one scanner over `minutes`: what the Web attack scan preset catches."""
 	ua = rng.choice(SCANNER_AGENTS)
 	out = []
@@ -166,7 +192,7 @@ def web_scan(rng, site, start, minutes, count, attacker):
 		at = start + timedelta(seconds=minutes * 60 * i / count)
 		path = PROBES[i % len(PROBES)]
 		status = 404 if rng.random() < 0.9 else 403
-		out.append((at, nginx_main(at, site.name, attacker, "GET", path, status, ua, size=146, took=0.002)))
+		out.append((at, line(at, site.name, attacker, "GET", path, status, ua, size=146, took=0.002)))
 	return out
 
 

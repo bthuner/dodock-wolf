@@ -184,16 +184,16 @@ def cmd_mark_deployment(args):
 
 def cmd_demo(args):
 	"""Lay out a demo server for this agent, backfill its history, then keep it alive."""
-	from .demo.press import PressDemo
+	from .demo import build
 
 	path, cfg = _load(args)
-	demo = PressDemo(args.root, host=cfg["hostname"], spool_dir=cfg["spool_dir"])
+	demo = build(args.kind, cfg, root=args.root)
 	if args.configure:
 		with open(path) as f:
 			raw = json.load(f)
 		raw.update(demo.agent_overrides())
 		save_config(path, raw)
-		print(f"{path}: Press mode on {demo.root}; restart the agent")
+		print(f"{path}: {args.kind} demo in {demo.root} ({demo.host}); restart the agent")
 		return
 	stop = threading.Event()
 	for sig in (signal.SIGTERM, signal.SIGINT):
@@ -280,8 +280,11 @@ def build_parser():
 		"test-fallback", help="send a test message through the watchdog fallback channel(s)"
 	).set_defaults(func=cmd_test_fallback)
 	dm = sub.add_parser("demo", help="write live demo data where this agent reads it (dev/demo/README.md)")
-	dm.add_argument("kind", choices=["press"], help="press: a Press app server with 3 benches and 8 sites")
-	dm.add_argument("--root", default="/home/frappe/demo-press", help="where to lay out the demo server")
+	dm.add_argument(
+		"kind", choices=["press", "multi", "single"],
+		help="press: a Press app server, 3 benches, 8 sites; multi: 2 benches, 6 sites; single: 1 bench, 1 site",
+	)  # fmt: skip
+	dm.add_argument("--root", help="where to lay out the demo server (default /home/frappe/demo-<kind>)")
 	dm.add_argument("--days", type=float, default=7, help="history to write before going live (default 7)")
 	dm.add_argument("--no-live", action="store_true", help="write the history and exit")
 	dm.add_argument("--cycle", type=int, default=30, help="minutes between live incident cycles (default 30)")
