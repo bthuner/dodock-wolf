@@ -3,6 +3,7 @@ from frappe import _
 from frappe.utils import cint, now_datetime
 
 from dodock_wolf import satellite
+from dodock_wolf.api import detectors
 from dodock_wolf.api.agent import _request_json, authenticate_agent, push_interval
 from dodock_wolf.wolf import events, health, rate, schema, silences
 from dodock_wolf.wolf.incidents import attach_to_open_incident
@@ -152,10 +153,14 @@ def store_batch(agent, metrics, events_in, correlate=None, attempt=None):
 		correlate = not satellite.is_satellite()  # a satellite opens no incidents
 	try:
 		events.insert_metrics(metrics, agent=agent)
+		dropper = detectors.Dropper()  # `external` mode: Wolf's own detector gives way (#72 step 4)
 		for event in events_in:
+			if dropper.drop(event):
+				continue
 			name = events.insert_event(event, agent=agent)
 			if correlate:
 				attach_to_open_incident(name, event)
+		detectors.record_dropped(agent, dropper.dropped)
 		frappe.db.commit()
 	except Exception:
 		if attempt is None:
@@ -170,7 +175,7 @@ def store_batch(agent, metrics, events_in, correlate=None, attempt=None):
 		)
 		frappe.db.commit()
 		return None
-	return {"metrics": len(metrics), "events": len(events_in)}
+	return {"metrics": len(metrics), "events": len(events_in) - dropper.dropped, "dropped": dropper.dropped}
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET", "POST"])

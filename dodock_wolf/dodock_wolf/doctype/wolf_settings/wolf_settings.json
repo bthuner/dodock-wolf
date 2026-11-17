@@ -31,6 +31,11 @@
   "timeline_padding_minutes",
   "correlate_by_entity",
   "entity_correlation_minutes",
+  "detectors_section",
+  "web_detection_mode",
+  "cb_detectors",
+  "host_detection_mode",
+  "detector_match_minutes",
   "local_section",
   "capture_scheduler_failures",
   "capture_error_logs",
@@ -274,6 +279,39 @@
    "fieldname": "entity_correlation_minutes",
    "fieldtype": "Int",
    "label": "Entity Correlation Minutes"
+  },
+  {
+   "fieldname": "detectors_section",
+   "fieldtype": "Section Break",
+   "label": "Overlapping detectors",
+   "description": "Where Wolf's own detection and Suricata or Wazuh see the same thing. own: Wolf's detector, as when it works alone. both: keep both; an event and the other source's alert about the same IP and technique are one finding (the later one is marked as such and not sent again to CrowdSec or the SIEM). external: drop Wolf's own events of that detector while the other source reports from the host; if it is quiet for an hour, Wolf's come back."
+  },
+  {
+   "default": "own",
+   "description": "nginx web probes (web_attack_probe) vs Suricata alerts (network_ids_alert).",
+   "fieldname": "web_detection_mode",
+   "fieldtype": "Select",
+   "label": "Web Attacks",
+   "options": "own\nboth\nexternal"
+  },
+  {
+   "fieldname": "cb_detectors",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "own",
+   "description": "auth.log signals (SSH, sudo, accounts) vs Wazuh alerts (hids_alert).",
+   "fieldname": "host_detection_mode",
+   "fieldtype": "Select",
+   "label": "Host Logins and Accounts",
+   "options": "own\nboth\nexternal"
+  },
+  {
+   "default": "10",
+   "description": "In both mode, how close in time two events must be to be one finding.",
+   "fieldname": "detector_match_minutes",
+   "fieldtype": "Int",
+   "label": "Detector Match Minutes"
   },
   {
    "fieldname": "local_section",
@@ -688,7 +726,7 @@
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-17 12:30:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Settings",

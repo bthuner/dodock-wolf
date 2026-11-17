@@ -272,6 +272,26 @@ oldest entries are purged every night after a signed purge record that verificat
 go every minute to a syslog collector (UniSOC, Wazuh, Graylog...) as RFC 5424 carrying OCSF JSON
 or CEF, over TCP, TLS or UDP. Nothing is skipped while the collector is down.
 
+**Overlapping detectors** (Wolf Settings → Overlapping detectors): where Wolf's own detection and
+Suricata or Wazuh see the same thing, one mode each, **Web Attacks** (the agent's nginx web probes
+vs Suricata) and **Host Logins and Accounts** (auth.log signals vs Wazuh):
+
+- `own` (default): as when Wolf works alone; both are stored and counted on their own.
+- `both`: a Wolf event and the other source's alert about the same remote IP, with an ATT&CK
+  technique in common when both name some, within **Detector Match Minutes** (10), are one
+  finding. The later one is stored as **Same Finding As** the first: it stays on the timeline
+  ("same finding as …") and in its own rules, and is not sent again to CrowdSec or the SIEM
+  when the first was (a critical alert linked to a warning one still goes to a collector that
+  takes critical only).
+- `external`: Wolf's own events of that detector are dropped at ingest while Suricata or Wazuh
+  has sent, in the last hour, an alert about the same host (under any of its names) that watches
+  the same thing: for Wazuh an authentication, SSH, sudo or account rule, or an ATT&CK technique
+  of the auth signals; for Suricata an alert with HTTP context or a web technique. A Wazuh
+  file-integrity alert does not stand in for SSH detection. When it goes quiet, Wolf's come back.
+  Each Wolf Agent counts the events it sent that gave way (**Own Events Given Way**).
+
+Every timeline row says who raised the event: the Wolf agent, the Wolf site, Suricata or Wazuh.
+
 **Public status pages** (opt-in): a **Wolf Status Page** (title, slug, site, optional bench,
 history days, minimum severity) is served to guests at `/wolf-status/<slug>` once **Enabled** is
 ticked; otherwise the address answers 404. It shows an overall banner, open incidents and the

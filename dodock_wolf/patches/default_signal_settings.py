@@ -20,6 +20,9 @@ DEFAULTS = {
 	"crowdsec_apply_blocks": 1,
 	"correlate_by_entity": 1,
 	"entity_correlation_minutes": 60,
+	"web_detection_mode": "own",
+	"host_detection_mode": "own",
+	"detector_match_minutes": 10,
 }
 
 
