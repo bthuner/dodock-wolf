@@ -141,8 +141,9 @@ def get_metric_series(host, metrics=None, range="6h", site=None):
 def get_incident_timeline(incident):
 	doc = frappe.get_doc("Wolf Incident", incident)
 	doc.check_permission("read")
-	# the incident is visible, but its time window may hold other scopes' events
-	rows = [r for r in get_timeline(doc) if r.incident == doc.name or access.visible("Wolf Event", r)]
+	# the incident is visible, but its time window, and the events it took from other scopes by
+	# IP or user, may hold events of scopes this user cannot read
+	rows = [r for r in get_timeline(doc) if access.visible("Wolf Event", r)]
 	for r in rows:
 		r.payload = parse_payload(r)
 		r.linked = r.incident == doc.name

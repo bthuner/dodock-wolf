@@ -18,6 +18,8 @@ DEFAULTS = {
 	"crowdsec_send_detections": 1,
 	"crowdsec_min_severity": "warning",
 	"crowdsec_apply_blocks": 1,
+	"correlate_by_entity": 1,
+	"entity_correlation_minutes": 60,
 }
 
 

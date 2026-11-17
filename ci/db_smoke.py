@@ -1902,6 +1902,102 @@ def main():
 		alias.delete(ignore_permissions=True)
 		return f"{sources_of(by_ip)} by IP, {sources_of(by_host)} by host under 3 names, site by domain, purge"
 
+	def entity_correlation():
+		"""Events of other scopes and sources join the incident naming the same IP (#72 step 5)."""
+		from dodock_wolf.api import incident_view
+		from dodock_wolf.wolf import access
+
+		ip, site, tz = "45.33.32.202", "corr.localhost", events.system_tz()
+		at = now_datetime()
+
+		def ev(raw, minutes=0):
+			e = schema.normalize_event({"type": "security", "severity": "warning", **raw}, tz, at + timedelta(minutes=minutes))
+			return events.insert_event(e), e
+
+		def attach(raw, minutes=0):
+			return incidents.attach_to_open_incident(*ev(raw, minutes))
+
+		def ids(title, src, **kw):
+			return {"category": "network_ids_alert", "source": "suricata", "host": "corr-ids", "title": title,
+			        "payload": {"ip": src, "src_ip": src, "dest_ip": "10.77.0.1"}, **kw}  # fmt: skip
+
+		def incident(title, **scope):
+			return frappe.get_doc({"doctype": "Wolf Incident", "title": title, "severity": "warning", "status": "Open",
+			                       "started_at": at - timedelta(minutes=20), **scope}).insert(ignore_permissions=True)  # fmt: skip
+
+		probe, _ = ev({"category": "web_attack_probe", "source": "nginx", "host": "corr-web", "site": site,
+		               "title": "corr probe", "payload": {"ip": ip, "users": ["Jane@Corr.example"]}}, -20)  # fmt: skip
+		inc = incident("corr incident", site=site)
+		incidents.link_events(inc.name, [probe])
+		first, first_event = ev(ids("corr ids", ip))
+		assert incidents.attach_to_open_incident(first, first_event) == inc.name, "same IP on another host not grouped"
+		# a repeat folded into a linked event stays where it is
+		assert incidents.attach_to_open_incident(first, first_event) == inc.name
+		assert attach({"category": "new_admin_ip", "source": "frappe", "host": "corr-other", "site": "corr-b.localhost",
+		               "title": "corr admin", "payload": {"user": "jane@corr.example"}}) == inc.name, "same e-mail user not grouped"  # fmt: skip
+		kept_out = {
+			"another attacker hitting the same server": ids("corr other attacker", "45.33.32.203"),
+			"a private address": ids("corr private", "10.20.0.9"),
+			"a login name": {"category": "ssh_accepted", "source": "auth", "host": "corr-hids", "title": "corr root",
+			                 "payload": {"user": "root"}},
+			"a failed login naming the user": {"category": "frappe_failed_login", "source": "frappe", "host": "corr-other",
+			                                   "site": "corr-c.localhost", "title": "corr failed",
+			                                   "payload": {"user": "jane@corr.example", "ip": "198.51.100.40"}},
+		}  # fmt: skip
+		for why, raw in kept_out.items():
+			got = attach(raw)
+			assert got is None, f"{why} grouped into {got}"
+		assert attach(ids("corr late", ip), 200) is None, "an IP seen 3 hours later grouped"
+
+		# an open incident of the event's own site comes first
+		own = incident("corr own site", site="corr-d.localhost")
+		assert attach(ids("corr own", ip, site="corr-d.localhost")) == own.name, "own site's incident not preferred"
+		# a rule's evidence is its own: its events come back from the incident that took them by IP
+		taken, taken_event = ev(ids("corr taken", ip, host="corr-e"))
+		assert incidents.attach_to_open_incident(taken, taken_event) == inc.name
+		host_inc = incident("corr host", host="corr-e")
+		incidents.link_events(host_inc.name, [taken, probe])
+		assert frappe.db.get_value("Wolf Event", taken, "incident") == host_inc.name, "rule evidence left elsewhere"
+		assert frappe.db.get_value("Wolf Event", probe, "incident") == inc.name, "in-scope evidence moved"
+		assert frappe.db.get_value("Wolf Incident", inc.name, "event_count") == 3, "count not refreshed"
+
+		frappe.db.set_single_value("Wolf Settings", "correlate_by_entity", 0)
+		frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+		try:
+			off = attach(ids("corr off", ip))
+		finally:
+			frappe.db.set_single_value("Wolf Settings", "correlate_by_entity", 1)
+			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+		assert off is None, f"grouped by IP with the setting off: {off}"
+		assert frappe.db.get_single_value("Wolf Settings", "correlate_by_entity") == 1, "not on by default"
+
+		timeline = {r.title for r in incidents.get_timeline(inc.name)}
+		assert {"corr probe", "corr ids", "corr admin"} <= timeline, timeline
+		# a user of the incident's site does not see the events it took from other scopes
+		user = "smoke-corr@example.com"
+		if not frappe.db.exists("User", user):
+			frappe.get_doc({"doctype": "User", "email": user, "first_name": "Corr", "send_welcome_email": 0,
+			                "roles": [{"role": "Wolf User"}]}).insert(ignore_permissions=True)  # fmt: skip
+		frappe.db.delete("Wolf User Scope", {"user": user})
+		frappe.get_doc({"doctype": "Wolf User Scope", "user": user, "scope_type": "site", "value": site}).insert()
+		access.clear_cache()
+		frappe.set_user(user)
+		try:
+			desk = {r["title"] for r in ui.get_incident_timeline(inc.name)["events"]}
+			spa = {r["summary"] for r in incident_view.get_timeline(inc.name)["rows"] if r["kind"] == "event"}
+		finally:
+			frappe.set_user("Administrator")
+			frappe.db.delete("Wolf User Scope", {"user": user})
+			access.clear_cache()
+		assert desk == spa == {"corr probe"}, (desk, spa)
+
+		for name in (inc.name, own.name, host_inc.name):  # own and host_inc hold events of the IP too
+			frappe.db.set_value("Wolf Incident", name, "status", "Resolved")
+		assert attach(ids("corr after", ip)) is None, "attached to a resolved incident"
+		return (f"{inc.name}: probe + Suricata on another host + e-mail user; other attacker, private IP, login name, "
+		        "failed login, late IP, setting off, resolved kept out; own site first; rule evidence returned; "
+		        "scoped user sees its site only")  # fmt: skip
+
 	def crowdsec_check():
 		"""CrowdSec LAPI (a local stand-in): decisions tag events, detections and approved blocks go out."""
 		from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -2582,6 +2678,7 @@ def main():
 	                 ("wazuh events", wazuh_events),
 	                 ("wazuh integration", wazuh_integration),
 	                 ("entities", entities_check),
+	                 ("entity correlation", entity_correlation),
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
 	                 ("response actions", response_actions), ("response links", response_links), ("journal", journal_chain),
