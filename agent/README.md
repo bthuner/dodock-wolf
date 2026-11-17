@@ -186,7 +186,9 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   by root is skipped. `outbound.include_private` adds LAN peers. Benches in containers (Docker,
   Press) are found without root through `/proc/<pid>/cgroup` and `mountinfo` and read through
   `/proc/<pid>/net/tcp`. Behind an outbound proxy, the proxy's access log gives every destination
-  by host name (`outbound.proxy_logs`, `/var/log/squid/access.log` by default when it exists).
+  by host name (`outbound.proxy_logs`, `/var/log/squid/access.log` by default when it exists; Squid's
+  native format; the installer adds the agent's user to the `proxy` group to read it). A client of
+  the proxy that is neither a bench's container nor the host itself is left out.
   Read from `/proc`, a connection that opens and closes between two samples is missed.
 - **TLS**: `tls_days_left` for every public site name and custom domain (`site_config.json`
   `domains`), every `tls.interval` (1 h), in a background thread. The agent connects to

@@ -103,54 +103,128 @@ def read_sockets(proc_root="/proc/net"):
 # --- benches in containers (Docker, Press, Podman): no root needed --------------------------
 
 CGROUP_RE = re.compile(r"(?:docker-|/docker/|cri-containerd-|crio-|libpod-)([0-9a-f]{64})")
+# any other layout naming the container by its id (kubepods with the cgroupfs driver, nerdctl)
+CGROUP_FALLBACK_RE = re.compile(r"/([0-9a-f]{64})(?:\.scope)?$", re.M)
 
 
-def containers(proc="/proc"):
-	"""{container id: its lowest pid}, from /proc/<pid>/cgroup (readable by anyone)."""
+def container_id(cgroup_text):
+	m = CGROUP_RE.search(cgroup_text) or CGROUP_FALLBACK_RE.search(cgroup_text)
+	return m.group(1) if m else None
+
+
+def containers(proc="/proc", cache=None):
+	"""{container id: its lowest pid}, from /proc/<pid>/cgroup (readable by anyone). `cache`
+	({pid: (start, id)}) skips the cgroup of a process already read: a pid's /proc entry keeps its
+	time until the pid is reused."""
 	out = {}
 	try:
 		pids = [int(p) for p in os.listdir(proc) if p.isdigit()]
 	except OSError:
 		return out
+	fresh = {}
 	for pid in sorted(pids):
 		try:
-			with open(os.path.join(proc, str(pid), "cgroup")) as f:
-				m = CGROUP_RE.search(f.read())
+			start = os.stat(os.path.join(proc, str(pid))).st_ctime_ns
+			cached = (cache or {}).get(pid)
+			if cached and cached[0] == start:
+				cid = cached[1]
+			else:
+				with open(os.path.join(proc, str(pid), "cgroup")) as f:
+					cid = container_id(f.read())
 		except OSError:
 			continue
-		if m and m.group(1) not in out:
-			out[m.group(1)] = pid
+		fresh[pid] = (start, cid)
+		if cid and cid not in out:
+			out[cid] = pid
+	if cache is not None:
+		cache.clear()
+		cache.update(fresh)
 	return out
 
 
-def _suffixes(path):
-	"""The path and its tails of two components or more: a bind mount from a separate /home
-	partition shows `/frappe/benches/b1/sites`, not `/home/frappe/benches/b1/sites`."""
-	parts = [p for p in os.path.normpath(path).split(os.sep) if p]
-	return ["/" + "/".join(parts[i:]) for i in range(len(parts) - 1)]
-
-
-def container_bench(pid, benches, proc="/proc"):
-	"""The bench a container belongs to: the one whose folder (or a folder in it) it mounts, from
-	/proc/<pid>/mountinfo (readable by anyone), longest match first."""
+def mount_lines(path):
+	"""(maj:min, root inside its filesystem, mount point) of each line of a mountinfo file."""
 	try:
-		with open(os.path.join(proc, str(pid), "mountinfo")) as f:
-			roots = [line.split()[3] for line in f if len(line.split()) > 4]
+		with open(path) as f:
+			return [(p[2], p[3], p[4]) for p in (line.split() for line in f) if len(p) > 4]
 	except OSError:
-		return None
-	best = None
+		return []
+
+
+def bench_filesystems(benches, self_mountinfo="/proc/self/mountinfo"):
+	"""{bench name: (maj:min, its path inside that filesystem)}: what a container mounting it shows
+	in its own mountinfo, whatever the bench path is on the host."""
+	mounts = mount_lines(self_mountinfo)
+	out = {}
 	for bench in benches:
-		for suffix in _suffixes(bench.get("path") or ""):
-			if any(r == suffix or r.startswith(suffix + "/") for r in roots):
-				if best is None or len(suffix) > best[0]:
-					best = (len(suffix), bench.get("name"))
-				break
-	return best[1] if best else None
+		path = os.path.realpath(bench.get("path") or "")
+		try:
+			st = os.stat(path)
+		except OSError:
+			continue
+		dev = f"{os.major(st.st_dev)}:{os.minor(st.st_dev)}"
+		best = None  # the mount of that device holding the bench, deepest mount point first
+		for majmin, root, point in mounts:
+			if majmin == dev and (path == point or path.startswith(point.rstrip("/") + "/")):
+				if best is None or len(point) > len(best[1]):
+					best = (root, point)
+		if best:
+			rel = path[len(best[1].rstrip("/")):] or "/"
+			out[bench.get("name")] = (dev, os.path.normpath(best[0].rstrip("/") + "/" + rel.lstrip("/")))
+	return out
+
+
+def container_bench(pid, filesystems, proc="/proc"):
+	"""The bench a container belongs to: one that mounts the bench folder (or a folder in it) from
+	the same filesystem, from /proc/<pid>/mountinfo (readable by anyone)."""
+	for majmin, root, _point in mount_lines(os.path.join(proc, str(pid), "mountinfo")):
+		for name, (dev, rel) in sorted(filesystems.items(), key=lambda kv: -len(kv[1][1])):
+			if majmin == dev and (root == rel or root.startswith(rel.rstrip("/") + "/")):
+				return name
+	return None
+
+
+def local_addresses(net_dir):
+	"""The addresses of a network namespace, from fib_trie (IPv4 `/32 host LOCAL`) and if_inet6."""
+	out = set()
+	try:
+		with open(os.path.join(net_dir, "fib_trie")) as f:
+			last = None
+			for line in f:
+				text = line.strip()
+				if text.startswith("|--"):
+					last = text[3:].strip()
+				elif "/32 host LOCAL" in text and last:
+					out.add(last)
+	except OSError:
+		pass
+	try:
+		with open(os.path.join(net_dir, "if_inet6")) as f:
+			for line in f:
+				word = line.split()[0] if line.split() else ""
+				if len(word) == 32:
+					out.add(str(ipaddress.IPv6Address(int(word, 16))))
+	except (OSError, ValueError):
+		pass
+	return {a for a in out if not ipaddress.ip_address(a).is_loopback}
 
 
 # --- outbound proxies: the real destinations, from the proxy's access log -------------------
 
 DEFAULT_PROXY_LOGS = [{"path": "/var/log/squid/access.log", "format": "squid"}]
+
+
+def proxy_specs(value):
+	"""[{"path", "format"}] from `outbound.proxy_logs`: a path alone means Squid; anything else is
+	dropped with a warning, so one bad entry does not stop outbound detection."""
+	out = []
+	for item in DEFAULT_PROXY_LOGS if value is None else (value or []):
+		spec = {"path": item, "format": "squid"} if isinstance(item, str) else item
+		if isinstance(spec, dict) and spec.get("path") and (spec.get("format") or "squid") in PROXY_PARSERS:
+			out.append({"path": spec["path"], "format": spec.get("format") or "squid"})
+		else:
+			log.warning("outbound.proxy_logs: %r is not {\"path\", \"format\": \"squid\"}, ignored", item)
+	return out
 
 
 def parse_squid(line):
@@ -241,7 +315,7 @@ class OutboundWatcher:
 	(`bench:<name>`), or the host's benches behind a proxy (`proxy:host`)."""
 
 	def __init__(self, host, state_path=None, learn_days=7, include_private=False, proc_root="/proc/net", usual_ports=None,
-	             report_usual_ports=False, proc="/proc", proxy_logs=None):  # fmt: skip
+	             report_usual_ports=False, proc="/proc", proxy_logs=None, self_mountinfo="/proc/self/mountinfo"):  # fmt: skip
 		self.host = host
 		self.state_path = state_path
 		self.learn_seconds = float(learn_days) * 86400
@@ -250,9 +324,13 @@ class OutboundWatcher:
 		self.report_usual_ports = report_usual_ports
 		self.proc_root = proc_root
 		self.proc = proc
-		self.proxy_logs = DEFAULT_PROXY_LOGS if proxy_logs is None else list(proxy_logs)
+		self.proxy_logs = proxy_specs(proxy_logs)
+		self.self_mountinfo = self_mountinfo
 		self.state = self._load()
 		self.tailers = {}
+		self.cgroups = {}  # pid -> (start, container id)
+		self.absent = set()  # proxy logs missing at a scan: read from their start once they appear
+		self.unreadable = set()  # proxy logs already warned about
 
 	def _load(self):
 		if not self.state_path or not os.path.exists(self.state_path):
@@ -280,49 +358,62 @@ class OutboundWatcher:
 			log.warning("could not save the outbound record: %s", e)
 
 	def subjects(self, benches, sockets=None):
-		"""[(key, bench names, {destination: (ip, port, host)}, how)] for this scan."""
-		out = []
+		"""[(key, bench names, {destination: (ip, port, host)}, how)] for this scan, one per key."""
+		merged, order = {}, []
+
+		def add(key, names, conns, how):
+			if key not in merged:
+				merged[key] = (names, {}, how)
+				order.append(key)
+			merged[key][1].update(conns)  # several containers of one bench: one subject
+
 		users = bench_users(benches)
 		host_sockets, host_inodes = read_table(self.proc_root) if sockets is None else (sockets, set())
 		by_uid = outbound(host_sockets, set(users), self.include_private)
 		for uid, names in sorted(users.items()):
-			out.append((str(uid), names, by_uid.get(uid, {}), "host"))
-		local_of = {}  # a container's addresses: who a proxy's client is
-		for _cid, pid in sorted(containers(self.proc).items(), key=lambda kv: kv[1]):
-			name = container_bench(pid, benches, self.proc)
+			add(str(uid), names, by_uid.get(uid, {}), "host")
+		filesystems = bench_filesystems(benches, self.self_mountinfo)
+		owner_of = {}  # a container's addresses: who a proxy's client is
+		for _cid, pid in sorted(containers(self.proc, self.cgroups).items(), key=lambda kv: kv[1]):
+			name = container_bench(pid, filesystems, self.proc)
 			if not name:
 				continue
-			table, inodes = read_table(os.path.join(self.proc, str(pid), "net"))
-			if inodes and inodes <= host_inodes:
-				continue  # host networking: the host's own table already has it
-			for _state, laddr, _lp, _r, _rp, _u in table:
-				try:
-					if not ipaddress.ip_address(laddr).is_loopback and not ipaddress.ip_address(laddr).is_unspecified:
-						local_of[laddr] = f"bench:{name}"
-				except ValueError:
-					continue
+			net_dir = os.path.join(self.proc, str(pid), "net")
+			table, inodes = read_table(net_dir)
+			if inodes & host_inodes:
+				continue  # a socket lives in one network: this container uses the host's, already read
+			for address in local_addresses(net_dir):
+				owner_of[address] = f"bench:{name}"
 			conns = {}
 			for found in outbound(table, None, self.include_private).values():
 				conns.update(found)
-			out.append((f"bench:{name}", [name], conns, "container"))
-		proxied = self._proxied(local_of)
-		host_names = sorted({n for _k, names, _c, how in out if how == "host" for n in names})
-		for key, conns in sorted(proxied.items()):
+			add(f"bench:{name}", [name], conns, "container")
+		host_names = sorted({n for key in order if merged[key][2] == "host" for n in merged[key][0]})
+		host_addresses = local_addresses(self.proc_root) | {"127.0.0.1", "::1"}
+		for key, conns in sorted(self._proxied(owner_of, host_addresses).items()):
 			names = [key.split(":", 1)[1]] if key.startswith("bench:") else host_names
 			if names:
-				out.append((f"proxy:{key}", names, conns, "proxy"))
-		return out
+				add(f"proxy:{key}", names, conns, "proxy")
+		return [(key, *merged[key]) for key in order]
 
-	def _proxied(self, local_of):
-		"""{subject: {host:port: (remote ip, port, host)}} read since the last scan from the proxy logs."""
+	def _proxied(self, owner_of, host_addresses):
+		"""{subject: {host:port: (remote ip, port, host)}} read since the last scan from the proxy
+		logs. A client is a bench's container, or the host itself (all its benches); any other
+		client of a shared proxy (a LAN machine) is not a bench's and is left out."""
 		out = {}
 		for spec in self.proxy_logs:
-			path, parse_line = spec.get("path"), PROXY_PARSERS.get(spec.get("format") or "squid")
-			if not path or not parse_line or not os.path.isfile(path):
+			path, parse_line = spec["path"], PROXY_PARSERS[spec["format"]]
+			if not os.path.isfile(path):
+				folder = os.path.dirname(path)
+				if os.path.isdir(folder) and not os.access(folder, os.R_OK | os.X_OK) and path not in self.unreadable:
+					self.unreadable.add(path)
+					log.warning("outbound: cannot read %s; add the agent's user to the proxy's group (proxy for Squid)", path)
+				self.absent.add(path)
 				continue
-			tailer = self.tailers.get(path) or self.tailers.setdefault(path, FileTailer(path, self.state["tail"]))
+			if path not in self.tailers:  # a log that appeared after the agent started is read from its start
+				self.tailers[path] = FileTailer(path, self.state["tail"], from_start=path in self.absent)
 			try:
-				lines = tailer.read_lines()
+				lines = self.tailers[path].read_lines()
 			except OSError:
 				continue
 			for line in lines:
@@ -332,8 +423,9 @@ class OutboundWatcher:
 				client, name, port, remote = got
 				if remote and not public(remote, self.include_private):
 					continue
-				subject = local_of.get(client, "host")
-				out.setdefault(subject, {}).setdefault(f"{name}:{port}", (remote, port, name))
+				subject = owner_of.get(client) or ("host" if client in host_addresses else None)
+				if subject:
+					out.setdefault(subject, {}).setdefault(f"{name}:{port}", (remote, port, name))
 		return out
 
 	def collect(self, benches, now=None, epoch=None, sockets=None):
