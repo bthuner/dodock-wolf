@@ -21,7 +21,7 @@ const localePath = useLocalePath()
       <NuxtLink
         :to="localePath('/')"
         class="focus-visible:outline-3 outline-primary/25 rounded-md p-1 -ms-1"
-        aria-label="Frappe Wolf"
+        aria-label="Dodock Wolf"
       >
         <AppLogo />
       </NuxtLink>

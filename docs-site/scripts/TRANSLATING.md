@@ -13,7 +13,7 @@ file name (number prefix included) and the same `.navigation.yml` structure.
   (`cron_failure`, `web_attack_probe`), metric names, HTTP fields. Translate only comments inside
   code blocks when they are prose (`# then restart…`), and the label after the language
   (```` ```bash [hôte] ````) only when it is prose.
-- Names: Frappe Wolf, Wolf Agent, Wolf App, Wolf UI, Desk, Press, Pilot, bench, and DocType names
+- Names: Dodock Wolf, Wolf Agent, Wolf App, Wolf UI, Desk, Press, Pilot, bench, and DocType names
   (**Wolf Alert Rule**, **Wolf Incident**…).
 - UI labels in bold stay in English, as the Wolf UI and Desk show them today: **Wolf Settings →
   Retention**, **Send test notification**, **Assign to me**. On first use in a page you may add a

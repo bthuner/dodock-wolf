@@ -14,7 +14,7 @@ export default defineAppConfig({
     }
   },
   seo: {
-    siteName: 'Frappe Wolf'
+    siteName: 'Dodock Wolf'
   },
   repo,
   header: {

@@ -15,7 +15,9 @@ before customers notice, and keeps all data on your own Frappe site.
   auth logs, reads `/proc`, and ships batches over HTTPS.
 - **Security**: web attack and host intrusion detection, MITRE ATT&CK tags on every security
   event, and a roadmap towards a Frappe-native SOC layer: [`docs/cyber.md`](docs/cyber.md).
-- Wire protocol: [`docs/protocol.md`](docs/protocol.md). The design story is in the [making-of](https://bthuner.github.io/dodock-wolf/).
+- **Documentation**: [bthuner.github.io/dodock-wolf](https://bthuner.github.io/dodock-wolf/), in English
+  and French (source in [`docs-site/`](docs-site/)).
+- Wire protocol: [`docs/protocol.md`](docs/protocol.md). The design story is in the [making-of](https://bthuner.github.io/dodock-wolf/making-of/).
 
 ## Install the app
 

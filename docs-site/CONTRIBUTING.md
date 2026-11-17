@@ -1,4 +1,4 @@
-# Writing the Frappe Wolf docs
+# Writing the Dodock Wolf docs
 
 The site is Nuxt 4 + Nuxt UI 4 + Nuxt Content 3, the same stack as doc.dokos.io.
 
@@ -7,6 +7,20 @@ nvm use            # Node 24 (.nvmrc)
 yarn install
 yarn dev           # http://localhost:3000, French at /fr
 yarn generate      # static site in .output/public
+yarn check:links   # every internal link and #anchor of that build
+```
+
+## Publishing
+
+`.github/workflows/pages.yml` publishes the site to GitHub Pages on every push to `main` that
+touches `docs-site/`: <https://bthuner.github.io/dodock-wolf/>, with the making-of page at
+`/making-of/`. It builds with `NUXT_APP_BASE_URL=/dodock-wolf/`, so files of `public/` referenced
+from code go through `usePublicPath()` (router links get the base by themselves). To preview that
+build locally:
+
+```bash
+NUXT_APP_BASE_URL=/dodock-wolf/ yarn generate
+NUXT_APP_BASE_URL=/dodock-wolf/ yarn check:links
 ```
 
 ## Layout
@@ -129,7 +143,7 @@ From `docs/making-of/brand.md`:
 1. State, don't dramatise. Numbers over adjectives: "count ≥ 10 in 5 min", not "many errors".
 2. Lead with scope: site, then bench, then host.
 3. One wolf metaphor per page at most. The product is a tool.
-4. Names: *Frappe Wolf* (the product), *Wolf Agent* (the host daemon), *Wolf App* (the Frappe
+4. Names: *Dodock Wolf* (the product), *Wolf Agent* (the host daemon), *Wolf App* (the Frappe
    app). DocTypes keep their technical names (**Wolf Alert Rule**).
 5. Short sentences. Tables for settings and fields. Settings paths in bold:
    **Wolf Settings → Retention**.

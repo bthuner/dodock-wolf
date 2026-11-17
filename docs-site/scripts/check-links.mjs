@@ -4,6 +4,8 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 const root = new URL('../.output/public', import.meta.url).pathname
+// Built with NUXT_APP_BASE_URL=/dodock-wolf/ (GitHub Pages), every link starts with it.
+const base = (process.env.NUXT_APP_BASE_URL || '/').replace(/\/$/, '')
 const pages = new Map() // route -> { ids, links }
 
 const walk = dir => readdirSync(dir, { withFileTypes: true }).flatMap(e =>
@@ -15,6 +17,11 @@ for (const file of walk(root)) {
   const main = html // header, sidebar and footer included: they link too
   const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]))
   const links = [...main.matchAll(/\shref="(\/[^"]*)"/g)].map(m => m[1].replace(/&amp;/g, '&'))
+    .map((href) => {
+      if (!base) return href
+      if (href === base || href.startsWith(base + '/')) return href.slice(base.length) || '/'
+      return `MISSING-BASE${href}` // served from the domain root, outside the site: always broken
+    })
   pages.set(route === '/' ? '/' : route, { ids, links })
 }
 
@@ -22,6 +29,10 @@ const broken = []
 for (const [route, { links }] of pages) {
   for (const href of links) {
     if (/^\/(_nuxt|raw|img|_fonts|__nuxt_content|llms|favicon|logo|og-)/.test(href)) continue
+    if (href.startsWith('MISSING-BASE')) {
+      broken.push(`${route} → ${href.slice(12)} (missing base ${base})`)
+      continue
+    }
     const [withQuery, hash] = href.split('#')
     const path = withQuery.split('?')[0]
     const target = path.replace(/\/$/, '') || '/'

@@ -1,5 +1,5 @@
 ---
-title: Frappe Wolf
+title: Dodock Wolf
 description: Observabilité et sécurité auto-hébergées pour les benches Frappe, les sites ERPNext et Dokos, et leurs hôtes Linux.
 ---
 
@@ -16,7 +16,7 @@ ui:
 L'équipe se réveille avec une [chronologie d'incident]{.text-primary}, pas avec l'e-mail d'un client.
 
 #description
-Frappe Wolf repère les fenêtres de 502, les crons nocturnes en échec, les plantages de workers et les connexions suspectes sur les benches Frappe, ERPNext et Dokos. Toutes les données restent sur votre propre site Frappe.
+Dodock Wolf repère les fenêtres de 502, les crons nocturnes en échec, les plantages de workers et les connexions suspectes sur les benches Frappe, ERPNext et Dokos. Toutes les données restent sur votre propre site Frappe.
 
 #links
   :::u-button
@@ -45,7 +45,7 @@ Frappe Wolf repère les fenêtres de 502, les crons nocturnes en échec, les pla
   code: |
     # On the bench: the Wolf App
     bench get-app https://github.com/bthuner/dodock-wolf
-    bench --site wolf.example.com install-app frappe_wolf
+    bench --site wolf.example.com install-app dodock_wolf
 
     # On each host: the Wolf Agent
     curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/main/agent/install.sh \
@@ -56,7 +56,7 @@ Frappe Wolf repère les fenêtres de 502, les crons nocturnes en échec, les pla
   ```bash [Terminal]
   # On the bench: the Wolf App
   bench get-app https://github.com/bthuner/dodock-wolf
-  bench --site wolf.example.com install-app frappe_wolf
+  bench --site wolf.example.com install-app dodock_wolf
 
   # On each host: the Wolf Agent
   curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/main/agent/install.sh \
@@ -198,7 +198,7 @@ Ce qu'il repère
       variant: subtle
       icon: i-simple-icons-github
   title: Formats ouverts, stockage auto-hébergé, aucune tarification à l'usage.
-  description: Frappe Wolf est sous licence MIT et tourne sur le site Frappe que vous exploitez déjà.
+  description: Dodock Wolf est sous licence MIT et tourne sur le site Frappe que vous exploitez déjà.
   ---
   :::
 ::
