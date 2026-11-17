@@ -2301,10 +2301,30 @@ Argument: `incident`.
     
     <td>
       <code>
-        {action, target, agent, host, bench, site, reason, label}
+        {action, target, agent, host, bench, site, reason, label, executors}
       </code>
       
-      , from the incident's security events, without the ones already approved or applied.
+      , from the incident's security events, without the ones already approved or applied. A block names the attacked <code>
+        host
+      </code>
+      
+      , its Wolf Agent in <code>
+        agent
+      </code>
+      
+       when it applies it, and <code>
+        executors
+      </code>
+      
+       (<code>
+        wolf_agent
+      </code>
+      
+      , <code>
+        wazuh
+      </code>
+      
+      ).
     </td>
   </tr>
   
@@ -2431,6 +2451,22 @@ POST. Wolf Manager or System Manager only.
   <tr>
     <td>
       <code>
+        host
+      </code>
+    </td>
+    
+    <td>
+      For <code>
+        block_ip
+      </code>
+      
+      : the attacked host, as proposed.
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
         agent
       </code>
     </td>
@@ -2440,7 +2476,11 @@ POST. Wolf Manager or System Manager only.
         block_ip
       </code>
       
-      : the agent that applies it.
+      , instead of <code>
+        host
+      </code>
+      
+       (older links and pages): the Wolf Agent that applies it.
     </td>
   </tr>
   
@@ -2456,7 +2496,7 @@ POST. Wolf Manager or System Manager only.
         block_ip
       </code>
       
-      : 1 to 168.
+      : 1 to 168, for the Wolf Agent's block. A Wazuh block lasts its command's timeout.
     </td>
   </tr>
   

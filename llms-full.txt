@@ -1485,17 +1485,17 @@ Wolf proposes, a Wolf Manager approves each action with a second click, and noth
 own. Every approval is a **Wolf Response Action** row (who, when, what, result; read-only for
 everyone) and a comment on the incident.
 
-| Action                                                          | Proposed for                                                                                                          | Applied by                                                                                                                                    |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Block IP for N hours** (1 to 168, default 24)                 | the public addresses of the incident's security events, for the agent that saw each one                               | the agent, with its next push, when allowed on that host (below); and [CrowdSec](https://bthuner.github.io/dodock-wolf/#crowdsec) when set up |
-| **Disable user**, **log out all sessions**, **revoke API keys** | the users named by the site's own security events (failed logins, new IP or country, role granted, API key generated) | the Wolf site, at once                                                                                                                        |
+| Action                                                          | Proposed for                                                                                                           | Applied by                                                                                                                                                                                                                                             |
+| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Block IP for N hours** (1 to 168, default 24)                 | the public addresses of the incident's security events, from any source (Wolf, Suricata, Wazuh), for the attacked host | the Wolf Agent on that host, with its next push, when allowed there (below), and/or [Wazuh active response](https://bthuner.github.io/dodock-wolf/#wazuh-active-response); and [CrowdSec](https://bthuner.github.io/dodock-wolf/#crowdsec) when set up |
+| **Disable user**, **log out all sessions**, **revoke API keys** | the users named by the site's own security events (failed logins, new IP or country, role granted, API key generated)  | the Wolf site, at once                                                                                                                                                                                                                                 |
 
 - Approve from the incident's **Response** panel in the Wolf UI, or from the signed link in the
   alert (up to 5 per alert). The link only shows the proposal: a guest is sent to the login page,
   only a logged-in Wolf Manager or System Manager gets the button, and only its POST acts. A
   forwarded email alone cannot act, and a link opened again says the action was done.
 - Only what Wolf proposed from the incident's own events can be approved: the API refuses any
-  other action, target or agent.
+  other action, target or host.
 - Administrator, Guest and the approver's own account are refused. Only a System Manager can act
   on a System Manager. User actions apply to the Wolf site only.
 - Blocks are marked *Expired* once their time is over (hourly).
@@ -1572,6 +1572,74 @@ block Wolf asks for (7 days), and the helper unbans each address when its own du
 
 Timers do not survive a reboot, and fail2ban restores its bans after one. Without the cron line, a
 block could last up to the jail's 7 days. The helper also sweeps on each ban.
+
+## Wazuh active response
+
+With **Block With** set to `wazuh` or `both` (**Wolf Settings → Blocking**), an approved block runs
+through Wazuh active response on the Wazuh agent of the attacked host, through the Wazuh manager's
+API. It is the same approval, the same signed links, the same journal: only who applies the block
+changes.
+
+| Block With             | Who applies an approved block                                     |
+| ---------------------- | ----------------------------------------------------------------- |
+| `wolf_agent` (default) | the Wolf Agent on the attacked host, as above                     |
+| `wazuh`                | Wazuh active response on that host's Wazuh agent                  |
+| `both`                 | each of them: two **Wolf Response Action** rows, one per executor |
+
+A block is proposed for the host that was attacked, not for the agent that sent the alert: a Wazuh
+or Suricata alert, read on the manager's or the sensor's host, or posted by the integration, is
+about the host it names. Any other agent's event is about that agent's own host, whatever its
+`host` says, so an agent cannot point a block at another machine. With
+`wolf_agent`, a host without a Wolf Agent gets no block proposal; with `wazuh` or `both`, it does.
+
+::steps{level="3"}
+### Define a timed command on the Wazuh manager
+
+Wolf runs a *named* command, which Wazuh removes by itself when its timeout runs out. Add an
+`<active-response>` block for `firewall-drop` with the timeout you want, on a rule that never fires
+so that it only runs when Wolf asks, then restart the manager:
+
+```xml [ossec.conf]
+<active-response>
+  <disabled>no</disabled>
+  <command>firewall-drop</command>
+  <location>local</location>
+  <rules_id>999999</rules_id>
+  <timeout>86400</timeout>
+</active-response>
+```
+
+Wazuh names the command with its timeout: `firewall-drop86400` (listed in
+`/var/ossec/etc/shared/ar.conf`). That timeout is the block's duration; the hours chosen at approval
+only apply to the Wolf Agent's block. A script (`!firewall-drop`) is refused: Wazuh never removes it.
+
+### Create a Wazuh API user
+
+A user allowed to read agents and run active response commands (`agent:read`,
+`active-response:command`).
+
+### Fill Wolf Settings → Blocking
+
+| Field                                      | Value                                                                                                                                                                           |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Block With**                             | `wazuh` or `both`                                                                                                                                                               |
+| **Wazuh Active Response Command**          | `firewall-drop86400`                                                                                                                                                            |
+| **Wazuh API URL**                          | `https://wazuh-manager:55000`. `http://` only to the same machine (`127.0.0.1`, `localhost`): the password goes with every login. Changing the URL asks for the password again. |
+| **Wazuh API User**, **Wazuh API Password** | the user above                                                                                                                                                                  |
+| **Verify Wazuh TLS Certificate**           | on, unless the manager has a self-signed certificate on a trusted network                                                                                                       |
+::
+
+- Wolf finds the Wazuh agent by the host's names (its Wolf hostname, its
+  [aliases](https://bthuner.github.io/dodock-wolf/security/wazuh-suricata#aliases)), then by an address only one Wazuh agent has: hosts
+  behind one NAT share theirs. The manager (`000`) never runs a block. When no agent matches, the action is *Failed* with the reason; add a Wolf Entity
+  Alias and approve again.
+- The action is *Applied* or *Failed* at once, with Wazuh's answer, and journaled like any other.
+  It is recorded before Wolf calls Wazuh, so a block Wazuh applied always has its row.
+- With `both`, each executor has its own duration (the hours asked for the Wolf Agent, the
+  command's timeout for Wazuh) and its own row. When Wazuh's half fails, it alone is proposed
+  again while the Wolf Agent's half waits for its agent.
+- Tried against a Wazuh 4.9.2 manager and agent: the address was dropped with iptables on the
+  agent, and Wazuh removed the rule when the timeout ran out.
 
 ## CrowdSec
 
@@ -3302,7 +3370,7 @@ In `external` mode, Wolf's own detection depends on Suricata or Wazuh covering t
 **Own Events Given Way** on the Wolf Agent to see what it handed over.
 ::
 
-Blocking (Wolf's nftables or fail2ban against Wazuh active response) is not part of these modes.
+Blocking is not part of these modes: an approved block can run through the Wolf Agent, [Wazuh active response](https://bthuner.github.io/dodock-wolf/agent/response-actions#wazuh-active-response), or both.
 
 Whatever the mode, [grouping by IP or user](https://bthuner.github.io/dodock-wolf/alerts/incidents#grouping-by-ip-or-user) puts the
 events of both sources in one incident, and [sequence rules](https://bthuner.github.io/dodock-wolf/alerts/rules#sequence-rules) chain
@@ -3313,7 +3381,6 @@ them: a scan, then a login from the same IP.
 ::note
 These are planned, not built:
 
-- Wazuh active response as an option for approved blocks.
 - For benches without Wazuh or Suricata: file integrity on the bench, and outbound connections of
   bench processes.
 ::
@@ -4439,25 +4506,26 @@ lessons and action items. Read permission on the incident is enough. Nothing is 
 
 Argument: `incident`.
 
-| Field                        | Meaning                                                                                                                                         |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `proposals`                  | `{action, target, agent, host, bench, site, reason, label}`, from the incident's security events, without the ones already approved or applied. |
-| `actions`                    | The incident's **Wolf Response Action** rows.                                                                                                   |
-| `can_approve`                | Whether the caller may approve.                                                                                                                 |
-| `default_hours`, `max_hours` | Block durations.                                                                                                                                |
+| Field                        | Meaning                                                                                                                                                                                                                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `proposals`                  | `{action, target, agent, host, bench, site, reason, label, executors}`, from the incident's security events, without the ones already approved or applied. A block names the attacked `host`, its Wolf Agent in `agent` when it applies it, and `executors` (`wolf_agent`, `wazuh`). |
+| `actions`                    | The incident's **Wolf Response Action** rows.                                                                                                                                                                                                                                        |
+| `can_approve`                | Whether the caller may approve.                                                                                                                                                                                                                                                      |
+| `default_hours`, `max_hours` | Block durations.                                                                                                                                                                                                                                                                     |
 
 ### `dodock_wolf.api.response.approve`
 
 POST. Wolf Manager or System Manager only.
 
-| Argument         | Meaning                                                             |
-| ---------------- | ------------------------------------------------------------------- |
-| `incident`       | The **Wolf Incident**.                                              |
-| `action`         | `block_ip`, `disable_user`, `logout_sessions` or `revoke_api_keys`. |
-| `target`         | IP or user.                                                         |
-| `agent`          | For `block_ip`: the agent that applies it.                          |
-| `duration_hours` | For `block_ip`: 1 to 168.                                           |
-| `reason`         | Free text.                                                          |
+| Argument         | Meaning                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------ |
+| `incident`       | The **Wolf Incident**.                                                                           |
+| `action`         | `block_ip`, `disable_user`, `logout_sessions` or `revoke_api_keys`.                              |
+| `target`         | IP or user.                                                                                      |
+| `host`           | For `block_ip`: the attacked host, as proposed.                                                  |
+| `agent`          | For `block_ip`, instead of `host` (older links and pages): the Wolf Agent that applies it.       |
+| `duration_hours` | For `block_ip`: 1 to 168, for the Wolf Agent's block. A Wazuh block lasts its command's timeout. |
+| `reason`         | Free text.                                                                                       |
 
 Refused targets are a validation error, and nothing is recorded: a private or reserved address,
 Administrator, Guest, yourself.

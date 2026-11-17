@@ -34,11 +34,15 @@ everyone) and a comment on the incident.
     </td>
     
     <td>
-      the public addresses of the incident's security events, for the agent that saw each one
+      the public addresses of the incident's security events, from any source (Wolf, Suricata, Wazuh), for the attacked host
     </td>
     
     <td>
-      the agent, with its next push, when allowed on that host (below); and <a href="#crowdsec">
+      the Wolf Agent on that host, with its next push, when allowed there (below), and/or <a href="#wazuh-active-response">
+        Wazuh active response
+      </a>
+      
+      ; and <a href="#crowdsec">
         CrowdSec
       </a>
       
@@ -77,7 +81,7 @@ alert (up to 5 per alert). The link only shows the proposal: a guest is sent to 
 only a logged-in Wolf Manager or System Manager gets the button, and only its POST acts. A
 forwarded email alone cannot act, and a link opened again says the action was done.
 - Only what Wolf proposed from the incident's own events can be approved: the API refuses any
-other action, target or agent.
+other action, target or host.
 - Administrator, Guest and the approver's own account are refused. Only a System Manager can act
 on a System Manager. User actions apply to the Wolf site only.
 - Blocks are marked *Expired* once their time is over (hourly).
@@ -160,6 +164,223 @@ that are over.
 
 Timers do not survive a reboot, and fail2ban restores its bans after one. Without the cron line, a
 block could last up to the jail's 7 days. The helper also sweeps on each ban.
+
+## Wazuh active response
+
+With **Block With** set to `wazuh` or `both` (**Wolf Settings → Blocking**), an approved block runs
+through Wazuh active response on the Wazuh agent of the attacked host, through the Wazuh manager's
+API. It is the same approval, the same signed links, the same journal: only who applies the block
+changes.
+
+<table>
+<thead>
+  <tr>
+    <th>
+      Block With
+    </th>
+    
+    <th>
+      Who applies an approved block
+    </th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr>
+    <td>
+      <code>
+        wolf_agent
+      </code>
+      
+       (default)
+    </td>
+    
+    <td>
+      the Wolf Agent on the attacked host, as above
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        wazuh
+      </code>
+    </td>
+    
+    <td>
+      Wazuh active response on that host's Wazuh agent
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        both
+      </code>
+    </td>
+    
+    <td>
+      each of them: two <strong>
+        Wolf Response Action
+      </strong>
+      
+       rows, one per executor
+    </td>
+  </tr>
+</tbody>
+</table>
+
+A block is proposed for the host that was attacked, not for the agent that sent the alert: a Wazuh
+or Suricata alert, read on the manager's or the sensor's host, or posted by the integration, is
+about the host it names. Any other agent's event is about that agent's own host, whatever its
+`host` says, so an agent cannot point a block at another machine. With
+`wolf_agent`, a host without a Wolf Agent gets no block proposal; with `wazuh` or `both`, it does.
+
+<steps level="3">
+
+### Define a timed command on the Wazuh manager
+
+Wolf runs a *named* command, which Wazuh removes by itself when its timeout runs out. Add an
+`<active-response>` block for `firewall-drop` with the timeout you want, on a rule that never fires
+so that it only runs when Wolf asks, then restart the manager:
+
+```xml [ossec.conf]
+<active-response>
+  <disabled>no</disabled>
+  <command>firewall-drop</command>
+  <location>local</location>
+  <rules_id>999999</rules_id>
+  <timeout>86400</timeout>
+</active-response>
+```
+
+Wazuh names the command with its timeout: `firewall-drop86400` (listed in
+`/var/ossec/etc/shared/ar.conf`). That timeout is the block's duration; the hours chosen at approval
+only apply to the Wolf Agent's block. A script (`!firewall-drop`) is refused: Wazuh never removes it.
+
+### Create a Wazuh API user
+
+A user allowed to read agents and run active response commands (`agent:read`,
+`active-response:command`).
+
+### Fill Wolf Settings → Blocking
+
+<table>
+<thead>
+  <tr>
+    <th>
+      Field
+    </th>
+    
+    <th>
+      Value
+    </th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr>
+    <td>
+      <strong>
+        Block With
+      </strong>
+    </td>
+    
+    <td>
+      <code>
+        wazuh
+      </code>
+      
+       or <code>
+        both
+      </code>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <strong>
+        Wazuh Active Response Command
+      </strong>
+    </td>
+    
+    <td>
+      <code>
+        firewall-drop86400
+      </code>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <strong>
+        Wazuh API URL
+      </strong>
+    </td>
+    
+    <td>
+      <code>
+        https://wazuh-manager:55000
+      </code>
+      
+      . <code>
+        http://
+      </code>
+      
+       only to the same machine (<code>
+        127.0.0.1
+      </code>
+      
+      , <code>
+        localhost
+      </code>
+      
+      ): the password goes with every login. Changing the URL asks for the password again.
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <strong>
+        Wazuh API User
+      </strong>
+      
+      , <strong>
+        Wazuh API Password
+      </strong>
+    </td>
+    
+    <td>
+      the user above
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <strong>
+        Verify Wazuh TLS Certificate
+      </strong>
+    </td>
+    
+    <td>
+      on, unless the manager has a self-signed certificate on a trusted network
+    </td>
+  </tr>
+</tbody>
+</table>
+</steps>
+
+- Wolf finds the Wazuh agent by the host's names (its Wolf hostname, its
+[aliases](/security/wazuh-suricata#aliases)), then by an address only one Wazuh agent has: hosts
+behind one NAT share theirs. The manager (`000`) never runs a block. When no agent matches, the action is *Failed* with the reason; add a Wolf Entity
+Alias and approve again.
+- The action is *Applied* or *Failed* at once, with Wazuh's answer, and journaled like any other.
+It is recorded before Wolf calls Wazuh, so a block Wazuh applied always has its row.
+- With `both`, each executor has its own duration (the hours asked for the Wolf Agent, the
+command's timeout for Wazuh) and its own row. When Wazuh's half fails, it alone is proposed
+again while the Wolf Agent's half waits for its agent.
+- Tried against a Wazuh 4.9.2 manager and agent: the address was dropped with iptables on the
+agent, and Wazuh removed the rule when the timeout ran out.
 
 ## CrowdSec
 
