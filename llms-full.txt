@@ -2518,10 +2518,31 @@ bench in `nginx_access_log` (see [Configuration](https://bthuner.github.io/dodoc
 
 A request is a probe when it:
 
-- looks for secrets: `.env`, `.git/`, `site_config.json`, keys, dumps;
+- looks for secrets: `.env`, `.git/`, `.git-credentials`, `.npmrc`, `docker-compose.yml`,
+  `site_config.json`, keys, dumps;
 - looks for CMS and admin panels (`wp-login.php`, `phpmyadmin`…);
+- looks for edge appliances known for their vulnerabilities: Fortinet, Palo Alto GlobalProtect,
+  Ivanti, Citrix, Cisco ASA, F5, Exchange, Confluence and Struts, GeoServer, Jenkins;
 - tries path traversal, SQL, command or template injection, or XSS;
-- comes from a scanner User-Agent (sqlmap, nuclei…).
+- comes from a scanner User-Agent (sqlmap, nuclei, ffuf, dirsearch, katana, LeakIX…).
+
+Appliance paths are matched on the path only and from its root: a DocType, a web page or a query
+string may well name Jenkins or Citrix.
+
+Two Frappe rules count only in bursts, since one call is normal: from one client over two minutes,
+
+- 10 calls to the guest endpoints that tell whether an account exists or take a credential
+  outside the login page (`frappe_auth_abuse`, `/api/method` and `/api/v2/method`): password reset,
+  login link, sign-up, personal data deletion confirmation, the OAuth2 token endpoint (whose
+  password grant skipped two-factor authentication before a fix; a refresh token in the URL is
+  not counted), LDAP and key or token logins;
+- 20 calls to `/api/method`, `/api/resource` or `/api/v2` answered 403, on at least 5 methods
+  (`frappe_api_forbidden`): methods tried without the right to call them. 401 is left out: it
+  also means an expired session, as after a deploy.
+
+Next to a client's other probes in the same minute, these calls are listed with them. Failed logins on the login page are the site's
+own [signal](https://bthuner.github.io/dodock-wolf/security/site-signals). A SQL injection in a header or a request body is not in an
+access log: [Suricata](https://bthuner.github.io/dodock-wolf/security/wazuh-suricata#suricata) sees those.
 
 URL-encoded targets are decoded twice before matching.
 
@@ -2534,7 +2555,9 @@ URL-encoded targets are decoded twice before matching.
 
 ### What is not a probe
 
-- Attachments (`/files`, `/private/files`) and authorized backup downloads (`/backups`).
+- Attachments (`/files`, `/private/files`) and authorized backup downloads (`/backups`). Static
+  assets and attachments are not checked for CMS or appliance names (Font Awesome ships a
+  `joomla.svg`).
 - A 2xx under a route that answers any sub-path with a page (`/app/`, `/wolf/`, `/api/`…) is not
   counted as a served file.
 
