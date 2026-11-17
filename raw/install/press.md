@@ -10,6 +10,12 @@ This is for **self-hosted Press** deployments, where you control the server. Fra
 
 </note>
 
+<tip>
+
+No Press server at hand? The [Press demo](/reference/development) simulates one for the Wolf Agent to read.
+
+</tip>
+
 ## Install
 
 Install the agent as on any host ([Wolf Agent](/install/wolf-agent)). Press mode needs no extra step and no Press credentials: everything is read from local files.

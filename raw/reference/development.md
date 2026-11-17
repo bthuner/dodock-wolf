@@ -7,6 +7,22 @@
 MVP, tested on a Dokos (Dodock 5.18) bench, on MariaDB 10.6 and on Postgres 17 (see
 [`ci/db_smoke.py`](https://github.com/bthuner/dodock-wolf/blob/main/ci/db_smoke.py)).
 
+## Live demos
+
+The demo stack in [`dev/demo`](https://github.com/bthuner/dodock-wolf/tree/main/dev/demo) runs one
+Dokos bench with the Wolf App and its agent. The `press` profile adds a simulated Press app server,
+watched by a second agent:
+
+```bash [dev/demo]
+WOLF_DEMO_BASE=registry.gitlab.com/dokos/dokos:latest docker compose --profile press up -d --build
+docker compose logs -f press-demo   # "history written up to ...", then live
+```
+
+`press-agent` registers as `f1-demo-press` in Press mode. `press-demo` runs
+`bench generate-demo-press`: 7 days of history for 3 benches and 8 sites, then an incident cycle
+every 30 minutes, with alerts sent to the stack's webhook sink (`docker compose logs catcher`).
+[Commands](/agent/commands) lists what a cycle contains.
+
 ## Python tests
 
 ```bash [repository root]

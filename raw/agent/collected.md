@@ -180,8 +180,10 @@ cron, also install the app on each site as a [satellite](/install/every-site).
 
 ## nginx access log
 
-Per site and per push interval: `http_requests`, `http_5xx`, `http_502`, plus one aggregated event
-per (site, status, route).
+Per site and per minute of the log line's own time: `http_requests`, `http_5xx`, `http_502`, plus
+one aggregated event per (site, status, route) and minute. Each sample is stamped with the newest
+line of its minute, so a backlog read at once (after a restart or a rotation) lands in the minutes
+it happened, not as one spike when the agent reads it. A known site with no traffic reports zeros.
 
 The site comes from `$host` when the log format includes it (a leading vhost field or a trailing
 quoted field), else from a per-site log file name, else the bench's only site.
@@ -211,7 +213,7 @@ From `/var/log/auth.log`, `/var/log/secure`, or `journalctl` (`sshd`, `sshd-sess
 <tbody>
   <tr>
     <td>
-      failed SSH logins, aggregated per source IP; root logins
+      failed SSH logins, aggregated per source IP and minute of log time; root logins
     </td>
     
     <td>

@@ -176,7 +176,7 @@ The agent reads Suricata when it finds an EVE log: `suricata.eve_log`, else
 ### What it sends
 
 - Only `alert` records are read.
-- Each (signature, remote address) pair gives one `network_ids_alert` event per push interval,
+- Each (signature, remote address) pair gives one `network_ids_alert` event per minute of log time,
 with a count. Past 500 pairs in an interval, alerts are only counted.
 - Severity follows the rule's priority: 1 is critical, 2 warning, 3 info.
 - The payload keeps the rule (SID, signature, category, ATT&CK techniques from its
@@ -337,7 +337,7 @@ sudo usermod -aG wazuh wolf-agent
 sudo systemctl restart wolf-agent
 ```
 
-Events are one per rule and subject per push interval.
+Events are one per rule and subject per minute of log time.
 
 ### Wazuh integration route
 

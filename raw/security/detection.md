@@ -55,7 +55,7 @@ URL-encoded targets are decoded twice before matching.
     </td>
     
     <td>
-      one event per (site, client) and push interval, with the rules hit, the statuses, up to 10 targets and the ATT&CK IDs
+      one event per (site, client) and minute of log time, with the rules hit, the statuses, up to 10 targets and the ATT&CK IDs
     </td>
   </tr>
   
@@ -184,7 +184,7 @@ forces journalctl, `false` turns it off. The installer adds the `wolf-agent` use
     </td>
     
     <td>
-      failed SSH logins, aggregated per source IP
+      failed SSH logins, aggregated per source IP and minute of log time
     </td>
     
     <td>
@@ -745,11 +745,33 @@ calls is not the remote party of an attack. It is searchable by entity and check
 destination, but it never groups incidents by IP, feeds a sequence rule, goes to CrowdSec as an
 attacker or gets a block proposal.
 
+**Benches in containers** (Docker, Press, Podman) have their own network. The agent finds them
+without root: each container's cgroup names it (`/proc/<pid>/cgroup`), the folder it mounts from
+the host (`/proc/<pid>/mountinfo`, for example the bench's `sites/`, on the same filesystem) says
+which bench it is, and the container's own TCP table (`/proc/<pid>/net/tcp`) gives its
+connections. Several containers of one bench are one record, and a container on the host's
+network is not counted twice. The event says `seen_by: container`.
+
+**Behind an outbound proxy**, the connections go to the proxy, not to the real destinations: the
+agent reads the proxy's access log instead. `/var/log/squid/access.log` is read when it exists;
+`outbound.proxy_logs` sets others (a path, or `[{"path": "...", "format": "squid"}]`); for a
+proxy running in a container, give its log's path on the host. Only Squid's native log format is
+read. Each request names its destination host and port (`remote_host`), every one of them, not a
+sample, and the client address says which bench made it: a container's address, or the host's own
+(all its benches). Other clients of a shared proxy, such as machines of the LAN, are left out.
+The event says `seen_by: proxy`.
+
+<warning>
+
+Squid's log folder is readable by the `proxy` group only on Debian and Ubuntu. The installer adds
+the agent's user to it; on a host set up by hand, run `sudo usermod -aG proxy wolf-agent` and
+restart the agent. Until then the agent logs that it cannot read the log.
+
+</warning>
+
 <note>
 
-A sample every minute misses a connection that opened and closed in between. A bench in Docker
-(another network namespace) is not seen, and an outbound proxy on a private address hides the
-real destinations.
+Read from `/proc`, a connection that opened and closed between two samples is missed.
 
 </note>
 

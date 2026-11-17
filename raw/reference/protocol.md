@@ -1738,7 +1738,7 @@ the **Wolf Entity Alias** rows. Agents do not send it: the site computes it.
     </td>
     
     <td>
-      Requests matching probe rules, per (site, client) and push interval; <code>
+      Requests matching probe rules, per (site, client) and minute of log time; <code>
         critical
       </code>
       
@@ -2108,7 +2108,7 @@ the **Wolf Entity Alias** rows. Agents do not send it: the site computes it.
     </td>
     
     <td>
-      One per rule and subject (source IP, else host) per push interval; level 12+ critical, 7–11 warning; <code>
+      One per rule and subject (source IP, else host) per minute of log time; level 12+ critical, 7–11 warning; <code>
         sca
       </code>
       
@@ -2190,7 +2190,7 @@ the **Wolf Entity Alias** rows. Agents do not send it: the site computes it.
     </td>
     
     <td>
-      One per signature and remote address per push interval; severity from the rule priority (1 critical, 2 warning, 3 info).
+      One per signature and remote address per minute of log time; severity from the rule priority (1 critical, 2 warning, 3 info).
     </td>
     
     <td>
@@ -2874,7 +2874,7 @@ Metrics emitted by the agent, unless noted.
     </td>
     
     <td>
-      count per push interval
+      count per minute of log time
     </td>
     
     <td>
@@ -2890,7 +2890,7 @@ Metrics emitted by the agent, unless noted.
     </td>
     
     <td>
-      count per push interval
+      count per minute of log time
     </td>
     
     <td>
@@ -2906,7 +2906,7 @@ Metrics emitted by the agent, unless noted.
     </td>
     
     <td>
-      count per push interval
+      count per minute of log time
     </td>
     
     <td>

@@ -438,6 +438,22 @@ others) turns a check off.
         false
       </code>
       
+      ), <code>
+        proxy_logs
+      </code>
+      
+       (<code>
+        null
+      </code>
+      
+      : <code>
+        /var/log/squid/access.log
+      </code>
+      
+       when it exists; or <code>
+        [{"path", "format": "squid"}]
+      </code>
+      
       )
     </td>
   </tr>
