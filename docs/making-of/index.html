@@ -525,7 +525,7 @@ Deployment shortly before: 2026-10-29 01:47:12
         </article>
         <p class="aside">Status: <span class="status done">● built</span>, in Desk and in the Wolf UI. The Wolf UI's rail interleaves linked evidence, context from the same scope, operator activity and notification attempts. Rows have stable ids and are paged with a cursor, so a page comes back the same whatever its size. A deployment before the incident is a <em>preceding change</em>, never its cause. A deduplicated event is one row with its count. A notification is <em>accepted by the endpoint</em>, not read by someone. A long silence is <em>no recorded activity</em>, never "healthy".</p>
         <figure class="shot">
-          <img src="assets/wolf-ui-incident.jpg" width="1280" height="800" loading="lazy" alt="The Wolf UI incident page: a warning incident for scheduler failures on wolf.localhost, acknowledged, with its scope, start time, owner and rule, the assign and resolve actions, and the timeline below with context rows marked as same scope">
+          <img src="assets/wolf-ui-incident.jpg" width="1280" height="800" loading="lazy" alt="The Wolf UI incident page: a warning incident, security score low on wolf.localhost, acknowledged, with its scope, start time, owner, preceding deployment and rule, the assign, resolve and merge actions, and the timeline below: the deployment marked as preceding change, then context rows marked as same scope">
           <figcaption>The incident page of the Wolf UI, light theme, from the demo stack.</figcaption>
         </figure>
       </div>
@@ -553,11 +553,11 @@ Deployment shortly before: 2026-10-29 01:47:12
         </div>
         <div class="shots">
           <figure class="shot">
-            <img src="assets/wolf-ui-overview.jpg" width="1280" height="800" loading="lazy" alt="A site dashboard in the dark theme: counts of unresolved, unacknowledged and critical incidents, the four unresolved incidents of wolf.localhost, and HTTP responses over 24 hours with dashed lines at each deployment">
+            <img src="assets/wolf-ui-overview.jpg" width="1280" height="800" loading="lazy" alt="A site dashboard in the dark theme: counts of unresolved, unacknowledged and critical incidents, the four unresolved incidents of wolf.localhost, and HTTP responses over 24 hours with a dashed line at the deployment">
             <figcaption>A site dashboard, dark theme.</figcaption>
           </figure>
           <figure class="shot">
-            <img src="assets/wolf-ui-metrics.jpg" width="1280" height="800" loading="lazy" alt="The metrics explorer: memory used, maximum per host over 6 hours, read from minute rollups in 3-minute buckets, with a gap before the data starts">
+            <img src="assets/wolf-ui-metrics.jpg" width="1280" height="800" loading="lazy" alt="The metrics explorer: memory used, maximum per host over the last hour, read from raw data in 1-minute buckets, with a gap before the data starts">
             <figcaption>The metrics explorer: what it read is stated above the chart.</figcaption>
           </figure>
         </div>
