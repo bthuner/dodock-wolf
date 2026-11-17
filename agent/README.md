@@ -176,6 +176,12 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   values. `integrity_files` counts what is watched, `integrity_unreadable` what it could not read
   (kept at its baseline). Files over 32 MB are compared by size and time; a removed app or site is
   reported once.
+- **Outbound connections** (every `outbound.interval`, 1 min; outbound.py): established client
+  connections of each bench folder's user to public addresses, from `/proc/net/tcp{,6}` (the uid
+  column; which process would need root). A destination is the remote /24 (or /48) and port;
+  for `outbound.learn_days` (7) they are learned silently, then each new one is a
+  `bench_new_outbound` event (info on web, mail, DNS and NTP ports, warning otherwise).
+  `outbound.include_private` adds LAN peers. Sampled, not every connection.
 - **TLS**: `tls_days_left` for every public site name and custom domain (`site_config.json`
   `domains`), every `tls.interval` (1 h), in a background thread. The agent connects to
   `<domain>:443` with SNI (or to `tls.connect_host`, e.g. `127.0.0.1`, to check the local nginx),

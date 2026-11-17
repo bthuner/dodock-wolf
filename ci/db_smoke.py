@@ -2278,6 +2278,35 @@ def main():
 			frappe.db.set_value("Wolf Alert Rule", doc.name, "enabled", 0)
 		return f"{fired}: code changed outside a deployment fires, a deployment does not; a config change fires its rule"
 
+	def outbound_connections():
+		"""The agent's new outbound destinations and their preset (#72 step 7)."""
+		from dodock_wolf.wolf.presets import PRESETS
+
+		tz, at = events.system_tz(), now_datetime()
+
+		def ev(severity, ip, port):
+			e = schema.normalize_event({"type": "security", "category": "bench_new_outbound", "severity": severity, "host": "ob-host",
+			                            "bench": "ob-bench", "source": "outbound", "title": f"ob new outbound {ip}:{port}",
+			                            "payload": {"ip": ip, "port": port, "attack_techniques": ["T1071", "T1041"]}}, tz, at)  # fmt: skip
+			return events.insert_event(e)
+
+		preset = next(p for p in PRESETS if p["rule_name"] == "Bench connects somewhere new")
+		name = "smoke outbound"
+		doc = frappe.get_doc("Wolf Alert Rule", name) if frappe.db.exists("Wolf Alert Rule", name) else frappe.new_doc("Wolf Alert Rule")
+		doc.update({**preset, "rule_name": name, "enabled": 1, "is_preset": 0, "channels": [], "filter_host": "ob-host"})
+		doc.save()
+		usual = ev("info", "185.199.111.5", 443)
+		assert not rules.evaluate(doc)["fired"], "a usual port fired"
+		odd = ev("warning", "185.199.110.66", 4444)
+		(fired,) = rules.evaluate(doc)["fired"]
+		linked = set(frappe.get_all("Wolf Event", filters={"incident": fired}, pluck="name"))
+		assert odd in linked and usual not in linked, linked
+		payload = json.loads(frappe.db.get_value("Wolf Event", odd, "payload"))
+		assert [t["id"] for t in payload["mitre_attack"]] == ["T1071", "T1041"] and payload["entities"]["ip"] == ["185.199.110.66"], payload
+		incidents.resolve(fired, "smoke")
+		frappe.db.set_value("Wolf Alert Rule", doc.name, "enabled", 0)
+		return f"{fired}: an unusual port fires, a usual one does not; the remote address is an entity"
+
 	def wazuh_blocking():
 		"""Approved blocks for the attacked host, by its Wolf Agent and/or Wazuh active response (#72 step 6)."""
 		import base64
@@ -3100,6 +3129,7 @@ def main():
 	                 ("detector modes", detector_modes),
 	                 ("wazuh blocking", wazuh_blocking),
 	                 ("file integrity", file_integrity),
+	                 ("outbound connections", outbound_connections),
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
 	                 ("response actions", response_actions), ("response links", response_links), ("journal", journal_chain),

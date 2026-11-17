@@ -193,6 +193,7 @@ the Wolf Entity Alias rows (#72 step 3). Agents do not send it: the site compute
 | `exposed_services`   | count    | host: bench ports (MariaDB/Postgres, bench Redis, socket.io, gunicorn) listening on all interfaces or a public address, from `/proc/net/tcp{,6}`; every 10 min |
 | `integrity_files`    | count    | bench (or host, for /etc paths): files under file integrity watch (app code, site configs, nginx and supervisor config); every 15 min |
 | `integrity_unreadable` | count  | bench (or host): watched files or folders the agent could not read, kept at their baseline; every 15 min |
+| `bench_outbound_destinations` | count | bench (the bench folder's user): public network and port destinations of its established client connections, sampled every minute |
 | `site_config_risks`  | count    | host, bench, site: `developer_mode`, `allow_tests`, a plain-HTTP `host_name`, `allow_cors: "*"` in the merged site config; every 10 min |
 | `security_score`     | 0–100    | site: written by the app (hourly), not the agent; see [cyber.md](cyber.md#step-3-posture-score-and-exposure-built) |
 | `user_export_bytes`  | bytes per hour | site, `labels.user`: response bytes of a user's exports and list reads over the past hour, written by the app (hourly); see [cyber.md](cyber.md#step-2-frappe-application-security-built) |
