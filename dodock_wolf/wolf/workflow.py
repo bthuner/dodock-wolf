@@ -5,7 +5,7 @@ import frappe
 from frappe import _
 from frappe.utils import get_fullname
 
-from dodock_wolf.wolf import incident_ops, live
+from dodock_wolf.wolf import access, incident_ops, live
 from dodock_wolf.wolf.incidents import get_timeline, latest_deployment, refresh_event_count
 from dodock_wolf.wolf.spa import MANAGER_ROLES  # the Wolf UI offers what these roles may do
 MOVED_COMMENT_TYPES = ("Comment", "Info")
@@ -314,7 +314,8 @@ def create_postmortem(incident):
 	if inc.status != "Resolved":
 		frappe.throw(_("Resolve the incident before writing its postmortem."))
 
-	events = get_timeline(inc)
+	# events taken from other scopes by IP or user stay out for a manager who cannot read them
+	events = [e for e in get_timeline(inc) if access.visible("Wolf Event", e)]
 	for e in events:
 		e["linked"] = e.get("incident") == inc.name
 	activity = incident_ops.build_activity(

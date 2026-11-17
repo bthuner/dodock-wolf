@@ -143,14 +143,15 @@ def _regulatory(doc, tz):
 def _events_after(doc, start, end, wanted, cursor_key, limit):
 	"""Up to limit + 1 event rows after the cursor: linked ones, and visible context in scope."""
 	parts, params = [], {}
+	# evidence too: an incident takes other scopes' events by IP or user (#72 step 5)
+	allowed, allowed_params = access.sql_condition("Wolf Event")
 	if "evidence" in wanted:
-		parts.append("incident = %(incident)s")
+		parts.append(f"(incident = %(incident)s{allowed})")
 	# an incident without any scope has no context: "same scope" would mean every site
 	if "context" in wanted and (doc.host or doc.bench or doc.site):
 		clause, params = events.scope_clause(doc.host, doc.bench, doc.site)
-		allowed, allowed_params = access.sql_condition("Wolf Event")
-		params.update(allowed_params)
 		parts.append(f"(coalesce(incident, '') != %(incident)s and `timestamp` between %(start)s and %(end)s and {clause}{allowed})")
+	params.update(allowed_params)
 	if not parts:
 		return [], False
 	keyset, keyset_params = timeline.keyset_sql(cursor_key, "event", "`timestamp`")

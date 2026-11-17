@@ -507,21 +507,28 @@ Built: entities shared by every source (`wolf/entities.py`, `api/entities.py`).
   Wolf's, Suricata's and Wazuh's events together.
 
 Built: incidents grouped by entity across sources (`wolf/incidents.py`, `entity_incident`).
-- A security event joins the open incident holding an event that names the same IP, whatever
-  its source, host, bench or site, if that event was seen within **Entity Correlation Minutes**
-  (Wolf Settings → Correlation, 60 by default). **Group Incidents by IP or User** (on by
-  default) turns it off. A Suricata scan on one host, a Wazuh SSH alert
-  on another and a web probe on a site, all from one address, read as one incident.
-- A user ties events together only when it is an e-mail address: `root` on two hosts or
-  `Administrator` on two sites are not one person.
-- The entity match comes before the scope match (site, then bench, then host); events without
-  a shared entity are attached by scope as before. The incident's timeline shows the events of
-  other scopes it gathered next to those of its own.
+- A security event joins the open incident holding an event that names the same remote IP,
+  whatever its source, host, bench or site, if that event was seen within **Entity Correlation
+  Minutes** (Wolf Settings → Correlation, 60 by default). A Suricata scan on one host, a Wazuh
+  SSH alert on another and a web probe on a site, all from one address, read as one incident.
+  **Group Incidents by IP or User** (on by default) turns it off.
+- Only the remote address (`payload.ip`) counts, and only a public one: a server's own address
+  (Suricata's `dest_ip`), private, loopback and documentation ranges would tie unrelated
+  attacks together.
+- A user ties events together only when it is an e-mail address (`root` on two hosts or
+  `Administrator` on two sites are not one person), and not from failed logins or `sudo`
+  failures, whose user the attacker chose.
+- Order: an open incident of the event's own site, then one sharing an IP or user, then one of
+  its bench or host. Only incidents started in the last 24 hours take events by entity, so a
+  scanner coming back every hour does not keep one incident growing.
+- A rule's evidence is its own: when a rule fires on events another incident took by IP, they
+  move to the rule's incident.
+- The incident's timeline shows the events of other scopes it gathered, to users who may read
+  those scopes; a user restricted to some sites sees only theirs.
 
 Planned: sequence rules ("scan, then a login from the same IP, then a large export"), and
-standalone parity for benches without
-them: file integrity and outbound connections of bench processes. Wolf alone stays fully
-supported.
+standalone parity for benches without them: file integrity and outbound connections of bench
+processes. Wolf alone stays fully supported.
 
 ## 5. Mapping reference
 
