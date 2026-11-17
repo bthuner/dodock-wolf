@@ -1354,6 +1354,34 @@ Presets have no channels. They open incidents but notify nobody until you add a
       ◐ warning
     </td>
   </tr>
+  
+  <tr>
+    <td>
+      Bench connects somewhere new
+    </td>
+    
+    <td>
+      <code>
+        security
+      </code>
+      
+       / <code>
+        bench_new_outbound
+      </code>
+      
+       events (warning) >= 1 in 15 min
+    </td>
+    
+    <td>
+      <code>
+        host
+      </code>
+    </td>
+    
+    <td>
+      ◐ warning
+    </td>
+  </tr>
 </tbody>
 </table>
 

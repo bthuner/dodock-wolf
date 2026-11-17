@@ -405,6 +405,46 @@ others) turns a check off.
   <tr>
     <td>
       <code>
+        outbound
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        interval
+      </code>
+      
+       (60 s), <code>
+        learn_days
+      </code>
+      
+       (7), <code>
+        include_private
+      </code>
+      
+       (<code>
+        false
+      </code>
+      
+      ), <code>
+        usual_ports
+      </code>
+      
+       (ports only counted, added to the defaults), <code>
+        report_usual_ports
+      </code>
+      
+       (<code>
+        false
+      </code>
+      
+      )
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
         suricata
       </code>
     </td>

@@ -636,6 +636,38 @@ and are skipped.
       .
     </td>
   </tr>
+  
+  <tr>
+    <td>
+      <strong>
+        Outbound connections
+      </strong>
+    </td>
+    
+    <td>
+      1 min
+    </td>
+    
+    <td>
+      <code>
+        bench_outbound_destinations
+      </code>
+      
+       per bench; a <code>
+        bench_new_outbound
+      </code>
+      
+       event for each public network and unusual port a bench's user had never used, after a 7-day learning period; <code>
+        bench_new_outbound_usual
+      </code>
+      
+       counts new ones on usual ports. See <a href="/security/detection#outbound-connections">
+        Detection
+      </a>
+      
+      .
+    </td>
+  </tr>
 </tbody>
 </table>
 

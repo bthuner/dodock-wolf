@@ -712,6 +712,79 @@ unreadable files are skipped.
 </tbody>
 </table>
 
+## Outbound connections
+
+Without Suricata, the agent still notices a bench talking to somewhere new: a light hint of
+command-and-control or exfiltration, not packet inspection. Every `outbound.interval` (60 s) it
+reads `/proc/net/tcp` and `/proc/net/tcp6` and keeps the established connections that:
+
+- belong to a bench's user, the owner of the bench folder. Knowing which process holds a socket
+would need root, so benches sharing one user share one record, and anything else that user runs
+(an SSH session, a `git push`) counts as the bench's. A bench owned by root is skipped;
+- leave from a local port nothing listens on: the bench is the client, not answering a visitor;
+- go to a public address. Private, loopback and link-local peers (MariaDB, Redis, a LAN API) are
+left out unless `outbound.include_private`.
+
+A destination is the remote network (/24 for IPv4, /48 for IPv6) and port, so a CDN's next
+address is not new. For `outbound.learn_days` (7) after the agent first sees a bench's user, every
+destination is learned silently. After that:
+
+- a new destination on an unusual port is reported once as `bench_new_outbound` (**warning**), at
+most 20 per scan; the rest come out at the next scans;
+- one on a usual port (web, mail with 2525, IMAP and POP, DNS, NTP, SSH and git, LDAP; add yours
+with `outbound.usual_ports`) is only counted in `bench_new_outbound_usual`, since clouds rotate
+their addresses all day. `outbound.report_usual_ports` reports those too, at **info**.
+
+A destination unseen for 30 days is forgotten. The record is in the spool directory
+(`outbound-state.json`, 0600). `bench_outbound_destinations` counts the destinations seen at each
+sample.
+
+The event names the destination in `remote_ip` and `remote_port`, not `ip`: a partner the bench
+calls is not the remote party of an attack. It is searchable by entity and checked against the
+[IP reputation lists](/security/journal#ip-reputation-lists), which raise a known-bad
+destination, but it never groups incidents by IP, feeds a sequence rule, goes to CrowdSec as an
+attacker or gets a block proposal.
+
+<note>
+
+A sample every minute misses a connection that opened and closed in between. A bench in Docker
+(another network namespace) is not seen, and an outbound proxy on a private address hides the
+real destinations.
+
+</note>
+
+<table>
+<thead>
+  <tr>
+    <th>
+      Preset
+    </th>
+    
+    <th>
+      Fires when
+    </th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr>
+    <td>
+      <em>
+        Bench connects somewhere new
+      </em>
+    </td>
+    
+    <td>
+      a <code>
+        bench_new_outbound
+      </code>
+      
+       event at warning (an unusual port), per host (warning)
+    </td>
+  </tr>
+</tbody>
+</table>
+
 ## Turning detection off
 
 <table>
@@ -760,6 +833,18 @@ unreadable files are skipped.
     <td>
       <code>
         "integrity": false
+      </code>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Outbound connections
+    </td>
+    
+    <td>
+      <code>
+        "outbound": false
       </code>
     </td>
   </tr>

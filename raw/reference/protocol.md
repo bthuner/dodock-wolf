@@ -3307,6 +3307,38 @@ Metrics emitted by the agent, unless noted.
   <tr>
     <td>
       <code>
+        bench_outbound_destinations
+      </code>
+    </td>
+    
+    <td>
+      count
+    </td>
+    
+    <td>
+      bench (the bench folder's user): public network and port destinations of its established client connections, sampled every minute
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        bench_new_outbound_usual
+      </code>
+    </td>
+    
+    <td>
+      count
+    </td>
+    
+    <td>
+      bench: new destinations on usual ports this sample, counted rather than reported
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
         site_config_risks
       </code>
     </td>

@@ -1132,12 +1132,13 @@ and are skipped.
 
 ## Security posture
 
-| Check              | Every  | Sends                                                                                                                                                                                                                                                                                                       |
-| ------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **App versions**   | 1 h    | `app_version` per bench and app, from `apps/<app>/<app>/__init__.py`. The Wolf site compares them with the GitHub Security Advisories of Frappe and ERPNext. Development versions are not sent.                                                                                                             |
-| **Site settings**  | 1 h    | `site_setting` per site: two-factor authentication, password policy and minimum score, lockout, guest uploads, and the System Manager role's two-factor flag. Feeds the [security score](https://bthuner.github.io/dodock-wolf/security/compliance) of sites other than the Wolf site.                      |
-| **Exposure**       | 10 min | `exposed_services` per host: bench ports listening beyond loopback (MariaDB 3306, Postgres 5432, Redis, socket.io 9000, gunicorn). `site_config_risks` per site: `developer_mode`, `allow_tests`, a plain-HTTP `host_name`, `allow_cors: "*"`.                                                              |
-| **File integrity** | 15 min | `integrity_files` per bench; `bench_code_changed` and `bench_config_changed` events when an app's code, a site config or the nginx and supervisor config changes, telling a deployment from a change outside one. See [Detection](https://bthuner.github.io/dodock-wolf/security/detection#file-integrity). |
+| Check                    | Every  | Sends                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **App versions**         | 1 h    | `app_version` per bench and app, from `apps/<app>/<app>/__init__.py`. The Wolf site compares them with the GitHub Security Advisories of Frappe and ERPNext. Development versions are not sent.                                                                                                                                         |
+| **Site settings**        | 1 h    | `site_setting` per site: two-factor authentication, password policy and minimum score, lockout, guest uploads, and the System Manager role's two-factor flag. Feeds the [security score](https://bthuner.github.io/dodock-wolf/security/compliance) of sites other than the Wolf site.                                                  |
+| **Exposure**             | 10 min | `exposed_services` per host: bench ports listening beyond loopback (MariaDB 3306, Postgres 5432, Redis, socket.io 9000, gunicorn). `site_config_risks` per site: `developer_mode`, `allow_tests`, a plain-HTTP `host_name`, `allow_cors: "*"`.                                                                                          |
+| **File integrity**       | 15 min | `integrity_files` per bench; `bench_code_changed` and `bench_config_changed` events when an app's code, a site config or the nginx and supervisor config changes, telling a deployment from a change outside one. See [Detection](https://bthuner.github.io/dodock-wolf/security/detection#file-integrity).                             |
+| **Outbound connections** | 1 min  | `bench_outbound_destinations` per bench; a `bench_new_outbound` event for each public network and unusual port a bench's user had never used, after a 7-day learning period; `bench_new_outbound_usual` counts new ones on usual ports. See [Detection](https://bthuner.github.io/dodock-wolf/security/detection#outbound-connections). |
 
 See [Detection](https://bthuner.github.io/dodock-wolf/security/detection).
 
@@ -1282,19 +1283,20 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
 Every key is optional; the defaults are those of the example. `"tls": false` (and the same for the
 others) turns a check off.
 
-| Key             | Settings                                                                                                                                                 |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `rq`            | `long_job_minutes` (30)                                                                                                                                  |
-| `backups`       | `enabled`, `interval` (600 s), `press` (skip Press benches), `dirs` (backup directory per site)                                                          |
-| `tls`           | `interval` (3600 s), `port` (443), `timeout` (5 s), `connect_host` (for example `127.0.0.1` to check the local nginx), `domains` (add), `exclude` (drop) |
-| `mariadb`       | `cli` (else `mariadb` / `mysql`), `host`, `port`, `user`, `password`, `defaults_file`: a monitoring user for replication status                          |
-| `processes`     | `manager`: `auto`, `supervisor` or `systemd`                                                                                                             |
-| `versions`      | `interval` (3600 s)                                                                                                                                      |
-| `site_settings` | `interval` (3600 s)                                                                                                                                      |
-| `exposure`      | `interval` (600 s), `ports` (more ports to count)                                                                                                        |
-| `integrity`     | `interval` (900 s), `full_scan_interval` (86400 s), `server_paths` (`null`: `/etc/nginx` and `/etc/supervisor`)                                          |
-| `suricata`      | `eve_log`, `max_priority` (3)                                                                                                                            |
-| `wazuh`         | `alerts_log`, `min_level` (7), `exclude_groups` (`["sca"]`)                                                                                              |
+| Key             | Settings                                                                                                                                                    |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rq`            | `long_job_minutes` (30)                                                                                                                                     |
+| `backups`       | `enabled`, `interval` (600 s), `press` (skip Press benches), `dirs` (backup directory per site)                                                             |
+| `tls`           | `interval` (3600 s), `port` (443), `timeout` (5 s), `connect_host` (for example `127.0.0.1` to check the local nginx), `domains` (add), `exclude` (drop)    |
+| `mariadb`       | `cli` (else `mariadb` / `mysql`), `host`, `port`, `user`, `password`, `defaults_file`: a monitoring user for replication status                             |
+| `processes`     | `manager`: `auto`, `supervisor` or `systemd`                                                                                                                |
+| `versions`      | `interval` (3600 s)                                                                                                                                         |
+| `site_settings` | `interval` (3600 s)                                                                                                                                         |
+| `exposure`      | `interval` (600 s), `ports` (more ports to count)                                                                                                           |
+| `integrity`     | `interval` (900 s), `full_scan_interval` (86400 s), `server_paths` (`null`: `/etc/nginx` and `/etc/supervisor`)                                             |
+| `outbound`      | `interval` (60 s), `learn_days` (7), `include_private` (`false`), `usual_ports` (ports only counted, added to the defaults), `report_usual_ports` (`false`) |
+| `suricata`      | `eve_log`, `max_priority` (3)                                                                                                                               |
+| `wazuh`         | `alerts_log`, `min_level` (7), `exclude_groups` (`["sca"]`)                                                                                                 |
 
 ## Privacy and safety
 
@@ -1885,6 +1887,7 @@ Presets have no channels. They open incidents but notify nobody until you add a
 | Development settings in production      | `last(site_config_risks)` > 0 in 30 min                             | `site`  | ◐ warning  |
 | Bench code changed outside a deployment | `security` / `bench_code_changed` events (critical) >= 1 in 30 min  | `bench` | ● critical |
 | Bench or server config changed          | `security` / `bench_config_changed` events (warning) >= 1 in 30 min | `host`  | ◐ warning  |
+| Bench connects somewhere new            | `security` / `bench_new_outbound` events (warning) >= 1 in 15 min   | `host`  | ◐ warning  |
 
 ## Application changes and posture
 
@@ -2618,13 +2621,57 @@ baseline:
 | *Bench code changed outside a deployment* | a `bench_code_changed` event at critical, per bench (critical) |
 | *Bench or server config changed*          | a `bench_config_changed` event, per host (warning)             |
 
+## Outbound connections
+
+Without Suricata, the agent still notices a bench talking to somewhere new: a light hint of
+command-and-control or exfiltration, not packet inspection. Every `outbound.interval` (60 s) it
+reads `/proc/net/tcp` and `/proc/net/tcp6` and keeps the established connections that:
+
+- belong to a bench's user, the owner of the bench folder. Knowing which process holds a socket
+  would need root, so benches sharing one user share one record, and anything else that user runs
+  (an SSH session, a `git push`) counts as the bench's. A bench owned by root is skipped;
+- leave from a local port nothing listens on: the bench is the client, not answering a visitor;
+- go to a public address. Private, loopback and link-local peers (MariaDB, Redis, a LAN API) are
+  left out unless `outbound.include_private`.
+
+A destination is the remote network (/24 for IPv4, /48 for IPv6) and port, so a CDN's next
+address is not new. For `outbound.learn_days` (7) after the agent first sees a bench's user, every
+destination is learned silently. After that:
+
+- a new destination on an unusual port is reported once as `bench_new_outbound` (**warning**), at
+  most 20 per scan; the rest come out at the next scans;
+- one on a usual port (web, mail with 2525, IMAP and POP, DNS, NTP, SSH and git, LDAP; add yours
+  with `outbound.usual_ports`) is only counted in `bench_new_outbound_usual`, since clouds rotate
+  their addresses all day. `outbound.report_usual_ports` reports those too, at **info**.
+
+A destination unseen for 30 days is forgotten. The record is in the spool directory
+(`outbound-state.json`, 0600). `bench_outbound_destinations` counts the destinations seen at each
+sample.
+
+The event names the destination in `remote_ip` and `remote_port`, not `ip`: a partner the bench
+calls is not the remote party of an attack. It is searchable by entity and checked against the
+[IP reputation lists](https://bthuner.github.io/dodock-wolf/security/journal#ip-reputation-lists), which raise a known-bad
+destination, but it never groups incidents by IP, feeds a sequence rule, goes to CrowdSec as an
+attacker or gets a block proposal.
+
+::note
+A sample every minute misses a connection that opened and closed in between. A bench in Docker
+(another network namespace) is not seen, and an outbound proxy on a private address hides the
+real destinations.
+::
+
+| Preset                         | Fires when                                                                    |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| *Bench connects somewhere new* | a `bench_new_outbound` event at warning (an unusual port), per host (warning) |
+
 ## Turning detection off
 
-| To turn off      | Set in the agent config |
-| ---------------- | ----------------------- |
-| Auth log signals | `"auth_log": false`     |
-| Exposure checks  | `"exposure": false`     |
-| File integrity   | `"integrity": false`    |
+| To turn off          | Set in the agent config |
+| -------------------- | ----------------------- |
+| Auth log signals     | `"auth_log": false`     |
+| Exposure checks      | `"exposure": false`     |
+| File integrity       | `"integrity": false`    |
+| Outbound connections | `"outbound": false`     |
 
 Web attack detection follows the nginx logs: it stops for a bench whose nginx log the agent does
 not tail.
@@ -3426,13 +3473,8 @@ them: a scan, then a login from the same IP.
 
 ## Planned
 
-::note
-These are planned, not built:
-
-- For benches without Suricata: outbound connections of bench processes.
-::
-
-Without Wazuh, the agent already watches [file integrity on the bench](https://bthuner.github.io/dodock-wolf/security/detection#file-integrity).
+Without Wazuh or Suricata, the agent still watches [file integrity on the bench](https://bthuner.github.io/dodock-wolf/security/detection#file-integrity)
+and the bench users' [outbound connections](https://bthuner.github.io/dodock-wolf/security/detection#outbound-connections).
 
 
 # Agent protocol
@@ -3759,6 +3801,8 @@ Metrics emitted by the agent, unless noted.
 | `exposed_services`                 | count                     | host: bench ports (MariaDB/Postgres, bench Redis, socket.io, gunicorn) listening on all interfaces or a public address, from `/proc/net/tcp{,6}`; every 10 min                                                                                                                                                                                                     |
 | `integrity_files`                  | count                     | bench (or host, for `/etc` paths): files under [file integrity](https://bthuner.github.io/dodock-wolf/security/detection#file-integrity) watch (app code, site configs, nginx and supervisor config); every 15 min                                                                                                                                                 |
 | `integrity_unreadable`             | count                     | bench (or host): watched files or folders the agent could not read, kept at their baseline; every 15 min                                                                                                                                                                                                                                                           |
+| `bench_outbound_destinations`      | count                     | bench (the bench folder's user): public network and port destinations of its established client connections, sampled every minute                                                                                                                                                                                                                                  |
+| `bench_new_outbound_usual`         | count                     | bench: new destinations on usual ports this sample, counted rather than reported                                                                                                                                                                                                                                                                                   |
 | `site_config_risks`                | count                     | host, bench, site: `developer_mode`, `allow_tests`, a plain-HTTP `host_name`, `allow_cors: "*"` in the merged site config; every 10 min                                                                                                                                                                                                                            |
 | `security_score`                   | 0–100                     | site: written by the app (hourly), not the agent; see [Security](https://bthuner.github.io/dodock-wolf/security)                                                                                                                                                                                                                                                   |
 | `user_export_bytes`                | bytes per hour            | site, `labels.user`: response bytes of a user's exports and list reads over the past hour, written by the app (hourly); see [Security](https://bthuner.github.io/dodock-wolf/security)                                                                                                                                                                             |
