@@ -115,3 +115,30 @@ class TestClockSkew(unittest.TestCase):
 		self.assertEqual(schema.clock_skew_seconds("2026-10-29T01:59:30Z", "Europe/Paris", NOW), -30)
 		self.assertIsNone(schema.clock_skew_seconds(None, "UTC", NOW))
 		self.assertIsNone(schema.clock_skew_seconds("garbage", "UTC", NOW))
+
+
+class TestNormalizeSetup(unittest.TestCase):
+	def test_setup_checks(self):
+		from datetime import datetime
+
+		now = datetime(2026, 11, 18, 21, 0)
+		raw = {"checked_at": "2026-11-18T20:00:00Z", "checks": [
+			{"area": "logs", "status": "fail", "title": "cannot read /x", "fix": "add wolf-agent to adm"},
+			{"area": "benches", "status": "warn", "title": "Redis unreachable", "fix": None},
+			{"area": "daemon", "status": "ok", "title": "spool writable"},
+			{"area": "x", "status": "evil", "title": "unknown status"},  # dropped
+			{"area": "x", "status": "ok", "title": ""},  # dropped
+			"not a dict",
+		]}  # fmt: skip
+		out = schema.normalize_setup(raw, "UTC", now)
+		self.assertEqual((out["setup_failed"], out["setup_warnings"]), (1, 1))
+		self.assertEqual(out["setup_checked_at"], datetime(2026, 11, 18, 20, 0))
+		self.assertEqual([c["title"] for c in json.loads(out["setup_checks"])], ["cannot read /x", "Redis unreachable", "spool writable"])
+		long = schema.normalize_setup({"checks": [{"status": "fail", "title": "t" * 900}]}, "UTC", now)
+		self.assertEqual(len(json.loads(long["setup_checks"])[0]["title"]), 300)
+		self.assertEqual(long["setup_checked_at"], now)  # no time sent: now
+		future = schema.normalize_setup({"checked_at": "2027-01-01T00:00:00Z", "checks": raw["checks"]}, "UTC", now)
+		self.assertEqual(future["setup_checked_at"], now)
+		for bad in (None, {}, {"checks": "x"}, {"checks": [{"status": "nope", "title": "t"}]}):
+			self.assertIsNone(schema.normalize_setup(bad, "UTC", now))
+

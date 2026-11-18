@@ -86,7 +86,13 @@ export function fixtures() {
       unplaced_sites: [{ site: 'd.example.com' }],
       note: 'Hosts and benches come from agent registrations and from telemetry in the window.',
     }),
-    'dodock_wolf.api.dashboard.get_monitoring': () => ({ health: null, rollups: {}, agents: [], silence_minutes: 5, mode: { mode: 'central' }, note: '' }),
+    'dodock_wolf.api.dashboard.get_monitoring': () => ({
+      health: null, rollups: {}, silence_minutes: 5, mode: { mode: 'central' }, note: '',
+      agents: [{ name: 'WAG-1', hostname: 'bench-01', kind: 'agent', status: 'Active', state: 'fresh', last_seen: ago(1),
+        clock_skew_seconds: 0, agent_version: '0.1.0', setup: { checked_at: ago(20), failed: 1, warnings: 0, problems: [
+          { area: 'logs', status: 'fail', title: 'cannot read /var/log/nginx/access.log (permission denied)', fix: 'add wolf-agent to the adm group' },
+        ] } }],
+    }),
     'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
     'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false, next_cursor: null }, totals: {}, truncated: {}, window: null }),
     'dodock_wolf.api.incident_view.act': () => ({ ...INCIDENT, status: 'Acknowledged', acknowledged: { at: NOW.toISOString(), by: 'ops@example.com', by_name: 'Ops' },

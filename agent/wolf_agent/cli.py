@@ -284,6 +284,9 @@ def cmd_run(args):
 	shipper = Shipper(cfg)
 	responder = Responder(section(cfg, "response"))
 	watchdog = _watchdog(cfg)
+	from . import doctor
+
+	setup = doctor.SetupWatcher(cfg, config_path(args.config), collector)
 
 	stop = threading.Event()
 	for sig in (signal.SIGTERM, signal.SIGINT):
@@ -293,6 +296,10 @@ def cmd_run(args):
 	try:
 		while not stop.is_set():
 			metrics, events = collector.collect()
+			finished = setup.poll()
+			if finished:
+				shipper.setup = finished
+				metrics += doctor.setup_metrics(finished, cfg["hostname"])
 			try:
 				ok = shipper.send(metrics, events)
 			except AuthError as e:

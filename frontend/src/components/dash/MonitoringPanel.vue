@@ -23,6 +23,15 @@ const tick = computed(() => {
   return s % 60 === 0 ? `${s / 60} min` : `${s} s`
 })
 const slowTick = computed(() => tickSeconds.value > 60)
+// each agent's own `wolf-agent doctor` run, every hour: what its host gives it and what to fix
+const setupProblems = computed(() => agents.value.filter((a) => a.setup && (a.setup.failed || a.setup.warnings)))
+function setupLabel(s) {
+  if (!s) return 'not reported'
+  const parts = []
+  if (s.failed) parts.push(`${s.failed} failed`)
+  if (s.warnings) parts.push(`${s.warnings} warning${s.warnings > 1 ? 's' : ''}`)
+  return parts.length ? parts.join(', ') : 'ok'
+}
 </script>
 
 <template>
@@ -60,6 +69,14 @@ const slowTick = computed(() => tickSeconds.value > 60)
         {{ agents.filter((a) => a.state === 'fresh').length }} of {{ agents.length }} reporting
         (silent after {{ monitoring.silence_minutes }} min)
       </dd>
+      <dt>Host setup</dt>
+      <dd>
+        <template v-if="setupProblems.length">
+          <span style="color: var(--wolf-warning)">{{ setupProblems.length }} host{{ setupProblems.length > 1 ? 's' : '' }} to fix</span>:
+          {{ setupProblems.map((a) => a.hostname).join(', ') }}
+        </template>
+        <template v-else>every reporting agent has what it needs</template>
+      </dd>
       <template v-if="satellites.length">
         <dt>Satellites</dt>
         <dd>{{ satellites.filter((a) => a.state === 'fresh').length }} of {{ satellites.length }} forwarding</dd>
@@ -72,17 +89,38 @@ const slowTick = computed(() => tickSeconds.value > 60)
     <div v-if="!compact && monitoring.agents.length" class="wolf-tablewell">
     <table class="wolf-table">
       <thead>
-        <tr><th>Host or site</th><th>Kind</th><th>State</th><th>Last seen</th><th>Clock skew</th><th>Version</th></tr>
+        <tr><th>Host or site</th><th>Kind</th><th>State</th><th>Last seen</th><th>Clock skew</th><th>Version</th><th>Setup</th></tr>
       </thead>
       <tbody>
-        <tr v-for="a in monitoring.agents" :key="a.name">
-          <td class="font-medium">{{ a.hostname }}</td>
-          <td>{{ a.kind }}</td>
-          <td>{{ STATE[a.state] }}</td>
-          <td class="wolf-data">{{ a.last_seen ? `${ago(a.last_seen)} ago` : '' }}</td>
-          <td class="wolf-data">{{ a.clock_skew_seconds != null ? `${a.clock_skew_seconds} s` : 'unknown' }}</td>
-          <td class="wolf-data">{{ a.agent_version || '' }}</td>
-        </tr>
+        <template v-for="a in monitoring.agents" :key="a.name">
+          <tr>
+            <td class="font-medium">{{ a.hostname }}</td>
+            <td>{{ a.kind }}</td>
+            <td>{{ STATE[a.state] }}</td>
+            <td class="wolf-data">{{ a.last_seen ? `${ago(a.last_seen)} ago` : '' }}</td>
+            <td class="wolf-data">{{ a.clock_skew_seconds != null ? `${a.clock_skew_seconds} s` : 'unknown' }}</td>
+            <td class="wolf-data">{{ a.agent_version || '' }}</td>
+            <td>
+              <span v-if="a.kind !== 'agent'"></span>
+              <span v-else :title="a.setup ? `checked ${full(a.setup.checked_at, timeZone)}` : 'older agents do not report it'"
+                :style="a.setup && a.setup.failed ? 'color: var(--wolf-critical)' : a.setup && a.setup.warnings ? 'color: var(--wolf-warning)' : ''"
+              >{{ setupLabel(a.setup) }}</span>
+            </td>
+          </tr>
+          <tr v-if="a.setup && a.setup.problems.length">
+            <td colspan="7">
+              <details>
+                <summary class="text-sm">What {{ a.hostname }} needs (<code>wolf-agent doctor</code> on the host shows the same)</summary>
+                <ul class="mt-1 space-y-1 text-sm">
+                  <li v-for="(p, i) in a.setup.problems" :key="i">
+                    <strong>{{ p.status === 'fail' ? 'Fail' : 'Warning' }}</strong> ({{ p.area }}): {{ p.title }}
+                    <div v-if="p.fix" class="text-ink-gray-7">Fix: <code>{{ p.fix }}</code></div>
+                  </li>
+                </ul>
+              </details>
+            </td>
+          </tr>
+        </template>
       </tbody>
     </table>
     </div>

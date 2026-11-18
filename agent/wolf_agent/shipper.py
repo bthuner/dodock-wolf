@@ -149,6 +149,7 @@ class Shipper:
 		self.health = None  # Wolf's own health from the last successful push (protocol §4)
 		self.actions = []  # response actions handed back by the last successful push
 		self.results = []  # their results, sent with the next push
+		self.setup = None  # the latest setup checks (doctor.SetupWatcher), sent once
 
 	def _body(self, metrics, events):
 		return {
@@ -204,6 +205,8 @@ class Shipper:
 		self.actions = []
 		if self.results:
 			bodies[0]["action_results"] = self.results
+		if self.setup:
+			bodies[0]["setup"], self.setup = self.setup, None  # a spooled batch keeps its copy
 		if self.clock() < self.retry_at:
 			self._spool(bodies)
 			return False

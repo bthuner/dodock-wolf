@@ -239,6 +239,22 @@ def get_http(range=None, since=None, until=None, site=None, bench=None, host=Non
 	}
 
 
+def _setup(agent, tz):
+	"""The agent's last `wolf-agent doctor` run: counts and the problems with their fixes."""
+	if not agent.setup_checked_at:
+		return None
+	try:
+		checks = json.loads(agent.setup_checks or "[]")
+	except ValueError:
+		checks = []
+	return {
+		"checked_at": window.to_utc(agent.setup_checked_at, tz),
+		"failed": agent.setup_failed or 0,
+		"warnings": agent.setup_warnings or 0,
+		"problems": [c for c in checks if isinstance(c, dict) and c.get("status") in ("fail", "warn")],
+	}
+
+
 @frappe.whitelist()
 def get_monitoring():
 	"""Is Wolf itself working: rules and scheduler, ingest queue, rollups, agents, satellites."""
@@ -247,7 +263,8 @@ def get_monitoring():
 	silence, cutoff = agent_cutoff()
 	agents = frappe.get_list(
 		"Wolf Agent",
-		fields=["name", "hostname", "kind", "status", "last_seen", "clock_skew_seconds", "agent_version"],
+		fields=["name", "hostname", "kind", "status", "last_seen", "clock_skew_seconds", "agent_version",
+		        "setup_checked_at", "setup_failed", "setup_warnings", "setup_checks"],  # fmt: skip
 		order_by="hostname asc",
 		limit_page_length=0,
 	)
@@ -260,7 +277,7 @@ def get_monitoring():
 				"name": a.name, "hostname": a.hostname, "kind": a.kind or "agent", "status": a.status,
 				"state": inventory.agent_state(a.status, a.last_seen, cutoff),
 				"last_seen": window.to_utc(a.last_seen, tz), "clock_skew_seconds": a.clock_skew_seconds,
-				"agent_version": a.agent_version,
+				"agent_version": a.agent_version, "setup": _setup(a, tz),
 			}  # fmt: skip
 			for a in agents
 		],

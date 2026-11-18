@@ -17,7 +17,10 @@ import pwd
 import shutil
 import stat
 import subprocess
+import threading
 import time
+from datetime import datetime, timezone
+from types import SimpleNamespace
 
 from . import pilot, press
 from .config import press_settings, resolve_auth_log, section
@@ -468,4 +471,62 @@ def _last_push(path, stale=DEFAULT_STALE_MINUTES):
 	minutes = (time.time() - last) / 60
 	return [item("daemon", OK if minutes < stale else WARN, f"last successful push {minutes:.0f} min ago",
 	             None if minutes < stale else "journalctl -u wolf-agent: the Wolf site or the network")]  # fmt: skip
+
+
+class SetupWatcher:
+	"""The daemon's own doctor run, every `setup_checks.interval` seconds (an hour by default).
+
+	In a thread, so a slow check (a Redis or journal timeout) never delays a push. Its result goes
+	once, with the next push, as `setup` (the Wolf site keeps it on the Wolf Agent and shows it on
+	the Monitoring page), plus the host metrics `agent_setup_failed` and `agent_setup_warnings` a
+	rule can alert on. The daemon's own sources and benches are checked, and the Wolf site is not
+	called: the push itself says whether it answers.
+	"""
+
+	def __init__(self, cfg, config_path, collector, clock=time.monotonic, runner=None, start=None):
+		settings = section(cfg, "setup_checks")
+		self.enabled = bool(settings.get("enabled", True))
+		self.interval = max(float(settings.get("interval") or 3600), 60)
+		self.cfg, self.config_path, self.collector, self.clock = cfg, config_path, collector, clock
+		self.runner = runner or run
+		self.start = start or (lambda target: threading.Thread(target=target, name="setup-checks", daemon=True).start())
+		self.next_run = clock() + 60  # after the first pushes: the daemon's start is not its steady state
+		self.result, self.running = None, False
+		self.lock = threading.Lock()
+
+	def _view(self, cfg):
+		collector = self.collector
+		return SimpleNamespace(sources=list(collector.sources), benches=list(collector.benches), close=lambda: None)
+
+	def _work(self):
+		try:
+			checks = self.runner(self.cfg, self.config_path, live=False, collector_factory=self._view)
+		except Exception as e:  # never the daemon's problem
+			checks = [item("agent", FAIL, f"setup checks failed: {type(e).__name__}: {e}")]
+		result = {"checked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "checks": checks}
+		with self.lock:
+			self.result, self.running = result, False
+
+	def poll(self):
+		"""The latest finished run, once, or None; starts a run when one is due."""
+		if not self.enabled:
+			return None
+		with self.lock:
+			done, self.result = self.result, None
+			due = not self.running and self.clock() >= self.next_run
+			if due:
+				self.running, self.next_run = True, self.clock() + self.interval
+		if due:
+			self.start(self._work)
+		return done
+
+
+def setup_metrics(result, host):
+	"""`agent_setup_failed` / `agent_setup_warnings` for a finished run."""
+	checks = result["checks"]
+	return [
+		{"metric_name": name, "value": sum(c["status"] == status for c in checks), "timestamp": result["checked_at"],
+		 "host": host, "bench": None, "site": None, "labels": {}}  # fmt: skip
+		for name, status in (("agent_setup_failed", FAIL), ("agent_setup_warnings", WARN))
+	]
 

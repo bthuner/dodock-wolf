@@ -96,6 +96,8 @@ DEFAULTS = {
 	# `ips` is off because the SSH brute-force / new-IP signals need the addresses.
 	"scrub": {"enabled": True, "ips": False, "extra_patterns": [], "keep": []},
 	"watchdog": {"enabled": True, "stale_minutes": 5, "webhook_url": None, "smtp": None},
+	# the daemon's own `wolf-agent doctor` run, shown on the Wolf site's Monitoring page
+	"setup_checks": {"enabled": True, "interval": 3600},
 }
 
 

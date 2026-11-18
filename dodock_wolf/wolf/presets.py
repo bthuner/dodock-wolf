@@ -114,6 +114,14 @@ PRESETS = [
 		"severity": "warning", "auto_resolve": 0, "cooldown_minutes": 0,
 	},
 	{
+		"rule_name": "Host setup problem",
+		"description": "A Wolf agent's hourly setup check (wolf-agent doctor) found something it cannot read or reach: "
+		"see Monitoring for the fix.",
+		"signal_type": "metric", "metric_name": "agent_setup_failed", "aggregation": "last",
+		"operator": ">=", "threshold": 1, "window_minutes": 120, "group_by": "host",
+		"severity": "warning", "auto_resolve": 1, "cooldown_minutes": 0,
+	},
+	{
 		"rule_name": "Scheduler stalled",
 		"description": "This site's scheduled jobs (and so Wolf's rules) stopped running. Recorded "
 		"by agent pushes while stalled, it fires once the scheduler runs again; the live alert "

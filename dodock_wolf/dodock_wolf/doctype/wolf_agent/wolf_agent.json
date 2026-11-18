@@ -21,7 +21,12 @@
   "os",
   "benches_section",
   "benches",
-  "silence_reported"
+  "silence_reported",
+  "setup_section",
+  "setup_checked_at",
+  "setup_failed",
+  "setup_warnings",
+  "setup_checks"
  ],
  "fields": [
   {
@@ -146,11 +151,42 @@
    "hidden": 1,
    "label": "Silence Reported",
    "read_only": 1
+  },
+  {
+   "fieldname": "setup_section",
+   "fieldtype": "Section Break",
+   "label": "Setup checks"
+  },
+  {
+   "fieldname": "setup_checked_at",
+   "fieldtype": "Datetime",
+   "label": "Setup Checked At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "setup_failed",
+   "fieldtype": "Int",
+   "label": "Setup Checks Failed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "setup_warnings",
+   "fieldtype": "Int",
+   "label": "Setup Warnings",
+   "read_only": 1
+  },
+  {
+   "fieldname": "setup_checks",
+   "fieldtype": "Code",
+   "label": "Setup Checks",
+   "options": "JSON",
+   "read_only": 1,
+   "description": "The agent's own `wolf-agent doctor` run, every hour: what this host gives it and what to fix."
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-18 19:10:32.062365",
+ "modified": "2026-11-18 22:33:59.992306",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Agent",
