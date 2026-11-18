@@ -28,7 +28,7 @@ Sources were read at these commits. Every link below is pinned to them:
 | nginx | Tails `/var/log/nginx/access.log` (Press's `main` format, which logs `$host`) and maps custom domains to sites | done, unit tested |
 | Redis queue | Reads `queue_length`, the RQ failed/started registries, live workers and Redis memory/evictions from `redis://127.0.0.1:<rq_port>` (bench `config.json`, or 11000 + the bench's port offset) | checked |
 | TLS expiry | Checks every site and custom domain like on other benches. On Press the certificates live on the proxy server, so the public handshake measures what customers see | done (generic) |
-| Backups | **Skipped** by default (`backups.press: false`): Press takes backups through its agent and uploads them offsite; whether local copies stay in `sites/<site>/private/backups` has not been checked | off |
+| Backups | From the Press agent's job history: `backup_age_hours` from each site's newest successful Backup Site job, `backup_failed` when one fails (offsite backups are deleted from the server after the upload, streamed ones never written); `backups.press: true` reads the folder instead | checked |
 | Processes | **Skipped**: supervisor runs inside each bench container and Wolf never runs `docker` | — |
 | MariaDB | Not on Press: the site's database password is in its `site_config.json`, mode 0600 for `frappe` | — |
 | Site config risks | Need the 0600 site configs: no `site_config_risks` sample (unknown) | checked |
@@ -160,9 +160,10 @@ and for `--site <name>`.
 
 ## How deployment events are produced
 
-- Wolf opens `jobs.sqlite3` with `file:…?mode=ro` (read-only, needs the agent's `-wal`/`-shm`
-  files to be readable). If that fails, it retries with `immutable=1`. Wolf never writes to
-  the database.
+- Wolf opens `jobs.sqlite3` with `file:…?mode=ro` while the agent's `-wal`/`-shm` files are there,
+  else with `immutable=1`: a reader creates them when missing, and files owned by `wolf-agent` (the
+  agent's folder is `frappe`-group writable) leave the Press agent unable to write its database
+  (seen on dev/press after `sudo -u wolf-agent wolf-agent check`). Wolf never writes to it.
 - **One `deployment` event per job**, sent as soon as the job has started. Its timestamp is
   the job's `start`, so Wolf's "502 spike after deployment" rule links incidents that happen
   *during* a long migrate. If the bench cannot be determined yet, the event waits up to
@@ -292,4 +293,10 @@ On `dev/press` (Press's roles `essentials`, `user`, `nginx`, `agent`, `bench`, `
    log, sites from `$host` and `nginx/hosts/*/map.json`, and proposes the blocks that work. The
    Press agent writes each site's TLS key 0644 there, readable by the `frappe` group.
 
-Still unchecked: shared-FS benches, MariaDB on the database server, and local backup copies.
+6. **Backups.** A local-only Backup Site job keeps its files in `sites/<site>/private/backups` and
+   lists them in its result (`data.backups.*.path`); an offsite one deletes them after the upload
+   (`upload_offsite_backup`, agent/site.py) unless the server keeps them, a streamed one writes
+   none. Wolf reads the job history: an age per site, and `backup_failed` for a failed job (checked
+   with the database server stopped).
+
+Still unchecked: shared-FS benches, MariaDB on the database server.

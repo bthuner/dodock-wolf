@@ -391,6 +391,59 @@ class TestPressJobs(PressCase):
 			benches_dir=self.press.benches_dir,
 		)
 
+	def backup(self, bench, site, start, status="Success"):
+		path = f"{self.press.benches_dir}/{bench}/sites/{site}/private/backups/20261029_010000-x-database.sql.gz"
+		data = {"backups": {"database": {"path": path, "file": os.path.basename(path), "size": 1}}} if status == "Success" else \
+			{"traceback": "Traceback ...\nOperationalError: (2003, \"Can't connect to MySQL server\")"}
+		return self.press.add_job("Backup Site", status, data, start=start, end=start + timedelta(seconds=30))
+
+	def test_reading_jobs_creates_no_file(self):
+		# the Press agent's last connection closed (a restart): SQLite removed its -wal/-shm. A reader
+		# would create them, as ours, and the Press agent could no longer write its database
+		self.press.close()
+		for suffix in ("-wal", "-shm"):
+			self.assertFalse(os.path.exists(self.press.db + suffix))
+		conn = press.open_jobs_db(self.press.db)
+		conn.execute("select count(*) from jobmodel").fetchall()
+		conn.close()
+		self.assertFalse(press.last_backups(self.press.agent_dir))  # read too
+		for suffix in ("-wal", "-shm"):
+			self.assertFalse(os.path.exists(self.press.db + suffix), suffix)
+		self.press.conn = sqlite3.connect(self.press.db)  # for tearDown
+
+	def test_backups_from_the_job_history(self):
+		# what a real Backup Site job leaves (dev/press): its result lists the files; offsite ones are
+		# then deleted from the server, so the backups folder cannot tell
+		self.backup("bench-1", "a.frappe.cloud", NOW - timedelta(hours=30))
+		self.backup("bench-2", "a.frappe.cloud", NOW - timedelta(hours=3))  # moved since: the newest counts
+		self.backup("bench-1", "b.frappe.cloud", NOW - timedelta(hours=1), status="Failure")
+		ages = press.last_backups(self.press.agent_dir)
+		self.assertEqual(set(ages), {"a.frappe.cloud"})
+		self.assertEqual(ages["a.frappe.cloud"].replace(microsecond=0),
+		                 (NOW - timedelta(hours=3) + timedelta(seconds=30)).astimezone().replace(tzinfo=None, microsecond=0))  # fmt: skip
+		self.assertIsNone(press.last_backups(os.path.join(self.tmp.name, "nope")))
+
+		from wolf_agent.collector import InfraChecks
+
+		benches = [{"name": "bench-2", "path": "/x", "sites": ["a.frappe.cloud", "b.frappe.cloud"], "platform": "press"}]
+		infra = InfraChecks({"press": {"agent_dir": self.press.agent_dir}}, "f1")
+		got = [(m["site"], m["value"]) for m in infra._press_backups(benches, NOW)]
+		self.assertEqual(got, [("a.frappe.cloud", 2.99)])  # b never had a successful backup: nothing, as on any bench
+
+	def test_a_failed_backup_and_no_deployment_for_backups(self):
+		w = self.watcher(known=lambda: {"bench-1"})
+		self.assertEqual(w.poll(NOW), [])  # baseline
+		self.backup("bench-1", "a.frappe.cloud", NOW - timedelta(minutes=5))
+		jid = self.backup("bench-1", "b.frappe.cloud", NOW - timedelta(minutes=2), status="Failure")
+		self.press.add_step(jid, "Backup Site", "Failure", {
+			"command": "docker exec -w /home/frappe/frappe-bench bench-1 bench --site b.frappe.cloud backup --with-files",
+			"directory": os.path.join(self.press.benches_dir, "bench-1")})  # fmt: skip
+		events = w.poll(NOW)
+		self.assertEqual([(e["type"], e["category"], e["severity"], e["bench"], e["site"]) for e in events],
+		                 [("error", "backup_failed", "critical", "bench-1", "b.frappe.cloud")])  # fmt: skip
+		self.assertIn("OperationalError", events[0]["payload"]["traceback"])
+		self.assertEqual(w.poll(NOW), [])
+
 	def test_finished_jobs_land_on_the_bench_their_last_step_ran_in(self):
 		# what dev/press recorded: both jobs ended between two polls, their data `null`
 		old = self.press.add_bench("bench-0001-000001-f1", sites=("w.frappe.cloud",))

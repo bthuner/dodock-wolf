@@ -58,6 +58,12 @@ DEPLOY_JOBS = {
 	"Rebuild Bench Assets": ("rebuild", ()),
 }
 TERMINAL = ("Success", "Failure")
+# Press takes every backup through its agent (Site.backup_job), offsite ones deleted from the server
+# after the upload or streamed without a local copy: the job history, not the backups folder, says
+# when a site was last backed up
+BACKUP_JOB = "Backup Site"
+_BACKUP_PATH_RE = re.compile(r"/benches/(?P<bench>[^/\"]+)/sites/(?P<site>[^/\"]+)/private/backups/")
+MAX_BACKUP_JOBS = 5000
 # A job whose bench cannot be read yet (Bench/Site methods carry no bench name in
 # their arguments) waits this long for its steps to name it, then ships host-scoped.
 SCOPE_WAIT = timedelta(minutes=2)
@@ -283,21 +289,61 @@ def _json(text):
 		return None
 
 
+def _backup_scope(row, steps, bench_in):
+	"""(bench, site) of a Backup Site job: its result lists the files, under
+	`<benches>/<bench>/sites/<site>/private/backups/`; a failed one, from its steps."""
+	for text in [row.get("data") or ""] + [s.get("data") or "" for s in steps]:
+		m = _BACKUP_PATH_RE.search(text)
+		if m:
+			return m.group("bench"), m.group("site")
+	site = next((m.group(1) for s in steps for m in [_SITE_FLAG_RE.search(s.get("data") or "")] if m), None)
+	bench = next((b for b in map(bench_in, [s.get("data") or "" for s in reversed(steps)]) if b), None)
+	return bench, site
+
+
+def last_backups(agent_dir=DEFAULT_AGENT_DIR, limit=MAX_BACKUP_JOBS):
+	"""{site: end} of each site's newest successful Backup Site job (naive server local time), or
+	None when jobs.sqlite3 cannot be read."""
+	try:
+		conn = open_jobs_db(os.path.join(agent_dir, JOBS_DB))
+	except JobsDBError:
+		return None
+	newest = {}
+	try:
+		rows = conn.execute(
+			"select data, end from jobmodel where name = ? and status = 'Success' order by id desc limit ?", [BACKUP_JOB, limit]
+		).fetchall()
+	except sqlite3.Error:
+		return None
+	finally:
+		conn.close()
+	for data, end in rows:
+		m = _BACKUP_PATH_RE.search(data or "")
+		end = _parse_dt(end)
+		if m and end and m.group("site") not in newest:
+			newest[m.group("site")] = end
+	return newest
+
+
 class JobsDBError(Exception):
 	pass
 
 
 def open_jobs_db(path):
-	"""Open the Press agent's jobs.sqlite3 strictly read-only.
+	"""Open the Press agent's jobs.sqlite3 strictly read-only, creating no file.
 
-	The database runs in WAL mode; `mode=ro` works while the agent keeps the
-	-wal/-shm files around. If that fails (e.g. -shm not readable), fall back to
-	`immutable=1`, which skips locking and may miss the very latest writes.
+	The database runs in WAL mode. A reader opening it creates its -wal and -shm files when they are
+	missing (after the Press agent's last connection closed, a restart), and the agent's folder is
+	writable by the frappe group: they would be ours, mode 0644, and the Press agent could no longer
+	write its own database (seen on dev/press after `sudo -u wolf-agent wolf-agent check`; the daemon's
+	unit has ProtectHome=read-only). So `mode=ro` only while both files are there; without them no
+	writer is open and the file holds every write: `immutable=1`, which creates nothing.
 	"""
 	if not os.path.exists(path):
 		raise JobsDBError(f"{path} does not exist")
 	errors = []
-	for params in ("mode=ro", "mode=ro&immutable=1"):
+	with_wal = os.path.exists(path + "-wal") and os.path.exists(path + "-shm")
+	for params in ("mode=ro", "mode=ro&immutable=1") if with_wal else ("mode=ro&immutable=1",):
 		try:
 			conn = sqlite3.connect(f"file:{path}?{params}", uri=True, timeout=5)
 			conn.execute("select 1 from jobmodel limit 1").fetchall()
@@ -349,7 +395,7 @@ class PressJobWatcher:
 			log.warning("cannot save Press job state %s: %s", self.state_path, e)
 
 	def _rows(self, conn, floor):
-		names = list(DEPLOY_JOBS)
+		names = [*DEPLOY_JOBS, BACKUP_JOB]
 		marks = ",".join("?" * len(names))
 		cur = conn.execute(
 			f"select id, name, status, agent_job_id, data, enqueue, start, end from jobmodel "
@@ -433,6 +479,30 @@ class PressJobWatcher:
 			site=site,
 		)
 
+	def _backup_failed_event(self, row, bench, site, end, steps):
+		data = _json(row.get("data"))
+		tb = data.get("traceback") if isinstance(data, dict) else None
+		failed = [s["name"] for s in steps if s.get("status") == "Failure"]
+		return event(
+			"error",
+			"backup_failed",
+			"critical",
+			utc_iso(end),
+			self.host,
+			f"Press backup failed on {site or bench or self.host}"[:140],
+			fingerprint("press_backup_failed", self.host, row["id"]),
+			{
+				"press_job": row["name"],
+				"agent_job_id": row.get("agent_job_id"),
+				"local_job_id": row["id"],
+				"failed_steps": failed,
+				"traceback": (tb or "")[-4000:] or None,
+			},
+			source="press-agent",
+			bench=bench,
+			site=site,
+		)
+
 	def _failure_event(self, row, bench, sites, end, steps):
 		site = sites[0] if len(sites) == 1 else None
 		failed = [s["name"] for s in steps if s.get("status") == "Failure"]
@@ -501,6 +571,15 @@ class PressJobWatcher:
 					finished.add(jid)
 					continue
 			steps = self._steps(conn, jid)
+			if row["name"] == BACKUP_JOB:  # no deployment: a failure is a failed backup
+				if not terminal:
+					pending.append(jid)
+					continue
+				if row["status"] == "Failure":
+					bench, site = _backup_scope(row, steps, self._bench_in)
+					events.append(self._backup_failed_event(row, bench, site, _parse_dt(row.get("end")) or start, steps))
+				finished.add(jid)
+				continue
 			bench, sites = self._scope(row, steps)
 			if jid not in started and start:
 				if bench or terminal or local_now - start >= SCOPE_WAIT:

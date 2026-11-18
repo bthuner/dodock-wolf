@@ -19,6 +19,7 @@ from .processes import ProcessWatcher
 from .redis_queue import RedisError, RedisProbe
 from .scrub import Scrubber
 from .tailer import FileTailer, JournalTailer, TailState
+from .util import metric, utc_iso
 
 log = logging.getLogger(__name__)
 DEFAULT_EVE_LOG = "/var/log/suricata/eve.json"
@@ -367,6 +368,7 @@ class InfraChecks:
 		self.sync = sync
 		self.rq = section(cfg, "rq")
 		self.backups = section(cfg, "backups")
+		self.press_agent_dir = press_settings(cfg)["agent_dir"]
 		self.tls = section(cfg, "tls")
 		self.mariadb = section(cfg, "mariadb")
 		self.processes = section(cfg, "processes")
@@ -448,9 +450,28 @@ class InfraChecks:
 	def _backups(self, benches, now):
 		if not self.backups.get("enabled", True) or not self._due("backups", self.backups.get("interval")):
 			return [], []
+		from_jobs = []
 		if not self.backups.get("press"):
+			# Press deletes offsite backups from the server after the upload: its job history says
+			from_jobs = self._press_backups([b for b in benches if b.get("platform") == "press"], now)
 			benches = [b for b in benches if b.get("platform") != "press"]
-		return backup_metrics(benches, self.host, now, overrides=self.backups.get("dirs")), []
+		return backup_metrics(benches, self.host, now, overrides=self.backups.get("dirs")) + from_jobs, []
+
+	def _press_backups(self, benches, now):
+		"""`backup_age_hours` per Press site, from its newest successful Backup Site job."""
+		if not benches:
+			return []
+		ages = press.last_backups(self.press_agent_dir)
+		if not ages:
+			return []
+		now = now or datetime.now(timezone.utc)
+		out = []
+		for bench in benches:
+			for site in bench.get("sites") or []:
+				if site in ages:
+					hours = max((now - ages[site].astimezone()).total_seconds(), 0) / 3600.0  # naive: server local time
+					out.append(metric("backup_age_hours", round(hours, 2), utc_iso(now), self.host, bench=bench["name"], site=site))
+		return out
 
 	def _tls(self, benches, now):
 		if not self.tls.get("enabled", True):
