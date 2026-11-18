@@ -4511,3 +4511,764 @@ msgstr ""
 msgid "{0} is already registered as another kind of Wolf Agent"
 msgstr ""
 
+#. Option of a Select field in DocType 'Wolf Agent', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json
+msgctxt "Wolf Agent"
+msgid "Active"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Agent', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json
+msgctxt "Wolf Agent"
+msgid "Disabled"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Agent', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json
+msgctxt "Wolf Agent"
+msgid "agent"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Agent', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json
+msgctxt "Wolf Agent"
+msgid "satellite"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Agent', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json
+msgctxt "Wolf Agent"
+msgid "integration"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Email"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Webhook"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Raven"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Slack"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Mattermost"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Matrix"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "ntfy"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Gotify"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "SMS"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "PagerDuty"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "none"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "hourly"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "POST"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "GET"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "form"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "json"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "160"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "320"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "metric"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "event"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "sequence"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "info"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "warning"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "critical"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "avg"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "min"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "max"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "sum"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "count"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "last"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "error"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "cron_failure"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "worker_failure"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "security"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "host_metric_alert"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "deployment"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "ip"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "user"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "host"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid ">"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid ">="
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "<"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "<="
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "=="
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "!="
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "none"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "bench"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "site"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "host_label"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Entity Alias', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json
+msgctxt "Wolf Entity Alias"
+msgid "host"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Entity Alias', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json
+msgctxt "Wolf Entity Alias"
+msgid "site"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Entity Alias', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json
+msgctxt "Wolf Entity Alias"
+msgid "Manual"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Entity Alias', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json
+msgctxt "Wolf Entity Alias"
+msgid "Auto"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "error"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "cron_failure"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "worker_failure"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "security"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "host_metric_alert"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "deployment"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "info"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "warning"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "critical"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event Entity', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json
+msgctxt "Wolf Event Entity"
+msgid "ip"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event Entity', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json
+msgctxt "Wolf Event Entity"
+msgid "host"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event Entity', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json
+msgctxt "Wolf Event Entity"
+msgid "site"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Event Entity', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json
+msgctxt "Wolf Event Entity"
+msgid "user"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "Open"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "Acknowledged"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "Resolved"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "info"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "warning"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "critical"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Postmortem', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json
+msgctxt "Wolf Postmortem"
+msgid "Draft"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Postmortem', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json
+msgctxt "Wolf Postmortem"
+msgid "In Review"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Postmortem', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json
+msgctxt "Wolf Postmortem"
+msgid "Published"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Postmortem Action Item', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json
+msgctxt "Wolf Postmortem Action Item"
+msgid "Open"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Postmortem Action Item', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json
+msgctxt "Wolf Postmortem Action Item"
+msgid "In Progress"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Postmortem Action Item', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json
+msgctxt "Wolf Postmortem Action Item"
+msgid "Done"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "block_ip"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "disable_user"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "logout_sessions"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "revoke_api_keys"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "Approved"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "Applied"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "Failed"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "Expired"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "wolf_agent"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "wazuh"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "central"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "satellite"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "async"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "sync"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "own"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "both"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "external"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "wolf_agent"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "wazuh"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "info"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "warning"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "critical"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "tcp"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "tls"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "udp"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "octet-counting"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "newline"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "rfc5424"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "none"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "ocsf"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "cef"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Silence', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json
+msgctxt "Wolf Silence"
+msgid "manual"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Silence', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json
+msgctxt "Wolf Silence"
+msgid "deployment"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Silence', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json
+msgctxt "Wolf Silence"
+msgid "api"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Status Page', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json
+msgctxt "Wolf Status Page"
+msgid "info"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Status Page', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json
+msgctxt "Wolf Status Page"
+msgid "warning"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf Status Page', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json
+msgctxt "Wolf Status Page"
+msgid "critical"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf User Scope', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json
+msgctxt "Wolf User Scope"
+msgid "site"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf User Scope', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json
+msgctxt "Wolf User Scope"
+msgid "bench"
+msgstr ""
+
+#. Option of a Select field in DocType 'Wolf User Scope', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json
+msgctxt "Wolf User Scope"
+msgid "host"
+msgstr ""
+
+#. Label in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule
+msgctxt "Wolf Alert Rule"
+msgid "Timing"
+msgstr ""
+
+#. Label in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event
+msgctxt "Wolf Event"
+msgid "Count"
+msgstr ""
+
+#. Label in DocType 'Wolf Metric Rollup', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup
+msgctxt "Wolf Metric Rollup"
+msgid "Count"
+msgstr ""
+
+#. Label in DocType 'Wolf Outbox', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox
+msgctxt "Wolf Outbox"
+msgid "Count"
+msgstr ""

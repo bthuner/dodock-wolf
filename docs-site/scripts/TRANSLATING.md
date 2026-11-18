@@ -87,6 +87,7 @@ When a change adds or changes strings, on a bench with the app:
 
 ```bash
 bench generate-pot-file --app dodock_wolf
+python3 ci/locale_contexts.py        # in this repository: the Select options' own entries
 bench update-po-files --app dodock_wolf --locale fr
 ```
 
@@ -97,6 +98,17 @@ Then:
 - translate the new entries (an empty `msgstr` shows the English);
 - run `python3 -m unittest tests.test_locale`. It fails when a string of the template is missing
   from `fr.po`, or when a translation drops a placeholder (`{0}`), an HTML tag or code.
+
+Frappe merges every app's translations into one table, Wolf's after Frappe's:
+- **A plain entry Wolf translates replaces Frappe's French of the same string in all of Desk.**
+  When Frappe already translates a string (`Comment`, `Assigned To`, `To Date`...), leave Wolf's
+  `msgstr` empty so Frappe's is used, or give a label its own entry with the DocType as context
+  (`LABELS` in `ci/locale_contexts.py`).
+- **An empty entry shows Frappe's French when there is one, not the English.** That is why every
+  Select option has an entry with its DocType as context (`ci/locale_contexts.py`): a status
+  such as `Open` reads « Ouvert » (`TRANSLATED`), and a value the code compares (`none`, `Email`,
+  `critical`) is pinned to the English. Python messages that show a status translate it with the
+  same context: `_(doc.status, context="Wolf Incident")`.
 
 What stays in English:
 - DocType names and product names;

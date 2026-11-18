@@ -3,6 +3,7 @@ translation keeps the placeholders, HTML tags and code of its source, so `.forma
 page never break in French."""
 
 import ast
+import importlib.util
 import re
 import unittest
 from pathlib import Path
@@ -36,6 +37,13 @@ def read_po(path):
 	return entries
 
 
+def _contexts():
+	spec = importlib.util.spec_from_file_location("locale_contexts", LOCALE.parent.parent / "ci" / "locale_contexts.py")
+	module = importlib.util.module_from_spec(spec)
+	spec.loader.exec_module(module)
+	return module
+
+
 class TestLocale(unittest.TestCase):
 	def setUp(self):
 		self.template = read_po(LOCALE / "main.pot")
@@ -49,6 +57,16 @@ class TestLocale(unittest.TestCase):
 		for lang, entries in self.translations.items():
 			missing = sorted(msgid for (_ctxt, msgid) in set(self.template) - set(entries))
 			self.assertEqual(missing, [], f"{lang}.po misses strings: run update-po-files")
+
+	def test_every_select_option_has_its_own_entry(self):
+		# without one, Desk shows Frappe's own French of the word ("Open" as the verb « Ouvrir »)
+		contexts = _contexts()
+		wanted = {(doctype, msgid) for doctype, msgid, _src, _opt in contexts.entries()}
+		for name, entries in {"main.pot": self.template, **{f"{k}.po": v for k, v in self.translations.items()}}.items():
+			self.assertEqual(sorted(wanted - set(entries)), [], f"{name}: run python3 ci/locale_contexts.py")
+		for lang, words in contexts.TRANSLATED.items():
+			for key, french in words.items():
+				self.assertEqual(self.translations[lang][key], french)
 
 	def test_a_translation_keeps_placeholders_tags_and_code(self):
 		for lang, entries in self.translations.items():

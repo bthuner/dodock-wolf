@@ -1,5 +1,26 @@
 frappe.provide("frappe.wolf");
 
+// Lists and reports show a Select value as __(value), with no context, while the form's control
+// passes the DocType. Pass it here too: Wolf's options have their own entries with the DocType as
+// context (ci/locale_contexts.py), so "Open" on an incident reads « Ouvert », not Frappe's verb
+// « Ouvrir ». Any other field falls back to the plain lookup, as before.
+(() => {
+	const formatters = frappe.form && frappe.form.formatters;
+	if (!formatters || !formatters.Select || formatters.Select.wolf_context) return;
+	const select = function (value, df, ...rest) {
+		if (!df || !df.parent) return formatters.Select.wolf_base.call(this, value, df, ...rest);
+		return __(formatters.Data(value, df), null, df.parent);
+	};
+	select.wolf_base = formatters.Select;
+	select.wolf_context = true;
+	formatters.Select = select;
+})();
+
+// A list's status pill, translated with the DocType as context: Frappe's list draws a plain Select
+// column with __(value) alone, and its indicator is the one place that passes the DocType.
+frappe.wolf.status_indicator = (doctype, colours) => (doc) =>
+	doc.status ? [__(doc.status, null, doctype), colours[doc.status] || "gray", "status,=," + doc.status] : null;
+
 frappe.wolf.esc = (v) => frappe.utils.escape_html(v == null ? "" : String(v));
 frappe.wolf.TYPE_LABEL = {
 	error: __("Error"),

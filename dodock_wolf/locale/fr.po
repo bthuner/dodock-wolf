@@ -160,7 +160,7 @@ msgstr "Un alias de site est un domaine, pas une adresse."
 #. Label of the api_key (Data) field in DocType 'Wolf API Key IP'
 #: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:19
 msgid "API Key"
-msgstr "Clé d'API"
+msgstr ""
 
 #. Description of the 'Secret' (Password) field in DocType 'Wolf Alert Channel'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:206
@@ -188,9 +188,7 @@ msgstr "Acquitter"
 #. Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:781
 msgid "Acknowledge/resolve links in alerts stay valid this long. 0 disables them."
-msgstr ""
-"Les liens « acquitter » et « résoudre » des alertes restent valides pendant cette durée. 0 les "
-"désactive."
+msgstr "Les liens « acquitter » et « résoudre » des alertes restent valides pendant cette durée. 0 les désactive."
 
 #. Option for the 'Status' (Select) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:89
@@ -247,16 +245,16 @@ msgstr ""
 #. Label of the active_from (Time) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:356
 msgid "Active From"
-msgstr "Actif de"
+msgstr "Début de la plage active"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:29
 msgid "Active From and Active To are the same time: the rule would never run"
-msgstr "Actif de et Actif à indiquent la même heure : la règle ne s'exécuterait jamais"
+msgstr "Le début et la fin de la plage active sont à la même heure : la règle ne serait jamais évaluée"
 
 #. Label of the active_to (Time) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:361
 msgid "Active To"
-msgstr "Actif à"
+msgstr "Fin de la plage active"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:173
 msgid "Add"
@@ -271,9 +269,7 @@ msgstr "Ajouter un commentaire"
 msgid ""
 "Addresses each API key was used from (wolf/api_keys.py): a key used from an address outside them "
 "raises api_key_new_ip. Delete a row to forget an address."
-msgstr ""
-"Adresses depuis lesquelles chaque clé d'API a été utilisée (wolf/api_keys.py) : une clé utilisée "
-"depuis une autre adresse lève api_key_new_ip. Supprimez une ligne pour oublier une adresse."
+msgstr "Adresses depuis lesquelles chaque clé d'API a été utilisée (wolf/api_keys.py) : une clé utilisée depuis une autre adresse déclenche api_key_new_ip. Supprimez une ligne pour oublier une adresse."
 
 #. Description of the 'Cooldown Minutes' (Int) field in DocType 'Wolf Alert
 #. Rule'
@@ -295,7 +291,7 @@ msgstr "Agent"
 #. Label of the agent_silence_minutes (Int) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:216
 msgid "Agent Silence Minutes"
-msgstr "Minutes de silence de l'agent"
+msgstr "Agent silencieux après (minutes)"
 
 #. Label of the agent_version (Data) field in DocType 'Wolf Agent'
 #: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:127
@@ -418,9 +414,7 @@ msgstr ""
 msgid ""
 "Another source's event about the same finding, seen first (Wolf Settings: overlapping detectors "
 "in both mode). This one is not sent again to CrowdSec or the SIEM."
-msgstr ""
-"L'événement d'une autre source sur la même détection, vu en premier (Wolf Settings : détecteurs "
-"qui se recouvrent en mode both). Celui-ci n'est pas renvoyé à CrowdSec ni au SIEM."
+msgstr "L'événement d'une autre source sur le même constat, vu en premier (Wolf Settings : détecteurs qui se recoupent en mode both). Celui-ci n'est pas renvoyé à CrowdSec ni au SIEM."
 
 #. Description of a DocType
 #: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:136
@@ -482,12 +476,12 @@ msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:27
 msgid "Assign to me"
-msgstr "M'assigner"
+msgstr ""
 
 #. Label of the assigned_to (Link) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:297
 msgid "Assigned To"
-msgstr "Assigné à"
+msgstr ""
 
 #. Label of the at (Datetime) field in DocType 'Wolf Delivery'
 #. Label of the at (Datetime) field in DocType 'Wolf Event Entity'
@@ -497,7 +491,7 @@ msgstr "Assigné à"
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:139
 #: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:36
 msgid "At"
-msgstr "Le"
+msgstr "Date"
 
 #. Label of the audit_section (Section Break) field in DocType 'Wolf Response
 #. Action'
@@ -542,17 +536,17 @@ msgstr "Résolution automatique"
 #. Label of the dora_aware_at (Datetime) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:375
 msgid "Aware since (DORA)"
-msgstr "Connu depuis (DORA)"
+msgstr "Prise de connaissance (DORA)"
 
 #. Label of the gdpr_aware_at (Datetime) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:414
 msgid "Aware since (GDPR)"
-msgstr "Connu depuis (RGPD)"
+msgstr "Prise de connaissance (RGPD)"
 
 #. Label of the nis2_aware_at (Datetime) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:320
 msgid "Aware since (NIS2)"
-msgstr "Connu depuis (NIS2)"
+msgstr "Prise de connaissance (NIS2)"
 
 #. Description of the 'Public Url' (Data) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:773
@@ -773,7 +767,7 @@ msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:172
 msgid "Comment"
-msgstr "Commenter"
+msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:171
 #, python-brace-format
@@ -835,7 +829,7 @@ msgstr "Impossible de joindre {0} : {1}"
 #: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:87
 #: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:65
 msgid "Count"
-msgstr "Nombre"
+msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:252
 #, python-brace-format
@@ -879,9 +873,7 @@ msgstr "Échéances"
 msgid ""
 "Deadlines count from here: early warning 24 h, incident notification 72 h, final report one month"
 " after the notification. Set to now when the flag is ticked."
-msgstr ""
-"Les échéances partent d'ici : alerte précoce 24 h, notification d'incident 72 h, rapport final un"
-" mois après la notification. Mis à maintenant quand la case est cochée."
+msgstr "Les échéances courent à partir de cette date : alerte précoce 24 h, notification d'incident 72 h, rapport final un mois après la notification. Mis à l'heure actuelle quand la case est cochée."
 
 #. Label of the honeytoken_api_keys (Small Text) field in DocType 'Wolf
 #. Settings'
@@ -922,7 +914,7 @@ msgstr "Utilisateurs leurres"
 #. Label of the deliveries_html (HTML) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:275
 msgid "Deliveries"
-msgstr "Envois"
+msgstr "Livraisons"
 
 #. Label of the deployment_section (Section Break) field in DocType 'Wolf
 #. Incident'
@@ -956,7 +948,7 @@ msgstr "Fenêtre de déploiement (minutes)"
 #. Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:264
 msgid "Deployments this recent are linked to new incidents."
-msgstr "Les déploiements aussi récents sont liés aux nouveaux incidents."
+msgstr "Les déploiements survenus dans ce délai sont liés aux nouveaux incidents."
 
 #. Label of the description (Small Text) field in DocType 'Wolf Alert Rule'
 #. Label of the description (Small Text) field in DocType 'Wolf Status Page'
@@ -978,7 +970,7 @@ msgstr "Détails"
 #. Label of the detector_match_minutes (Int) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:322
 msgid "Detector Match Minutes"
-msgstr "Fenêtre de rapprochement des détecteurs (minutes)"
+msgstr "Rapprochement des détecteurs (minutes)"
 
 #. Label of the digest (Select) field in DocType 'Wolf Alert Channel'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:56
@@ -1108,17 +1100,17 @@ msgstr "Activé"
 #. Label of the ends_at (Datetime) field in DocType 'Wolf Silence'
 #: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:43
 msgid "Ends At"
-msgstr "Se termine le"
+msgstr "Fin"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.py:15
 msgid "Ends At must be after Starts At"
-msgstr "Se termine le doit être après Commence le"
+msgstr "La fin doit être postérieure au début"
 
 #. Label of the entity_correlation_minutes (Int) field in DocType 'Wolf
 #. Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:289
 msgid "Entity Correlation Minutes"
-msgstr "Fenêtre de corrélation des entités (minutes)"
+msgstr "Corrélation par entité (minutes)"
 
 #. Label of the error (Small Text) field in DocType 'Wolf Delivery'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:78
@@ -1130,16 +1122,16 @@ msgstr "Erreur"
 #. Label of the escalate_after_minutes (Int) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:423
 msgid "Escalate After Minutes"
-msgstr "Escalader après (minutes)"
+msgstr "Escalade après (minutes)"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:38
 msgid "Escalate After Minutes cannot be negative"
-msgstr "Escalader après (minutes) ne peut pas être négatif"
+msgstr "Le délai d'escalade ne peut pas être négatif"
 
 #. Label of the escalated_at (Datetime) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:253
 msgid "Escalated At"
-msgstr "Escaladé le"
+msgstr "Escalade le"
 
 #. Label of the escalation_section (Section Break) field in DocType 'Wolf Alert
 #. Rule'
@@ -1220,9 +1212,7 @@ msgstr ""
 msgid ""
 "Events of Wolf's own detectors this agent sent that were dropped because Suricata or Wazuh covers"
 " them (Wolf Settings: overlapping detectors in external mode)."
-msgstr ""
-"Événements des détecteurs propres à Wolf envoyés par cet agent et écartés parce que Suricata ou "
-"Wazuh les couvre (Wolf Settings : détecteurs qui se recouvrent en mode external)."
+msgstr "Événements des détecteurs propres à Wolf envoyés par cet agent et écartés parce que Suricata ou Wazuh les couvre (Wolf Settings : détecteurs qui se recoupent en mode external)."
 
 #. Description of the 'Timeline Padding Minutes' (Int) field in DocType 'Wolf
 #. Settings'
@@ -1263,7 +1253,7 @@ msgstr ""
 #. Label of the executor (Select) field in DocType 'Wolf Response Action'
 #: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:80
 msgid "Executor"
-msgstr "Exécuteur"
+msgstr "Exécutant"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:128
 msgid "Expected the rule's fields"
@@ -1415,21 +1405,21 @@ msgstr ""
 #. Label of the forward_failures (Int) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:190
 msgid "Forward Failures"
-msgstr "Échecs de transfert"
+msgstr "Échecs de transmission"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:15
 msgid "Forward now"
-msgstr "Transférer maintenant"
+msgstr "Transmettre maintenant"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:22
 #, python-brace-format
 msgid "Forwarded {0} events"
-msgstr "{0} événements transférés"
+msgstr "{0} événements transmis"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:21
 #, python-brace-format
 msgid "Forwarding: {0}"
-msgstr "Transfert : {0}"
+msgstr "Transmission : {0}"
 
 #. Label of the siem_framing (Select) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:672
@@ -1494,7 +1484,7 @@ msgstr "URL du serveur Gotify"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:57
 msgid "Group"
-msgstr "Regroupement"
+msgstr ""
 
 #. Label of the group_by (Select) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:276
@@ -1530,7 +1520,7 @@ msgstr "Statut HTTP"
 #. Label of the matrix_homeserver (Data) field in DocType 'Wolf Alert Channel'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:95
 msgid "Homeserver URL"
-msgstr "URL du homeserver"
+msgstr "URL du serveur d'accueil"
 
 #. Label of the host (Data) field in DocType 'Wolf Event'
 #. Label of the host (Data) field in DocType 'Wolf Incident'
@@ -1629,7 +1619,7 @@ msgstr ""
 #. Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:319
 msgid "In both mode, how close in time two events must be to be one finding."
-msgstr "En mode both, écart de temps maximal entre deux événements pour n'en faire qu'une détection."
+msgstr "En mode both, écart de temps maximal entre deux événements pour ne former qu'un seul constat."
 
 #. Label of the rule_sentence (HTML) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:77
@@ -1756,7 +1746,7 @@ msgstr "Rattaché par IP ou utilisateur"
 #. Label of the journal_retention_days (Int) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:764
 msgid "Journal Retention Days"
-msgstr "Rétention du journal (jours)"
+msgstr "Conservation du journal (jours)"
 
 #. Description of the 'Separate Resolve Threshold' (Check) field in DocType
 #. 'Wolf Alert Rule'
@@ -1799,7 +1789,7 @@ msgstr "Libellés"
 #. Label of the value_last (Float) field in DocType 'Wolf Metric Rollup'
 #: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:111
 msgid "Last"
-msgstr "Dernière"
+msgstr ""
 
 #. Label of the last_error (Small Text) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:457
@@ -1824,23 +1814,23 @@ msgstr "Dernier déclenchement"
 #. Label of the last_forward_at (Datetime) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:162
 msgid "Last Forward At"
-msgstr "Dernier transfert le"
+msgstr "Dernière transmission le"
 
 #. Label of the last_forward_error (Small Text) field in DocType 'Wolf
 #. Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:176
 msgid "Last Forward Error"
-msgstr "Dernière erreur de transfert"
+msgstr "Dernière erreur de transmission"
 
 #. Label of the last_forward_status (Data) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:169
 msgid "Last Forward Status"
-msgstr "Dernier statut de transfert"
+msgstr "Dernier statut de transmission"
 
 #. Label of the own_events_dropped_at (Datetime) field in DocType 'Wolf Agent'
 #: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:121
 msgid "Last Given Way"
-msgstr "Dernier délestage"
+msgstr "Dernier événement écarté le"
 
 #. Label of the last_ip (Data) field in DocType 'Wolf Agent'
 #: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:93
@@ -1879,18 +1869,18 @@ msgstr "Dernière erreur"
 
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:147
 msgid "Last forward"
-msgstr "Dernier transfert"
+msgstr "Dernière transmission"
 
 #. Description of the 'Last Forward At' (Datetime) field in DocType 'Wolf
 #. Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:159
 msgid "Last successful push to the central site."
-msgstr "Dernier envoi réussi vers le site central."
+msgstr "Dernière transmission réussie vers le site central."
 
 #. Label of the seen_from (Data) field in DocType 'Wolf Entity Alias'
 #: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:53
 msgid "Learnt from"
-msgstr "Appris depuis"
+msgstr "Origine"
 
 #. Label of the lessons_learned (Text Editor) field in DocType 'Wolf
 #. Postmortem'
@@ -1902,7 +1892,7 @@ msgstr "Enseignements"
 #. Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:607
 msgid "Let CrowdSec decide on detections"
-msgstr "Laisser CrowdSec décider des détections"
+msgstr "Laisser CrowdSec statuer sur les détections"
 
 #: dodock_wolf/api/actions.py:31 dodock_wolf/api/actions.py:95
 msgid "Link expired"
@@ -2018,7 +2008,7 @@ msgstr "Événements max. par envoi"
 #. Label of the sms_max_length (Select) field in DocType 'Wolf Alert Channel'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:211
 msgid "Max Length"
-msgstr "Longueur max."
+msgstr ""
 
 #. Label of the max_metrics_per_push (Int) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:239
@@ -2080,7 +2070,7 @@ msgstr "Alerte sur métrique"
 #. Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:135
 msgid "Metric condition"
-msgstr "Condition sur métrique"
+msgstr "Condition sur les métriques"
 
 #. Label of the value_min (Float) field in DocType 'Wolf Metric Rollup'
 #: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:97
@@ -2183,7 +2173,7 @@ msgstr ""
 
 #: dodock_wolf/api/actions.py:36 dodock_wolf/api/actions.py:99
 msgid "Not found"
-msgstr "Introuvable"
+msgstr ""
 
 #: dodock_wolf/api/compliance.py:93 dodock_wolf/api/compliance.py:101 dodock_wolf/api/response.py:33
 msgid "Not permitted"
@@ -2437,7 +2427,7 @@ msgstr "Opérateur"
 #. Alert Channel'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
 msgid "Optional access token (tk_…) for protected topics."
-msgstr "Jeton d'accès facultatif (tk_…) pour les sujets protégés."
+msgstr "Jeton d'accès facultatif (tk_…) pour les topics protégés."
 
 #. Description of the 'Auth Header' (Data) field in DocType 'Wolf Alert
 #. Channel'
@@ -2484,7 +2474,7 @@ msgstr "Détecteurs qui se recoupent"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:42
 msgid "Overview"
-msgstr "Vue d'ensemble"
+msgstr ""
 
 #. Label of the own_events_dropped (Int) field in DocType 'Wolf Agent'
 #: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:115
@@ -2583,7 +2573,7 @@ msgstr "Compteurs d'hystérésis par groupe, tenus à jour par l'évaluateur."
 #. Label of the gdpr_breach (Check) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:407
 msgid "Personal data breach (GDPR Art. 33)"
-msgstr "Violation de données personnelles (RGPD art. 33)"
+msgstr "Violation de données personnelles (RGPD, art. 33)"
 
 #. Label of the sms_numbers (Small Text) field in DocType 'Wolf Alert Channel'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:158
@@ -2678,17 +2668,17 @@ msgstr "Intervalle d'envoi"
 #. Label of the queued_at (Datetime) field in DocType 'Wolf Digest Item'
 #: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:74
 msgid "Queued At"
-msgstr "Mis en file le"
+msgstr ""
 
 #. Description of the 'Agent Silence Minutes' (Int) field in DocType 'Wolf
 #. Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:213
 msgid "Raise a warning event when an agent has not pushed for this long."
-msgstr "Lève un événement warning quand un agent n'a rien envoyé depuis ce délai."
+msgstr "Crée un événement warning quand un agent n'a rien envoyé depuis ce délai."
 
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:39
 msgid "Range"
-msgstr "Période"
+msgstr ""
 
 #. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
@@ -2736,7 +2726,7 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:149
 #: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:27
 msgid "Reason"
-msgstr "Motif"
+msgstr ""
 
 #. Description of the 'Webhook URL' (Data) field in DocType 'Wolf Alert
 #. Channel'
@@ -2757,12 +2747,12 @@ msgstr "Destinataires"
 #. Label of the ref_name (Data) field in DocType 'Wolf Journal Entry'
 #: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:68
 msgid "Record"
-msgstr "Enregistrement"
+msgstr "Document"
 
 #. Label of the ref_doctype (Data) field in DocType 'Wolf Journal Entry'
 #: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:62
 msgid "Record Type"
-msgstr "Type d'enregistrement"
+msgstr "Type de document"
 
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:22
 msgid "Refresh"
@@ -2831,11 +2821,7 @@ msgid ""
 "Report exports, Data Export, bulk PDFs and list reads, counted per user and hour. An event when a"
 " user's hour is far above their largest hour of the last 14 days (critical at 20x, or without any"
 " history), once past the floor below."
-msgstr ""
-"Exports de rapports, Data Export, PDF en masse et lectures de listes, comptés par utilisateur et "
-"par heure. Un événement quand l'heure d'un utilisateur dépasse de loin sa plus grosse heure des "
-"14 derniers jours (critical à 20x, ou en l'absence d'historique), une fois le plancher ci-dessous"
-" franchi."
+msgstr "Exports de rapports, Data Export, PDF en masse et lectures de listes, comptés par utilisateur et par heure. Un événement quand l'heure d'un utilisateur dépasse de loin sa plus grosse heure des 14 derniers jours (critical à 20×, ou en l'absence d'historique), une fois le plancher ci-dessous franchi."
 
 #. Description of the 'Action' (Data) field in DocType 'Wolf Delivery'
 #: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:52
@@ -2866,7 +2852,7 @@ msgstr "Résoudre"
 #. Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:298
 msgid "Resolve After Evaluations"
-msgstr "Résoudre après N évaluations"
+msgstr "Résoudre après (évaluations)"
 
 #. Label of the resolve_threshold (Float) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:315
@@ -2983,10 +2969,7 @@ msgstr "Nom de la règle"
 msgid ""
 "Rules are matched by name; a field the file leaves out goes back to its default. Rules not in the"
 " file are left alone. Channel secrets are never in a file: a channel keeps its stored one."
-msgstr ""
-"Les règles sont rapprochées par leur nom ; un champ absent du fichier revient à sa valeur par "
-"défaut. Les règles absentes du fichier ne sont pas modifiées. Les secrets des canaux ne sont "
-"jamais dans un fichier : un canal garde celui qu'il a en mémoire."
+msgstr "Les règles sont rapprochées par leur nom ; un champ absent du fichier revient à sa valeur par défaut. Les règles absentes du fichier ne sont pas modifiées. Les secrets des canaux ne sont jamais dans un fichier : un canal garde celui qui est déjà enregistré."
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:54
 msgid "Rules imported"
@@ -3023,7 +3006,7 @@ msgstr ""
 #. Label of the sequence_entity (Select) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:230
 msgid "Same"
-msgstr "Même"
+msgstr "Même entité"
 
 #. Label of the duplicate_of (Link) field in DocType 'Wolf Event'
 #: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:121
@@ -3033,7 +3016,7 @@ msgstr "Même constat que"
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:49
 #, python-brace-format
 msgid "Same must be one of {0}"
-msgstr "« Même » doit valoir l'une des valeurs suivantes : {0}"
+msgstr "« Même entité » doit valoir l'une des valeurs suivantes : {0}"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:57
 msgid "Samples"
@@ -3069,7 +3052,7 @@ msgstr "Enregistrez pour démarrer les compteurs de délai."
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence_list.js:9
 msgid "Scheduled"
-msgstr "Programmé"
+msgstr ""
 
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:158
 msgid ""
@@ -3092,7 +3075,7 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:78
 #: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:30
 msgid "Scope"
-msgstr "Périmètre"
+msgstr ""
 
 #. Label of the scope_section (Section Break) field in DocType 'Wolf Alert
 #. Rule'
@@ -3208,7 +3191,7 @@ msgstr "Renseignez à la fois le début et la fin de la plage active, ou aucun d
 #. Description of the 'Central URL' (Data) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:125
 msgid "Set by Register with central site."
-msgstr "Renseigné par « S'enregistrer auprès du site central »."
+msgstr "Renseigné par « S'enregistrer auprès du site central »."
 
 #. Description of the 'Secret Issued At' (Datetime) field in DocType 'Wolf
 #. Agent'
@@ -3318,9 +3301,7 @@ msgstr "Jours d'historique affichés"
 msgid ""
 "Shown on public status pages instead of a generic \"Degraded performance\" / \"Service "
 "disruption\". Never put host names or internal details here."
-msgstr ""
-"Affiché sur les pages de statut publiques à la place d'un « Degraded performance » / « Service "
-"disruption » générique. N'indiquez jamais de noms d'hôtes ni de détails internes ici."
+msgstr "Affiché sur les pages de statut publiques à la place d'un « Degraded performance » / « Service disruption » générique. N'indiquez jamais de noms d'hôtes ni de détails internes ici."
 
 #. Label of the signal_type (Select) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:104
@@ -3335,7 +3316,7 @@ msgstr "Signaux"
 #. Label of the nis2_significant (Check) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:313
 msgid "Significant incident (NIS2 Art. 23)"
-msgstr "Incident important (NIS2 art. 23)"
+msgstr "Incident important (NIS2, art. 23)"
 
 #. Label of the silence (Link) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:236
@@ -3391,9 +3372,7 @@ msgstr ""
 msgid ""
 "Slack: app → Incoming Webhooks. Mattermost: Integrations → Incoming Webhooks. Stored encrypted: "
 "the URL is the credential."
-msgstr ""
-"Slack : app → Incoming Webhooks. Mattermost : Integrations → Incoming Webhooks. Stockée chiffrée "
-": l'URL est l'identifiant."
+msgstr "Slack : app → Incoming Webhooks. Mattermost : Integrations → Incoming Webhooks. Stockée chiffrée : l'URL fait office de secret."
 
 #. Label of the slug (Data) field in DocType 'Wolf Status Page'
 #: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:34
@@ -3433,19 +3412,19 @@ msgstr "Scinder…"
 #. Description of the 'Label Key' (Data) field in DocType 'Wolf Metric Sample'
 #: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:65
 msgid "Stable string form of labels, e.g. mount=/"
-msgstr "Forme texte stable des labels, par exemple mount=/"
+msgstr "Forme texte stable des libellés, par exemple mount=/"
 
 #. Label of the started_at (Datetime) field in DocType 'Wolf Incident'
 #. Label of the started_at (Datetime) field in DocType 'Wolf Postmortem'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:123
 #: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:75
 msgid "Started At"
-msgstr "Commencé le"
+msgstr ""
 
 #. Label of the starts_at (Datetime) field in DocType 'Wolf Silence'
 #: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:35
 msgid "Starts At"
-msgstr "Commence le"
+msgstr "Début"
 
 #. Label of the status (Select) field in DocType 'Wolf Agent'
 #. Label of the status_section (Section Break) field in DocType 'Wolf Alert
@@ -3738,7 +3717,7 @@ msgstr "Instantané de la chronologie"
 #: dodock_wolf/www/wolf_status.html:73
 #, python-brace-format
 msgid "Times in {0}."
-msgstr "Heures exprimées en {0}."
+msgstr "Heures dans le fuseau {0}."
 
 #. Label of the timestamp (Datetime) field in DocType 'Wolf Event'
 #. Label of the timestamp (Datetime) field in DocType 'Wolf Metric Sample'
@@ -3761,7 +3740,7 @@ msgstr ""
 #. Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:350
 msgid "Timing"
-msgstr "Calendrier"
+msgstr ""
 
 #. Label of the title (Data) field in DocType 'Wolf Digest Item'
 #. Label of the title (Data) field in DocType 'Wolf Event'
@@ -3780,7 +3759,7 @@ msgstr "Titre"
 
 #: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:15
 msgid "To Date"
-msgstr "Jusqu'au"
+msgstr ""
 
 #. Description of the 'Application Token' (Password) field in DocType 'Wolf
 #. Alert Channel'
@@ -3796,7 +3775,7 @@ msgstr "Trop d'envois de l'agent {0} : la limite est de {1} par minute, réessa
 #. Label of the ntfy_topic (Data) field in DocType 'Wolf Alert Channel'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:127
 msgid "Topic"
-msgstr "Sujet"
+msgstr "Topic"
 
 #. Label of the siem_transport (Select) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:649
@@ -3927,7 +3906,7 @@ msgstr ""
 #. Label of the capture_email_queue (Check) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:410
 msgid "Watch the Email Queue"
-msgstr "Surveiller la file d'attente des e-mails"
+msgstr "Surveiller la file d'e-mails"
 
 #. Label of the wazuh_api_password (Password) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:531
@@ -3967,7 +3946,7 @@ msgstr ""
 #. Label of the webhook_url (Data) field in DocType 'Wolf Alert Channel'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:73
 msgid "Webhook URL"
-msgstr "URL du webhook"
+msgstr ""
 
 #. Description of the 'Overlapping detectors' (Section Break) field in DocType
 #. 'Wolf Settings'
@@ -4009,7 +3988,7 @@ msgstr "Qui applique le blocage : le Wolf Agent sur l'hôte, ou la réponse act
 #. Description of the 'Assigned To' (Link) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:293
 msgid "Who is working on it. Assigning creates a ToDo and notifies them."
-msgstr "Qui s'en occupe. L'assignation crée une tâche (ToDo) et prévient la personne."
+msgstr "Qui s'en occupe. L'attribution crée une tâche (ToDo) et prévient la personne."
 
 #. Label of the window_minutes (Int) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:268
@@ -4033,11 +4012,11 @@ msgstr ""
 #. Label of the sequence_minutes (Int) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:238
 msgid "Within Minutes"
-msgstr "Délai (minutes)"
+msgstr "Écart max. (minutes)"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:51
 msgid "Within Minutes must be at least one minute"
-msgstr "Le délai doit être d'au moins une minute"
+msgstr "L'écart max. doit être d'au moins une minute"
 
 #. Name of a DocType
 #: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:64
@@ -4463,7 +4442,7 @@ msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:71
 msgid "due within 6 h"
-msgstr "échéance dans 6 h"
+msgstr "échéance dans moins de 6 h"
 
 #. Option for the 'Event Type' (Select) field in DocType 'Wolf Alert Rule'
 #. Option for the 'Event Type' (Select) field in DocType 'Wolf Event'
@@ -4500,7 +4479,7 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:71
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:134
 msgid "failed"
-msgstr "échec"
+msgstr ""
 
 #: dodock_wolf/api/actions.py:137
 #, python-brace-format
@@ -4737,9 +4716,7 @@ msgstr ""
 msgid ""
 "rfc5424: a syslog header before each message (rsyslog, syslog-ng, Graylog). none: the bare JSON "
 "or CEF, which Wazuh decodes (OCSF, newline framing over TCP; see docs/siem.md)."
-msgstr ""
-"rfc5424 : un en-tête syslog avant chaque message (rsyslog, syslog-ng, Graylog). none : le JSON ou"
-" le CEF brut, que Wazuh décode (OCSF, découpage newline sur TCP ; voir docs/siem.md)."
+msgstr "rfc5424 : un en-tête syslog avant chaque message (rsyslog, syslog-ng, Graylog). none : le JSON ou le CEF brut, que Wazuh décode (OCSF, délimitation newline sur TCP ; voir docs/siem.md)."
 
 #: dodock_wolf/public/js/wolf.js:46
 msgid "same finding as"
@@ -4766,11 +4743,11 @@ msgstr "envoyé"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:72
 msgid "sent late"
-msgstr "envoyée en retard"
+msgstr "envoi en retard"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:72
 msgid "sent on time"
-msgstr "envoyée dans les délais"
+msgstr "envoi dans les délais"
 
 #. Option for the 'Signal Type' (Select) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:105
@@ -4880,3 +4857,764 @@ msgstr "{0} est System Manager : seul un System Manager peut approuver cette ac
 msgid "{0} is already registered as another kind of Wolf Agent"
 msgstr "{0} est déjà enregistré comme un autre type de Wolf Agent"
 
+#. Option of a Select field in DocType 'Wolf Agent', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json
+msgctxt "Wolf Agent"
+msgid "Active"
+msgstr "Actif"
+
+#. Option of a Select field in DocType 'Wolf Agent', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json
+msgctxt "Wolf Agent"
+msgid "Disabled"
+msgstr "Désactivé"
+
+#. Option of a Select field in DocType 'Wolf Agent', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json
+msgctxt "Wolf Agent"
+msgid "agent"
+msgstr "agent"
+
+#. Option of a Select field in DocType 'Wolf Agent', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json
+msgctxt "Wolf Agent"
+msgid "satellite"
+msgstr "satellite"
+
+#. Option of a Select field in DocType 'Wolf Agent', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json
+msgctxt "Wolf Agent"
+msgid "integration"
+msgstr "integration"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Email"
+msgstr "Email"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Webhook"
+msgstr "Webhook"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Raven"
+msgstr "Raven"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Slack"
+msgstr "Slack"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Mattermost"
+msgstr "Mattermost"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Matrix"
+msgstr "Matrix"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "ntfy"
+msgstr "ntfy"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "Gotify"
+msgstr "Gotify"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "SMS"
+msgstr "SMS"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "PagerDuty"
+msgstr "PagerDuty"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "none"
+msgstr "none"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "hourly"
+msgstr "hourly"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "POST"
+msgstr "POST"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "GET"
+msgstr "GET"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "form"
+msgstr "form"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "json"
+msgstr "json"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "160"
+msgstr "160"
+
+#. Option of a Select field in DocType 'Wolf Alert Channel', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgctxt "Wolf Alert Channel"
+msgid "320"
+msgstr "320"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "metric"
+msgstr "metric"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "event"
+msgstr "event"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "sequence"
+msgstr "sequence"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "info"
+msgstr "info"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "warning"
+msgstr "warning"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "critical"
+msgstr "critical"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "avg"
+msgstr "avg"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "min"
+msgstr "min"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "max"
+msgstr "max"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "sum"
+msgstr "sum"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "count"
+msgstr "count"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "last"
+msgstr "last"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "error"
+msgstr "error"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "cron_failure"
+msgstr "cron_failure"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "worker_failure"
+msgstr "worker_failure"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "security"
+msgstr "security"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "host_metric_alert"
+msgstr "host_metric_alert"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "deployment"
+msgstr "deployment"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "ip"
+msgstr "ip"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "user"
+msgstr "user"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "host"
+msgstr "host"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid ">"
+msgstr ">"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid ">="
+msgstr ">="
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "<"
+msgstr "<"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "<="
+msgstr "<="
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "=="
+msgstr "=="
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "!="
+msgstr "!="
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "none"
+msgstr "none"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "bench"
+msgstr "bench"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "site"
+msgstr "site"
+
+#. Option of a Select field in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgctxt "Wolf Alert Rule"
+msgid "host_label"
+msgstr "host_label"
+
+#. Option of a Select field in DocType 'Wolf Entity Alias', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json
+msgctxt "Wolf Entity Alias"
+msgid "host"
+msgstr "host"
+
+#. Option of a Select field in DocType 'Wolf Entity Alias', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json
+msgctxt "Wolf Entity Alias"
+msgid "site"
+msgstr "site"
+
+#. Option of a Select field in DocType 'Wolf Entity Alias', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json
+msgctxt "Wolf Entity Alias"
+msgid "Manual"
+msgstr "Manuel"
+
+#. Option of a Select field in DocType 'Wolf Entity Alias', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json
+msgctxt "Wolf Entity Alias"
+msgid "Auto"
+msgstr "Automatique"
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "error"
+msgstr "error"
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "cron_failure"
+msgstr "cron_failure"
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "worker_failure"
+msgstr "worker_failure"
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "security"
+msgstr "security"
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "host_metric_alert"
+msgstr "host_metric_alert"
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "deployment"
+msgstr "deployment"
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "info"
+msgstr "info"
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "warning"
+msgstr "warning"
+
+#. Option of a Select field in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json
+msgctxt "Wolf Event"
+msgid "critical"
+msgstr "critical"
+
+#. Option of a Select field in DocType 'Wolf Event Entity', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json
+msgctxt "Wolf Event Entity"
+msgid "ip"
+msgstr "ip"
+
+#. Option of a Select field in DocType 'Wolf Event Entity', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json
+msgctxt "Wolf Event Entity"
+msgid "host"
+msgstr "host"
+
+#. Option of a Select field in DocType 'Wolf Event Entity', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json
+msgctxt "Wolf Event Entity"
+msgid "site"
+msgstr "site"
+
+#. Option of a Select field in DocType 'Wolf Event Entity', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json
+msgctxt "Wolf Event Entity"
+msgid "user"
+msgstr "user"
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "Open"
+msgstr "Ouvert"
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "Acknowledged"
+msgstr "Acquitté"
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "Resolved"
+msgstr "Résolu"
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "info"
+msgstr "info"
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "warning"
+msgstr "warning"
+
+#. Option of a Select field in DocType 'Wolf Incident', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json
+msgctxt "Wolf Incident"
+msgid "critical"
+msgstr "critical"
+
+#. Option of a Select field in DocType 'Wolf Postmortem', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json
+msgctxt "Wolf Postmortem"
+msgid "Draft"
+msgstr "Brouillon"
+
+#. Option of a Select field in DocType 'Wolf Postmortem', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json
+msgctxt "Wolf Postmortem"
+msgid "In Review"
+msgstr "En relecture"
+
+#. Option of a Select field in DocType 'Wolf Postmortem', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json
+msgctxt "Wolf Postmortem"
+msgid "Published"
+msgstr "Publié"
+
+#. Option of a Select field in DocType 'Wolf Postmortem Action Item', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json
+msgctxt "Wolf Postmortem Action Item"
+msgid "Open"
+msgstr "Ouverte"
+
+#. Option of a Select field in DocType 'Wolf Postmortem Action Item', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json
+msgctxt "Wolf Postmortem Action Item"
+msgid "In Progress"
+msgstr "En cours"
+
+#. Option of a Select field in DocType 'Wolf Postmortem Action Item', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json
+msgctxt "Wolf Postmortem Action Item"
+msgid "Done"
+msgstr "Terminée"
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "block_ip"
+msgstr "block_ip"
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "disable_user"
+msgstr "disable_user"
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "logout_sessions"
+msgstr "logout_sessions"
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "revoke_api_keys"
+msgstr "revoke_api_keys"
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "Approved"
+msgstr "Approuvée"
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "Applied"
+msgstr "Appliquée"
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "Failed"
+msgstr "Échouée"
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "Expired"
+msgstr "Expirée"
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "wolf_agent"
+msgstr "wolf_agent"
+
+#. Option of a Select field in DocType 'Wolf Response Action', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json
+msgctxt "Wolf Response Action"
+msgid "wazuh"
+msgstr "wazuh"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "central"
+msgstr "central"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "satellite"
+msgstr "satellite"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "async"
+msgstr "async"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "sync"
+msgstr "sync"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "own"
+msgstr "own"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "both"
+msgstr "both"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "external"
+msgstr "external"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "wolf_agent"
+msgstr "wolf_agent"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "wazuh"
+msgstr "wazuh"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "info"
+msgstr "info"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "warning"
+msgstr "warning"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "critical"
+msgstr "critical"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "tcp"
+msgstr "tcp"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "tls"
+msgstr "tls"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "udp"
+msgstr "udp"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "octet-counting"
+msgstr "octet-counting"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "newline"
+msgstr "newline"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "rfc5424"
+msgstr "rfc5424"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "none"
+msgstr "none"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "ocsf"
+msgstr "ocsf"
+
+#. Option of a Select field in DocType 'Wolf Settings', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json
+msgctxt "Wolf Settings"
+msgid "cef"
+msgstr "cef"
+
+#. Option of a Select field in DocType 'Wolf Silence', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json
+msgctxt "Wolf Silence"
+msgid "manual"
+msgstr "manual"
+
+#. Option of a Select field in DocType 'Wolf Silence', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json
+msgctxt "Wolf Silence"
+msgid "deployment"
+msgstr "deployment"
+
+#. Option of a Select field in DocType 'Wolf Silence', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json
+msgctxt "Wolf Silence"
+msgid "api"
+msgstr "api"
+
+#. Option of a Select field in DocType 'Wolf Status Page', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json
+msgctxt "Wolf Status Page"
+msgid "info"
+msgstr "info"
+
+#. Option of a Select field in DocType 'Wolf Status Page', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json
+msgctxt "Wolf Status Page"
+msgid "warning"
+msgstr "warning"
+
+#. Option of a Select field in DocType 'Wolf Status Page', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json
+msgctxt "Wolf Status Page"
+msgid "critical"
+msgstr "critical"
+
+#. Option of a Select field in DocType 'Wolf User Scope', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json
+msgctxt "Wolf User Scope"
+msgid "site"
+msgstr "site"
+
+#. Option of a Select field in DocType 'Wolf User Scope', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json
+msgctxt "Wolf User Scope"
+msgid "bench"
+msgstr "bench"
+
+#. Option of a Select field in DocType 'Wolf User Scope', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json
+msgctxt "Wolf User Scope"
+msgid "host"
+msgstr "host"
+
+#. Label in DocType 'Wolf Alert Rule', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule
+msgctxt "Wolf Alert Rule"
+msgid "Timing"
+msgstr "Horaires et délais"
+
+#. Label in DocType 'Wolf Event', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_event
+msgctxt "Wolf Event"
+msgid "Count"
+msgstr "Nombre"
+
+#. Label in DocType 'Wolf Metric Rollup', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup
+msgctxt "Wolf Metric Rollup"
+msgid "Count"
+msgstr "Nombre"
+
+#. Label in DocType 'Wolf Outbox', shown with the DocType as context
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox
+msgctxt "Wolf Outbox"
+msgid "Count"
+msgstr "Nombre"
