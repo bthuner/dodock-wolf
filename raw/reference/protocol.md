@@ -363,6 +363,7 @@ X-Wolf-Agent-Secret: <secret>
   "sent_at": "2026-10-29T02:00:30Z",
   "agent_version": "0.1.0",
   "hostname": "bench-01",
+  "behind_proxy": null,
   "metrics": [
     {"metric_name": "cpu_usage", "value": 12.5, "timestamp": "...", "host": "bench-01",
      "bench": null, "site": null, "labels": {}}
@@ -481,6 +482,26 @@ The same two headers authenticate the deployment marker, the status call and the
     
     <td>
       The host's name.
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        behind_proxy
+      </code>
+    </td>
+    
+    <td>
+      The proxy this host's web traffic comes through (a Press app server's <code>
+        proxy_ip
+      </code>
+      
+      ), or <code>
+        null
+      </code>
+      
+      . Stored on Wolf Agent; blocks for web clients are then not proposed on this host. Absent from older agents: the stored value stays.
     </td>
   </tr>
   

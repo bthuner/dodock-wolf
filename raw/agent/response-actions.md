@@ -90,6 +90,12 @@ on a System Manager. User actions apply to the Wolf site only.
 
 The agent does nothing unless you allow it on that host.
 
+<note>
+
+**Behind a proxy.** A block on a host only stops what reaches it directly. On a Press app server behind its proxy, a web client's packets come from the proxy, so Wolf proposes blocks there for SSH events only. The Response panel lists the other addresses as *Not proposed*, naming the proxy. The Wolf Agent on the [proxy server](/install/press#proxy-servers) proposes their blocks, where they take effect.
+
+</note>
+
 <caution>
 
 The agent refuses private, loopback and reserved addresses, and durations over a week, whatever

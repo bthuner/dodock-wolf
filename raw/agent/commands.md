@@ -48,6 +48,22 @@ Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
   <tr>
     <td>
       <code>
+        refresh
+      </code>
+    </td>
+    
+    <td>
+      As root: read again what the agent's user cannot (a Press server's benches folder and proxy; a Press proxy's access log) and save it in the config, without registering again. <code>
+        install.sh
+      </code>
+      
+       runs it on every upgrade.
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
         discover [--bench PATH] [--platform auto|press|generic]
       </code>
     </td>
