@@ -105,6 +105,8 @@ not applied.
 
 An agent installed before this fix has `NoNewPrivileges=yes` in `/etc/systemd/system/wolf-agent.service`, which stops `sudo`: no block ever ran. Re-run `install.sh`, or delete that line, then `systemctl daemon-reload && systemctl restart wolf-agent`.
 
+`install.sh` does not install the helpers below: after an upgrade, copy `wolf-block` (or `wolf-block-fail2ban`) again with the `install` line of its tab. Older copies let a shorter block of an address cut short a longer one.
+
 </note>
 
 <tabs>
@@ -123,7 +125,8 @@ In the agent config:
 ```
 
 Restart the agent. `wolf-block` adds the address to an nftables set (`inet wolf`, `blocked4` /
-`blocked6`) whose entries expire by themselves. `nft list table inet wolf` shows them.
+`blocked6`) whose entries expire by themselves. `nft list table inet wolf` shows them. Blocking
+an address that is already blocked keeps the longer of the two blocks.
 
 </tabs-item>
 
@@ -165,9 +168,10 @@ Paths are relative to a checkout of the repository.
 fail2ban has no per-ban duration: every ban gets the jail's `bantime`. The jail's is the longest
 block Wolf asks for (7 days), and the helper unbans each address when its own duration is over:
 
-- a transient systemd timer (`wolf-unban-<ip>-<time>`) runs `fail2ban-client set wolf unbanip`;
-- each expiry is also written to `/var/lib/wolf-block/fail2ban.state`, and `--sweep` unbans those
-that are over.
+- each expiry is written to `/var/lib/wolf-block/fail2ban.state`, and `--sweep` unbans those that
+are over. Banning an address again keeps the later expiry;
+- a transient systemd timer (`wolf-unban-<ip>-<time>`) runs `--sweep` at the expiry, so an earlier
+timer leaves a longer ban alone.
 
 Timers do not survive a reboot, and fail2ban restores its bans after one. Without the cron line, a
 block could last up to the jail's 7 days. The helper also sweeps on each ban.
