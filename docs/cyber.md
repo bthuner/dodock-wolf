@@ -100,14 +100,22 @@ Wolf alone is covered.
 
 | | Wolf alone | + Suricata | + Wazuh |
 |---|---|---|---|
-| Web attacks | nginx access logs: probes, injections, secret files served | signatures on the HTTP traffic (after TLS termination), with packet context | — |
-| Network | exposed bench services; new outbound destinations of the bench users (sampled from `/proc/net/tcp`) | **read by the agent** (`network_ids_alert`, #72 step 1): C2, scans, exploits, DNS, TLS, with the rules' ATT&CK techniques | — |
-| Host | `auth.log`/journal: SSH brute force then login, sudo, new accounts, admin groups; file integrity on the bench (code, site configs, nginx and supervisor) | — | **read by the agent on the manager's host** (`hids_alert`, #72 step 2): full HIDS, more log sources, rootkits, integrity, Windows/macOS endpoints |
-| Frappe application | permissions, scripts, settings, API keys, exfiltration, honeytokens | — (HTTPS, and no notion of DocTypes or users) | — (log lines, no Frappe semantics) |
-| Posture | Frappe settings per site, versions vs advisories, bench exposure, TLS/HSTS, SPF/DMARC | — | OS configuration assessment |
-| Health | 5xx, crons, workers, backups, certificates, database | — | — |
-| Response | block IP (nftables, fail2ban), disable user, revoke sessions and API keys, human-approved | — | active response for approved blocks, instead of or with the Wolf Agent (#72) |
-| Correlation, incidents, NIS2/GDPR, signed journal | Wolf | feeds Wolf's incidents | feeds Wolf's incidents |
+| Web attacks | nginx access log: scanners, injections in the URL, CMS and edge appliance paths, secret files (and whether one was served), bursts on Frappe's account endpoints and 403 storms on its API | signatures on the traffic itself: request bodies and headers (after TLS termination), every protocol, packet context | the web server's access log through Wazuh's own web attack rules, when its agent reads it |
+| Outbound | new destinations of the bench users and of their containers: sampled from `/proc` every minute; every new TCP connection with the optional `wolf-outbound-log` helper; every request through a Squid proxy | command-and-control signatures, DNS, TLS fingerprints, UDP, the content of the flows | — |
+| Exposure | bench services listening beyond loopback, risky `site_config.json` settings | the scans and exploits aimed at them | — |
+| Host | auth log or journal: SSH brute force then login, root logins, sudo failures, new accounts, admin groups; file integrity of the bench (app code, site configs, nginx and supervisor config) | SSH brute force and scans seen on the wire | a full HIDS: more log sources, file integrity across the OS, rootkits, configuration assessment, Windows and macOS endpoints |
+| Frappe application | logins, roles, Server and Client Scripts, permissions, security settings, API keys, webhooks, exports, honeytokens: only Wolf sees inside a bench | — | — |
+| Posture and health | security score, versions against advisories, TLS, SPF/DMARC; 5xx, crons, workers, backups, database | — | OS configuration assessment |
+| Response | human-approved: block an IP (nftables or fail2ban), disable a user, log out sessions, revoke API keys; CrowdSec bans | — | Wazuh active response for approved blocks, instead of or with the Wolf Agent |
+| Correlation | incidents, grouping by IP or user across sources, sequence rules, the timeline of related scopes, NIS2/GDPR deadlines, signed journal | its alerts join Wolf's incidents and sequence rules | its alerts join Wolf's incidents and sequence rules |
+
+What Wolf alone does not see:
+
+- request bodies and headers (an injection in a POST body, or in a header such as
+  `X-Frappe-Request-Id`), and protocols other than HTTP: Suricata does;
+- the content of outbound flows and UDP; without the helper, connections shorter than a minute;
+- file changes outside the bench and its web and process config, rootkits, and hosts other than
+  Linux: Wazuh does.
 
 Where Wolf's own detector and an external one overlap (web probes and Suricata's HTTP rules,
 `auth.log` signals and Wazuh), the operator picks per detector: Wolf's own (the default), both
