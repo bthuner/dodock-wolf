@@ -146,8 +146,9 @@ logs the agent already tails):
 - `ssh_login_after_failures` (critical): a successful login from an address that failed 5 or
   more times in the hour before. Failure counts survive push intervals.
 - `sudo_failure`: wrong sudo passwords and users outside sudoers.
-- `account_created`: a `useradd` creates an account. A package's service account (system UID
-  1-999, `nologin`/`false` shell) is `service_account_created` at info, with no preset: no one
+- `account_created`: a `useradd` creates an account, or an account is given a login shell
+  (`usermod -s`, `chsh`) or UID 0 (critical). A package's service account (system UID 1-999,
+  exactly `/usr/sbin/nologin`, `/sbin/nologin`, `/bin/false` or `/usr/bin/false` as shell) is `service_account_created` at info, with no preset: no one
   logs in with it, and each package install that adds a service user would alert.
 - `admin_group_change` (critical): a user is added to `sudo`, `wheel`, `admin`, `root`, `adm`,
   `docker` or `lxd`.

@@ -98,7 +98,7 @@ class FileTailer:
 
 # syslog identifiers the auth parser reads: sshd (`sshd-session` since OpenSSH 9.8), sudo and
 # the shadow-utils account tools
-JOURNAL_IDENTIFIERS = ("sshd", "sshd-session", "sudo", "useradd", "usermod", "gpasswd")
+JOURNAL_IDENTIFIERS = ("sshd", "sshd-session", "sudo", "useradd", "usermod", "gpasswd", "chsh")
 
 
 class JournalTailer:

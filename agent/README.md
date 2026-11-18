@@ -98,11 +98,12 @@ and `dev/pilot/` for a Pilot host to test on.
   `frappe_auth_abuse`), and 20 `/api/method`, `/api/resource` or `/api/v2` calls answered 403 on
   at least 5 methods (`frappe_api_forbidden`; 401 also means an expired session).
 - **Auth log** (`/var/log/auth.log`, `/var/log/secure`, or `journalctl -o short-iso -t sshd
-  -t sshd-session -t sudo -t useradd -t usermod -t gpasswd`): failed SSH logins aggregated per
+  -t sshd-session -t sudo -t useradd -t usermod -t gpasswd -t chsh`): failed SSH logins aggregated per
   source IP, root logins, a successful login from an address that failed 5+ times in the hour
   before (`ssh_login_after_failures`, critical), failed sudo attempts and users outside
-  sudoers (`sudo_failure`), new local accounts (`account_created`; a package's service account,
-  system UID and no login shell, is `service_account_created` at info) and users added to `sudo`,
+  sudoers (`sudo_failure`), new local accounts and accounts given a login shell or UID 0
+  (`account_created`; a package's service account, system UID and no login shell, is
+  `service_account_created` at info) and users added to `sudo`,
   `wheel`, `admin`, `root`, `adm`, `docker` or `lxd` (`admin_group_change`, critical).
 - **Redis / RQ** (the bench's `redis_queue`): `queue_length` for every `rq:queue:*` list;
   `rq_failed_jobs` (failed-job registry size) and `rq_failed_jobs_added` (its increase per push);

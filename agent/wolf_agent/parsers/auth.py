@@ -8,6 +8,8 @@ shadow-utils: new accounts (`account_created`) and users added to an admin group
 (`admin_group_change`), the classic persistence and privilege escalation steps. A service account a
 package adds (a system UID, 1-999, and a no-login shell: nologin or false) is `service_account_created`,
 at info: no one can log in with it, and every package install that adds a service user would alert.
+Giving an account a login shell later (`usermod -s`, `chsh`) or UID 0 (`usermod -u 0`) is
+`account_created` too.
 """
 
 import re
@@ -27,10 +29,18 @@ _SUDO_INCORRECT_RE = re.compile(r"sudo(?:\[\d+\])?:\s+(?P<user>\S+) : (?P<n>\d+)
 _SUDO_NOT_ALLOWED_RE = re.compile(
 	r"sudo(?:\[\d+\])?:\s+(?P<user>\S+) : (?:user NOT in sudoers|command not allowed)"
 )
-_USERADD_RE = re.compile(
-	r"useradd(?:\[\d+\])?: new user: name=(?P<user>[^,\s]+)(?:, UID=(?P<uid>\d+))?(?:.*?, shell=(?P<shell>[^,\s]+))?"
+_USERADD_RE = re.compile(r"useradd(?:\[\d+\])?: new user: name=(?P<user>[^,\s]+)(?:, UID=(?P<uid>\d+))?")
+# the shell field is the one right before the closing `from=`: an earlier field (home) can hold
+# commas and a fake ", shell=..."
+_USERADD_SHELL_RE = re.compile(r", shell=(?P<shell>[^,\s]+), from=\S*\s*$")
+# usermod -s / chsh give an account a shell; usermod -u 0 makes it a second root
+_SHELL_CHANGE_RE = re.compile(
+	r"(?:usermod(?:\[\d+\])?: change user '(?P<user>[^']+)' shell from '[^']*' to '(?P<shell>[^']*)'|"
+	r"chsh(?:\[\d+\])?: changed user '(?P<user2>[^']+)' shell to '(?P<shell2>[^']*)')"
 )
-NO_LOGIN_SHELLS = ("nologin", "false")
+_UID_CHANGE_RE = re.compile(r"usermod(?:\[\d+\])?: change user '(?P<user>[^']+)' UID from '\d+' to '(?P<uid>\d+)'")
+# exact paths only: a script named nologin elsewhere is a shell like any other
+NO_LOGIN_SHELLS = {"/usr/sbin/nologin", "/sbin/nologin", "/bin/false", "/usr/bin/false"}
 SYSTEM_UID_MAX = 999  # UID_MIN is 1000 on Debian, Ubuntu and RHEL (login.defs)
 _GROUP_ADD_RE = re.compile(
 	r"(?:usermod|gpasswd)(?:\[\d+\])?: (?:add '(?P<user>[^']+)' to (?:shadow )?group '(?P<group>[^']+)'|"
@@ -84,13 +94,30 @@ def parse_line(line):
 	m = _USERADD_RE.search(line)
 	if m:
 		uid = int(m.group("uid")) if m.group("uid") else None
-		shell = m.group("shell")
-		# UID 0 (a second root) or any account with a shell to log in with stays account_created
-		service = uid is not None and 0 < uid <= SYSTEM_UID_MAX and bool(shell) and shell.rsplit("/", 1)[-1] in NO_LOGIN_SHELLS
+		shell_m = _USERADD_SHELL_RE.search(line)
+		shell = shell_m.group("shell") if shell_m else None
+		# UID 0 (a second root), any account with a shell to log in with, or a line we cannot read
+		# that far stays account_created
+		service = uid is not None and 0 < uid <= SYSTEM_UID_MAX and shell in NO_LOGIN_SHELLS
 		return {
 			"kind": "service_account_created" if service else "account_created", "ip": None, "user": m.group("user"),
 			"count": 1, "timestamp": ts, "uid": uid, "shell": shell,
 		}  # fmt: skip
+
+	# an existing account (a service one, say) given a login shell or UID 0: as good as a new account
+	m = _SHELL_CHANGE_RE.search(line)
+	if m:
+		shell = m.group("shell") or m.group("shell2")
+		if shell in NO_LOGIN_SHELLS:
+			return None
+		return {"kind": "account_created", "ip": None, "user": m.group("user") or m.group("user2"), "count": 1,
+		        "timestamp": ts, "shell": shell, "change": "shell"}  # fmt: skip
+	m = _UID_CHANGE_RE.search(line)
+	if m:
+		if m.group("uid") != "0":
+			return None
+		return {"kind": "account_created", "ip": None, "user": m.group("user"), "count": 1, "timestamp": ts,
+		        "uid": 0, "change": "uid"}  # fmt: skip
 
 	m = _GROUP_ADD_RE.search(line)
 	if m:
@@ -168,7 +195,7 @@ class AuthParser:
 		g["count"] += 1 if failures is not None else parsed["count"]
 		if failures is not None:
 			g["failures_before"] = max(g.get("failures_before", 0), failures)
-		for extra in ("uid", "shell", "group"):
+		for extra in ("uid", "shell", "group", "change"):
 			if parsed.get(extra) is not None:
 				g[extra] = parsed[extra]
 		if parsed["user"] not in g["users"] and len(g["users"]) < 10:
@@ -185,6 +212,10 @@ class AuthParser:
 			return f"SSH login as {users} from {subject} after {g['failures_before']} failed attempts", severity
 		if kind == "sudo_failure":
 			return f"{g['count']} failed sudo attempt(s) by {subject}", severity
+		if kind == "account_created" and g.get("change") == "shell":
+			return f"{subject} can now log in (shell {g.get('shell')})", severity
+		if kind == "account_created" and g.get("change") == "uid":
+			return f"{subject} given UID 0 (root)", "critical"
 		if kind == "account_created":
 			return f"New system account {subject}", severity
 		if kind == "service_account_created":
@@ -209,7 +240,7 @@ class AuthParser:
 			}
 			if kind.startswith("ssh_"):
 				payload["ip"] = subject
-			for extra in ("failures_before", "uid", "shell", "group"):
+			for extra in ("failures_before", "uid", "shell", "group", "change"):
 				if extra in g:
 					payload[extra] = g[extra]
 			events.append(

@@ -507,6 +507,33 @@ class TestAuthSecurity(unittest.TestCase):
 		self.assertEqual(events["sshd"]["title"], "New service account sshd (no login shell)")
 		self.assertEqual((events["sshd"]["payload"]["uid"], events["sshd"]["payload"]["shell"]), (101, "/usr/sbin/nologin"))
 
+	def test_service_account_cannot_be_faked(self):
+		parser = auth.AuthParser("h")
+		# a script named nologin outside the system paths is a shell like any other
+		parser.feed("Oct 29 02:00:01 h useradd[50]: new user: name=x1, UID=500, GID=500, home=/x1, shell=/tmp/.x/nologin, from=none")
+		# a home holding ", shell=/bin/false": the real shell is the field before `from=`
+		parser.feed("Oct 29 02:00:02 h useradd[51]: new user: name=x2, UID=501, GID=501, home=/x, shell=/bin/false, "
+		            "shell=/bin/bash, from=/dev/pts/0")  # fmt: skip
+		got = {e["payload"]["users"][0]: (e["category"], e["payload"]["shell"]) for e in parser.drain(NOW)[1]}
+		self.assertEqual(got, {"x1": ("account_created", "/tmp/.x/nologin"), "x2": ("account_created", "/bin/bash")})
+
+	def test_an_account_given_a_shell_or_uid_0(self):
+		# created as a service account (info), then made usable: alerts like a new account
+		parser = auth.AuthParser("h")
+		parser.feed("Oct 29 02:00:01 h usermod[60]: change user 'svc' shell from '/usr/sbin/nologin' to '/bin/bash'")
+		parser.feed("Oct 29 02:00:02 h chsh[61]: changed user 'svc2' shell to '/bin/sh'")
+		parser.feed("Oct 29 02:00:03 h usermod[62]: change user 'svc3' UID from '998' to '0'")
+		parser.feed("Oct 29 02:00:04 h usermod[63]: change user 'alice' shell from '/bin/bash' to '/usr/sbin/nologin'")  # locked: no
+		parser.feed("Oct 29 02:00:05 h usermod[64]: change user 'bob' UID from '1001' to '1002'")  # no
+		events = {e["payload"]["users"][0]: e for e in parser.drain(NOW)[1]}
+		got = {u: (e["category"], e["severity"], e["title"]) for u, e in events.items()}
+		self.assertEqual(got, {
+			"svc": ("account_created", "warning", "svc can now log in (shell /bin/bash)"),
+			"svc2": ("account_created", "warning", "svc2 can now log in (shell /bin/sh)"),
+			"svc3": ("account_created", "critical", "svc3 given UID 0 (root)"),
+		})  # fmt: skip
+		self.assertEqual(events["svc"]["payload"]["change"], "shell")
+
 	def test_account_and_admin_group(self):
 		parser = auth.AuthParser("bench-01")
 		parser.feed("Oct 29 02:00:01 h useradd[42]: new user: name=backdoor, UID=1001, GID=1001, home=/home/backdoor, "

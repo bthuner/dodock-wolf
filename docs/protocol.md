@@ -142,7 +142,7 @@ Categories added with the infrastructure signals:
 | `email_queue_backlog` | site, every 5 min (satellites too) | Email Queue rows `Not Sent`/`Sending`, due, older than **Wolf Settings → Email Queue Stale Minutes** (default 30); one event per site, bumped while it lasts | `pending`, `oldest`, `stale_minutes`, `suspended` |
 | `email_queue_error` | site, every 5 min | Email Queue rows that went to `Error` in the last 15 min | `errors`, `latest` |
 | `ssh_login_after_failures` | agent (`source`: `sshd`) | a successful SSH login from an address with 5+ failures in the hour before; `critical` | `ip`, `users`, `failures_before` |
-| `sudo_failure` / `account_created` / `admin_group_change` | agent (`source`: `auth`) | failed sudo or user not in sudoers / `useradd` / user added to an admin group (`critical`) | `users`, `count`, `uid`, `shell` / `group` |
+| `sudo_failure` / `account_created` / `admin_group_change` | agent (`source`: `auth`) | failed sudo or user not in sudoers / `useradd`, or an account given a login shell or UID 0 (`change`: `shell` / `uid`) / user added to an admin group (`critical`) | `users`, `count`, `uid`, `shell`, `change` / `group` |
 | `service_account_created` | agent (`source`: `auth`) | `useradd` of a system UID (1-999) with a no-login shell, as a package adds one (`info`) | `users`, `count`, `uid`, `shell` |
 | `web_attack_probe` | agent (`source`: `nginx`) | requests matching probe rules, per (site, client) and minute of log time; `critical` from 50 | `ip`, `count`, `rules`, `statuses`, `targets`, `user_agents` |
 | `web_sensitive_file_exposed` | agent (`source`: `nginx`) | a secret-bearing file (`.env`, `.git/`, keys, dumps) answered with a 2xx; `critical` | as `web_attack_probe` |
