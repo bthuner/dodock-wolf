@@ -150,6 +150,18 @@ def cmd_refresh(args):
 		print(f"{path} is up to date")
 
 
+def cmd_doctor(args):
+	"""What this host gives the agent, and what to fix. Read-only."""
+	from . import doctor
+
+	if not args.verbose:  # the report is the output: no collector chatter around it
+		logging.getLogger("wolf_agent").setLevel(logging.WARNING)
+	path, cfg = _load(args)
+	checks = doctor.run(cfg, path, live=not args.offline)
+	print(json.dumps(checks, indent=2) if args.json else doctor.render(checks))
+	sys.exit(doctor.exit_code(checks))
+
+
 def cmd_check(args):
 	path = config_path(args.config)
 	cfg = _load(args)[1] if os.path.exists(path) else _ephemeral_config(args)
@@ -317,6 +329,11 @@ def build_parser():
 	c.add_argument("--platform", choices=PLATFORMS, default="auto", help="bench layout (default: config or auto)")
 	c.add_argument("--status", action="store_true", help="also ask the Wolf site for its health (read-only)")
 	c.set_defaults(func=cmd_check)
+
+	dr = sub.add_parser("doctor", help="check what this host gives the agent and what to fix (read-only)")
+	dr.add_argument("--json", action="store_true", help="the checks as JSON")
+	dr.add_argument("--offline", action="store_true", help="do not contact the Wolf site")
+	dr.set_defaults(func=cmd_doctor)
 
 	d = sub.add_parser("discover", help="print benches found on this host")
 	d.add_argument("--bench", action="append", help="bench path to inspect")

@@ -270,6 +270,10 @@ def discover_press_benches(agent_dir=DEFAULT_AGENT_DIR, nginx_access_log=DEFAULT
 	root = benches_directory(agent_dir, default=benches_dir)
 	try:
 		names = sorted(os.listdir(root))
+	except FileNotFoundError:
+		# a proxy or database server has no benches folder: nothing to say at every rediscovery
+		log.debug("no Press benches directory %s", root)
+		return []
 	except OSError as e:
 		log.warning("cannot list Press benches directory %s: %s", root, e)
 		return []
