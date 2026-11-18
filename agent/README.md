@@ -115,7 +115,10 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
     `network_ids_alert` event per minute of log time, with a count; past 500 pairs, alerts are only
     counted.
   - Severity follows the rule's priority: 1 is critical, 2 warning, 3 info. Priorities above
-    `suricata.max_priority` are skipped.
+    `suricata.max_priority` are skipped, and so are the rules in `suricata.exclude_sids`
+    (`[2012888]` by default: ET's "pwd= in cleartext", priority 1, fires on every Frappe login
+    where Suricata sees traffic after TLS termination) and alerts with no address at all
+    (decoder events such as truncated packets).
   - The payload keeps the rule (SID, signature, category, ATT&CK from its
     `mitre_technique_id` metadata), the flow (`flow_id`, `community_id`, ports) and the
     app-layer fields Suricata puts on alerts (HTTP host, URL, user agent, TLS SNI, DNS query).
@@ -266,7 +269,7 @@ credentials (401/403) the agent exits with status 2 and systemd stops restarting
   "processes": {"enabled": true, "manager": "auto"},
   "versions": {"enabled": true, "interval": 3600},
   "site_settings": {"enabled": true, "interval": 3600},
-  "suricata": {"enabled": true, "eve_log": null, "max_priority": 3},
+  "suricata": {"enabled": true, "eve_log": null, "max_priority": 3, "exclude_sids": [2012888]},
   "wazuh": {"enabled": true, "alerts_log": null, "min_level": 7, "exclude_groups": ["sca"]},
   "scrub": {"enabled": true, "ips": false, "extra_patterns": [], "keep": []},
   "watchdog": {
