@@ -195,7 +195,7 @@ a 2xx becomes a critical `web_sensitive_file_exposed` event.
 ## Auth log
 
 From `/var/log/auth.log`, `/var/log/secure`, or `journalctl` (`sshd`, `sshd-session`, `sudo`,
-`useradd`, `usermod`, `gpasswd`):
+`useradd`, `usermod`, `gpasswd`, `chsh`):
 
 <table>
 <thead>
@@ -258,6 +258,12 @@ From `/var/log/auth.log`, `/var/log/secure`, or `journalctl` (`sshd`, `sshd-sess
       <code>
         account_created
       </code>
+      
+      ; a package's service account (system UID, no login shell): <code>
+        service_account_created
+      </code>
+      
+       (info)
     </td>
   </tr>
   

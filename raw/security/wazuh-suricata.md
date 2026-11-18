@@ -966,6 +966,10 @@ auth log signals and Wazuh. **Wolf Settings → Overlapping detectors** has one 
       </code>
       
       , <code>
+        service_account_created
+      </code>
+      
+      , <code>
         admin_group_change
       </code>
     </td>
@@ -1044,7 +1048,7 @@ Both events are kept, and each still counts in its own alert rules. The later on
 - CrowdSec and the [SIEM export](/security/siem-export) skip it when the first was sent. A critical
 alert linked to a warning one still goes to a collector that takes critical only.
 
-`sudo_failure`, `account_created` and `admin_group_change` carry no IP, so they are never linked.
+`sudo_failure`, `account_created`, `service_account_created` and `admin_group_change` carry no IP, so they are never linked.
 
 ### External: Wolf gives way, then comes back
 

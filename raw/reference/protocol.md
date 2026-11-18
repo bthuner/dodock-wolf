@@ -1281,6 +1281,10 @@ before forwarding are merged into one event.
       </code>
       
       , <code>
+        service_account_created
+      </code>
+      
+      , <code>
         admin_group_change
       </code>
       
@@ -1692,7 +1696,19 @@ the **Wolf Entity Alias** rows. Agents do not send it: the site computes it.
         useradd
       </code>
       
-       / user added to an admin group (<code>
+      , or an account given a login shell or UID 0 (<code>
+        change
+      </code>
+      
+      : <code>
+        shell
+      </code>
+      
+       / <code>
+        uid
+      </code>
+      
+      ) / user added to an admin group (<code>
         critical
       </code>
       
@@ -1712,8 +1728,66 @@ the **Wolf Entity Alias** rows. Agents do not send it: the site computes it.
         uid
       </code>
       
+      , <code>
+        shell
+      </code>
+      
+      , <code>
+        change
+      </code>
+      
        / <code>
         group
+      </code>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        service_account_created
+      </code>
+    </td>
+    
+    <td>
+      agent (<code>
+        source
+      </code>
+      
+      : <code>
+        auth
+      </code>
+      
+      )
+    </td>
+    
+    <td>
+      <code>
+        useradd
+      </code>
+      
+       of a system UID (1-999) with a no-login shell, as a package adds one (<code>
+        info
+      </code>
+      
+      ).
+    </td>
+    
+    <td>
+      <code>
+        users
+      </code>
+      
+      , <code>
+        count
+      </code>
+      
+      , <code>
+        uid
+      </code>
+      
+      , <code>
+        shell
       </code>
     </td>
   </tr>

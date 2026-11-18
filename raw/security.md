@@ -293,6 +293,22 @@ The tags travel with the event to the [SIEM export](/security/siem-export): OCSF
   <tr>
     <td>
       <code>
+        service_account_created
+      </code>
+    </td>
+    
+    <td>
+      agent (auth)
+    </td>
+    
+    <td>
+      T1136.001 Create Local Account
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
         admin_group_change
       </code>
     </td>

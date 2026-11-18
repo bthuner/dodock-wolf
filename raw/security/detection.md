@@ -167,7 +167,7 @@ appended. The left-most entries are written by the client and are not trusted.
 The agent reads `/var/log/auth.log`, `/var/log/secure`, or the journal:
 
 ```bash
-journalctl -o short-iso -t sshd -t sshd-session -t sudo -t useradd -t usermod -t gpasswd
+journalctl -o short-iso -t sshd -t sshd-session -t sudo -t useradd -t usermod -t gpasswd -t chsh
 ```
 
 `sshd-session` covers OpenSSH 9.8 and later. The `short-iso` format keeps each line's real
@@ -301,7 +301,19 @@ forces journalctl, `false` turns it off. The installer adds the `wolf-agent` use
         useradd
       </code>
       
-       creates a local account
+       creates a local account; or an account is given a login shell (<code>
+        usermod -s
+      </code>
+      
+      , <code>
+        chsh
+      </code>
+      
+      ) or UID 0 (<code>
+        usermod -u 0
+      </code>
+      
+      , critical)
     </td>
     
     <td>
@@ -312,6 +324,46 @@ forces journalctl, `false` turns it off. The installer adds the `wolf-agent` use
       <em>
         New system account
       </em>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        service_account_created
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        useradd
+      </code>
+      
+       creates an account with a system UID (1-999) and no login shell (<code>
+        /usr/sbin/nologin
+      </code>
+      
+      , <code>
+        /sbin/nologin
+      </code>
+      
+      , <code>
+        /bin/false
+      </code>
+      
+      , <code>
+        /usr/bin/false
+      </code>
+      
+      , exactly): what a package adds for its service. Recorded, no preset alerts on it
+    </td>
+    
+    <td>
+      info
+    </td>
+    
+    <td>
+      —
     </td>
   </tr>
   
