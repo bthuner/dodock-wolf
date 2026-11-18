@@ -21,6 +21,7 @@ At run time it relies on what the group can read: jobs.sqlite3, the bench logs, 
 docker-compose.yml (its image) and nginx.conf (its web port, sites and custom domains).
 """
 
+import contextlib
 import json
 import logging
 import os
@@ -63,7 +64,18 @@ TERMINAL = ("Success", "Failure")
 # when a site was last backed up
 BACKUP_JOB = "Backup Site"
 _BACKUP_PATH_RE = re.compile(r"/benches/(?P<bench>[^/\"]+)/sites/(?P<site>[^/\"]+)/private/backups/")
-MAX_BACKUP_JOBS = 5000
+# a streamed backup's result has S3 keys for paths, and the site only in its url
+_BACKUP_URL_RE = re.compile(r"\"url\":\s*\"https?://(?P<site>[^/\"]+)/backups/")
+MAX_BACKUP_JOBS = 200000  # rows read back for the newest backup of each site, at most
+
+
+def _backup_site(text):
+	"""(bench or None, site) named by a Backup Site job's result, or None."""
+	m = _BACKUP_PATH_RE.search(text or "")
+	if m:
+		return m.group("bench"), m.group("site")
+	m = _BACKUP_URL_RE.search(text or "")
+	return (None, m.group("site")) if m else None
 # A job whose bench cannot be read yet (Bench/Site methods carry no bench name in
 # their arguments) waits this long for its steps to name it, then ships host-scoped.
 SCOPE_WAIT = timedelta(minutes=2)
@@ -293,35 +305,38 @@ def _backup_scope(row, steps, bench_in):
 	"""(bench, site) of a Backup Site job: its result lists the files, under
 	`<benches>/<bench>/sites/<site>/private/backups/`; a failed one, from its steps."""
 	for text in [row.get("data") or ""] + [s.get("data") or "" for s in steps]:
-		m = _BACKUP_PATH_RE.search(text)
-		if m:
-			return m.group("bench"), m.group("site")
+		found = _backup_site(text)
+		if found and found[0]:
+			return found
 	site = next((m.group(1) for s in steps for m in [_SITE_FLAG_RE.search(s.get("data") or "")] if m), None)
 	bench = next((b for b in map(bench_in, [s.get("data") or "" for s in reversed(steps)]) if b), None)
 	return bench, site
 
 
-def last_backups(agent_dir=DEFAULT_AGENT_DIR, limit=MAX_BACKUP_JOBS):
+def last_backups(agent_dir=DEFAULT_AGENT_DIR, sites=None, limit=MAX_BACKUP_JOBS):
 	"""{site: end} of each site's newest successful Backup Site job (naive server local time), or
-	None when jobs.sqlite3 cannot be read."""
+	None when jobs.sqlite3 cannot be read. Reads back from the newest job until every one of `sites`
+	is found (a site whose backups stopped long ago still gets its age), `limit` rows at most."""
 	try:
 		conn = open_jobs_db(os.path.join(agent_dir, JOBS_DB))
 	except JobsDBError:
 		return None
+	wanted = set(sites) if sites is not None else None
 	newest = {}
 	try:
-		rows = conn.execute(
+		cur = conn.execute(
 			"select data, end from jobmodel where name = ? and status = 'Success' order by id desc limit ?", [BACKUP_JOB, limit]
-		).fetchall()
+		)
+		for data, end in cur:
+			found, end = _backup_site(data), _parse_dt(end)
+			if found and end and found[1] not in newest:
+				newest[found[1]] = end
+				if wanted is not None and wanted <= set(newest):
+					break
 	except sqlite3.Error:
 		return None
 	finally:
 		conn.close()
-	for data, end in rows:
-		m = _BACKUP_PATH_RE.search(data or "")
-		end = _parse_dt(end)
-		if m and end and m.group("site") not in newest:
-			newest[m.group("site")] = end
 	return newest
 
 
@@ -347,10 +362,28 @@ def open_jobs_db(path):
 		try:
 			conn = sqlite3.connect(f"file:{path}?{params}", uri=True, timeout=5)
 			conn.execute("select 1 from jobmodel limit 1").fetchall()
-			return conn
 		except sqlite3.Error as e:
 			errors.append(f"{params}: {e}")
+			continue
+		if "immutable" not in params and _created_wal(path):
+			# the Press agent's last connection closed between the check and the connect: the files
+			# are ours, which the Press agent could not write; take them back and read the file alone
+			conn.close()
+			for suffix in ("-wal", "-shm"):
+				with contextlib.suppress(OSError):
+					os.unlink(path + suffix)
+			errors.append("mode=ro: created the -wal/-shm files, removed")
+			continue
+		return conn
 	raise JobsDBError("; ".join(errors))
+
+
+def _created_wal(path):
+	"""True when the -shm file is ours but the database is not (we, not the Press agent, made it)."""
+	try:
+		return os.stat(path + "-shm").st_uid == os.geteuid() != os.stat(path).st_uid
+	except OSError:
+		return False
 
 
 class PressJobWatcher:
@@ -373,7 +406,7 @@ class PressJobWatcher:
 		self._warned = False
 
 	def _load_state(self):
-		state = {"floor": None, "started": [], "finished": []}
+		state = {"floor": None, "started": [], "finished": [], "backup_since": None}
 		if self.state_path:
 			try:
 				with open(self.state_path) as f:
@@ -395,7 +428,7 @@ class PressJobWatcher:
 			log.warning("cannot save Press job state %s: %s", self.state_path, e)
 
 	def _rows(self, conn, floor):
-		names = [*DEPLOY_JOBS, BACKUP_JOB]
+		names = list(DEPLOY_JOBS)
 		marks = ",".join("?" * len(names))
 		cur = conn.execute(
 			f"select id, name, status, agent_job_id, data, enqueue, start, end from jobmodel "
@@ -571,15 +604,6 @@ class PressJobWatcher:
 					finished.add(jid)
 					continue
 			steps = self._steps(conn, jid)
-			if row["name"] == BACKUP_JOB:  # no deployment: a failure is a failed backup
-				if not terminal:
-					pending.append(jid)
-					continue
-				if row["status"] == "Failure":
-					bench, site = _backup_scope(row, steps, self._bench_in)
-					events.append(self._backup_failed_event(row, bench, site, _parse_dt(row.get("end")) or start, steps))
-				finished.add(jid)
-				continue
 			bench, sites = self._scope(row, steps)
 			if jid not in started and start:
 				if bench or terminal or local_now - start >= SCOPE_WAIT:
@@ -600,7 +624,35 @@ class PressJobWatcher:
 		self.state["floor"] = floor
 		self.state["started"] = sorted(j for j in started if j > floor)
 		self.state["finished"] = sorted(j for j in finished if j > floor)
+		events += self._backup_failures(conn)
 		self._save_state()
+		return events
+
+	def _backup_failures(self, conn):
+		"""`backup_failed` for each Backup Site job that failed since the last poll.
+
+		Apart from the deployment jobs and their floor: Press queues a backup of every site at once,
+		which must not hold deployments back, and the first poll (an install, an upgrade) starts at
+		the newest backup that ended, so no old failure is replayed. Ordered by `end`, which a job
+		gets when it ends (same peewee text format, so it compares as text)."""
+		since = self.state.get("backup_since")
+		if since is None:
+			row = conn.execute("select max(end) from jobmodel where name = ?", [BACKUP_JOB]).fetchone()
+			self.state["backup_since"] = (row[0] if row else None) or ""
+			return []
+		rows = conn.execute(
+			"select id, name, status, agent_job_id, data, start, end from jobmodel where name = ? and status = 'Failure' "
+			f"and end > ? order by end limit {MAX_JOBS_PER_POLL}",
+			[BACKUP_JOB, since],
+		)
+		cols = [c[0] for c in rows.description]
+		events = []
+		for row in (dict(zip(cols, r)) for r in rows.fetchall()):  # noqa: B905 (Python 3.9: no strict=)
+			steps = self._steps(conn, row["id"])
+			bench, site = _backup_scope(row, steps, self._bench_in)
+			end = _parse_dt(row["end"]) or _parse_dt(row["start"])
+			events.append(self._backup_failed_event(row, bench, site, end, steps))
+			self.state["backup_since"] = max(self.state["backup_since"], str(row["end"]))
 		return events
 
 	def _baseline(self, conn, started, finished):

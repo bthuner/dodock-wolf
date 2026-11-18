@@ -461,7 +461,7 @@ class InfraChecks:
 		"""`backup_age_hours` per Press site, from its newest successful Backup Site job."""
 		if not benches:
 			return []
-		ages = press.last_backups(self.press_agent_dir)
+		ages = press.last_backups(self.press_agent_dir, sites={s for b in benches for s in b.get("sites") or []})
 		if not ages:
 			return []
 		now = now or datetime.now(timezone.utc)

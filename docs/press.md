@@ -164,6 +164,10 @@ and for `--site <name>`.
   else with `immutable=1`: a reader creates them when missing, and files owned by `wolf-agent` (the
   agent's folder is `frappe`-group writable) leave the Press agent unable to write its database
   (seen on dev/press after `sudo -u wolf-agent wolf-agent check`). Wolf never writes to it.
+- **One `backup_failed` event per failed Backup Site job** (error, critical), read apart from the
+  deployment jobs (own position, by `end`: queued backups never hold deployments back, and the first
+  poll replays no old failure). Successful ones, local, offsite or streamed (the site from the
+  result's file paths, else its `https://<site>/backups/` url), give `backup_age_hours`.
 - **One `deployment` event per job**, sent as soon as the job has started. Its timestamp is
   the job's `start`, so Wolf's "502 spike after deployment" rule links incidents that happen
   *during* a long migrate. If the bench cannot be determined yet, the event waits up to
