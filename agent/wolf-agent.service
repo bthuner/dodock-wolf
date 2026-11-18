@@ -22,6 +22,8 @@ ProtectSystem=strict
 ProtectHome=read-only
 PrivateTmp=yes
 ReadWritePaths=/var/lib/wolf-agent
+# wolf-block-fail2ban's expiries, written by the helper sudo starts in this unit's namespace
+ReadWritePaths=-/var/lib/wolf-block
 
 [Install]
 WantedBy=multi-user.target

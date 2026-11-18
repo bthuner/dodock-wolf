@@ -28,14 +28,26 @@ class TestUnitFile(unittest.TestCase):
 		for key in ("NoNewPrivileges", "RestrictSUIDSGID", "PrivateUsers", "DynamicUser"):
 			self.assertNotIn(d.get(key, ["no"])[-1].lower(), ("yes", "true", "1", "on"), f"{key}= blocks sudo")
 		self.assertNotIn("", d.get("CapabilityBoundingSet", ["x"]), "an empty CapabilityBoundingSet= blocks sudo")
+		for caps in d.get("CapabilityBoundingSet", []):  # a set must keep what sudo and nft need
+			for cap in ("CAP_SETUID", "CAP_SETGID", "CAP_NET_ADMIN"):
+				self.assertIn(cap, caps.split(), f"CapabilityBoundingSet= without {cap}")
 		self.assertNotIn("SystemCallFilter", d, "a syscall filter can kill sudo's setuid calls")
+		# the helpers change the host's firewall: not a private network, netlink kept
+		self.assertNotIn(d.get("PrivateNetwork", ["no"])[-1].lower(), ("yes", "true", "1", "on"), "PrivateNetwork= hides the host's firewall")
+		for families in d.get("RestrictAddressFamilies", []):
+			self.assertIn("AF_NETLINK", families.split(), "nft talks netlink")
+
+	def test_helpers_can_write_what_they_write(self):
+		# sudo's child shares the unit's mount namespace: ProtectSystem=strict applies to it too
+		self.assertIn("-/var/lib/wolf-block", directives(UNIT)["ReadWritePaths"])  # wolf-block-fail2ban's expiries
 
 	def test_still_hardened(self):
 		d = directives(UNIT)
 		self.assertEqual(d["ProtectSystem"], ["strict"])
 		self.assertEqual(d["ProtectHome"], ["read-only"])
 		self.assertEqual(d["PrivateTmp"], ["yes"])
-		self.assertEqual(d["ReadWritePaths"], ["/var/lib/wolf-agent"])
+		self.assertEqual(d["ReadWritePaths"][0], "/var/lib/wolf-agent")
+		self.assertTrue(all(p == "/var/lib/wolf-agent" or p.lstrip("-").startswith("/var/lib/") for p in d["ReadWritePaths"]))
 
 
 if __name__ == "__main__":

@@ -67,6 +67,18 @@ class TestFail2banHelper(unittest.TestCase):
 		self.assertEqual(addr, "45.33.32.156")
 		self.assertAlmostEqual(int(until), time.time() + 3600, delta=30)
 
+	@unittest.skipIf(os.geteuid() == 0, "root writes through a read-only mode")
+	def test_no_ban_when_its_expiry_cannot_be_recorded(self):
+		# under the agent's unit a read-only state folder made the script ban, then exit before the
+		# unban: the address stayed banned for the jail's bantime
+		self.stub("fail2ban-client")
+		os.makedirs(os.path.dirname(self.state))
+		os.chmod(os.path.dirname(self.state), 0o500)
+		self.addCleanup(os.chmod, os.path.dirname(self.state), 0o700)
+		done, calls = self.run_script("45.33.32.156", "3600")
+		self.assertNotEqual(done.returncode, 0)
+		self.assertNotIn("set wolf banip 45.33.32.156", calls)
+
 	def test_without_systemd_the_sweep_unbans(self):
 		self.stub("fail2ban-client")
 		self.stub("systemd-run", code=1)  # no systemd (a container) or no bus
