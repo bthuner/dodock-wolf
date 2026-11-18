@@ -78,6 +78,198 @@ them, the agent's own [web and host detection](/security/detection) stays on.
 </tbody>
 </table>
 
+## What each setup covers
+
+With Wolf alone, a bench is covered. Suricata and Wazuh add what a log line cannot show:
+
+<table>
+<thead>
+  <tr>
+    <th>
+      
+    </th>
+    
+    <th>
+      Wolf alone
+    </th>
+    
+    <th>
+      + Suricata
+    </th>
+    
+    <th>
+      + Wazuh
+    </th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr>
+    <td>
+      Web attacks
+    </td>
+    
+    <td>
+      nginx access log: scanners, injections in the URL, CMS and edge appliance paths, secret files (and whether one was served), bursts on Frappe's account endpoints and 403 storms on its API
+    </td>
+    
+    <td>
+      signatures on the traffic itself: request bodies and headers (after TLS termination), every protocol, packet context
+    </td>
+    
+    <td>
+      the web server's access log through Wazuh's own web attack rules, when its agent reads it
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Outbound
+    </td>
+    
+    <td>
+      new destinations of the bench users and of their containers: sampled from <code>
+        /proc
+      </code>
+      
+       every minute; every new TCP connection with the optional <code>
+        wolf-outbound-log
+      </code>
+      
+       helper; every request through a Squid proxy
+    </td>
+    
+    <td>
+      command-and-control signatures, DNS, TLS fingerprints, UDP, the content of the flows
+    </td>
+    
+    <td>
+      —
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Exposure
+    </td>
+    
+    <td>
+      bench services listening beyond loopback, risky <code>
+        site_config.json
+      </code>
+      
+       settings
+    </td>
+    
+    <td>
+      the scans and exploits aimed at them
+    </td>
+    
+    <td>
+      —
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Host
+    </td>
+    
+    <td>
+      auth log or journal: SSH brute force then login, root logins, sudo failures, new accounts, admin groups; file integrity of the bench (app code, site configs, nginx and supervisor config)
+    </td>
+    
+    <td>
+      SSH brute force and scans seen on the wire
+    </td>
+    
+    <td>
+      a full HIDS: more log sources, file integrity across the OS, rootkits, configuration assessment, Windows and macOS endpoints
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Frappe application
+    </td>
+    
+    <td>
+      logins, roles, Server and Client Scripts, permissions, security settings, API keys, webhooks, exports, honeytokens: only Wolf sees inside a bench
+    </td>
+    
+    <td>
+      —
+    </td>
+    
+    <td>
+      —
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Posture and health
+    </td>
+    
+    <td>
+      security score, versions against advisories, TLS, SPF/DMARC; 5xx, crons, workers, backups, database
+    </td>
+    
+    <td>
+      —
+    </td>
+    
+    <td>
+      OS configuration assessment
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Response
+    </td>
+    
+    <td>
+      human-approved: block an IP (nftables or fail2ban), disable a user, log out sessions, revoke API keys; CrowdSec bans
+    </td>
+    
+    <td>
+      —
+    </td>
+    
+    <td>
+      Wazuh active response for approved blocks, instead of or with the Wolf Agent
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Correlation
+    </td>
+    
+    <td>
+      incidents, grouping by IP or user across sources, sequence rules, the timeline of related scopes, NIS2/GDPR deadlines, signed journal
+    </td>
+    
+    <td>
+      its alerts join Wolf's incidents and sequence rules
+    </td>
+    
+    <td>
+      its alerts join Wolf's incidents and sequence rules
+    </td>
+  </tr>
+</tbody>
+</table>
+
+What Wolf alone does not see:
+
+- request bodies and headers (an injection in a POST body, or in a header such as
+`X-Frappe-Request-Id`), and protocols other than HTTP: Suricata does;
+- the content of outbound flows and UDP; without the helper, connections shorter than a minute;
+- file changes outside the bench and its web and process config, rootkits, and hosts other than
+Linux: Wazuh does.
+
 ## Suricata
 
 ### Turn it on
