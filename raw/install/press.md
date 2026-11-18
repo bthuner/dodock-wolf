@@ -10,9 +10,11 @@ This is for **self-hosted Press** deployments, where you control the server. Fra
 
 </note>
 
+Everything on this page was checked on a Press app server set up by **Press's own Ansible roles** (frappe/press [`7ce25f2`](https://github.com/frappe/press/tree/7ce25f221378cb4558cd3993f3283d75cc8fe7d7), frappe/agent [`6bbd199`](https://github.com/frappe/agent/tree/6bbd199c13e90f48950e2a06401ca98738455aaf), November 2026), with benches and sites created through the Press agent's API as Press creates them, and real deploys: New Bench, Update Site Migrate, Bench Restart, Archive Bench and failed jobs. The repository's [`dev/press`](https://github.com/bthuner/dodock-wolf/tree/main/dev/press) sets the same server up in a container.
+
 <tip>
 
-No Press server at hand? The [Press demo](/reference/development) simulates one for the Wolf Agent to read.
+No Press server at hand? `dev/press` above, or the [Press demo](/reference/development), which simulates one for the Wolf Agent to read.
 
 </tip>
 
@@ -24,7 +26,7 @@ Install the agent as on any host ([Wolf Agent](/install/wolf-agent)). Press mode
 
 ### Let detection run
 
-The agent switches to Press mode when `/home/frappe/agent/config.json` exists with a `benches_directory` key. In Press mode, the `benches` list in the config is refreshed from disk at start and on every rediscovery.
+The agent switches to Press mode when `/home/frappe/agent/config.json` exists with a `benches_directory` key. The daemon's own user cannot read that file (mode `0600`): there, the file and `jobs.sqlite3` being present is enough. Registration runs as root and also saves `"platform": "press"` and the benches folder in Wolf's config. In Press mode, the `benches` list in the config is refreshed from disk at start and on every rediscovery.
 
 ### Check what Wolf finds
 
@@ -73,6 +75,12 @@ Press agent directory. Default `/home/frappe/agent`.
 
 </field>
 
+<field name="press.benches_directory" type="string | null">
+
+The Press agent's `benches_directory`, saved by registration, which reads it as root. Used when the daemon cannot read the Press agent's config. Default `/home/frappe/benches`.
+
+</field>
+
 <field name="press.nginx_access_log" type="string">
 
 Shared nginx access log. Default `/var/log/nginx/access.log`.
@@ -102,21 +110,197 @@ The full config is on [Configuration](/agent/configuration).
 
 ### Permissions
 
-The `wolf-agent` user must be able to read:
+`install.sh` adds the `wolf-agent` user to the `frappe` and `adm` groups. On a server set up by Press's roles, that gives it:
 
-- `/home/frappe/benches/*/logs`
-- `sites/*/site_config.json`
-- `/home/frappe/agent/config.json`
-- `jobs.sqlite3`, plus its `-wal` and `-shm` files
-- `/var/log/nginx/access.log`
+<table>
+<thead>
+  <tr>
+    <th>
+      File
+    </th>
+    
+    <th>
+      Mode
+    </th>
+    
+    <th>
+      <code>
+        wolf-agent
+      </code>
+    </th>
+  </tr>
+</thead>
 
-`install.sh` already adds the user to the `frappe` and `adm` groups.
+<tbody>
+  <tr>
+    <td>
+      <code>
+        /home/frappe
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        0750 frappe:frappe
+      </code>
+    </td>
+    
+    <td>
+      enters (group)
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        <bench>/logs/*
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        0644
+      </code>
+    </td>
+    
+    <td>
+      reads
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        jobs.sqlite3
+      </code>
+      
+      , <code>
+        -wal
+      </code>
+      
+      , <code>
+        -shm
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        0644
+      </code>
+    </td>
+    
+    <td>
+      reads, with <code>
+        mode=ro
+      </code>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        /var/log/nginx/access.log
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        0640 www-data:adm
+      </code>
+    </td>
+    
+    <td>
+      reads (group <code>
+        adm
+      </code>
+      
+      )
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        <bench>/docker-compose.yml
+      </code>
+      
+      , <code>
+        <bench>/nginx.conf
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        0644
+      </code>
+    </td>
+    
+    <td>
+      reads
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        /home/frappe/agent/config.json
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        0600
+      </code>
+    </td>
+    
+    <td>
+      no
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        <bench>/config.json
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        0600
+      </code>
+    </td>
+    
+    <td>
+      no
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        sites/common_site_config.json
+      </code>
+      
+      , <code>
+        sites/<site>/site_config.json
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        0600
+      </code>
+    </td>
+    
+    <td>
+      no
+    </td>
+  </tr>
+</tbody>
+</table>
 
-<warning>
-
-Whether Press's directory modes allow group read has not been checked on a real server.
-
-</warning>
+The Press agent writes its configs `0600`, so the daemon reads them only through registration, which runs as root. At run time a new bench is found from the files it can read: its image from `docker-compose.yml`; its web port, sites and custom domains from its `nginx.conf`; and its `rq_port` from that web port, since Press gives a bench one offset for all its ports (`web_port` 18000 + offset, `rq_port` 11000 + offset).
 
 ## What Wolf does on a Press server
 
@@ -152,7 +336,11 @@ Whether Press's directory modes allow group read has not been checked on a real 
         benches_directory
       </code>
       
-       key, or when <code>
+       key, when it is there next to <code>
+        jobs.sqlite3
+      </code>
+      
+       (unreadable), or when <code>
         "platform": "press"
       </code>
       
@@ -160,7 +348,7 @@ Whether Press's directory modes allow group read has not been checked on a real 
     </td>
     
     <td>
-      done, unit tested
+      checked
     </td>
   </tr>
   
@@ -174,7 +362,11 @@ Whether Press's directory modes allow group read has not been checked on a real 
         <benches_directory>/*
       </code>
       
-       that have <code>
+       that have a <code>
+        sites/
+      </code>
+      
+       directory and <code>
         config.json
       </code>
       
@@ -182,15 +374,17 @@ Whether Press's directory modes allow group read has not been checked on a real 
         docker_image
       </code>
       
-       and a <code>
-        sites/
+      , or, unreadable, <code>
+        config.json
       </code>
       
-       directory
+       next to a <code>
+        docker-compose.yml
+      </code>
     </td>
     
     <td>
-      done, unit tested
+      checked
     </td>
   </tr>
   
@@ -208,7 +402,7 @@ Whether Press's directory modes allow group read has not been checked on a real 
     </td>
     
     <td>
-      done, unit tested
+      checked: a new bench is tailed within a minute
     </td>
   </tr>
   
@@ -278,11 +472,11 @@ Whether Press's directory modes allow group read has not been checked on a real 
         config.json
       </code>
       
-      )
+      , or 11000 + the bench's port offset)
     </td>
     
     <td>
-      done
+      checked
     </td>
   </tr>
   
@@ -348,19 +542,71 @@ Whether Press's directory modes allow group read has not been checked on a real 
     </td>
     
     <td>
-      Uses the site's <code>
-        db_host
+      Not on Press: the site's database password is in its <code>
+        site_config.json
       </code>
       
-      , which on Press points at the separate database server. Works only if the app server can reach it with the site user and has a <code>
-        mariadb
+      , readable by <code>
+        frappe
       </code>
       
-       client
+       only
     </td>
     
     <td>
-      unverified
+      —
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Site config risks
+    </td>
+    
+    <td>
+      <code>
+        developer_mode
+      </code>
+      
+      , <code>
+        allow_tests
+      </code>
+      
+      … need the <code>
+        0600
+      </code>
+      
+       site configs: no sample, shown as unknown
+    </td>
+    
+    <td>
+      checked
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Exposed services
+    </td>
+    
+    <td>
+      The Press agent publishes each bench's queue and cache Redis on all interfaces (<code>
+        -p 0.0.0.0:<rq_port>:11000
+      </code>
+      
+      , <code>
+        <rq_cache_port>:13000
+      </code>
+      
+      ), for secondary servers. Wolf reports them as <code>
+        service_exposed
+      </code>
+      
+      : Press relies on the server's firewall to keep them private
+    </td>
+    
+    <td>
+      checked
     </td>
   </tr>
   
@@ -386,7 +632,37 @@ Whether Press's directory modes allow group read has not been checked on a real 
     </td>
     
     <td>
-      done, unit tested
+      checked
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Site events
+    </td>
+    
+    <td>
+      The Wolf App on a Press bench names its bench and server as the agent does: the container's hostname is the bench (<code>
+        docker run --hostname <bench>
+      </code>
+      
+      ), and Press's <code>
+        supervisor.conf
+      </code>
+      
+       names the server (<code>
+        <server>-gunicorn.access.log
+      </code>
+      
+      , its name in Press). Registration names the agent's host the same way, from the Press agent's config, unless <code>
+        --hostname
+      </code>
+      
+       is given or the agent was registered before
+    </td>
+    
+    <td>
+      checked (the test server's hostname is its Press name)
     </td>
   </tr>
   
@@ -409,22 +685,6 @@ Whether Press's directory modes allow group read has not been checked on a real 
     
     <td>
       done, unit tested
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      Real Press server
-    </td>
-    
-    <td>
-      <strong>
-        Not tested yet
-      </strong>
-    </td>
-    
-    <td>
-      —
     </td>
   </tr>
 </tbody>
@@ -662,21 +922,21 @@ The two stacks overlap on host metrics (node_exporter vs Wolf's `/proc` sampling
 ### Limitations
 
 - Only app servers with benches are supported directly. Proxy and database servers have no bench: add their logs through `extra_logs`.
-- Bench and site detection for `Bench` and `Site` jobs is heuristic (step command lines). A job that finishes without any step naming its bench is reported host-scoped.
+- When a job ends, the Press agent replaces its arguments with its result. A job Wolf first sees finished takes the bench its last step ran in (a site move ends on its target) and the site from `--site` in a step command. A job without any such step is reported host-scoped.
 - The filesystem fallback cannot tell a deploy from a manual move, and it has no failure signal.
+- A bench found after registration shows the image it was created with (its `docker-compose.yml`): Update Bench In Place changes only its `0600` config.
 - Jobs are matched by display name. If Press renames a job, it is no longer recognised. Add the new name to `DEPLOY_JOBS` in [`agent/wolf_agent/press.py`](https://github.com/bthuner/dodock-wolf/blob/main/agent/wolf_agent/press.py).
 - Shared-FS benches (`Run Benches on Shared FS`) change `benches_directory`. Wolf rereads it from the Press agent config on every rediscovery, but this path has not been tested.
-- MariaDB checks depend on the app server reaching the separate database server with the site user and having a `mariadb` client. Unverified.
 - Whether local backup copies stay in `sites/<site>/private/backups` has not been checked, which is why backups are off by default.
 
-### Unverified
+### Checked on a Press server
 
-Everything on this page comes from reading the two repositories. These points still need a real Press server:
+1. **Modes.** `jobs.sqlite3` and its `-wal` and `-shm` files are `0644`, and `mode=ro` works for a member of the `frappe` group. The configs are `0600`: see [Permissions](#permissions).
+2. **Job data.** Job names match `DEPLOY_JOBS`. A finished job's `data` is `null`, and its steps keep their command and `directory`, for example `docker exec … bench-0001-000002-f1 bench --site <site> migrate` for a migrate.
+3. **$host.** Every site request carries the site in `"$host"`. The Press agent's own vhost on 443 logs the server's name there, which is no site: Wolf leaves those lines out.
+4. **rq_port.** Press sets it on every new bench and publishes it. A bench whose config has none (an older one) gets no queue metrics: the daemon keeps what registration read in it rather than derive a port from the web port.
 
-1. File and directory modes under `/home/frappe` and on `jobs.sqlite3*`: whether `mode=ro` works for a group member or `immutable=1` is needed.
-2. The actual contents of `jobmodel.data` and `stepmodel.data` on a production agent: job names, and the command strings Wolf searches for bench names.
-3. That `/var/log/nginx/access.log` lines carry the site in `$host` behind the Press proxy for every request type, including the Press agent's own vhost on 443.
-4. That `rq_port` is published on every bench. Older benches may predate it.
+Not checked: a site behind a Press proxy server (here requests reach the app server directly), shared-FS benches, and local backup copies.
 
 <collapsible>
 
