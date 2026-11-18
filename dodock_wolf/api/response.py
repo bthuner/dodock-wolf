@@ -46,6 +46,7 @@ def _events(incident):
 	senders = {r.name: r for r in frappe.get_all("Wolf Agent", fields=["name", "hostname", "kind"],
 	                                             filters={"name": ("in", list({r.agent for r in rows if r.agent}) or [""])})}  # fmt: skip
 	agents = _wolf_agents(aliases)
+	proxies = _proxied_hosts(aliases)
 	for r in rows:
 		try:
 			r["payload"] = json.loads(r.payload) if r.payload else {}
@@ -57,7 +58,17 @@ def _events(incident):
 		sender = senders.get(r.agent) or frappe._dict()
 		r["block_host"] = aliases.host(response.attacked_host(r, sender.kind or ("agent" if r.agent else None), sender.hostname))
 		r["block_agent"] = agents.get(r["block_host"])
+		r["block_proxy"] = proxies.get(r["block_host"])
 	return rows
+
+
+def _proxied_hosts(aliases):
+	"""{canonical host: proxy address} for the hosts whose agent reports web traffic through a proxy."""
+	rows = frappe.get_all("Wolf Agent", filters={"status": ("!=", "Disabled")}, fields=["hostname", "kind", "behind_proxy"],
+	                      order_by="last_seen asc")  # fmt: skip
+	# as _wolf_agents: the latest seen agent of a host wins, so an older row of it says nothing
+	latest = {aliases.host(r.hostname): r.behind_proxy for r in rows if r.hostname and (r.kind or "agent") == "agent"}
+	return {host: proxy for host, proxy in latest.items() if proxy}
 
 
 def _wolf_agents(aliases):
@@ -154,6 +165,8 @@ def get_response(incident):
 		actions.append(a)
 	return {
 		"proposals": _proposals(doc),
+		# addresses that reached the attacked host through a proxy: block them there, not on it
+		"held": response.held_blocks(_events(doc.name)),
 		"actions": actions,
 		"can_approve": _is_manager(),
 		"default_hours": response.DEFAULT_HOURS,

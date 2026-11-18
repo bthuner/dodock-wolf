@@ -7,7 +7,11 @@ Wolf proposes; a Wolf Manager confirms each action; nothing runs on its own.
   host, as an nftables entry that expires by itself (1 to 168 hours), and/or by Wazuh active
   response on its Wazuh agent (Wolf Settings → Block With; the duration is the Wazuh command's
   timeout).
-  Loopback, private, link-local and reserved addresses are never proposed nor accepted.
+  Loopback, private, link-local and reserved addresses are never proposed nor accepted. On a host
+  whose web traffic comes through a proxy (`block_proxy`: a Press app server behind its proxy),
+  only SSH events propose a block: a web client's packets come from the proxy there, so blocking
+  its address would stop nothing. `held_blocks` lists those, for the Response panel to say where to
+  block instead.
 - `disable_user`, `logout_sessions`, `revoke_api_keys`: proposed for the users named by the
   site's own security events, applied on the Wolf site itself. Administrator, Guest and the
   approver are refused, so a click cannot lock everyone out.
@@ -115,7 +119,7 @@ def suggest(events, block_with="wolf_agent", wazuh=False):
 			continue
 		payload = ev.get("payload") or {}
 		ip = payload.get("ip")
-		who = executors(block_with, ev.get("block_agent"), wazuh) if ip and ev.get("block_host") else []
+		who = executors(block_with, ev.get("block_agent"), wazuh) if ip and ev.get("block_host") and not _through_proxy(ev) else []
 		if who:
 			add("block_ip", str(ip), ev, f"{ev.get('category')}: {ev.get('title') or ip}", host=ev["block_host"],
 			    agent=ev.get("block_agent") if "wolf_agent" in who else None, executors=who)  # fmt: skip
@@ -123,6 +127,40 @@ def suggest(events, block_with="wolf_agent", wazuh=False):
 		if user and ev.get("category") in USER_CATEGORIES and not ev.get("agent"):
 			for action in USER_ACTIONS:
 				add(action, str(user), ev, f"{ev.get('category')}: {ev.get('title') or user}")
+	return out
+
+
+# the categories whose address reaches the host itself, not through its web proxy: SSH (the auth
+# log, Wazuh), and a network IDS alert on the packet's own source
+DIRECT_CATEGORIES = ("ssh_failed_login", "ssh_root_login", "ssh_login_after_failures", "ssh_accepted", "hids_alert")
+
+
+def _direct(ev):
+	payload = ev.get("payload") or {}
+	if ev.get("category") == "network_ids_alert":
+		return bool(payload.get("ip")) and payload.get("ip") == payload.get("src_ip")  # not an X-Forwarded-For client
+	return ev.get("category") in DIRECT_CATEGORIES
+
+
+def _through_proxy(ev):
+	return bool(ev.get("block_proxy")) and not _direct(ev)
+
+
+def held_blocks(events):
+	"""`{target, host, via_proxy}` for each address a block is not proposed for because it reached
+	that host through a proxy."""
+	# an address also seen on SSH gets its block proposed there: nothing to explain
+	direct = {(str((e.get("payload") or {}).get("ip")), e.get("block_host")) for e in events if _direct(e)}
+	out, seen = [], set(direct)
+	for ev in events:
+		ip = (ev.get("payload") or {}).get("ip")
+		if ev.get("event_type") != "security" or not ip or not _through_proxy(ev) or not blockable(ip)[0]:
+			continue
+		via = ev["block_proxy"]
+		key = (str(ip), ev.get("block_host"))
+		if key not in seen and len(out) < MAX_PROPOSALS:
+			seen.add(key)
+			out.append({"target": str(ip), "host": ev.get("block_host"), "via_proxy": str(via)})
 	return out
 
 

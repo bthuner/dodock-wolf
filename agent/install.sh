@@ -72,6 +72,8 @@ if [[ -n "${WOLF_URL:-}" && -n "${WOLF_TOKEN:-}" ]]; then
 	"$PREFIX/bin/wolf-agent" "${args[@]}"
 fi
 if [[ -f "$CONFIG" ]]; then
+	# an upgrade: what only root can read (a Press server's proxy...) without registering again
+	"$PREFIX/bin/wolf-agent" --config "$CONFIG" refresh || echo "warning: wolf-agent refresh failed" >&2
 	chown "$USER_NAME:$USER_NAME" "$CONFIG"
 	chmod 0600 "$CONFIG"
 fi

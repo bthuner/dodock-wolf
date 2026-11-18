@@ -95,19 +95,35 @@ def client_address(parsed):
 	return remote
 
 
+def _host_name(value):
+	"""A DNS name as nginx logs `$host`: not `-`/`_`, not an address (the X-Forwarded-For field)."""
+	if not value or "." not in value or value in ("-", "_") or any(ch in value for ch in ", \t"):
+		return False
+	try:
+		ipaddress.ip_address(value)
+	except ValueError:
+		return True
+	return False
+
+
 class NginxParser:
 	"""Counts requests per site and aggregates 5xx responses per (site, status, route).
 
 	`site_benches` maps known site names to their bench; the site of a line is
 	taken from `$host` when logged (custom domains resolved through
 	`site_aliases`, domain → site), else from a per-site log file name, else
-	`default_site` (a bench serving a single site).
+	`default_site` (a bench serving a single site). `site_from_host` (a Press proxy, which serves every
+	site of its app servers): an unknown `$host` is the site, through `site_aliases`, except the
+	`ignore_hosts` (the proxy's own name, its Press agent's vhost).
 	"""
 
 	def __init__(
-		self, host, site_benches=None, default_site=None, default_bench=None, log_file=None, site_aliases=None, **_
-	):
+		self, host, site_benches=None, default_site=None, default_bench=None, log_file=None, site_aliases=None,
+		site_from_host=False, ignore_hosts=(), **_,
+	):  # fmt: skip
 		self.host = host
+		self.site_from_host = bool(site_from_host)
+		self.ignore_hosts = set(ignore_hosts or ())
 		self.site_benches = dict(site_benches or {})
 		self.site_aliases = dict(site_aliases or {})
 		self.default_site = default_site
@@ -139,6 +155,12 @@ class NginxParser:
 		for c in candidates:
 			if c and self.site_aliases.get(c) in self.site_benches:
 				return self.site_aliases[c]
+		if self.site_from_host:
+			# $host only: the vhost field, else the last quoted field (Press's `main` format); the
+			# fields before it include X-Forwarded-For, which the client chooses
+			c = parsed["vhost"] or (parsed["extra"][-1] if parsed["extra"] else None)
+			if _host_name(c) and c not in self.ignore_hosts:
+				return self.site_aliases.get(c, c)
 		if self.file_site:
 			return self.file_site
 		if self.default_site:

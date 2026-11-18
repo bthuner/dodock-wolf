@@ -114,9 +114,11 @@ Wolf uses `redis://127.0.0.1:<rq_port>`. When a bench has no `rq_port`, Wolf ski
   Wolf's nginx parser already reads trailing quoted fields. Press mode adds the
   domain→site map. The bench templates set no per-bench `access_log`
   ([`agent/templates/bench/nginx.conf.jinja2`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/templates/bench/nginx.conf.jinja2)). Behind a Press proxy, `$remote_addr` is
-  the proxy (`set_real_ip_from <proxy_ip>`, same file L59-L62).
-- Proxy servers (`n*` hosts) use the same root template, but they have no benches. To count
-  5xx there, add `/var/log/nginx/access.log` as an `extra_logs` entry with `"parser": "nginx"`.
+  still the client: `set_real_ip_from <proxy_ip>` takes it from the proxy's `X-Real-IP` (same file
+  L59-L62; checked on dev/press).
+- Proxy servers (`n*` hosts) use the same root template, but they have no benches. Registration
+  recognises one (`<agent_dir>/nginx/proxy.conf`) and adds `/var/log/nginx/access.log` to
+  `extra_logs` with `"site_from_host": true`.
 
 ### Job history (deploys, updates, migrations)
 
@@ -280,5 +282,14 @@ On `dev/press` (Press's roles `essentials`, `user`, `nginx`, `agent`, `bench`, `
    `11000 + offset` and the image from its `docker-compose.yml`, which Update Bench In Place does
    not change.
 
-Still unchecked: a Press proxy server in front (`$remote_addr` is then the proxy), shared-FS
-benches, MariaDB on the database server, and local backup copies.
+5. **Behind a proxy server** (Press's `proxy` role, Add Upstream / Add Host / Add Site to Upstream):
+   the app server's `$remote_addr` is the real client (`set_real_ip_from <proxy_ip>` and the
+   proxy's `X-Real-IP`), in its access log and in the site's failed logins. A block applied on the
+   app server stopped nothing; on the proxy it did. So the app server's agent reports its proxy
+   (`behind_proxy` in every push, from the Press agent's `proxy_ip`, saved by registration or
+   `wolf-agent refresh`); the Wolf site proposes blocks there for SSH events only and lists the
+   others as held. The Wolf agent on the proxy (detected by `nginx/proxy.conf`) reads its access
+   log, sites from `$host` and `nginx/hosts/*/map.json`, and proposes the blocks that work. The
+   Press agent writes each site's TLS key 0644 there, readable by the `frappe` group.
+
+Still unchecked: shared-FS benches, MariaDB on the database server, and local backup copies.

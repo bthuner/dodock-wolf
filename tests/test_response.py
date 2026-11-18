@@ -42,6 +42,30 @@ class TestSuggest(unittest.TestCase):
 		blocks = [(p["target"], p["agent"]) for p in response.suggest(events) if p["action"] == "block_ip"]
 		self.assertEqual(blocks, [("45.33.32.156", "agent-1"), ("45.33.32.156", "agent-2")])
 
+	def test_behind_a_proxy_only_ssh_blocks_on_the_host(self):
+		# a Press app server behind its proxy: a web client's packets come from the proxy there
+		def proxied(category, ip):
+			return {**ev(category, {"ip": ip}, host="f1"), "block_proxy": "10.0.0.3"}
+
+		events = [proxied("web_attack_probe", "45.33.32.156"), proxied("frappe_failed_login", "45.33.32.156"),
+		          proxied("api_key_new_ip", "45.33.32.157"), proxied("ssh_failed_login", "45.33.32.158"),
+		          proxied("web_attack_probe", "45.33.32.158"), proxied("web_attack_probe", "10.0.0.9")]  # fmt: skip
+		blocks = [p["target"] for p in response.suggest(events) if p["action"] == "block_ip"]
+		self.assertEqual(blocks, ["45.33.32.158"])  # SSH reaches the host itself
+		held = response.held_blocks(events)
+		self.assertEqual(held, [{"target": "45.33.32.156", "host": "f1", "via_proxy": "10.0.0.3"},
+		                        {"target": "45.33.32.157", "host": "f1", "via_proxy": "10.0.0.3"}])  # fmt: skip
+		# direct packets: an accepted SSH login, Wazuh, a network IDS alert on the packet's own source
+		direct = [proxied("ssh_accepted", "45.33.32.160"), proxied("hids_alert", "45.33.32.161"),
+		          {**proxied("network_ids_alert", "45.33.32.162"), "payload": {"ip": "45.33.32.162", "src_ip": "45.33.32.162"}},
+		          {**proxied("network_ids_alert", "45.33.32.163"), "payload": {"ip": "45.33.32.163", "src_ip": "10.0.0.3"}}]  # fmt: skip
+		self.assertEqual([p["target"] for p in response.suggest(direct)], ["45.33.32.160", "45.33.32.161", "45.33.32.162"])
+		self.assertEqual([h["target"] for h in response.held_blocks(direct)], ["45.33.32.163"])  # an X-Forwarded-For client
+		# no proxy: proposed as before, nothing held
+		plain = [ev("web_attack_probe", {"ip": "45.33.32.156"})]
+		self.assertEqual(len(response.suggest(plain)), 1)
+		self.assertEqual(response.held_blocks(plain), [])
+
 	def test_wazuh_blocks_where_no_wolf_agent_runs(self):
 		# a Wazuh alert about web-02, sent by the integration: no Wolf Agent on web-02
 		events = [ev("hids_alert", {"ip": "45.33.32.159"}, agent="wazuh-integration", host="web-02", block_agent=None),

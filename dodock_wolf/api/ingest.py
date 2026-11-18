@@ -95,6 +95,8 @@ def accept(agent, data, now=None):
 			"last_seen": now,
 			"last_ip": frappe.local.request_ip,
 			"agent_version": str(data.get("agent_version") or "")[:140] or None,
+			# the proxy its web traffic comes through; older agents send nothing: keep what is known
+			**({"behind_proxy": str(data["behind_proxy"] or "")[:140] or None} if "behind_proxy" in data else {}),
 			"silence_reported": 0,
 			# satellites and older agents send no sent_at: keep the last known skew
 			**({"clock_skew_seconds": skew} if skew is not None else {}),

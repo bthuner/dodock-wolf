@@ -66,7 +66,8 @@ def _discover(args, cfg=None):
 
 def _remember_press(cfg):
 	"""Registration runs as root; the daemon runs as wolf-agent, which cannot read the Press agent's
-	config.json (mode 0600). Keep what root found: that this is Press, and the benches folder.
+	config.json (mode 0600). Keep what root found: that this is Press, the benches folder and the
+	proxy in front of it; on a proxy server, read its nginx log.
 	Returns the server's name in Press (`agent setup config --name`), or None."""
 	press_cfg = press_settings(cfg)
 	if cfg.get("platform") in (None, "auto") and press.detect(press_cfg["agent_dir"]):
@@ -74,8 +75,27 @@ def _remember_press(cfg):
 	if cfg.get("platform") != "press":
 		return None
 	agent_cfg = press.read_agent_config(press_cfg["agent_dir"]) or {}
-	if agent_cfg.get("benches_directory"):
-		cfg["press"] = {**(cfg.get("press") or {}), "benches_directory": agent_cfg["benches_directory"]}
+	if agent_cfg:  # read as root: what it says now, a removed proxy included
+		press_now = dict(cfg.get("press") or {})
+		for key, value in (("benches_directory", agent_cfg.get("benches_directory")), ("proxy_ip", agent_cfg.get("proxy_ip")),
+		                   ("server_name", agent_cfg.get("name"))):  # fmt: skip
+			if value:
+				press_now[key] = value
+			elif key != "benches_directory":
+				press_now.pop(key, None)
+		cfg["press"] = press_now
+	# a Press proxy server (n*): no bench, the sites' traffic in its nginx log, with the real clients
+	if press.is_proxy(press_cfg["agent_dir"]):
+		log_path = press_cfg.get("nginx_access_log") or press.DEFAULT_NGINX_ACCESS_LOG
+		entry = {"path": log_path, "parser": "nginx", "site_from_host": True}
+		extra = [dict(e) for e in cfg.get("extra_logs") or []]
+		same = [e for e in extra if e.get("path") == log_path]
+		if not same:
+			extra.append(entry)
+		for e in same:
+			if e.get("parser", "nginx") == "nginx":
+				e.update(entry)  # one registered before: its sites from $host too
+		cfg["extra_logs"] = extra
 	name = agent_cfg.get("name")
 	return name if isinstance(name, str) and name.strip() else None
 
@@ -115,6 +135,19 @@ def cmd_register(args):
 	print(f"registered as {cfg['agent_id']} with {cfg['url']}; config written to {path}")
 	for bench in cfg["benches"]:
 		print(f"  bench {bench['name']} at {bench['path']}: {len(bench['sites'])} site(s)")
+
+
+def cmd_refresh(args):
+	"""As root: read again what the daemon's user cannot (a Press server's benches folder, its proxy;
+	a Press proxy's access log) and save it, without registering again. install.sh runs it."""
+	path, cfg = _load(args)
+	before = json.dumps(cfg, sort_keys=True)
+	_remember_press(cfg)
+	if json.dumps(cfg, sort_keys=True) != before:
+		save_config(path, cfg)
+		print(f"updated {path}")
+	else:
+		print(f"{path} is up to date")
 
 
 def cmd_check(args):
@@ -274,6 +307,9 @@ def build_parser():
 	r.set_defaults(func=cmd_register)
 
 	sub.add_parser("run", help="run the agent loop").set_defaults(func=cmd_run)
+	sub.add_parser("refresh", help="as root: re-read the Press facts the agent's user cannot, keep the registration").set_defaults(
+		func=cmd_refresh
+	)
 
 	c = sub.add_parser("check", help="collect once and print the payload without sending")
 	c.add_argument("--from-start", action="store_true", help="parse logs from the beginning instead of EOF")

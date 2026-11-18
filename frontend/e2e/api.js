@@ -91,7 +91,10 @@ export function fixtures() {
     'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false, next_cursor: null }, totals: {}, truncated: {}, window: null }),
     'dodock_wolf.api.incident_view.act': () => ({ ...INCIDENT, status: 'Acknowledged', acknowledged: { at: NOW.toISOString(), by: 'ops@example.com', by_name: 'Ops' },
       can: { ...INCIDENT.can, acknowledge: false } }),
-    'dodock_wolf.api.response.get_response': () => ({ proposals: [], actions: [], can_approve: true, default_hours: 24, max_hours: 168 }),
+    'dodock_wolf.api.response.get_response': () => ({
+      proposals: [], actions: [], held: [{ target: '45.33.32.156', host: 'f1-press', via_proxy: '10.0.0.3' }],
+      can_approve: true, default_hours: 24, max_hours: 168,
+    }),
     'dodock_wolf.api.explore.list_events': () => ({
       events: [{ name: 'E1', title: 'KeyError: customer', event_type: 'error', severity: 'critical', count: 14, first_seen: ago(30),
         last_seen: ago(5), site: 'a.example.com', bench: 'frappe-bench', host: 'bench-01', incident: null, fingerprint: 'fp1' }],

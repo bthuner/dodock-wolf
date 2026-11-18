@@ -126,10 +126,17 @@ class TestShipper(unittest.TestCase):
 		self.assertEqual(req["headers"]["X-Wolf-Agent-Secret"], "secret")
 		self.assertEqual(req["headers"]["Content-Type"], "application/json")
 		body = req["body"]
-		self.assertEqual(set(body), {"sent_at", "agent_version", "hostname", "metrics", "events"})
+		self.assertEqual(set(body), {"sent_at", "agent_version", "hostname", "behind_proxy", "metrics", "events"})
 		self.assertTrue(body["sent_at"].endswith("Z"))
 		self.assertEqual(body["hostname"], "bench-01")
+		self.assertIsNone(body["behind_proxy"])
 		self.assertEqual(self.shipper.push_interval, 15)
+
+	def test_a_press_app_server_reports_its_proxy(self):
+		cfg = {"url": self.server.url, "agent_id": "WAG-0001", "agent_secret": "s", "hostname": "f1", "spool_dir": self.tmp.name,
+		       "platform": "press", "press": {"proxy_ip": "10.0.0.3"}}  # fmt: skip
+		self.assertEqual(Shipper(cfg, clock=self.clock).behind_proxy, "10.0.0.3")
+		self.assertIsNone(Shipper({**cfg, "platform": "generic"}, clock=self.clock).behind_proxy)
 
 	def test_large_batch_is_split(self):
 		self.shipper.send([{"v": i} for i in range(6000)], [{"e": i} for i in range(10)])

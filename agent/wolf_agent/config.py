@@ -27,6 +27,8 @@ DEFAULTS = {
 	"press": {
 		"agent_dir": "/home/frappe/agent",
 		"benches_directory": None,  # registration saves the Press agent's (its config is 0600)
+		"proxy_ip": None,  # the Press proxy in front of this app server, saved by registration
+		"server_name": None,  # the server's name in Press (its agent's vhost on a proxy is no site)
 		"nginx_access_log": "/var/log/nginx/access.log",
 		"rediscover_interval": 60,
 		"deployments": True,

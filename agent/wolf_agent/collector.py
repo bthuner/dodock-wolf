@@ -78,6 +78,7 @@ class Collector:
 		if resolve_platform(cfg.get("platform"), press_cfg["agent_dir"]) == "press":
 			self._setup_press(press_cfg, state_path)
 		self.pilot_tasks = self._setup_pilot(state_path)
+		self._proxy_parsers, self._next_proxy_hosts = [], 0.0  # a Press proxy's log, its domain map re-read
 		self._build()
 
 	def _setup_pilot(self, state_path):
@@ -201,6 +202,15 @@ class Collector:
 		self.benches = found
 		self._build(fresh_benches=new)
 
+	def _refresh_proxy_hosts(self):
+		"""A custom domain added to the proxy since the start maps to its site within a minute."""
+		if not self._proxy_parsers or self.clock() < self._next_proxy_hosts:
+			return
+		self._next_proxy_hosts = self.clock() + 60
+		aliases = press.proxy_hosts(press_settings(self.cfg)["agent_dir"])
+		for parser in self._proxy_parsers:
+			parser.site_aliases = dict(aliases)
+
 	def _file_source(self, path, parser_names, from_start=None, **ctx):
 		parsers = [PARSERS[name](self.host, log_file=path, **ctx) for name in parser_names]
 		start = self.from_start if from_start is None else from_start
@@ -208,6 +218,7 @@ class Collector:
 		self.sources.append(Source(tailer, parsers))
 
 	def _build(self, fresh_benches=()):
+		self._proxy_parsers = []  # rebuilt with the sources
 		benches = self.benches
 		nginx_logs = {}  # path -> {site: bench}; one parser per file even if benches share it
 
@@ -256,7 +267,14 @@ class Collector:
 			ctx = {k: extra.get(k) for k in ("bench", "site")}
 			if parser_name == "nginx":
 				ctx = {"default_site": extra.get("site"), "default_bench": extra.get("bench")}
+				if extra.get("site_from_host"):  # a Press proxy's log: every site its app servers serve
+					settings = press_settings(self.cfg)
+					# the proxy's own names: its Press agent's vhost is no site
+					ignore = tuple(n for n in (self.host, settings.get("server_name")) if n)
+					ctx.update(site_from_host=True, site_aliases=press.proxy_hosts(settings["agent_dir"]), ignore_hosts=ignore)
 			self._file_source(extra["path"], [parser_name], **ctx)
+			if ctx.get("site_from_host"):
+				self._proxy_parsers += self.sources[-1].parsers
 
 		self.eve_path, self.suricata_source = None, None
 		suricata = section(self.cfg, "suricata")
@@ -283,6 +301,7 @@ class Collector:
 		"""Poll every source once; return `(metrics, events)` for this interval."""
 		now = now or datetime.now(timezone.utc)
 		self._rediscover()
+		self._refresh_proxy_hosts()
 		self._recheck_sources()
 		metrics, events = [], []
 		for source in self.sources:
