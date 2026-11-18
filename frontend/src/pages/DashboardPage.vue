@@ -11,6 +11,7 @@ import { useLive } from '@/composables/useLive'
 import { useQueryParam } from '@/composables/useQueryParam'
 import CountTiles from '@/components/dash/CountTiles.vue'
 import HttpChart from '@/components/dash/HttpChart.vue'
+import InventoryPanel from '@/components/dash/InventoryPanel.vue'
 import MonitoringPanel from '@/components/dash/MonitoringPanel.vue'
 import SignalsPanel from '@/components/dash/SignalsPanel.vue'
 import { call, failure } from '@/services/api'
@@ -77,18 +78,11 @@ const hosts = computed(() => {
   const all = data.value.inventory?.hosts || []
   return scope.value.host ? all.filter((h) => h.host === scope.value.host) : all
 })
-// the first hosts are drawn, the rest on demand (drawing 101 hosts was part of the page's time)
-const FIRST_HOSTS = 20
-const allHosts = ref(false)
-const shownHosts = computed(() => (allHosts.value ? hosts.value : hosts.value.slice(0, FIRST_HOSTS)))
-const SOURCES = { agent: 'agent', satellite: 'satellite', events: 'events', metrics: 'metrics', incidents: 'incidents' }
-
 // another scope: drop the previous one's panels at once, so its numbers never sit under the
 // new title while the new ones load
 watch(scope, () => {
   data.value = {}
   errors.value = {}
-  allHosts.value = false
 })
 watch([scope, range], load, { immediate: true })
 
@@ -169,32 +163,7 @@ const live = useLive(hub, {
     <LoadingNote v-else-if="loading" what="the signals" />
     <p v-if="errors.inventory" role="alert" class="wolf-alert">Inventory: {{ errors.inventory }}</p>
 
-    <section v-if="hosts.length" class="wolf-card space-y-2" aria-label="Hosts, benches and sites">
-      <h2 class="text-base font-semibold text-ink-gray-9">{{ scope.host ? 'Benches and sites on this host' : 'Hosts, benches and sites' }}</h2>
-      <ul class="space-y-2 text-sm">
-        <li v-for="h in shownHosts" :key="h.host">
-          <RouterLink class="wolf-link" :to="{ name: 'host', params: { host: h.host } }">{{ h.host }}</RouterLink>
-          <span class="text-ink-gray-6"> · known from {{ h.sources.map((s) => SOURCES[s]).join(', ') }}</span>
-          <ul class="ml-4">
-            <li v-for="b in h.benches" :key="b.bench">
-              <RouterLink class="wolf-link" :to="{ name: 'bench', params: { host: h.host, bench: b.bench } }">{{ b.bench }}</RouterLink>:
-              <template v-for="(s, i) in b.sites" :key="s.site">
-                <span v-if="i">, </span>
-                <RouterLink class="wolf-link" :to="{ name: 'site', params: { site: s.site } }">{{ s.site }}</RouterLink>
-              </template>
-            </li>
-          </ul>
-        </li>
-      </ul>
-      <Button
-        v-if="hosts.length > FIRST_HOSTS"
-        size="sm"
-        variant="ghost"
-        :label="allHosts ? `Show the first ${FIRST_HOSTS} hosts only` : `Show the other ${hosts.length - FIRST_HOSTS} of ${hosts.length} hosts`"
-        @click="allHosts = !allHosts"
-      />
-      <p class="text-sm text-ink-gray-6">{{ data.inventory.note }}</p>
-    </section>
+    <InventoryPanel v-if="hosts.length" :inventory="data.inventory" :host="scope.host || ''" :time-zone="tz" />
 
     <MonitoringPanel v-if="data.monitoring" :monitoring="data.monitoring" :time-zone="tz" compact />
     <p v-else-if="errors.monitoring" role="alert" class="wolf-alert">Monitoring: {{ errors.monitoring }}</p>
