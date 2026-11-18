@@ -228,7 +228,9 @@ def _site_domains(path, sites):
 
 
 def describe_press_bench(path, nginx_access_log=DEFAULT_NGINX_ACCESS_LOG):
-	path = os.path.abspath(path)
+	# resolved: after Run Benches on Shared FS the same bench is also /home/frappe/shared/<bench> (a
+	# link); one path keeps its logs' read positions, which are keyed by path, across the switch
+	path = os.path.realpath(path)
 	bench_config = _load_json(os.path.join(path, "config.json"))
 	sites = _sites(path)
 	rq_port = _rq_port(bench_config, path)
@@ -401,7 +403,9 @@ class PressJobWatcher:
 		self.db_path = os.path.join(agent_dir, JOBS_DB)
 		self.state_path = state_path
 		self.known_benches = known_benches or (lambda: set())
-		self.benches_dir = os.path.normpath(benches_dir or DEFAULT_BENCHES_DIR)
+		# resolved: on shared FS the Press agent works in /home/frappe/shared, a link to the benches
+		# folder registration saw (Press's link_benches_to_nfs role)
+		self.benches_dir = os.path.realpath(benches_dir or DEFAULT_BENCHES_DIR)
 		self.state = self._load_state()
 		self._warned = False
 
@@ -482,7 +486,7 @@ class PressJobWatcher:
 		rediscovered yet, e.g. New Bench's), else a known bench named in it."""
 		data = _json(text)
 		directory = data.get("directory") if isinstance(data, dict) else None
-		if isinstance(directory, str) and os.path.dirname(os.path.normpath(directory)) == self.benches_dir:
+		if isinstance(directory, str) and os.path.realpath(os.path.dirname(os.path.normpath(directory))) == self.benches_dir:
 			return os.path.basename(os.path.normpath(directory))
 		return next((b for b in sorted(self.known_benches(), key=len, reverse=True) if b in text), None)
 
