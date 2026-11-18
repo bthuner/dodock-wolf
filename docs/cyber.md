@@ -364,7 +364,10 @@ nothing runs on its own. Every approval is a **Wolf Response Action** row (who, 
 result; read-only for everyone) and a comment on the incident.
 
 - **Block IP for N hours** (1 to 168, default 24): proposed for the public addresses of the
-  incident's security events, whatever their source, for the attacked host. The Wolf Agent on
+  incident's security events, whatever their source, for the attacked host. A host behind a
+  proxy (`behind_proxy`, a Press app server) gets blocks for SSH events only: a web client's
+  packets come from the proxy there; the Response panel lists those as not proposed, and the
+  Wolf Agent on the proxy proposes them where they take effect. The Wolf Agent on
   that host receives it with its next push, runs `sudo -n /usr/local/sbin/wolf-block IP SECONDS` (`agent/wolf-block.sh`: an
   nftables `inet wolf` set whose entries expire by themselves; an address already blocked keeps the longer block) and reports the result. The agent
   only does this with `response.enabled` in its own config (off by default) and the helper

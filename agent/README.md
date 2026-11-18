@@ -25,6 +25,7 @@ Set `WOLF_BENCHES="/home/frappe/frappe-bench /srv/other-bench"` to skip auto-dis
 |---------|--------------|
 | `wolf-agent register --url URL --token TOKEN [--bench PATH]...` | register the host, discover benches, write the config |
 | `wolf-agent run` | the daemon loop (what systemd runs) |
+| `wolf-agent refresh` | as root: read again what the agent's user cannot (a Press server's benches folder and proxy, a Press proxy's access log) and save it, keeping the registration; `install.sh` runs it on upgrade |
 | `wolf-agent discover [--bench PATH] [--platform auto\|press\|generic]` | show what bench discovery finds |
 | `wolf-agent check [--from-start] [--status] [--platform …]` | collect once and print the JSON payload, nothing is sent; the watchdog state goes to stderr (`--status` also asks the site for its health) |
 | `wolf-agent mark-deployment --bench NAME [--site S] [--note TEXT] [--silence 15m]` | put a deployment marker on the Wolf timeline; `--silence` also opens a maintenance window that mutes notifications for that bench/site |
@@ -44,7 +45,10 @@ deploy/update/migrate jobs (`jobs.sqlite3`, read-only) into `deployment` events,
 reads them and saves `"platform": "press"` and `press.benches_directory`; the daemon finds new
 benches from their readable `docker-compose.yml` and `nginx.conf`. Details, source references
 and limitations are in [`../docs/press.md`](../docs/press.md), and `dev/press/` sets up a Press
-app server with Press's own roles to test on.
+app server and proxy server with Press's own roles to test on. On a Press **proxy** server
+(`nginx/proxy.conf`), registration reads its `/var/log/nginx/access.log` with each line's site
+from `$host` (custom domains through its `nginx/hosts/*/map.json`). An app server behind a proxy
+reports it (`behind_proxy`): web clients are blocked on the proxy, where the block takes effect.
 
 ## Pilot benches
 

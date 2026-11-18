@@ -137,6 +137,8 @@ class Shipper:
 		self.url = cfg["url"].rstrip("/")
 		self.headers = {"X-Wolf-Agent-Id": cfg["agent_id"], "X-Wolf-Agent-Secret": cfg["agent_secret"]}
 		self.hostname = cfg["hostname"]
+		# a Press app server's proxy: its web clients' addresses are blocked there, not here
+		self.behind_proxy = ((cfg.get("press") or {}).get("proxy_ip") or None) if cfg.get("platform") == "press" else None
 		self.verify_tls = cfg.get("verify_tls", True)
 		self.push_interval = int(cfg.get("push_interval") or 30)
 		self.skew_warned = False
@@ -153,6 +155,7 @@ class Shipper:
 			"sent_at": utc_iso(),
 			"agent_version": __version__,
 			"hostname": self.hostname,
+			"behind_proxy": self.behind_proxy,
 			"metrics": metrics,
 			"events": events,
 		}

@@ -55,6 +55,7 @@ X-Wolf-Agent-Secret: <secret>
   "sent_at": "2026-10-29T02:00:30Z",
   "agent_version": "0.1.0",
   "hostname": "bench-01",
+  "behind_proxy": null,
   "metrics": [
     {"metric_name": "cpu_usage", "value": 12.5, "timestamp": "...", "host": "bench-01",
      "bench": null, "site": null, "labels": {}}
@@ -96,6 +97,10 @@ satellites treat 429 like a network error: the batch stays spooled and is replay
 **Scrubbing.** The agent removes e-mail addresses, credentials, card numbers and IBANs from
 event titles and payloads before sending (agent README, "Scrubbing"). The server stores what
 it receives as is.
+
+**`behind_proxy`.** The proxy this host's web traffic comes through (a Press app server's
+`proxy_ip`), or `null`; older agents send nothing and the stored value stays. The Wolf site keeps it
+on Wolf Agent and proposes blocks on that host for SSH events only.
 
 **Clock skew.** `sent_at` is stamped when the request is sent (also for replayed spool batches).
 The server records `sent_at - server time` as the agent's `clock_skew_seconds` (positive = agent

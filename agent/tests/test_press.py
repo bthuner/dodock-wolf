@@ -282,6 +282,63 @@ class TestPressAsWolfAgent(PressCase):
 		self.assertIsNotNone(c.press_jobs)
 		self.assertEqual([b["name"] for b in c.benches], ["bench-0001-000002-f1-mumbai"])
 
+	def test_registration_on_an_app_server_behind_a_proxy_and_on_the_proxy(self):
+		from wolf_agent import cli
+
+		path = os.path.join(self.press.agent_dir, "config.json")
+		with open(path) as f:
+			agent_cfg = json.load(f)
+		write_json(path, {**agent_cfg, "proxy_ip": "10.0.0.3"})  # agent setup config --proxy-ip
+		cfg = {"press": {"agent_dir": self.press.agent_dir}}
+		cli._remember_press(cfg)
+		self.assertEqual(cfg["press"]["proxy_ip"], "10.0.0.3")
+		self.assertNotIn("extra_logs", cfg)
+		# a proxy server: Press's proxy role creates nginx/proxy.conf; no bench, its access log is read
+		os.makedirs(os.path.join(self.press.agent_dir, "nginx"), exist_ok=True)
+		open(os.path.join(self.press.agent_dir, "nginx", "proxy.conf"), "w").close()
+		cfg = {"press": {"agent_dir": self.press.agent_dir, "nginx_access_log": "/var/log/nginx/access.log"}}
+		cli._remember_press(cfg)
+		cli._remember_press(cfg)  # registering again adds it once
+		self.assertEqual(cfg["extra_logs"], [{"path": "/var/log/nginx/access.log", "parser": "nginx", "site_from_host": True}])
+		cfg["extra_logs"] = [{"path": "/var/log/nginx/access.log", "parser": "nginx"}]  # registered before
+		cli._remember_press(cfg)
+		self.assertTrue(cfg["extra_logs"][0]["site_from_host"])
+
+	def test_a_proxy_log_names_its_sites(self):
+		# a Press proxy serves every site of its app servers: the site is $host, a custom domain
+		# maps to its site through the proxy's nginx/hosts/<host>/map.json
+		for host, target in (("erp.example.com", "a.frappe.cloud"), ("a.frappe.cloud", "a.frappe.cloud")):
+			write_json(os.path.join(self.press.agent_dir, "nginx", "hosts", host, "map.json"), {host: target})
+		write_json(os.path.join(self.press.agent_dir, "nginx", "hosts", "*.n1", "map.json"), {"*.n1": "x"})
+		aliases = press.proxy_hosts(self.press.agent_dir)
+		self.assertEqual(aliases, {"erp.example.com": "a.frappe.cloud"})
+		parser = NginxParser("n1.example.net", site_from_host=True, site_aliases=aliases, ignore_hosts=("n1.example.net",))
+		for host in ("erp.example.com", "b.frappe.cloud", "n1.example.net", "-"):
+			parser.feed(f'45.33.32.156 - - [29/Oct/2026:02:00:13 +0000] "GET /x HTTP/2.0" 200 1 "-" "curl" "45.33.32.156" "{host}" 0.002')
+		sites = sorted({m["site"] or "" for m in parser.drain(NOW)[0] if m["metric_name"] == "http_requests"})
+		self.assertEqual(sites, ["", "a.frappe.cloud", "b.frappe.cloud"])  # the proxy's own name and "-": no site
+
+	def test_refresh_saves_what_root_reads_without_registering(self):
+		import argparse
+		import contextlib
+		import io
+
+		from wolf_agent import cli
+
+		path = os.path.join(self.press.agent_dir, "config.json")
+		with open(path) as f:
+			write_json(path, {**json.load(f), "proxy_ip": "10.0.0.3"})
+		conf = os.path.join(self.tmp.name, "wolf-agent.json")
+		write_json(conf, {"url": "https://wolf.example", "agent_id": "WAG-1", "agent_secret": "s", "hostname": "f1",
+		                  "press": {"agent_dir": self.press.agent_dir}})  # fmt: skip
+		with contextlib.redirect_stdout(io.StringIO()) as out:
+			cli.cmd_refresh(argparse.Namespace(config=conf))
+			cli.cmd_refresh(argparse.Namespace(config=conf))
+		self.assertEqual(out.getvalue().count("updated"), 1)
+		with open(conf) as f:
+			saved = json.load(f)
+		self.assertEqual((saved["platform"], saved["press"]["proxy_ip"], saved["agent_id"]), ("press", "10.0.0.3", "WAG-1"))
+
 	def test_what_registration_read_is_kept(self):
 		# an older bench: its config (read by root at registration) has no rq_port, so its Redis is not
 		# published; the daemon, unable to read it, must not probe 11000 + its offset instead
@@ -310,6 +367,8 @@ class TestPressAsWolfAgent(PressCase):
 		self.assertEqual(cli._remember_press(cfg), "f1-mumbai.frappe.cloud")  # registration: root reads the config
 		self.assertEqual(cfg["platform"], "press")
 		self.assertEqual(cfg["press"]["benches_directory"], self.press.benches_dir)
+		self.assertNotIn("proxy_ip", cfg["press"])
+		self.assertNotIn("extra_logs", cfg)
 		cfg = {"platform": "generic", "press": {"agent_dir": self.press.agent_dir}}
 		self.assertIsNone(cli._remember_press(cfg))  # --platform generic stays
 		self.assertEqual(cfg["platform"], "generic")

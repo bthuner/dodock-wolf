@@ -23,7 +23,7 @@ import urllib.request
 SERVER = os.environ.get("PRESS_SERVER_NAME", "f1-press")
 # as Press reaches it: https://<server>/agent/ through nginx (press/agent.py get_request_url)
 AGENT = os.environ.get("PRESS_AGENT_URL", "https://127.0.0.1/agent")
-PASSWORD_FILE = "/root/wolf-press/agent_password"
+PASSWORD_FILE = os.environ.get("PRESS_PASSWORD_FILE", "/root/wolf-press/agent_password")
 TLS = ssl.create_default_context()
 TLS.check_hostname, TLS.verify_mode = False, ssl.CERT_NONE  # the dev server's self-signed certificate
 SERVER_IP = os.environ.get("PRESS_SERVER_IP", "172.30.80.2")

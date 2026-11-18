@@ -88,6 +88,28 @@ def detect(agent_dir=DEFAULT_AGENT_DIR):
 	return os.path.isfile(os.path.join(agent_dir, "config.json")) and os.path.isfile(os.path.join(agent_dir, JOBS_DB))
 
 
+def is_proxy(agent_dir=DEFAULT_AGENT_DIR):
+	"""A Press proxy server: Press's proxy role creates the agent's nginx/proxy.conf (0664, readable)."""
+	return os.path.isfile(os.path.join(agent_dir, "nginx", "proxy.conf"))
+
+
+def proxy_hosts(agent_dir=DEFAULT_AGENT_DIR):
+	"""On a Press proxy: domain → site, from each `nginx/hosts/<host>/map.json` (Add Host to Proxy)."""
+	root = os.path.join(agent_dir, "nginx", "hosts")
+	try:
+		names = os.listdir(root)
+	except OSError:
+		return {}
+	aliases = {}
+	for name in names:
+		if name.startswith("*"):
+			continue  # a wildcard: its sites are under it by name
+		for host, target in _load_json(os.path.join(root, name, "map.json")).items():
+			if isinstance(target, str) and target and target != host and "." in target:
+				aliases[host] = target
+	return aliases
+
+
 def benches_directory(agent_dir=DEFAULT_AGENT_DIR, default=None):
 	"""From the agent's config, else `default` (what registration read as root), else Press's own."""
 	cfg = read_agent_config(agent_dir) or {}

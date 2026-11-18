@@ -256,6 +256,9 @@ class Collector:
 			ctx = {k: extra.get(k) for k in ("bench", "site")}
 			if parser_name == "nginx":
 				ctx = {"default_site": extra.get("site"), "default_bench": extra.get("bench")}
+				if extra.get("site_from_host"):  # a Press proxy's log: every site its app servers serve
+					agent_dir = press_settings(self.cfg)["agent_dir"]
+					ctx.update(site_from_host=True, site_aliases=press.proxy_hosts(agent_dir), ignore_hosts=(self.host,))
 			self._file_source(extra["path"], [parser_name], **ctx)
 
 		self.eve_path, self.suricata_source = None, None

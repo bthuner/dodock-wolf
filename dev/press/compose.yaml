@@ -1,4 +1,4 @@
-# A Press app server set up by Press's own Ansible roles, a database server, and a bench run by the
+# A Press app server and proxy server set up by Press's own Ansible roles, a database server, and a bench run by the
 # Press agent through its API, as Press drives it: the real benches directory, jobs.sqlite3, nginx
 # and Redis ports that Wolf reads. See dev/press/README.md.
 name: wolfpress
@@ -22,6 +22,23 @@ services:
     networks:
       press:
         ipv4_address: 172.30.80.2
+
+  # Press's proxy server (`n*` hosts): TLS for the sites, forwarded to the app server on port 80
+  proxy:
+    image: wolf-press-host:local
+    hostname: n1-press
+    privileged: true
+    cgroup: host
+    tmpfs: [/run, /run/lock]
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - proxy-home:/home
+      - ../..:/src:ro
+    ports:
+      - "${WOLF_PRESS_HTTPS:-8443}:443"
+    networks:
+      press:
+        ipv4_address: 172.30.80.3
 
   # Press's database server: the benches reach it at its private address
   db:
@@ -48,3 +65,4 @@ volumes:
   home:
   docker:
   db:
+  proxy-home:

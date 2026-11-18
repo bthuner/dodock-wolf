@@ -330,6 +330,21 @@ describe('IncidentPage response actions', () => {
     expect(page.text()).not.toContain('Approve…')
   })
 
+  it('says where to block an address that came through a proxy, with nothing to approve', async () => {
+    server({
+      'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
+      'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: [], paging: { has_more: false }, totals: {}, truncated: {} }),
+      'dodock_wolf.api.response.get_response': () => ({
+        proposals: [], actions: [], held: [{ target: '45.33.32.156', host: 'f1-press', via_proxy: '10.0.0.3' }],
+        can_approve: true, default_hours: 24, max_hours: 168,
+      }),
+    })
+    const { page } = await open()
+    expect(page.text()).toContain('Not proposed: block 45.33.32.156 on f1-press')
+    expect(page.text()).toContain('through the proxy 10.0.0.3')
+    expect(page.findAll('button').find((b) => b.text() === 'Approve…')).toBeUndefined()
+  })
+
   it('sends a Wazuh-only block without a duration field, and says Wazuh applied it', async () => {
     let actions = []
     const proposal = { action: 'block_ip', target: '45.33.32.159', agent: null, host: 'web-02', executors: ['wazuh'],
