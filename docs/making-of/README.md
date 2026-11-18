@@ -91,13 +91,15 @@ configuration.
    would move. Proposed responses wait there for a manager's approval. The postmortem starts
    there and is written in Desk.
 3. **Alert Rule** (built, in Desk): a form that reads like the brief's sentence, *when X > Y for
-   Z minutes, send alert*. "For Z minutes" is the `min` aggregation over the window.
+   Z minutes, send alert*. "For Z minutes" is the `min` aggregation over the window. The form
+   reads the rule back in plain words as it is edited, and rules also live in YAML, to be kept in
+   git.
 4. **Security** (built): a score out of 100 per site, with every check, what Wolf read and the
    fix. A check Wolf cannot read is unknown, and says so. The journal's anchor sits below, with
    a Verify button.
 5. **Monitoring** (built): is Wolf itself working. When the rules were last evaluated, the
    scheduler's pace, the ingest queue, how far the rollups got, and which agents report, with
-   their clock skew.
+   their clock skew and what their host is missing.
 
 Explorers came after the rooms:
 - **Events**: deduplicated records with their counts;
@@ -252,6 +254,15 @@ they are grouped by day.
 - **2026-11-17 · One story per incident; overlapping detectors** (#72): an incident that took events from other scopes also shows their deployments and health events, for the users allowed to see both. Where Wolf's own detector and Suricata or Wazuh overlap, the operator picks: Wolf's own, both as one finding, or the external one only.
 - **2026-11-17 · Documentation site**: user documentation in `docs-site/`, in English and French, the same page at the same path in both.
 - **2026-11-17 · This page**: redesigned, with chapters for security and the load test, and the log grouped by day.
+- **2026-11-17 · Evidence that belongs**: an event used to join the newest open incident of its site, whatever it was about. Since the MVP, the 502s of an outage could land under *Server Script can run new code*. An incident's evidence is now what its rule matched.
+- **2026-11-17 · Standalone parity** (#72): file integrity of the bench every 15 minutes, critical when files change under an unchanged git commit; outbound connections of bench users to new destinations, read from `/proc` without root, then in containers and behind a proxy, then every connection from the kernel log with an optional root helper. Blocks can go through Wazuh active response, for the host that was attacked.
+- **2026-11-17 · Wolf UI redesigned**: the security score next to a weight bar, one segment per check, unknown hatched so a state is never colour alone; one look for every page.
+- **2026-11-18 · Live demos through the real agent**: a Press app server, several plain benches, one bench, each backfilling history through the agent. Log signals are now aggregated at log time, so a restart or a spool replay no longer bends a chart.
+- **2026-11-18 · Detection kept up to date** (#72): edge appliance paths, more secret files, and two Frappe rules that count bursts, written from the list of every method a guest can call. Fixtures from real Suricata and Wazuh, a coverage table for Wolf alone, with Suricata and with Wazuh, and a bench smoke where the three report one IP and open one incident. An incident a rule opens also takes the same attacker's earlier events: on the demo bench, nginx, Suricata and Wazuh saw one attack within seconds, and the incident opened a minute later held only its own.
+- **2026-11-18 · Dashboards**: hosts, benches and sites drawn as a schematic, with a filter; a range dragged on the HTTP chart becomes the window of the page.
+- **2026-11-18 · Press and Pilot, for real** (#17, #114): a Press app server built by Press's own Ansible roles, then its proxy server, its backups and its shared filesystem; a Pilot host on v1.0.0-rc.1, then rc.2. Each found what the source alone had missed. The worst: opening the Press agent's `jobs.sqlite3` read-only, after its last connection closed, created files that then made every Press job fail. Also checked on real hosts: blocks through nftables and fail2ban, and the auth log on a journald-only host.
+- **2026-11-18 · Onboarding** (#23): `wolf-agent doctor` says what a host gives the agent and the fix for each problem. The agent runs it every hour, and the Monitoring page shows each host's setup.
+- **2026-11-18 · Rules**: export and import as YAML, a dry run first and all or nothing, secrets never in a file; and the rule form reads the rule back in plain words as it is edited.
 
 ## 12 · Trade-offs
 
@@ -266,7 +277,8 @@ they are grouped by day.
 
 ## Next
 
-- **Standalone parity:** file integrity on the bench and outbound connections of bench processes, for benches without Suricata or Wazuh.
+- **French in the app:** the documentation is in English and French; Desk and the Wolf UI are in English only.
+- **An onboarding checklist** in the Wolf UI, from the first agent to the first test alert.
+- **Packages:** `.deb`, `.rpm` and PyPI for the agent, with auto-update, then the Frappe Marketplace.
 - **Log search:** waits for raw-line storage, which Wolf deliberately doesn't have yet.
-- **A real Press server and Pilot host:** the integrations still need to run on one.
 - **The overview's first visit at 100 hosts:** a visit the background reads do not cover (the first in 10 quiet minutes on a scope) still takes 0.9 to 1.2 s ([`docs/load-test.md`](../load-test.md)).
