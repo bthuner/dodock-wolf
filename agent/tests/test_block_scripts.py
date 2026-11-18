@@ -1,4 +1,4 @@
-"""wolf-block-fail2ban.sh, run for real with a stub fail2ban-client and systemd-run in PATH."""
+"""wolf-block.sh and wolf-block-fail2ban.sh, run for real with stub nft, fail2ban-client and systemd-run in PATH."""
 
 import os
 import shutil
@@ -9,6 +9,7 @@ import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPT = os.path.join(HERE, "..", "wolf-block-fail2ban.sh")
+NFT_SCRIPT = os.path.join(HERE, "..", "wolf-block.sh")
 
 STUB = """#!/bin/sh
 echo "$@" >> "{log}"
@@ -62,7 +63,8 @@ class TestFail2banHelper(unittest.TestCase):
 		self.assertIn("set wolf banip 45.33.32.156", calls)
 		timer = next(c for c in calls if c.startswith("--quiet"))
 		self.assertIn("--on-active=3600s", timer)
-		self.assertTrue(timer.endswith("set wolf unbanip 45.33.32.156"), timer)
+		# the timer sweeps (unbans only what $STATE says is due), never a bare unbanip
+		self.assertTrue(timer.endswith(f"{self.script} --sweep"), timer)
 		addr, until = read(self.state).split()
 		self.assertEqual(addr, "45.33.32.156")
 		self.assertAlmostEqual(int(until), time.time() + 3600, delta=30)
@@ -91,13 +93,23 @@ class TestFail2banHelper(unittest.TestCase):
 		self.assertIn("set wolf unbanip 203.0.113.9", calls)
 		self.assertEqual(read(self.state).split()[0], "2001:db8::7")  # the other one is kept
 
-	def test_a_ban_again_replaces_its_expiry(self):
+	def test_a_ban_again_keeps_the_later_expiry(self):
+		# a 1 h approval on a second incident must not cut short the 7-day block of the first
 		self.stub("fail2ban-client")
 		self.run_script("45.33.32.156", "60")
 		self.run_script("45.33.32.156", "7200")
+		done, calls = self.run_script("45.33.32.156", "120")
+		self.assertEqual(done.returncode, 0, done.stderr)
+		self.assertIn("already banned for", done.stdout)
+		self.assertIn("set wolf banip 45.33.32.156", calls)  # banned again all the same
+		self.assertEqual(sum(c.startswith("--quiet") for c in calls), 2)  # no timer for the kept one
 		lines = read(self.state).splitlines()
 		self.assertEqual(len(lines), 1)
 		self.assertAlmostEqual(int(lines[0].split()[1]), time.time() + 7200, delta=30)
+		# the first ban's timer fires after 60 s: its sweep leaves the longer ban alone
+		done, calls = self.run_script("--sweep")
+		self.assertEqual(done.stdout.strip(), "")
+		self.assertNotIn("set wolf unbanip 45.33.32.156", calls)
 
 	def test_refusals(self):
 		self.stub("fail2ban-client")
@@ -115,6 +127,56 @@ class TestFail2banHelper(unittest.TestCase):
 		self.assertEqual(done.returncode, 1)
 		self.assertIn("no jail 'wolf'", done.stderr)
 		self.assertFalse(any("banip" in c for c in calls), calls)
+
+
+NFT_STUB = """#!/bin/sh
+echo "$@" >> "{log}"
+if [ "$1" = -f ]; then cat >> "{log}"; exit 0; fi
+if [ "$1" = get ]; then
+	[ -n "{expires}" ] || exit 1
+	printf 'table inet wolf {{\\n\\tset blocked4 {{\\n\\t\\telements = {{ x timeout 7d expires {expires} }}\\n\\t}}\\n}}\\n'
+fi
+exit 0
+"""
+
+
+@unittest.skipUnless(shutil.which("sh") and shutil.which("awk"), "needs a POSIX shell and awk")
+class TestNftablesHelper(unittest.TestCase):
+	def setUp(self):
+		self.dir = tempfile.mkdtemp()
+		self.addCleanup(shutil.rmtree, self.dir)
+		self.log = os.path.join(self.dir, "calls.log")
+		self.bin = os.path.join(self.dir, "bin")
+		os.mkdir(self.bin)
+
+	def run_script(self, *args, expires=""):
+		path = os.path.join(self.bin, "nft")
+		with open(path, "w") as f:
+			f.write(NFT_STUB.format(log=self.log, expires=expires))
+		os.chmod(path, 0o755)
+		env = {"PATH": f"{self.bin}:/usr/bin:/bin"}
+		done = subprocess.run(["sh", NFT_SCRIPT, *args], capture_output=True, text=True, env=env, timeout=20)
+		return done, read(self.log) if os.path.exists(self.log) else ""
+
+	def test_a_new_address_is_added(self):
+		done, calls = self.run_script("45.33.32.156", "3600")
+		self.assertEqual(done.returncode, 0, done.stderr)
+		self.assertIn("add element inet wolf blocked4 { 45.33.32.156 timeout 3600s }", calls)
+		self.assertNotIn("delete element", calls)
+
+	def test_a_longer_block_is_kept(self):
+		done, calls = self.run_script("45.33.32.156", "3600", expires="6d23h59m58s120ms")
+		self.assertEqual(done.returncode, 0, done.stderr)
+		self.assertIn("already blocked for 604798s more", done.stdout)
+		self.assertNotIn("add element", calls)
+
+	def test_a_shorter_block_is_replaced_in_one_transaction(self):
+		done, calls = self.run_script("2600:3c01::f03c:91ff:fe18:bb2f", "7200", expires="8m20s774ms")
+		self.assertEqual(done.returncode, 0, done.stderr)
+		self.assertIn("blocked 2600:3c01::f03c:91ff:fe18:bb2f for 7200s (inet wolf blocked6)", done.stdout)
+		batch = calls[calls.index("delete element"):]
+		self.assertIn("delete element inet wolf blocked6 { 2600:3c01::f03c:91ff:fe18:bb2f }\nadd element inet wolf blocked6 "
+		              "{ 2600:3c01::f03c:91ff:fe18:bb2f timeout 7200s }", batch)  # fmt: skip
 
 
 if __name__ == "__main__":

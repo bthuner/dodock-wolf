@@ -363,7 +363,7 @@ result; read-only for everyone) and a comment on the incident.
 - **Block IP for N hours** (1 to 168, default 24): proposed for the public addresses of the
   incident's security events, whatever their source, for the attacked host. The Wolf Agent on
   that host receives it with its next push, runs `sudo -n /usr/local/sbin/wolf-block IP SECONDS` (`agent/wolf-block.sh`: an
-  nftables `inet wolf` set whose entries expire by themselves) and reports the result. The agent
+  nftables `inet wolf` set whose entries expire by themselves; an address already blocked keeps the longer block) and reports the result. The agent
   only does this with `response.enabled` in its own config (off by default) and the helper
   installed with a one-line sudoers rule (agent/README.md). It refuses private, loopback and
   reserved addresses and durations over a week, whatever the site sends.
@@ -393,7 +393,9 @@ result; read-only for everyone) and a comment on the incident.
 - **fail2ban instead of nftables**: `agent/wolf-block-fail2ban.sh` with the jail
   `agent/fail2ban/wolf.local`, set as the agent's `response.command`. fail2ban has no per-ban
   duration, so the jail bans for 7 days at most and the helper unbans each address on time: a
-  transient systemd timer, and `--sweep` from cron for what a reboot loses. See agent/README.md.
+  transient systemd timer that sweeps at the expiry, and `--sweep` from cron for what a reboot
+  loses; a ban again keeps the later expiry. Both helpers checked against nftables 1.0.6 and
+  fail2ban 1.0.2 on Debian 12. See agent/README.md.
 - Not built: user actions on other sites than the Wolf site.
 
 ### Step 6: compliance and evidence
