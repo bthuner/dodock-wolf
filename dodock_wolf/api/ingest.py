@@ -98,6 +98,8 @@ def accept(agent, data, now=None):
 			# the proxy its web traffic comes through; older agents send nothing: keep what is known
 			**({"behind_proxy": str(data["behind_proxy"] or "")[:140] or None} if "behind_proxy" in data else {}),
 			"silence_reported": 0,
+			# the agent's hourly doctor run, when this push carries one
+			**(schema.normalize_setup(data.get("setup"), tz, now) or {}),
 			# satellites and older agents send no sent_at: keep the last known skew
 			**({"clock_skew_seconds": skew} if skew is not None else {}),
 		},

@@ -17,7 +17,10 @@ import pwd
 import shutil
 import stat
 import subprocess
+import threading
 import time
+from datetime import datetime, timezone
+from types import SimpleNamespace
 
 from . import pilot, press
 from .config import press_settings, resolve_auth_log, section
@@ -35,8 +38,10 @@ def item(area, status, title, fix=None):
 	return {"area": area, "status": status, "title": title, "fix": fix}
 
 
-def run(cfg, config_path, live=True, collector_factory=None, euid=None):
-	"""The checks for this host, in report order."""
+def run(cfg, config_path, live=True, collector_factory=None, euid=None, daemon=False):
+	"""The checks for this host, in report order. `daemon`: the agent's own hourly run, which skips
+	what only makes sense from a shell (probing sudo, which logs a line the agent itself parses; the
+	service it is)."""
 	euid = os.geteuid() if euid is None else euid
 	if collector_factory is None:
 		from .collector import Collector
@@ -61,13 +66,13 @@ def run(cfg, config_path, live=True, collector_factory=None, euid=None):
 		                "fix the config (benches, extra_logs) or run with -v for the traceback"))  # fmt: skip
 	for area, fn in (
 		("agent", lambda: _identity(cfg, config_path, euid)),
-		("wolf site", lambda: _site(cfg, live)),
+		("wolf site", lambda: [] if daemon else _site(cfg, live)),  # the daemon's push says it
 		("logs", lambda: _sources(seen["paths"])),
 		("benches", lambda: _benches(cfg, seen["benches"])),
 		("platform", lambda: _platform(cfg)),
 		("host signals", lambda: _auth(cfg)),
-		("response", lambda: _response(cfg)),
-		("daemon", lambda: _daemon(cfg)),
+		("response", lambda: _response(cfg, daemon)),
+		("daemon", lambda: _daemon(cfg, daemon)),
 	):
 		try:
 			out += fn()
@@ -399,7 +404,7 @@ def _journal_groups():
 	return bool(names & {"systemd-journal", "adm", "wheel"})
 
 
-def _response(cfg):
+def _response(cfg, daemon=False):
 	resp = section(cfg, "response")
 	if not resp.get("enabled"):
 		return [item("response", INFO, "response actions off: approved blocks come back Failed (response.enabled)")]
@@ -410,7 +415,11 @@ def _response(cfg):
 		script = "wolf-block-fail2ban.sh" if "fail2ban" in helper else "wolf-block.sh"
 		return [item("response", FAIL, f"response actions on, but {helper} is not installed",
 		             f"install -m 0755 -o root -g root agent/{script} {helper} (docs: agent/response-actions)")]  # fmt: skip
-	if command[:1] == ["sudo"] and helper:
+	if command[:1] == ["sudo"] and helper and daemon:
+		# `sudo -l` without a rule logs "user NOT in sudoers", which the agent's own auth parser
+		# reports as a sudo_failure: every hour, from itself. A shell run of doctor checks it.
+		out.append(item("response", INFO, f"{helper} installed; its sudo rule: run wolf-agent doctor on the host"))
+	elif command[:1] == ["sudo"] and helper:
 		try:
 			done = subprocess.run(["sudo", "-n", "-l", helper], capture_output=True, text=True, timeout=10)
 			allowed = done.returncode == 0
@@ -426,14 +435,14 @@ def _response(cfg):
 	return out
 
 
-def _daemon(cfg):
+def _daemon(cfg, daemon=False):
 	out = []
 	spool = cfg.get("spool_dir")
 	if spool:
 		ok = os.path.isdir(spool) and os.access(spool, os.W_OK)
 		out.append(item("daemon", OK if ok else FAIL, f"spool {spool} " + ("writable" if ok else "not writable"),
 		                None if ok else f"install -d -o {AGENT_USER} -g {AGENT_USER} -m 0750 {spool}"))  # fmt: skip
-	if _systemd():
+	if _systemd() and not daemon:  # the hourly run is the daemon: its unit says nothing new
 		try:
 			shown = subprocess.run(["systemctl", "show", "-p", "LoadState", "-p", "ActiveState", "wolf-agent.service"],
 			                       capture_output=True, text=True, timeout=10).stdout  # fmt: skip
@@ -468,4 +477,62 @@ def _last_push(path, stale=DEFAULT_STALE_MINUTES):
 	minutes = (time.time() - last) / 60
 	return [item("daemon", OK if minutes < stale else WARN, f"last successful push {minutes:.0f} min ago",
 	             None if minutes < stale else "journalctl -u wolf-agent: the Wolf site or the network")]  # fmt: skip
+
+
+class SetupWatcher:
+	"""The daemon's own doctor run, every `setup_checks.interval` seconds (an hour by default).
+
+	In a thread, so a slow check (a Redis or journal timeout) never delays a push. Its result goes
+	once, with the next push, as `setup` (the Wolf site keeps it on the Wolf Agent and shows it on
+	the Monitoring page), plus the host metrics `agent_setup_failed` and `agent_setup_warnings` a
+	rule can alert on. The daemon's own sources and benches are checked, and the Wolf site is not
+	called: the push itself says whether it answers.
+	"""
+
+	def __init__(self, cfg, config_path, collector, clock=time.monotonic, runner=None, start=None):
+		settings = section(cfg, "setup_checks")
+		self.enabled = bool(settings.get("enabled", True))
+		self.interval = max(float(settings.get("interval") or 3600), 60)
+		self.cfg, self.config_path, self.collector, self.clock = cfg, config_path, collector, clock
+		self.runner = runner or run
+		self.start = start or (lambda target: threading.Thread(target=target, name="setup-checks", daemon=True).start())
+		self.next_run = clock() + 60  # after the first pushes: the daemon's start is not its steady state
+		self.result, self.running = None, False
+		self.lock = threading.Lock()
+
+	def _view(self, cfg):
+		collector = self.collector
+		return SimpleNamespace(sources=list(collector.sources), benches=list(collector.benches), close=lambda: None)
+
+	def _work(self):
+		try:
+			checks = self.runner(self.cfg, self.config_path, live=False, collector_factory=self._view, daemon=True)
+		except Exception as e:  # never the daemon's problem
+			checks = [item("agent", FAIL, f"setup checks failed: {type(e).__name__}: {e}")]
+		result = {"checked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "checks": checks}
+		with self.lock:
+			self.result, self.running = result, False
+
+	def poll(self):
+		"""The latest finished run, once, or None; starts a run when one is due."""
+		if not self.enabled:
+			return None
+		with self.lock:
+			done, self.result = self.result, None
+			due = not self.running and self.clock() >= self.next_run
+			if due:
+				self.running, self.next_run = True, self.clock() + self.interval
+		if due:
+			self.start(self._work)
+		return done
+
+
+def setup_metrics(result, host):
+	"""`agent_setup_failed` / `agent_setup_warnings` for a finished run."""
+	checks = result["checks"]
+	return [
+		{"metric_name": name, "value": sum(c["status"] == status for c in checks), "timestamp": result["checked_at"],
+		 "host": host, "bench": None, "site": None, "labels": {}}  # fmt: skip
+		for name, status in (("agent_setup_failed", FAIL), ("agent_setup_warnings", WARN))
+	]
 

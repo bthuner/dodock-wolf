@@ -41,6 +41,8 @@ _SPEC = [
 	("backup_age_hours", "backups", "Newest backup age", "gauge", "h", "site", 600),
 	("tls_days_left", "tls", "Certificate expires in", "gauge", "days", "site", 3600),
 	("hsts_max_age_days", "tls", "HSTS max-age", "gauge", "days", "site", 3600),
+	("agent_setup_failed", "host", "Agent setup checks failed", "gauge", "", "host", 3600),
+	("agent_setup_warnings", "host", "Agent setup warnings", "gauge", "", "host", 3600),
 	("cpu_usage", "host", "CPU", "gauge", "%", "host", PUSH_SECONDS),
 	("memory_used_percent", "host", "Memory used", "gauge", "%", "host", PUSH_SECONDS),
 	("disk_used_percent", "host", "Disk used", "gauge", "%", "host", PUSH_SECONDS),
@@ -69,6 +71,7 @@ GROUPS = ("workers", "processes", "redis", "database", "backups", "tls", "securi
 # what a gauge means for the reader, said once: backup age is not proof a restore works
 CAVEATS = {
 	"backup_age_hours": "Age of the newest backup file; it does not prove the backup restores.",
+	"agent_setup_failed": "From the agent's hourly wolf-agent doctor run; Monitoring lists what failed and the fix.",
 	"tls_days_left": "Days until the certificate served on port 443 expires; not a full validity check.",
 	"app_version": "Version of each app in the bench (apps/<app>/<app>/__init__.py) as major * 1e6 + minor * 1e3 + patch: 15100000 is 15.100.0; development versions are not sent.",
 	"hsts_max_age_days": "Strict-Transport-Security max-age of the first response to HEAD / (0: no header); redirects are not followed.",

@@ -280,4 +280,35 @@ describe('MonitoringPanel', () => {
     const unknown = mount(MonitoringPanel, { props: { monitoring: MONITORING(null), timeZone: 'UTC' } })
     expect(unknown.text()).not.toContain('jobs every')
   })
+
+  it("shows each agent's setup checks, and the fix for each problem", async () => {
+    const { default: MonitoringPanel } = await import('@/components/dash/MonitoringPanel.vue')
+    const agent = (hostname, setup) => ({ name: hostname, hostname, kind: 'agent', status: 'Active', state: 'fresh', last_seen: NOW,
+      clock_skew_seconds: 0, agent_version: '0.1.0', setup })  // prettier-ignore
+    const monitoring = {
+      ...MONITORING(60),
+      agents: [
+        agent('f1', { checked_at: NOW, failed: 1, warnings: 1, problems: [
+          { area: 'logs', status: 'fail', title: 'cannot read /home/frappe/benches/b1/logs/web.log (permission denied)',
+            fix: 'give wolf-agent access: add it to the group of the user who owns the folder (frappe...)' },
+          { area: 'benches', status: 'warn', title: 'b1: queue Redis redis://127.0.0.1:11000 unreachable', fix: 'start the bench\'s queue Redis' },
+        ] }),  // prettier-ignore
+        agent('n1', { checked_at: NOW, failed: 0, warnings: 0, problems: [] }),
+        agent('old', null),
+      ],
+    }
+    const full = mount(MonitoringPanel, { props: { monitoring, timeZone: 'UTC' } })
+    expect(full.text()).toContain('1 host to fix: f1')
+    expect(full.text()).toContain('1 failed, 1 warning')
+    expect(full.text()).toContain('not reported') // an agent from before the setup checks
+    expect(full.text()).toContain('cannot read /home/frappe/benches/b1/logs/web.log (permission denied)')
+    expect(full.text()).toContain('Fix: give wolf-agent access')
+    const compact = mount(MonitoringPanel, { props: { monitoring, timeZone: 'UTC', compact: true } })
+    expect(compact.text()).toContain('1 host to fix: f1')
+    expect(compact.find('table').exists()).toBe(false)
+    expect(full.text()).toMatch(/checked .* ago/)
+    // no agent has reported yet: nothing claimed
+    const none = mount(MonitoringPanel, { props: { monitoring: { ...monitoring, agents: [agent('old', null)] }, timeZone: 'UTC' } })
+    expect(none.text()).toContain('not reported yet')
+  })
 })

@@ -25,7 +25,7 @@ Set `WOLF_BENCHES="/home/frappe/frappe-bench /srv/other-bench"` to skip auto-dis
 |---------|--------------|
 | `wolf-agent register --url URL --token TOKEN [--bench PATH]...` | register the host, discover benches, write the config |
 | `wolf-agent run` | the daemon loop (what systemd runs) |
-| `wolf-agent doctor [--json] [--offline]` | as the agent's user: what this host gives the agent (registration, Wolf site, logs, benches, Redis, nginx, Press/Pilot, auth log, response actions, daemon) and the fix for each problem; read-only, exit 1 on a failure |
+| `wolf-agent doctor [--json] [--offline]` | (the daemon also runs it hourly, `setup_checks`, for the Monitoring page) as the agent's user: what this host gives the agent (registration, Wolf site, logs, benches, Redis, nginx, Press/Pilot, auth log, response actions, daemon) and the fix for each problem; read-only, exit 1 on a failure |
 | `wolf-agent refresh` | as root: read again what the agent's user cannot (a Press server's benches folder and proxy, a Press proxy's access log) and save it, keeping the registration; `install.sh` runs it on upgrade |
 | `wolf-agent discover [--bench PATH] [--platform auto\|press\|generic]` | show what bench discovery finds |
 | `wolf-agent check [--from-start] [--status] [--platform …]` | collect once and print the JSON payload, nothing is sent; the watchdog state goes to stderr (`--status` also asks the site for its health) |
@@ -290,6 +290,7 @@ credentials (401/403) the agent exits with status 2 and systemd stops restarting
   "suricata": {"enabled": true, "eve_log": null, "max_priority": 3, "exclude_sids": [2012888]},
   "wazuh": {"enabled": true, "alerts_log": null, "min_level": 7, "exclude_groups": ["sca"]},
   "scrub": {"enabled": true, "ips": false, "extra_patterns": [], "keep": []},
+  "setup_checks": {"enabled": true, "interval": 3600},
   "watchdog": {
     "enabled": true,
     "stale_minutes": 5,

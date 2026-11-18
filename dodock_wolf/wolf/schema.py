@@ -71,6 +71,38 @@ def _text(value, length=140):
 	return value[:length] or None
 
 
+SETUP_STATUSES = ("ok", "warn", "fail", "info")
+MAX_SETUP_CHECKS = 100
+
+
+def normalize_setup(raw, tz_name, now):
+	"""An agent's setup checks (`setup` in a push, `wolf-agent doctor` run by the daemon) as the
+	Wolf Agent fields, or None when it sent none or nothing usable. Only known statuses, bounded
+	text: the page shows it as text."""
+	if not isinstance(raw, dict) or not isinstance(raw.get("checks"), list):
+		return None
+	checks = []
+	for c in raw["checks"][:MAX_SETUP_CHECKS]:
+		if not isinstance(c, dict) or c.get("status") not in SETUP_STATUSES or not _text(c.get("title")):
+			continue
+		checks.append({"area": _text(c.get("area"), 40) or "agent", "status": c["status"],
+		               "title": _text(c.get("title"), 300), "fix": _text(c.get("fix"), 300)})  # fmt: skip
+	if not checks:
+		return None
+	try:
+		checked_at = parse_timestamp(raw.get("checked_at"), tz_name, default=now)
+	except PayloadError:
+		checked_at = now
+	checked_at, _ = clamp_future(checked_at, now, 300)
+	return {
+		"setup_checked_at": checked_at,
+		"setup_failed": sum(c["status"] == "fail" for c in checks),
+		"setup_warnings": sum(c["status"] == "warn" for c in checks),
+		# what the page shows and what to fix: the passing checks (registration URL, paths) stay out
+		"setup_checks": json.dumps([c for c in checks if c["status"] != "ok"], ensure_ascii=False),
+	}
+
+
 def label_key(labels):
 	if not labels:
 		return None
