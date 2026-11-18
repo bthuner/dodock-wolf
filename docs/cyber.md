@@ -493,7 +493,9 @@ Built: Suricata as an optional source. The agent reads its `eve.json` alerts int
 `network_ids_alert` events (see agent/README.md), and the "Network IDS alert (critical)"
 preset alerts on priority 1 rules. Tried against Suricata 7 with ET Open on the demo bench:
 sqlmap, Zmap and path traversal probes against nginx came out as events with the client
-address, the site and the rule's ATT&CK technique.
+address, the site and the rule's ATT&CK technique. The agent finds the EVE log from Suricata
+itself: a running Suricata's flags and `suricata.yaml`, followed through a container's bind mounts,
+re-checked every 5 minutes (Pilot and Press do not manage Suricata).
 
 Built: Wazuh as an optional source. The Wolf agent on the manager's host reads `alerts.json`
 into `hids_alert` events, from level 7, without configuration assessment and without Wazuh's

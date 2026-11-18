@@ -106,8 +106,11 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
   never had a backup sends nothing, so "No backup for 26 h" cannot fire for it. Press benches are
   skipped (`backups.press`), since Press uploads backups offsite and its local copies are not a
   reliable signal. Offsite-only setups can point `backups.dirs` at a mounted directory per site.
-- **Suricata** (optional, #72): when Suricata writes an EVE log (`suricata.eve_log`, else
-  `/var/log/suricata/eve.json` if it exists), the agent tails it like the other logs.
+- **Suricata** (optional, #72): when Suricata writes an EVE log, the agent tails it like the other
+  logs. The path is `suricata.eve_log`, else found from a running Suricata (its `-c`/`-l` flags and
+  the `eve-log` output of its `suricata.yaml`, through the bind mounts of a container), else from
+  `suricata.yaml` in `/etc/suricata` or `/usr/local/etc/suricata`, else
+  `/var/log/suricata/eve.json`. Checked again every 5 minutes.
   - Only `alert` records are read. Each (signature, remote address) pair gives one
     `network_ids_alert` event per minute of log time, with a count; past 500 pairs, alerts are only
     counted.
