@@ -452,7 +452,8 @@ Wazuh agent, the source IP and user, and the first log line, scrubbed like every
 ### Agent route
 
 On the Wazuh manager's host, the agent tails `wazuh.alerts_log`, else
-`/var/ossec/logs/alerts/alerts.json` if it exists.
+`/var/ossec/logs/alerts/alerts.json` if it exists. Wazuh writes that file at its first alert: when it
+appears after the agent started, the agent finds it within 5 minutes and reads it from its start.
 
 ```json [config.json]
 "wazuh": {"enabled": true, "alerts_log": null, "min_level": 7, "exclude_groups": ["sca"]}
@@ -514,7 +515,7 @@ On the Wazuh manager's host, the agent tails `wazuh.alerts_log`, else
         /var/ossec/logs/alerts/alerts.json
       </code>
       
-       when it exists
+       when it exists, or once it appears (checked every 5 minutes)
     </td>
     
     <td>

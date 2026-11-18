@@ -3456,18 +3456,19 @@ use the integration route. Both map alerts the same way.
 ### Agent route
 
 On the Wazuh manager's host, the agent tails `wazuh.alerts_log`, else
-`/var/ossec/logs/alerts/alerts.json` if it exists.
+`/var/ossec/logs/alerts/alerts.json` if it exists. Wazuh writes that file at its first alert: when it
+appears after the agent started, the agent finds it within 5 minutes and reads it from its start.
 
 ```json [config.json]
 "wazuh": {"enabled": true, "alerts_log": null, "min_level": 7, "exclude_groups": ["sca"]}
 ```
 
-| Key              | Meaning                                                                                | Default   |
-| ---------------- | -------------------------------------------------------------------------------------- | --------- |
-| `enabled`        | read Wazuh's alerts log                                                                | `true`    |
-| `alerts_log`     | path of `alerts.json`. `null` uses `/var/ossec/logs/alerts/alerts.json` when it exists | `null`    |
-| `min_level`      | lowest rule level sent                                                                 | `7`       |
-| `exclude_groups` | Wazuh rule groups left out (`dodock_wolf` is always left out)                          | `["sca"]` |
+| Key              | Meaning                                                                                                                              | Default   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------ | --------- |
+| `enabled`        | read Wazuh's alerts log                                                                                                              | `true`    |
+| `alerts_log`     | path of `alerts.json`. `null` uses `/var/ossec/logs/alerts/alerts.json` when it exists, or once it appears (checked every 5 minutes) | `null`    |
+| `min_level`      | lowest rule level sent                                                                                                               | `7`       |
+| `exclude_groups` | Wazuh rule groups left out (`dodock_wolf` is always left out)                                                                        | `["sca"]` |
 
 The agent's user must be able to read the alerts log: add `wolf-agent` to the `wazuh` group.
 
@@ -5403,6 +5404,17 @@ docker compose --profile multi logs -f multi-demo   # "history written up to ...
 Each `<kind>-demo` service runs `bench generate-demo-<kind>`: 7 days of history, then an incident
 cycle every 30 minutes, with alerts sent to the stack's webhook sink (`docker compose logs catcher`).
 [Commands](https://bthuner.github.io/dodock-wolf/agent/commands) lists what a cycle contains.
+
+### Suricata and Wazuh
+
+The `ids` profile runs a real Suricata (with ET Open) on the bench's network and a real Wazuh
+manager reading its nginx log, each with the Wolf agent that reads it. `ids_scenario.py` then sends
+one attacker: Wolf's own web detection, Suricata and Wazuh each report it, in one incident.
+
+```bash [dev/demo]
+docker compose --profile ids up -d --build
+python3 ids_scenario.py
+```
 
 ## Python tests
 

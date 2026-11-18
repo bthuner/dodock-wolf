@@ -96,6 +96,17 @@ Each `<kind>-demo` service runs `bench generate-demo-<kind>`: 7 days of history,
 cycle every 30 minutes, with alerts sent to the stack's webhook sink (`docker compose logs catcher`).
 [Commands](/agent/commands) lists what a cycle contains.
 
+### Suricata and Wazuh
+
+The `ids` profile runs a real Suricata (with ET Open) on the bench's network and a real Wazuh
+manager reading its nginx log, each with the Wolf agent that reads it. `ids_scenario.py` then sends
+one attacker: Wolf's own web detection, Suricata and Wazuh each report it, in one incident.
+
+```bash [dev/demo]
+docker compose --profile ids up -d --build
+python3 ids_scenario.py
+```
+
 ## Python tests
 
 ```bash [repository root]
