@@ -149,12 +149,36 @@ class Collector:
 		self.suricata_source = Source(FileTailer(eve, self.state.data, from_start=self.from_start), [parser])
 		self.sources.append(self.suricata_source)
 
+	def _wazuh_source(self, alerts, from_start):
+		wazuh = section(self.cfg, "wazuh")
+		parser = PARSERS["wazuh"](self.host, log_file=alerts, min_level=wazuh.get("min_level"),
+		                          exclude_groups=wazuh.get("exclude_groups"))  # fmt: skip
+		self.wazuh_source = Source(FileTailer(alerts, self.state.data, from_start=from_start), [parser])
+		self.sources.append(self.wazuh_source)
+
+	def _recheck_wazuh(self):
+		"""Wazuh writes alerts.json at its first alert: an agent started before it (a fresh manager,
+		a restart after the file was rotated away) finds it later, and reads it from its start."""
+		wazuh = section(self.cfg, "wazuh")
+		if self.wazuh_source or not wazuh.get("enabled", True) or wazuh.get("alerts_log"):
+			return
+		if os.path.exists(DEFAULT_WAZUH_ALERTS):
+			log.info("Wazuh alerts log found: %s", DEFAULT_WAZUH_ALERTS)
+			self._wazuh_source(DEFAULT_WAZUH_ALERTS, True)
+
+	def _recheck_sources(self):
+		"""Every RECHECK seconds: the Suricata and Wazuh logs may have appeared, moved or gone."""
+		if self.clock() < self._next_source_check:
+			return
+		self._next_source_check = self.clock() + suricata_discovery.RECHECK
+		self._recheck_wazuh()
+		self._recheck_suricata()
+
 	def _recheck_suricata(self):
 		"""A Suricata started, moved or stopped since: follow it (unless `suricata.eve_log` is set)."""
 		suricata = section(self.cfg, "suricata")
-		if not suricata.get("enabled", True) or suricata.get("eve_log") or self.clock() < self._next_eve_check:
+		if not suricata.get("enabled", True) or suricata.get("eve_log"):
 			return
-		self._next_eve_check = self.clock() + suricata_discovery.RECHECK
 		eve, how = _discover_eve()
 		if eve != self.eve_path:
 			(log.info if eve or how == "no Suricata found" else log.warning)("Suricata EVE log is now %s (%s)", eve or "none", how)
@@ -238,14 +262,14 @@ class Collector:
 			eve, how = _discover_eve(suricata.get("eve_log"))
 			(log.info if eve or how == "no Suricata found" else log.warning)("Suricata EVE log: %s (%s)", eve or "none", how)
 			self._suricata_source(eve)
-		self._next_eve_check = self.clock() + suricata_discovery.RECHECK
+		self._next_source_check = self.clock() + suricata_discovery.RECHECK
 
+		self.wazuh_source = None
 		wazuh = section(self.cfg, "wazuh")
 		alerts = wazuh.get("alerts_log") or (DEFAULT_WAZUH_ALERTS if os.path.exists(DEFAULT_WAZUH_ALERTS) else None)
 		if wazuh.get("enabled", True) and alerts:
-			parser = PARSERS["wazuh"](self.host, log_file=alerts, min_level=wazuh.get("min_level"),
-			                          exclude_groups=wazuh.get("exclude_groups"))  # fmt: skip
-			self.sources.append(Source(FileTailer(alerts, self.state.data, from_start=self.from_start), [parser]))
+			log.info("Wazuh alerts log: %s", alerts)
+			self._wazuh_source(alerts, self.from_start)
 
 		auth = resolve_auth_log(self.cfg.get("auth_log"), JournalTailer.available())
 		if auth == "journal":
@@ -257,7 +281,7 @@ class Collector:
 		"""Poll every source once; return `(metrics, events)` for this interval."""
 		now = now or datetime.now(timezone.utc)
 		self._rediscover()
-		self._recheck_suricata()
+		self._recheck_sources()
 		metrics, events = [], []
 		for source in self.sources:
 			try:

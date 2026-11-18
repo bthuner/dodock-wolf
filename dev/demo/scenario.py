@@ -7,6 +7,7 @@ Stdlib only. Talks to the site through its REST API, like any admin would.
 
 import http.cookiejar
 import json
+import os
 import subprocess
 import sys
 import time
@@ -16,7 +17,7 @@ import urllib.request
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-URL = "http://localhost:8099"
+URL = os.environ.get("WOLF_DEMO_URL", "http://localhost:8099")
 SITE = "wolf.localhost"
 WEBHOOK = "http://catcher:9999/"
 # What Frappe uses when System Settings has no time zone (frappe.utils.get_system_timezone).
@@ -127,7 +128,9 @@ def main():
 
 	step("Backend back + nginx reload")
 	compose("start", "backend")
-	compose("restart", "frontend")
+	# a reload, not a restart: a restarted frontend would leave the "ids" profile's Suricata, which
+	# shares its network, listening on an interface that no longer exists
+	compose("exec", "-T", "frontend", "nginx", "-c", "/etc/wolf/nginx.conf", "-s", "reload")
 	time.sleep(10)
 	print("    responses:", hammer(10))
 

@@ -133,6 +133,8 @@ services:
       - nginx-logs:/var/log/wolf-nginx:ro
       - agent-state:/home/frappe/wolf-agent
       - ./agent-init.sh:/etc/wolf/agent-init.sh:ro
+      # empty unless the "ids" profile runs Suricata: the agent finds eve.json there by itself
+      - suricata-logs:/var/log/suricata:ro
     entrypoint: [bash, /etc/wolf/agent-init.sh]
     depends_on: [frontend]
 
@@ -205,6 +207,60 @@ services:
     command: [single]
     depends_on: [single-agent]
 
+  # Suricata and Wazuh next to the bench (README "Suricata and Wazuh"): docker compose --profile ids up -d
+  # Suricata sniffs the frontend's interface, with ET Open, and names the client from
+  # X-Forwarded-For as nginx's port 8081 does; the bench's agent reads its eve.json. The Wazuh manager reads
+  # nginx's combined log; a Wolf agent on its host reads alerts.json.
+  suricata:
+    image: jasonish/suricata:7.0.17  # its suricata.yaml has eve-log as outputs.1 (the --set below)
+    profiles: [ids]
+    restart: on-failure
+    network_mode: "service:frontend"
+    cap_add: [NET_ADMIN, NET_RAW, SYS_NICE]
+    volumes:
+      - suricata-logs:/var/log/suricata
+      - suricata-rules:/var/lib/suricata
+    entrypoint: [bash, -c]
+    command:
+      - |
+        [ -s /var/lib/suricata/rules/suricata.rules ] || suricata-update -q --no-test || echo "suricata-update failed: no ET Open rules"
+        # the frontend's ports only: nginx's own calls to the backend would count each attack twice.
+        # EXTERNAL_NET any: in Docker the attacker's address is private, like HOME_NET
+        exec suricata -i eth0 -k none \
+          --set vars.address-groups.EXTERNAL_NET=any \
+          --set outputs.1.eve-log.xff.enabled=yes --set outputs.1.eve-log.xff.mode=overwrite \
+          --set outputs.1.eve-log.xff.deployment=forward \
+          "tcp port 8080 or tcp port 8081"
+    depends_on: [frontend]
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.9.2
+    profiles: [ids]
+    hostname: wazuh-manager
+    restart: on-failure
+    volumes:
+      - wazuh-logs:/var/ossec/logs
+      - nginx-logs:/var/log/wolf-nginx:ro
+      - ./wazuh-wolf.sh:/entrypoint-scripts/wolf.sh:ro
+    # after nginx has created the log it reads: Wazuh only picks up a missing file minutes later
+    depends_on: [frontend]
+  wazuh-wolf-agent:
+    image: wolf-demo:local
+    profiles: [ids]
+    hostname: wazuh-manager
+    restart: on-failure
+    user: frappe
+    # alerts.json is group wazuh (999 in the manager image): on a real manager, add wolf-agent to it
+    group_add: ["999"]
+    environment:
+      WOLF_AGENT_CONFIG: /home/frappe/wolf-agent/config.json
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites:ro
+      - wazuh-wolf-state:/home/frappe/wolf-agent
+      - wazuh-logs:/var/ossec/logs:ro
+      - ./wazuh-agent-init.sh:/etc/wolf/wazuh-agent-init.sh:ro
+    entrypoint: [bash, /etc/wolf/wazuh-agent-init.sh]
+    depends_on: [frontend, wazuh-manager]
+
   # Optional Postgres for portability checks: docker compose --profile postgres up -d pgdb
   pgdb:
     image: ${WOLF_DEMO_PG_IMAGE:-postgres:16}
@@ -238,3 +294,7 @@ volumes:
   demo-press:
   demo-multi:
   demo-single:
+  suricata-logs:
+  suricata-rules:
+  wazuh-logs:
+  wazuh-wolf-state:

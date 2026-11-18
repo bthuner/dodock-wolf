@@ -186,21 +186,21 @@ class TestCollector(unittest.TestCase):
 		self.assertEqual(self.eves(c), [])
 		with mock.patch.object(d, "discover", side_effect=lambda *a, **k: found[0]):
 			found[0] = ("/srv/ids/eve.json", "Suricata pid 1")
-			c._recheck_suricata()
+			c._recheck_sources()
 			self.assertEqual(self.eves(c), [], "not before RECHECK")
 			self.now[0] += d.RECHECK
-			c._recheck_suricata()
+			c._recheck_sources()
 			self.assertEqual(self.eves(c), ["/srv/ids/eve.json"])
 			found[0] = ("/data/eve.json", "Suricata pid 2")
 			self.now[0] += d.RECHECK
-			c._recheck_suricata()
+			c._recheck_sources()
 			self.assertEqual(self.eves(c), ["/data/eve.json"], "replaced, not added")
 
 	def test_a_configured_path_or_disabled_is_left_alone(self):
 		c = self.collector({**self.cfg, "suricata": {"eve_log": "/x/eve.json"}}, [("/x/eve.json", "config")])
 		with mock.patch.object(d, "discover") as discover:
 			self.now[0] += d.RECHECK
-			c._recheck_suricata()
+			c._recheck_sources()
 			discover.assert_not_called()
 		self.assertEqual(self.eves(c), ["/x/eve.json"])
 		off = self.collector({**self.cfg, "suricata": False}, [("/y/eve.json", "Suricata pid 1")])
