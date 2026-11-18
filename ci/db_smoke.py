@@ -2104,7 +2104,9 @@ def main():
 	def three_sources_one_incident():
 		"""Real agent output, end to end (#72 tests): the agent's parsers on the real Suricata and
 		Wazuh fixtures (agent/tests/data) and on nginx and auth.log lines, all naming one attacker,
-		through the ingest path. One agent reads nginx and Suricata on the bench host, as deployed; the shipped IDS preset opens the incident, the rest joins it by IP.
+		through the ingest path. One agent reads nginx and Suricata on the bench host, as deployed.
+		Everything arrives first, as in an attack; the shipped IDS preset then opens the incident,
+		which takes the rest by IP (incidents.adopt_related).
 		Once per detector mode: own (all kept), both (Wolf's events are the same finding as the
 		external alert), external (Wolf's own web and SSH events give way)."""
 		from datetime import timezone
@@ -2153,11 +2155,8 @@ def main():
 			ids_host, hids_host = f"three-ids-{run}", f"three-hids-{run}"
 			suricata = parse("suricata", fixture("suricata_eve_et_open.json", ip, hids_host), ids_host, log_file="eve.json", local={"192.0.2.10"},
 			                 site_benches={"erp.example.com": "b3"})  # fmt: skip
+			# as it happens: every detector reports within one push, the rule runs after (each minute)
 			store(suricata)
-			fired = rules_mod.evaluate(rule)["fired"]
-			fired_here.extend(fired)
-			inc = frappe.db.get_value("Wolf Incident", {"name": ("in", fired or [""]), "host": ids_host}, "name")
-			assert inc, f"{run}: the IDS preset opened no incident for {ids_host}: {fired}"
 			store(parse("wazuh", fixture("wazuh_alerts_lab.json", ip, hids_host), "three-wazuh", log_file="alerts.json"))
 			t = datetime.now(timezone.utc)
 			web = store(parse("nginx", [
@@ -2169,7 +2168,35 @@ def main():
 			                            for i in range(8)]  # fmt: skip
 			                   + [f"{t:%b %e %H:%M:%S} {hids_host} sshd[99]: Accepted password for root from {ip} port 51999 ssh2"],
 			                   hids_host, log_file="/var/log/auth.log"))
-			rows = frappe.get_all("Wolf Event", filters={"incident": inc}, fields=["name", "source", "category", "duplicate_of"])
+			# kept out: the same IP 3 hours ago, and an event another incident holds
+			old = schema.normalize_event({"type": "security", "category": "web_attack_probe", "source": "nginx", "host": ids_host,
+			                              "severity": "warning", "title": f"three old {run}", "payload": {"ip": ip}},
+			                             tz, now_datetime() - timedelta(hours=3))  # fmt: skip
+			old = events.insert_event(old, agent=agent.name)
+			held = frappe.get_doc({"doctype": "Wolf Incident", "title": f"three held {run}", "severity": "warning", "status": "Open",
+			                       "host": f"three-other-{run}", "started_at": now_datetime()}).insert(ignore_permissions=True)  # fmt: skip
+			other = events.insert_event(schema.normalize_event({"type": "security", "category": "ssh_failed_login", "source": "sshd",
+			                                                    "host": f"three-other-{run}", "severity": "warning",
+			                                                    "title": f"three held {run}", "payload": {"ip": ip}},
+			                                                   tz, now_datetime()), agent=agent.name)  # fmt: skip
+			frappe.db.set_value("Wolf Event", other, "incident", held.name)
+			fired = rules_mod.evaluate(rule)["fired"]
+			fired_here.extend(fired + [held.name])
+			inc = frappe.db.get_value("Wolf Incident", {"name": ("in", fired or [""]), "host": ids_host}, "name")
+			assert inc, f"{run}: the IDS preset opened no incident for {ids_host}: {fired}"
+			assert not frappe.db.get_value("Wolf Event", old, "incident"), "an event 3 hours old taken"
+			assert frappe.db.get_value("Wolf Event", other, "incident") == held.name, "another incident's event taken"
+			rows = frappe.get_all("Wolf Event", filters={"incident": inc}, fields=["name", "source", "category", "duplicate_of", "severity"])
+			# ET's info rules about the same client (log4j hunting) stay out, as at ingest
+			assert not [r for r in rows if r.severity == "info"], "info events taken"
+			assert frappe.db.exists("Wolf Event", {"agent": agent.name, "severity": "info", "source": "suricata",
+			                                      "payload": ("like", f'%"{ip}"%')}), "no info alert to keep out"  # fmt: skip
+			count = frappe.db.get_value("Wolf Incident", inc, "event_count")
+			assert count == len(rows), f"event count {count}, {len(rows)} linked"
+			# the IDS alerts are the rule's evidence; the rest joined by IP and says so
+			by_entity = dict(frappe.get_all("Wolf Event", filters={"incident": inc}, fields=["name", "incident_by_entity"], as_list=True))
+			joined = [r for r in rows if r.category != "network_ids_alert"]
+			assert joined and all(by_entity[r.name] for r in joined), [(r.category, by_entity[r.name]) for r in joined]
 			return inc, rows, web, auth
 
 		def sources(rows):
@@ -2331,7 +2358,14 @@ def main():
 			fired = frappe.get_all("Wolf Incident", filters={"alert_rule": name, "status": "Open"}, fields=["name", "group_key", "title", "site"])
 			assert [i.group_key for i in fired] == [key], (name, res, fired)
 			got = set(frappe.get_all("Wolf Event", filters={"incident": fired[0].name}, pluck="name"))
-			assert got == {names[k] for k in linked}, (name, got)
+			evidence = {names[k] for k in linked}
+			assert evidence <= got, (name, evidence - got)
+			# beyond its evidence, the incident takes the earlier events of the same IP or e-mail user
+			# (incidents.adopt_related): the burst of older probes, the login user's other events
+			keys = {(k, v) for e in evidence for k, v in incidents.correlation_keys(e, frappe.get_doc("Wolf Event", e).as_dict())}
+			for extra in got - evidence:
+				theirs = set(frappe.db.sql("select kind, value from `tabWolf Event Entity` where event = %s", extra))
+				assert theirs & keys, (name, "took an unrelated event", extra, theirs)
 			# the incident starts at the first event: its timeline shows both, linked or not
 			first, then = {"ip": ("probe", "login"), "user": ("login", "export"), "host": ("ids", "script")}[preset["sequence_entity"]]
 			shown = {r.name for r in incidents.get_timeline(fired[0].name)}

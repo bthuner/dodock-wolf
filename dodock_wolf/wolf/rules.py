@@ -114,8 +114,13 @@ def evaluate(rule, now=None):
 			continue
 		if sequence:
 			incidents.link_events(name, row["events"])
+			if kind:  # opened or reopened: what the same party set off just before (#72 step 5)
+				incidents.adopt_related(name, row["events"])
 		elif rule.signal_type == "event":
-			incidents.link_events(name, matching_event_names(rule, since, row))
+			evidence = matching_event_names(rule, since, row)
+			incidents.link_events(name, evidence)
+			if kind:  # opened or reopened: what the same attacker set off just before (#72 step 5)
+				incidents.adopt_related(name, evidence)
 		else:
 			if kind:
 				record_metric_alert(rule, name, scope, summary)

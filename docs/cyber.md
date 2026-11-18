@@ -521,7 +521,9 @@ Built: entities shared by every source (`wolf/entities.py`, `api/entities.py`).
 - **Search:** the event list's `entity=` filter (`ip:…`, `host:…`, `site:…`, `user:…`) finds
   Wolf's, Suricata's and Wazuh's events together.
 
-Built: incidents grouped by entity across sources (`wolf/incidents.py`, `entity_incident`).
+Built: incidents grouped by entity across sources (`wolf/incidents.py`, `entity_incident`; and
+`adopt_related` the other way: an incident a rule opens takes the earlier events of the same IP or
+user that no incident holds).
 - A security event joins the open incident holding an event that names the same remote IP,
   whatever its source, host, bench or site, if that event was seen within **Entity Correlation
   Minutes** (Wolf Settings → Correlation, 60 by default). A Suricata scan on one host, a Wazuh
