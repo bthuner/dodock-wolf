@@ -297,7 +297,7 @@ the agent's log says so; mount a host folder instead, or set `suricata.eve_log`.
 do not manage Suricata, so their hosts are read the same way.
 
 ```json [config.json]
-"suricata": {"enabled": true, "eve_log": null, "max_priority": 3}
+"suricata": {"enabled": true, "eve_log": null, "max_priority": 3, "exclude_sids": [2012888]}
 ```
 
 <table>
@@ -375,8 +375,37 @@ do not manage Suricata, so their hosts are read the same way.
       </code>
     </td>
   </tr>
+  
+  <tr>
+    <td>
+      <code>
+        exclude_sids
+      </code>
+    </td>
+    
+    <td>
+      rules skipped, by signature ID. ET's <em>
+        Http Client Body contains pwd= in cleartext
+      </em>
+      
+       (2012888) is priority 1 and fires on every Frappe login where Suricata sees traffic after TLS termination. <code>
+        []
+      </code>
+      
+       keeps every rule; a list of your own replaces the default
+    </td>
+    
+    <td>
+      <code>
+        [2012888]
+      </code>
+    </td>
+  </tr>
 </tbody>
 </table>
+
+Alerts with no address at all (decoder events such as *truncated packet*, common with network
+offloading in containers and VMs) are skipped: there is nothing to correlate or block.
 
 `"suricata": false` turns it off. See [Configuration](/agent/configuration).
 

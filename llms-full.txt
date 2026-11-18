@@ -1211,7 +1211,7 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
   "processes": {"enabled": true, "manager": "auto"},
   "versions": {"enabled": true, "interval": 3600},
   "site_settings": {"enabled": true, "interval": 3600},
-  "suricata": {"enabled": true, "eve_log": null, "max_priority": 3},
+  "suricata": {"enabled": true, "eve_log": null, "max_priority": 3, "exclude_sids": [2012888]},
   "wazuh": {"enabled": true, "alerts_log": null, "min_level": 7, "exclude_groups": ["sca"]},
   "scrub": {"enabled": true, "ips": false, "extra_patterns": [], "keep": []},
   "watchdog": {
@@ -1301,7 +1301,7 @@ others) turns a check off.
 | `exposure`      | `interval` (600 s), `ports` (more ports to count)                                                                                                                                                                                                                                                                                                                |
 | `integrity`     | `interval` (900 s), `full_scan_interval` (86400 s), `server_paths` (`null`: `/etc/nginx` and `/etc/supervisor`)                                                                                                                                                                                                                                                  |
 | `outbound`      | `interval` (60 s), `learn_days` (7), `include_private` (`false`), `usual_ports` (ports only counted, added to the defaults), `report_usual_ports` (`false`), `proxy_logs` (`null`: `/var/log/squid/access.log` when it exists; or `[{"path", "format": "squid"}]`), `kernel_log` (`"auto"`: every new connection when `wolf-outbound-log` is installed; `false`) |
-| `suricata`      | `eve_log`, `max_priority` (3)                                                                                                                                                                                                                                                                                                                                    |
+| `suricata`      | `eve_log`, `max_priority` (3), `exclude_sids` (`[2012888]`)                                                                                                                                                                                                                                                                                                      |
 | `wazuh`         | `alerts_log`, `min_level` (7), `exclude_groups` (`["sca"]`)                                                                                                                                                                                                                                                                                                      |
 
 ## Privacy and safety
@@ -3384,14 +3384,18 @@ the agent's log says so; mount a host folder instead, or set `suricata.eve_log`.
 do not manage Suricata, so their hosts are read the same way.
 
 ```json [config.json]
-"suricata": {"enabled": true, "eve_log": null, "max_priority": 3}
+"suricata": {"enabled": true, "eve_log": null, "max_priority": 3, "exclude_sids": [2012888]}
 ```
 
-| Key            | Meaning                                                    | Default |
-| -------------- | ---------------------------------------------------------- | ------- |
-| `enabled`      | read Suricata's EVE log                                    | `true`  |
-| `eve_log`      | path of the EVE log. `null` finds it from Suricata (above) | `null`  |
-| `max_priority` | skip alerts whose priority is above this                   | `3`     |
+| Key            | Meaning                                                                                                                                                                                                                                                      | Default     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
+| `enabled`      | read Suricata's EVE log                                                                                                                                                                                                                                      | `true`      |
+| `eve_log`      | path of the EVE log. `null` finds it from Suricata (above)                                                                                                                                                                                                   | `null`      |
+| `max_priority` | skip alerts whose priority is above this                                                                                                                                                                                                                     | `3`         |
+| `exclude_sids` | rules skipped, by signature ID. ET's *Http Client Body contains pwd= in cleartext* (2012888) is priority 1 and fires on every Frappe login where Suricata sees traffic after TLS termination. `[]` keeps every rule; a list of your own replaces the default | `[2012888]` |
+
+Alerts with no address at all (decoder events such as *truncated packet*, common with network
+offloading in containers and VMs) are skipped: there is nothing to correlate or block.
 
 `"suricata": false` turns it off. See [Configuration](https://bthuner.github.io/dodock-wolf/agent/configuration).
 

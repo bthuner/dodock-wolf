@@ -44,7 +44,7 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
   "processes": {"enabled": true, "manager": "auto"},
   "versions": {"enabled": true, "interval": 3600},
   "site_settings": {"enabled": true, "interval": 3600},
-  "suricata": {"enabled": true, "eve_log": null, "max_priority": 3},
+  "suricata": {"enabled": true, "eve_log": null, "max_priority": 3, "exclude_sids": [2012888]},
   "wazuh": {"enabled": true, "alerts_log": null, "min_level": 7, "exclude_groups": ["sca"]},
   "scrub": {"enabled": true, "ips": false, "extra_patterns": [], "keep": []},
   "watchdog": {
@@ -490,7 +490,15 @@ others) turns a check off.
         max_priority
       </code>
       
-       (3)
+       (3), <code>
+        exclude_sids
+      </code>
+      
+       (<code>
+        [2012888]
+      </code>
+      
+      )
     </td>
   </tr>
   
