@@ -9,6 +9,7 @@ import PageTitle from '@/components/PageTitle.vue'
 import SeverityGlyph from '@/components/SeverityGlyph.vue'
 import { useExplore } from '@/composables/useExplore'
 import { useLive } from '@/composables/useLive'
+import { __ } from '@/services/i18n'
 import { call } from '@/services/api'
 import { EVENT_TYPES, SEVERITIES, pick } from '@/services/filters'
 import { clock, day, full } from '@/services/time'
@@ -54,17 +55,16 @@ const live = useLive(hub, {
 
 <template>
   <PageHeader>
-    <PageTitle title="Events" />
+    <PageTitle :title="__('Events')" />
     <div class="flex items-center gap-2">
-      <LiveStatus :live="live" :poll-seconds="hub?.pollSeconds" pending-label="New events recorded" />
-      <Button label="Refresh" icon-left="lucide-refresh-cw" :loading="list.loading.value" @click="live.apply()" />
+      <LiveStatus :live="live" :poll-seconds="hub?.pollSeconds" :pending-label="__('New events recorded')" />
+      <Button :label="__('Refresh')" icon-left="lucide-refresh-cw" :loading="list.loading.value" @click="live.apply()" />
     </div>
   </PageHeader>
   <div class="wolf-page space-y-3">
     <ExploreFilters types />
     <p v-if="list.meta.value" class="text-sm text-ink-gray-6">
-      Event records active in the window, newest first; times in {{ tz }}. A record's count is every repeat it absorbed,
-      inside the window or not.
+      {{ __("Event records active in the window, newest first; times in {0}. A record's count is every repeat it absorbed, inside the window or not.", [tz]) }}
     </p>
     <p v-if="list.error.value" role="alert" class="wolf-alert">{{ list.error.value }}</p>
     <ul v-if="list.items.value.length" class="wolf-card wolf-list">
@@ -79,11 +79,11 @@ const live = useLive(hub, {
             </div>
             <div class="wolf-list-sub">
               <span>{{ where(e) }}</span>
-              <span v-if="e.count > 1" class="wolf-data">{{ e.count }} reported, last {{ clock(e.last_seen, tz) }}</span>
+              <span v-if="e.count > 1" class="wolf-data">{{ __('{0} reported, last {1}', [e.count, clock(e.last_seen, tz)]) }}</span>
               <span v-if="e.category">{{ e.category }}</span>
               <RouterLink v-if="e.incident" class="wolf-link" :to="{ name: 'incident', params: { incident: e.incident } }">{{ e.incident }}</RouterLink>
-              <RouterLink v-if="e.event_type === 'error' && e.fingerprint" class="wolf-link" :to="{ name: 'error-group', params: { fingerprint: e.fingerprint } }">error group</RouterLink>
-              <button type="button" class="wolf-link" :aria-expanded="!!open[e.name]" @click="toggle(e.name)">{{ open[e.name] ? 'Hide details' : 'Details' }}</button>
+              <RouterLink v-if="e.event_type === 'error' && e.fingerprint" class="wolf-link" :to="{ name: 'error-group', params: { fingerprint: e.fingerprint } }">{{ __('error group') }}</RouterLink>
+              <button type="button" class="wolf-link" :aria-expanded="!!open[e.name]" @click="toggle(e.name)">{{ open[e.name] ? __('Hide details') : __('Details') }}</button>
             </div>
             <template v-if="open[e.name]">
               <p v-if="open[e.name].error" role="alert" class="wolf-alert mt-2">{{ open[e.name].error }}</p>
@@ -93,8 +93,8 @@ const live = useLive(hub, {
         </div>
       </li>
     </ul>
-    <LoadingNote v-if="list.loading.value && !list.items.value.length && !list.error.value" what="events" />
-    <p v-if="!list.loading.value && !list.error.value && !list.items.value.length" class="text-sm text-ink-gray-6">No event records match.</p>
-    <Button v-if="list.hasMore.value" label="Load more" :loading="list.loading.value" @click="list.load(true)" />
+    <LoadingNote v-if="list.loading.value && !list.items.value.length && !list.error.value" :text="__('Loading events…')" />
+    <p v-if="!list.loading.value && !list.error.value && !list.items.value.length" class="text-sm text-ink-gray-6">{{ __('No event records match.') }}</p>
+    <Button v-if="list.hasMore.value" :label="__('Load more')" :loading="list.loading.value" @click="list.load(true)" />
   </div>
 </template>

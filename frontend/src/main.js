@@ -5,13 +5,16 @@ import App from './App.vue'
 import { makeRouter } from './router'
 import { loadBoot } from './services/boot'
 import { focusPageTitle, installFocusGuard } from './services/focus'
+import i18n, { setMessages } from './services/i18n'
 import { createLive } from './services/live'
 import './style.css'
 
 loadBoot()
   .then((boot) => {
     if (!boot) return // on its way to the login page
+    setMessages(boot)
     const app = createApp(App)
+    app.use(i18n)
     app.provide('boot', boot)
     app.provide('live', createLive(boot))
     const router = makeRouter(undefined, boot)

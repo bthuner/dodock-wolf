@@ -17,6 +17,7 @@ import SignalsPanel from '@/components/dash/SignalsPanel.vue'
 import WindowTiles from '@/components/dash/WindowTiles.vue'
 import WindowNote from '@/components/WindowNote.vue'
 import { call, failure } from '@/services/api'
+import { __ } from '@/services/i18n'
 import { clock, full } from '@/services/time'
 
 // The overview (no scope) and the site, host and bench dashboards (scope from the route).
@@ -33,10 +34,10 @@ const scope = computed(() => {
 })
 const title = computed(() => {
   const s = scope.value
-  if (s.bench) return `Bench ${s.bench} on ${s.host}`
-  if (s.host) return `Host ${s.host}`
-  if (s.site) return `Site ${s.site}`
-  return 'Overview'
+  if (s.bench) return __('Bench {0} on {1}', [s.bench, s.host])
+  if (s.host) return __('Host {0}', [s.host])
+  if (s.site) return __('Site {0}', [s.site])
+  return __('Overview')
 })
 const isOverview = computed(() => !Object.keys(scope.value).length)
 // a satellite keeps no incidents: saying "none open" would suggest all is well
@@ -47,7 +48,15 @@ const errors = ref({})
 const loading = ref(false)
 let ticket = 0
 
-const PANELS = { counts: 'these counts', http: 'HTTP activity', signals: 'these signals', incidents: 'these incidents', inventory: 'the inventory', monitoring: "Wolf's own monitoring" }
+// each panel's name in "You may not see …", translated when a panel fails
+const PANELS = {
+  counts: () => __('these counts'),
+  http: () => __('HTTP activity'),
+  signals: () => __('these signals'),
+  incidents: () => __('these incidents'),
+  inventory: () => __('the inventory'),
+  monitoring: () => __("Wolf's own monitoring"),
+}
 
 async function load() {
   const mine = ++ticket
@@ -69,7 +78,7 @@ async function load() {
   const failed = {}
   Object.keys(jobs).forEach((k, i) => {
     if (settled[i].status === 'fulfilled') next[k] = settled[i].value
-    else failed[k] = failure(settled[i].reason, PANELS[k]) // each panel says it failed; the others still show
+    else failed[k] = failure(settled[i].reason, PANELS[k]()) // each panel says it failed; the others still show
   })
   data.value = next
   errors.value = failed
@@ -112,23 +121,23 @@ const live = useLive(hub, {
     <div class="flex items-center gap-2">
       <TabButtons :model-value="win.explicit.value ? null : win.range.value" :options="RANGES" @update:model-value="win.choose" />
       <LiveStatus :live="live" :poll-seconds="hub?.pollSeconds" />
-      <Button label="Refresh" icon-left="lucide-refresh-cw" :loading="loading" @click="live.apply()" />
+      <Button :label="__('Refresh')" icon-left="lucide-refresh-cw" :loading="loading" @click="live.apply()" />
     </div>
   </PageHeader>
 
   <div class="wolf-page space-y-5">
-    <p v-if="data.counts?.restricted" class="text-sm text-ink-gray-6">You see the sites, benches and hosts you were granted.</p>
+    <p v-if="data.counts?.restricted" class="text-sm text-ink-gray-6">{{ __('You see the sites, benches and hosts you were granted.') }}</p>
 
     <WindowNote v-if="win.explicit.value" v-bind="win.explicit.value" :time-zone="tz" @reset="win.reset" />
 
-    <LoadingNote v-if="loading && !data.counts && !errors.counts" what="the counts" />
+    <LoadingNote v-if="loading && !data.counts && !errors.counts" :text="__('Loading the counts…')" />
     <CountTiles v-if="data.counts" :counts="data.counts" />
-    <p v-else-if="errors.counts" role="alert" class="wolf-alert">Counts: {{ errors.counts }}</p>
+    <p v-else-if="errors.counts" role="alert" class="wolf-alert">{{ __('Counts: {0}', [errors.counts]) }}</p>
 
-    <section v-if="hasIncidents" class="wolf-card space-y-2" aria-label="Unresolved incidents">
+    <section v-if="hasIncidents" class="wolf-card space-y-2" :aria-label="__('Unresolved incidents')">
       <div class="flex items-baseline justify-between">
-        <h2 class="text-base font-semibold text-ink-gray-9">Unresolved incidents</h2>
-        <RouterLink class="wolf-link text-sm" :to="{ name: 'incidents' }">All incidents</RouterLink>
+        <h2 class="text-base font-semibold text-ink-gray-9">{{ __('Unresolved incidents') }}</h2>
+        <RouterLink class="wolf-link text-sm" :to="{ name: 'incidents' }">{{ __('All incidents') }}</RouterLink>
       </div>
       <p v-if="errors.incidents" role="alert" class="wolf-alert">{{ errors.incidents }}</p>
       <ul v-else-if="data.incidents?.incidents.length" class="wolf-incidents">
@@ -137,25 +146,25 @@ const live = useLive(hub, {
           <RouterLink class="font-medium text-ink-gray-9 hover:underline" :to="{ name: 'incident', params: { incident: i.name } }">{{ i.title }}</RouterLink>
           <div class="wolf-incidents-meta">
             <span>{{ [i.site, i.bench, i.host].filter(Boolean).join(' · ') }}</span>
-            <span class="wolf-data" :title="full(i.started_at, tz)">since {{ clock(i.started_at, tz) }}</span>
-            <span>{{ i.status }}</span>
+            <span class="wolf-data" :title="full(i.started_at, tz)">{{ __('since {0}', [clock(i.started_at, tz)]) }}</span>
+            <span>{{ __(i.status, null, 'Wolf Incident') }}</span>
           </div>
         </li>
       </ul>
-      <p v-else-if="data.incidents" class="text-sm text-ink-gray-6">None open that you can see.</p>
+      <p v-else-if="data.incidents" class="text-sm text-ink-gray-6">{{ __('None open that you can see.') }}</p>
       <p v-if="data.incidents?.paging.has_more && data.counts" class="text-sm text-ink-gray-6">
-        The 10 newest of {{ data.counts.incidents.unresolved }}.
+        {{ __('The 10 newest of {0}.', [data.counts.incidents.unresolved]) }}
       </p>
     </section>
 
     <WindowTiles v-if="data.counts?.events" :counts="data.counts" :window-query="win.query.value" :scope="scope" :incidents="hasIncidents" :time-zone="tz" />
 
     <HttpChart v-if="data.http" :http="data.http" :time-zone="tz" @select="win.select" />
-    <p v-else-if="errors.http" role="alert" class="wolf-alert">HTTP: {{ errors.http }}</p>
-    <LoadingNote v-else-if="loading" what="HTTP activity" />
+    <p v-else-if="errors.http" role="alert" class="wolf-alert">{{ __('HTTP: {0}', [errors.http]) }}</p>
+    <LoadingNote v-else-if="loading" :text="__('Loading HTTP activity…')" />
 
-    <section v-if="data.http?.deployments.length" class="wolf-card space-y-1" aria-label="Recent changes">
-      <h2 class="text-base font-semibold text-ink-gray-9">Deployments in this window</h2>
+    <section v-if="data.http?.deployments.length" class="wolf-card space-y-1" :aria-label="__('Recent changes')">
+      <h2 class="text-base font-semibold text-ink-gray-9">{{ __('Deployments in this window') }}</h2>
       <ul class="text-sm">
         <li v-for="d in data.http.deployments" :key="d.name" class="flex flex-wrap gap-x-3 py-0.5">
           <time class="wolf-data text-ink-gray-6" :title="full(d.at, tz)">{{ clock(d.at, tz) }}</time>
@@ -166,13 +175,13 @@ const live = useLive(hub, {
     </section>
 
     <SignalsPanel v-if="data.signals" :signals="data.signals" :time-zone="tz" />
-    <p v-else-if="errors.signals" role="alert" class="wolf-alert">Signals: {{ errors.signals }}</p>
-    <LoadingNote v-else-if="loading" what="the signals" />
-    <p v-if="errors.inventory" role="alert" class="wolf-alert">Inventory: {{ errors.inventory }}</p>
+    <p v-else-if="errors.signals" role="alert" class="wolf-alert">{{ __('Signals: {0}', [errors.signals]) }}</p>
+    <LoadingNote v-else-if="loading" :text="__('Loading the signals…')" />
+    <p v-if="errors.inventory" role="alert" class="wolf-alert">{{ __('Inventory: {0}', [errors.inventory]) }}</p>
 
     <InventoryPanel v-if="hosts.length" :inventory="data.inventory" :host="scope.host || ''" :time-zone="tz" />
 
     <MonitoringPanel v-if="data.monitoring" :monitoring="data.monitoring" :time-zone="tz" compact />
-    <p v-else-if="errors.monitoring" role="alert" class="wolf-alert">Monitoring: {{ errors.monitoring }}</p>
+    <p v-else-if="errors.monitoring" role="alert" class="wolf-alert">{{ __('Monitoring: {0}', [errors.monitoring]) }}</p>
   </div>
 </template>

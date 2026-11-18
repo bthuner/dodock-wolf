@@ -1,6 +1,8 @@
 // Calls to whitelisted Wolf methods with the session cookie. Errors carry the server's message,
 // so a refused action says why (permission, merged incident, ...).
 
+import { __ } from '@/services/i18n'
+
 export class ApiError extends Error {
   constructor(message, status, expired = false) {
     super(message)
@@ -20,10 +22,11 @@ function serverMessage(body) {
 }
 
 // What the reader is told when a read fails: a refusal says what may not be seen, in words,
-// not as Frappe's exception text; anything else keeps the server's reason.
+// not as Frappe's exception text; anything else keeps the server's reason. `what` is a noun
+// phrase the caller has translated: failure(e, __('these incidents')).
 export function failure(e, what) {
-  if (e?.expired) return 'Your session has ended: reload the page to log in again.'
-  if (e?.status === 403) return `You may not see ${what}.`
+  if (e?.expired) return __('Your session has ended: reload the page to log in again.')
+  if (e?.status === 403) return __('You may not see {0}.', [what])
   return e?.message || String(e)
 }
 

@@ -334,6 +334,18 @@ Documentation site
     - Keep the repository docs (README.md, agent/README.md, docs/*.md) consistent with the site when they cover the same thing.
     - Check with `yarn generate && yarn check:links` in docs-site/ (Node 24, see .nvmrc). The docs CI job runs the same checks, so a broken page or link fails the PR.
 
+App translations
+
+    The app's own strings (Desk, the Wolf UI, the rule sentence, server messages) are translated in dodock_wolf/locale/: main.pot is the template, one <lang>.po per available language (French today). Keep every available language complete in the same pull request as the change, as for the docs. docs-site/scripts/TRANSLATING.md ("Translating the app") has the steps and the rules.
+
+    - Write user-visible text translatable: `_("…")` in Python, `__("…")` in Desk JS and in the Wolf UI (`import { __ } from '@/services/i18n'`). The first argument is a literal, and the whole call stays on one line (Frappe's extractor reads one line; a context is the third argument, never a nested `__()`); whole sentences with `{0}` placeholders, never pieces glued together; separate singular and plural strings. In the Wolf UI never call `__()` at module load: translate at render time.
+    - A status shown from a Select field is translated with its DocType as context: `__(status, null, 'Wolf Incident')`, `_(status, context="Wolf Incident")`.
+    - When a change adds, changes or removes strings, on a bench: `bench generate-pot-file --app dodock_wolf`, then `python3 ci/locale_contexts.py`, then `bench update-po-files --app dodock_wolf --locale <lang>` for each language. Reset the files' header (the tool writes `app_email` into it) and translate every new or changed entry with the glossary. An empty msgstr shows Frappe's own translation when it has one, not the English.
+    - Never give a plain entry a translation that differs from Frappe's own for the same string: Frappe merges every app's translations, so it would replace Frappe's wording across Desk. Leave it empty, or use a context entry (`LABELS` in ci/locale_contexts.py).
+    - A new Select option that is a word for people gets its translation in `TRANSLATED` (ci/locale_contexts.py); a code value stays pinned to the English.
+    - Check with `python3 -m unittest tests.test_locale` (every template string present, placeholders, tags and code kept, every Select option with its own entry).
+    - A new language: add `<lang>.po` (`bench create-po-file`), its `TRANSLATED` and `LABELS` entries, and its docs (docs-site/content/<lang>/).
+
 Commit and PR attribution
 
     Every commit message, pull request description, issue body, and issue, pull request or review comment ends with the single line "Co-authored with AI".

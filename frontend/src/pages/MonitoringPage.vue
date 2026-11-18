@@ -6,6 +6,7 @@ import LoadingNote from '@/components/LoadingNote.vue'
 import PageTitle from '@/components/PageTitle.vue'
 import MonitoringPanel from '@/components/dash/MonitoringPanel.vue'
 import { call, failure } from '@/services/api'
+import { __ } from '@/services/i18n'
 
 const boot = inject('boot')
 const monitoring = ref(null)
@@ -18,7 +19,7 @@ async function load() {
   try {
     monitoring.value = await call('dodock_wolf.api.dashboard.get_monitoring')
   } catch (e) {
-    error.value = failure(e, "Wolf's own monitoring")
+    error.value = failure(e, __("Wolf's own monitoring"))
   } finally {
     loading.value = false
   }
@@ -28,8 +29,8 @@ onMounted(load)
 
 <template>
   <PageHeader>
-    <PageTitle title="Monitoring" />
-    <Button label="Refresh" icon-left="lucide-refresh-cw" :loading="loading" @click="load" />
+    <PageTitle :title="__('Monitoring')" />
+    <Button :label="__('Refresh')" icon-left="lucide-refresh-cw" :loading="loading" @click="load" />
   </PageHeader>
   <div class="wolf-page space-y-5">
     <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>

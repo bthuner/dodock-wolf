@@ -6,13 +6,15 @@ import LoadingNote from '@/components/LoadingNote.vue'
 import PageTitle from '@/components/PageTitle.vue'
 import { useQueryParam } from '@/composables/useQueryParam'
 import { call, failure } from '@/services/api'
+import { __ } from '@/services/i18n'
 
 // Security posture of one site (dodock_wolf/api/security.py): every check with what Wolf read
 // and the fix. A check Wolf cannot read is "Unknown" and does not count as passed.
+// labels and notes are functions: translated when drawn, not when the module loads
 const STATUS = {
-  fail: { label: 'Failed', glyph: '✕', note: 'What to fix first: the heaviest on top.' },
-  unknown: { label: 'Unknown', glyph: '?', note: 'Wolf could not read these. They count as not passed.' },
-  pass: { label: 'Passed', glyph: '✓', note: '' },
+  fail: { label: () => __('Failed'), glyph: '✕', note: () => __('What to fix first: the heaviest on top.') },
+  unknown: { label: () => __('Unknown'), glyph: '?', note: () => __('Wolf could not read these. They count as not passed.') },
+  pass: { label: () => __('Passed'), glyph: '✓', note: () => '' },
 }
 const ORDER = Object.keys(STATUS)
 
@@ -47,7 +49,13 @@ const gain = (c) => {
   return Math.round((100 * (pass + c.weight)) / total) - Math.round((100 * pass) / total)
 }
 const groups = computed(() =>
-  ORDER.map((status) => ({ status, ...STATUS[status], checks: checks.value.filter((c) => c.status === status) })).filter((g) => g.checks.length),
+  ORDER.map((status) => ({
+    status,
+    glyph: STATUS[status].glyph,
+    label: STATUS[status].label(),
+    note: STATUS[status].note(),
+    checks: checks.value.filter((c) => c.status === status),
+  })).filter((g) => g.checks.length),
 )
 // `backticks` in a fix are commands or config: drawn as code, never as HTML
 const parts = (text) => text.split('`').map((t, i) => ({ t, code: i % 2 === 1 })).filter((p) => p.t)
@@ -62,7 +70,7 @@ async function loadSites() {
   try {
     sites.value = await call('dodock_wolf.api.security.list_sites')
   } catch (e) {
-    sitesError.value = failure(e, 'the sites')
+    sitesError.value = failure(e, __('the sites'))
   }
 }
 
@@ -76,7 +84,7 @@ async function load() {
   } catch (e) {
     if (mine === ticket) {
       posture.value = null
-      error.value = failure(e, 'this site')
+      error.value = failure(e, __('this site'))
     }
   } finally {
     if (mine === ticket) loading.value = false
@@ -125,39 +133,39 @@ watch(site, load, { immediate: true })
 
 <template>
   <PageHeader>
-    <PageTitle title="Security" />
+    <PageTitle :title="__('Security')" />
     <div class="flex items-center gap-2">
       <Select
         v-if="siteOptions.length > 1"
         :model-value="posture?.site || site"
         :options="siteOptions"
-        aria-label="Site"
+        :aria-label="__('Site')"
         class="w-64"
         @update:model-value="(v) => (site = v)"
       />
-      <Button label="Refresh" icon-left="lucide-refresh-cw" :loading="loading" @click="load" />
+      <Button :label="__('Refresh')" icon-left="lucide-refresh-cw" :loading="loading" @click="load" />
     </div>
   </PageHeader>
 
   <div class="wolf-page wolf-security" :class="{ 'wolf-security-rail': journal }">
     <div class="wolf-security-top space-y-3">
-      <p v-if="sitesError" role="alert" class="wolf-alert">Sites: {{ sitesError }}</p>
+      <p v-if="sitesError" role="alert" class="wolf-alert">{{ __('Sites: {0}', [sitesError]) }}</p>
       <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>
-      <LoadingNote v-if="loading && !posture && !error" what="the security score" />
+      <LoadingNote v-if="loading && !posture && !error" :text="__('Loading the security score…')" />
 
-      <section v-if="posture" class="wolf-card wolf-score" aria-label="Score">
+      <section v-if="posture" class="wolf-card wolf-score" :aria-label="__('Score')">
         <div class="wolf-score-figure">
-          <div class="wolf-label">Security score</div>
+          <div class="wolf-label">{{ __('Security score') }}</div>
           <div class="wolf-data wolf-score-number">{{ posture.score }}<span class="wolf-score-of"> / 100</span></div>
           <div class="wolf-score-site">{{ posture.site }}</div>
         </div>
 
         <div class="wolf-score-weights">
-          <div class="wolf-label">Weight of the {{ checks.length }} checks</div>
+          <div class="wolf-label">{{ __('Weight of the {0} checks', [checks.length]) }}</div>
           <div
             class="wolf-weightbar"
             role="img"
-            :aria-label="`Weight of the checks: ${weight.fail} failed, ${weight.unknown} unknown, ${weight.pass} passed, of ${weight.total}`"
+            :aria-label="__('Weight of the checks: {0} failed, {1} unknown, {2} passed, of {3}', [weight.fail, weight.unknown, weight.pass, weight.total])"
             :data-hot="hot ? '' : null"
           >
             <span
@@ -167,7 +175,7 @@ watch(site, load, { immediate: true })
               :data-status="c.status"
               :data-on="hot === c.id ? '' : null"
               :style="{ flexGrow: c.weight }"
-              :title="`${c.label}: ${STATUS[c.status].label.toLowerCase()}, weight ${c.weight}`"
+              :title="__('{0}: {1}, weight {2}', [c.label, STATUS[c.status].label().toLowerCase(), c.weight])"
               @mouseenter="hot = c.id"
               @mouseleave="hot = null"
               @click="reveal(c.id)"
@@ -176,38 +184,42 @@ watch(site, load, { immediate: true })
           <ul class="wolf-legend">
             <li v-for="s in ORDER" :key="s" :data-status="s">
               <span class="wolf-legend-key" :data-status="s" aria-hidden="true" />
-              <span class="wolf-legend-word">{{ STATUS[s].label }}</span>
-              <span class="wolf-data wolf-legend-n">{{ weight[s] }}<span class="wolf-legend-of"> of {{ weight.total }}</span></span>
+              <span class="wolf-legend-word">{{ STATUS[s].label() }}</span>
+              <span class="wolf-data wolf-legend-n">{{ weight[s] }}<span class="wolf-legend-of">{{ ' ' + __('of {0}', [weight.total]) }}</span></span>
             </li>
           </ul>
         </div>
 
         <dl class="wolf-score-facts">
           <div>
-            <dt>Checks</dt>
-            <dd>{{ posture.passed }} passed, {{ posture.failed }} failed, {{ posture.unknown }} unknown</dd>
+            <dt>{{ __('Checks') }}</dt>
+            <dd>{{ __('{0} passed, {1} failed, {2} unknown', [posture.passed, posture.failed, posture.unknown]) }}</dd>
           </div>
           <div>
-            <dt>Coverage</dt>
-            <dd>Wolf could read {{ posture.coverage }}% of the weight</dd>
+            <dt>{{ __('Coverage') }}</dt>
+            <dd>{{ __('Wolf could read {0}% of the weight', [posture.coverage]) }}</dd>
           </div>
           <div v-if="posture.hosts.length">
-            <dt>Hosts</dt>
+            <dt>{{ __('Hosts') }}</dt>
             <dd class="wolf-data">{{ posture.hosts.join(', ') }}</dd>
           </div>
         </dl>
 
         <p class="wolf-score-note">
-          The score is the weight of the checks that passed out of all of them: a check Wolf cannot read counts as not
-          passed. Agent samples older than {{ posture.recent_hours }} h are not used.
+          {{
+            __(
+              'The score is the weight of the checks that passed out of all of them: a check Wolf cannot read counts as not passed. Agent samples older than {0} h are not used.',
+              [posture.recent_hours],
+            )
+          }}
           <template v-if="!posture.local">
-            System Settings of this site are read by the agent from its database, hourly.
+            {{ __('System Settings of this site are read by the agent from its database, hourly.') }}
           </template>
         </p>
       </section>
     </div>
 
-    <section v-if="posture" class="wolf-security-main space-y-5" aria-label="Checks">
+    <section v-if="posture" class="wolf-security-main space-y-5" :aria-label="__('Checks')">
       <div v-for="g in groups" :key="g.status" class="wolf-checks" :data-status="g.status">
         <header class="wolf-checks-head">
           <h2>
@@ -233,68 +245,74 @@ watch(site, load, { immediate: true })
               <h3>{{ c.label }} <span class="sr-only">({{ g.label }})</span></h3>
               <p class="wolf-check-evidence">{{ c.evidence }}</p>
               <div v-if="c.fix" class="wolf-fix">
-                <span class="wolf-label">Fix</span>
+                <span class="wolf-label">{{ __('Fix') }}</span>
                 <p>
                   <template v-for="(p, i) in parts(c.fix)" :key="i"><code v-if="p.code" class="wolf-data">{{ p.t }}</code><template v-else>{{ p.t }}</template></template>
                 </p>
               </div>
             </div>
             <div class="wolf-check-weight">
-              <span v-if="gain(c)" class="wolf-data wolf-check-gain" :title="`The score gains ${gain(c)} if this check passes`">+{{ gain(c) }}</span>
-              <span class="wolf-check-w">weight <span class="wolf-data">{{ c.weight }}</span></span>
+              <span v-if="gain(c)" class="wolf-data wolf-check-gain" :title="__('The score gains {0} if this check passes', [gain(c)])">+{{ gain(c) }}</span>
+              <span class="wolf-check-w">{{ __('weight') }} <span class="wolf-data">{{ c.weight }}</span></span>
             </div>
           </li>
         </ul>
       </div>
       <p v-if="weight.fail + weight.unknown" class="text-sm" style="color: var(--wolf-muted)">
-        +N is what the score gains if that check alone passes.
+        {{ __('+N is what the score gains if that check alone passes.') }}
       </p>
     </section>
 
     <aside v-if="journal" class="wolf-security-side">
-      <section class="wolf-card wolf-journal" aria-label="Journal">
+      <section class="wolf-card wolf-journal" :aria-label="__('Journal')">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 class="wolf-h2">Tamper-evident journal</h2>
-          <Button size="sm" label="Verify" icon-left="lucide-shield-check" :loading="verifying" @click="verifyJournal" />
+          <h2 class="wolf-h2">{{ __('Tamper-evident journal') }}</h2>
+          <Button size="sm" :label="__('Verify')" icon-left="lucide-shield-check" :loading="verifying" @click="verifyJournal" />
         </div>
 
         <div v-if="verdict" class="wolf-verdict" :data-ok="verdict.ok ? 'yes' : 'no'">
           <span aria-hidden="true">{{ verdict.ok ? '✓' : '✕' }}</span>
           <p role="status">
-            <template v-if="verdict.ok">
-              Verified: {{ verdict.checked }} entries, every digest and MAC matches, no gap<template v-if="verdict.purged_through">,
-              and the journal starts where the last purge stopped (entry {{ verdict.purged_through + 1 }})</template>.
+            <template v-if="verdict.ok && verdict.purged_through">
+              {{
+                __(
+                  'Verified: {0} entries, every digest and MAC matches, no gap, and the journal starts where the last purge stopped (entry {1}).',
+                  [verdict.checked, verdict.purged_through + 1],
+                )
+              }}
             </template>
-            <template v-else>Broken<template v-if="verdict.problem?.seq"> at entry {{ verdict.problem.seq }}</template>: {{ verdict.problem?.why }}</template>
+            <template v-else-if="verdict.ok">{{ __('Verified: {0} entries, every digest and MAC matches, no gap.', [verdict.checked]) }}</template>
+            <template v-else-if="verdict.problem?.seq">{{ __('Broken at entry {0}: {1}', [verdict.problem.seq, verdict.problem?.why]) }}</template>
+            <template v-else>{{ __('Broken: {0}', [verdict.problem?.why]) }}</template>
           </p>
         </div>
 
         <p>
-          {{ journal.entries }} signed entries, {{ journal.pending }} waiting to be signed (within a minute).
-          <template v-if="!journal.key">No key yet: it is created with the first signature.</template>
+          {{ __('{0} signed entries, {1} waiting to be signed (within a minute).', [journal.entries, journal.pending]) }}
+          <template v-if="!journal.key">{{ __('No key yet: it is created with the first signature.') }}</template>
         </p>
         <p>
-          <template v-if="journal.retention_days">Entries older than {{ journal.retention_days }} days are purged every night.</template>
-          <template v-else>Kept forever (Wolf Settings → Journal Retention Days).</template>
+          <template v-if="journal.retention_days">{{ __('Entries older than {0} days are purged every night.', [journal.retention_days]) }}</template>
+          <template v-else>{{ __('Kept forever (Wolf Settings → Journal Retention Days).') }}</template>
           <template v-if="journal.purged_through">
-            Entries 1 to {{ journal.purged_through }} were purged; a signed purge record says where, and verification checks it.
+            {{ ' ' + __('Entries 1 to {0} were purged; a signed purge record says where, and verification checks it.', [journal.purged_through]) }}
           </template>
         </p>
 
         <div v-if="journal.anchor" class="wolf-anchor">
           <div class="flex items-center justify-between gap-2">
-            <span class="wolf-label">Anchor</span>
+            <span class="wolf-label">{{ __('Anchor') }}</span>
             <Button
               v-if="canCopy"
               size="sm"
               variant="ghost"
-              :label="copied ? 'Copied' : 'Copy'"
+              :label="copied ? __('Copied') : __('Copy')"
               :icon-left="copied ? 'lucide-check' : 'lucide-copy'"
               @click="copyAnchor"
             />
           </div>
           <code class="wolf-data">{{ journal.anchor }}</code>
-          <p>To copy somewhere Wolf cannot write (a ticket, a password manager).</p>
+          <p>{{ __('To copy somewhere Wolf cannot write (a ticket, a password manager).') }}</p>
         </div>
       </section>
     </aside>

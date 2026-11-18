@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 
 import { call, failure } from '@/services/api'
 import { RANGES, pick } from '@/services/filters'
+import { __ } from '@/services/i18n'
 
 // A paged list driven by the URL's filters: a newer filter's answer always wins, and
 // "Load more" appends without repeating a row.
@@ -38,7 +39,7 @@ export function useExplore(method, key, { extraArgs = () => ({}), itemKey }) {
       hasMore.value = page.paging.has_more
       meta.value = page
     } catch (e) {
-      if (mine === ticket) error.value = failure(e, 'these records')
+      if (mine === ticket) error.value = failure(e, __('these records'))
     } finally {
       if (mine === ticket) loading.value = false
     }
