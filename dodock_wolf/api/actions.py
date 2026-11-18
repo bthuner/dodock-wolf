@@ -39,7 +39,7 @@ def incident_action(incident=None, action=None, expires=None, sig=None, actor=No
 	summary = f"<p><strong>{escape_html(inc.name)}</strong> · {escape_html(inc.severity)} · {escape_html(inc.title)}</p>"
 	done = (action == "ack" and inc.status != "Open") or (action == "resolve" and inc.status == "Resolved")
 	if done:
-		return _page(label, summary + "<p>" + _("Nothing to do: the incident is already {0}.").format(_(inc.status)) + "</p>", "blue")
+		return _page(label, summary + "<p>" + _("Nothing to do: the incident is already {0}.").format(_(inc.status, context="Wolf Incident").lower()) + "</p>", "blue")
 
 	if frappe.request and frappe.request.method != "POST":
 		return _page(label, summary + _confirm_form(incident, action, expires, sig, actor, label), "orange")
@@ -57,7 +57,7 @@ def incident_action(incident=None, action=None, expires=None, sig=None, actor=No
 	doc.save()
 	doc.add_comment("Info", f"{'Acknowledged' if action == 'ack' else 'Resolved'} from an alert link by {who}.")
 	frappe.db.commit()
-	return _page(label, summary + "<p>" + _("Done: the incident is now {0}.").format(_(doc.status)) + "</p>", "green")
+	return _page(label, summary + "<p>" + _("Done: the incident is now {0}.").format(_(doc.status, context="Wolf Incident").lower()) + "</p>", "green")
 
 
 def _confirm_form(incident, action, expires, sig, actor, label):
@@ -112,7 +112,7 @@ def response_action(incident=None, action=None, target=None, agent=None, hours=N
 		["name", "status", "approved_by"], as_dict=True, order_by="creation desc")  # fmt: skip
 	if taken:
 		return _page(what, summary + "<p>" + _("Nothing to do: {0} is already {1} (approved by {2}).").format(
-			escape_html(taken.name), _(taken.status).lower(), escape_html(taken.approved_by)) + "</p>", "blue")  # fmt: skip
+			escape_html(taken.name), _(taken.status, context="Wolf Response Action").lower(), escape_html(taken.approved_by)) + "</p>", "blue")  # fmt: skip
 	if frappe.session.user == "Guest":
 		login = "/login?" + urlencode({"redirect-to": frappe.request.full_path if frappe.request else RESPONSE_METHOD})
 		return _page(what, summary + "<p>" + _("Only a Wolf Manager can confirm a response action.") +

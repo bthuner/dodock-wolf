@@ -15,7 +15,8 @@ file name (number prefix included) and the same `.navigation.yml` structure.
   (```` ```bash [hôte] ````) only when it is prose.
 - Names: Dodock Wolf, Wolf Agent, Wolf App, Wolf UI, Desk, Press, Pilot, bench, and DocType names
   (**Wolf Alert Rule**, **Wolf Incident**…).
-- UI labels in bold stay in English, as the Wolf UI and Desk show them today: **Wolf Settings →
+- UI labels in bold stay in English, as the Wolf UI shows them today (Desk now follows the user's
+  language: the French pages move to Desk's French labels with the Wolf UI's translation): **Wolf Settings →
   Retention**, **Send test notification**, **Assign to me**. On first use in a page you may add a
   French gloss in parentheses when the label is not self-explanatory.
 - Every number, threshold, duration and default.
@@ -75,3 +76,40 @@ file name (number prefix included) and the same `.navigation.yml` structure.
 | Alerts and incidents | Alertes et incidents |
 | Security | Sécurité |
 | Reference | Référence |
+
+# Translating the app
+
+Desk (forms, labels, descriptions, messages) is translated with Frappe's gettext files in
+`dodock_wolf/locale/`: `main.pot` holds every string, `fr.po` their French, with the glossary
+above. `bench build` compiles them; a user whose language is French sees Desk in French.
+
+When a change adds or changes strings, on a bench with the app:
+
+```bash
+bench generate-pot-file --app dodock_wolf
+python3 ci/locale_contexts.py        # in this repository: the Select options' own entries
+bench update-po-files --app dodock_wolf --locale fr
+```
+
+Then:
+- put `https://github.com/bthuner/dodock-wolf/issues` back in `Report-Msgid-Bugs-To`, and
+  "Dodock Wolf contributors" in `Last-Translator` and `Language-Team`, in the header of both
+  files: the tool writes `app_email` there;
+- translate the new entries (an empty `msgstr` shows the English);
+- run `python3 -m unittest tests.test_locale`. It fails when a string of the template is missing
+  from `fr.po`, or when a translation drops a placeholder (`{0}`), an HTML tag or code.
+
+Frappe merges every app's translations into one table, Wolf's after Frappe's:
+- **A plain entry Wolf translates replaces Frappe's French of the same string in all of Desk.**
+  When Frappe already translates a string (`Comment`, `Assigned To`, `To Date`...), leave Wolf's
+  `msgstr` empty so Frappe's is used, or give a label its own entry with the DocType as context
+  (`LABELS` in `ci/locale_contexts.py`).
+- **An empty entry shows Frappe's French when there is one, not the English.** That is why every
+  Select option has an entry with its DocType as context (`ci/locale_contexts.py`): a status
+  such as `Open` reads « Ouvert » (`TRANSLATED`), and a value the code compares (`none`, `Email`,
+  `critical`) is pinned to the English. Python messages that show a status translate it with the
+  same context: `_(doc.status, context="Wolf Incident")`.
+
+What stays in English:
+- DocType names and product names;
+- Select values the code compares (`metric`, `critical`, `hourly`...).

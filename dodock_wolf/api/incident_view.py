@@ -293,7 +293,7 @@ def act(incident, action):
 		frappe.throw(_("This incident was merged into {0}.").format(doc.merged_into))
 	if not _allowed(doc, action):
 		frappe.throw(
-			_("This incident is {0} now: refresh to see what changed.").format(_(doc.status).lower()),
+			_("This incident is {0} now: refresh to see what changed.").format(_(doc.status, context="Wolf Incident").lower()),
 			frappe.ValidationError,
 		)
 	getattr(doc, action)()
