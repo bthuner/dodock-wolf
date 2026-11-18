@@ -112,3 +112,16 @@ class WolfAlertRule(Document):
 		rows = list(self.get("channels") or []) + list(self.get("escalation_channels") or [])
 		results = notify.send(incident.name, "test", channels=rows)
 		return {"incident": incident.name, "results": results}
+
+
+@frappe.whitelist()
+def describe(doc):
+	"""The rule in words, as the form shows it above its fields (wolf/rule_sentence.py): the form's
+	unsaved values, read only, nothing written."""
+	from dodock_wolf.wolf import rule_sentence
+
+	frappe.has_permission("Wolf Alert Rule", "read", throw=True)
+	data = frappe.parse_json(doc) if isinstance(doc, str) else doc
+	if not isinstance(data, dict):
+		frappe.throw(_("Expected the rule's fields"))
+	return rule_sentence.describe(data)

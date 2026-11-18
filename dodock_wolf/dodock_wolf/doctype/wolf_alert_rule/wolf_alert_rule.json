@@ -5,6 +5,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "rule_sentence",
+  "rule_section",
   "rule_name",
   "enabled",
   "signal_type",
@@ -69,6 +71,15 @@
   "evaluation_state"
  ],
  "fields": [
+  {
+   "fieldname": "rule_sentence",
+   "fieldtype": "HTML",
+   "label": "In words"
+  },
+  {
+   "fieldname": "rule_section",
+   "fieldtype": "Section Break"
+  },
   {
    "fieldname": "rule_name",
    "fieldtype": "Data",
@@ -458,7 +469,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-18 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Alert Rule",

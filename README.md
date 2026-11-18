@@ -55,7 +55,8 @@ configuration, `wolf-agent check` and `wolf-agent mark-deployment`.
 
 ## Alert rules
 
-A rule reads like the brief: *when X > Y for Z minutes, send alert*.
+A rule reads like the brief: *when X > Y for Z minutes, send alert*. The rule form reads it back in plain
+words as you edit it.
 
 Rules can also live in YAML: `bench --site <site> wolf-rules export` / `import` (a dry run unless
 `--apply`; channel secrets never written), or **Export to YAML** / **Import from YAML** in the

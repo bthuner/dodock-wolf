@@ -1,8 +1,33 @@
 // Copyright (c) 2026, Dodock Wolf contributors
 // For license information, please see license.txt
 
+// The rule in words (wolf/rule_sentence.py), redrawn as its fields change: each sentence is a
+// list of [text, is_value] parts, a value in bold.
+function draw_sentence(frm) {
+	const field = frm.fields_dict.rule_sentence;
+	if (!field) return;
+	frappe.call({
+		method: "dodock_wolf.dodock_wolf.doctype.wolf_alert_rule.wolf_alert_rule.describe",
+		args: { doc: frm.doc },
+	}).then(({ message }) => {
+		const text = (message || [])
+			.map((parts) =>
+				parts.map(([t, value]) => (value ? `<strong>${frappe.wolf.esc(t)}</strong>` : frappe.wolf.esc(t))).join("")
+			)
+			.join(" ");
+		field.$wrapper.html(`<div class="wolf-rule-sentence" style="font-size: var(--text-base); line-height: 1.6;
+			padding: var(--padding-sm) var(--padding-md); background: var(--subtle-fg); border-radius: var(--border-radius-md);">${text}</div>`);
+	});
+}
+const draw_sentence_soon = frappe.utils.debounce(draw_sentence, 400);
+
 frappe.ui.form.on("Wolf Alert Rule", {
+	onload_post_render(frm) {
+		// every change, the channel tables' included, marks the form dirty
+		$(frm.wrapper).off("dirty.wolf_sentence").on("dirty.wolf_sentence", () => draw_sentence_soon(frm));
+	},
 	refresh(frm) {
+		draw_sentence(frm);
 		frm.add_custom_button(__("Preview"), () =>
 			frm.call("preview").then(({ message }) => {
 				const rows = message.groups
