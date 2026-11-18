@@ -130,6 +130,7 @@ if [[ "$PILOT" == 1 ]]; then systemctl enable --now wolf-pilot-export.timer; fi
 if [[ -f "$CONFIG" ]]; then
 	systemctl enable --now wolf-agent
 	echo "==> wolf-agent is running: journalctl -u wolf-agent -f"
+	echo "==> check the host: sudo -u $USER_NAME wolf-agent doctor"
 else
 	systemctl enable wolf-agent
 	echo "==> installed but not registered. Run:"

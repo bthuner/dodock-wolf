@@ -25,6 +25,7 @@ Set `WOLF_BENCHES="/home/frappe/frappe-bench /srv/other-bench"` to skip auto-dis
 |---------|--------------|
 | `wolf-agent register --url URL --token TOKEN [--bench PATH]...` | register the host, discover benches, write the config |
 | `wolf-agent run` | the daemon loop (what systemd runs) |
+| `wolf-agent doctor [--json] [--offline]` | as the agent's user: what this host gives the agent (registration, Wolf site, logs, benches, Redis, nginx, Press/Pilot, auth log, response actions, daemon) and the fix for each problem; read-only, exit 1 on a failure |
 | `wolf-agent refresh` | as root: read again what the agent's user cannot (a Press server's benches folder and proxy, a Press proxy's access log) and save it, keeping the registration; `install.sh` runs it on upgrade |
 | `wolf-agent discover [--bench PATH] [--platform auto\|press\|generic]` | show what bench discovery finds |
 | `wolf-agent check [--from-start] [--status] [--platform …]` | collect once and print the JSON payload, nothing is sent; the watchdog state goes to stderr (`--status` also asks the site for its health) |
