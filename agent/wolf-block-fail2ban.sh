@@ -69,12 +69,18 @@ if [ "$seconds" -lt 60 ] || [ "$seconds" -gt 604800 ]; then
 	echo "seconds must be between 60 and 604800" >&2
 	exit 2
 fi
+# an address only: digits and 3 dots, or hex, colons and dots
 case "$ip" in
-'' | *[!0-9a-fA-F:.]*)
+'' | *[!0-9a-fA-F:.]* | :*:*:*:*:*:*:*:*:*) ip_ok=no ;;
+*:*:*) ip_ok=yes ;;
+*[!0-9.]* | *.*.*.*.* | *..* | .* | *.) ip_ok=no ;;
+*.*.*.*) ip_ok=yes ;;
+*) ip_ok=no ;;
+esac
+if [ "$ip_ok" != yes ]; then
 	echo "invalid address" >&2
 	exit 2
-	;;
-esac
+fi
 
 if ! "$CLIENT" status "$JAIL" >/dev/null 2>&1; then
 	echo "fail2ban has no jail '$JAIL': install agent/fail2ban/wolf.local and reload fail2ban" >&2

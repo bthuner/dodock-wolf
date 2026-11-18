@@ -26,14 +26,18 @@ if [ "$seconds" -lt 60 ] || [ "$seconds" -gt 604800 ]; then
 	echo "seconds must be between 60 and 604800" >&2
 	exit 2
 fi
+# an address only, never a name nft would look up: digits and 3 dots, or hex, colons and dots
 case "$ip" in
-'' | *[!0-9a-fA-F:.]*)
+'' | *[!0-9a-fA-F:.]* | :*:*:*:*:*:*:*:*:*) ip_ok=no ;;
+*:*:*) ip_ok=yes set_name=blocked6 ;;
+*[!0-9.]* | *.*.*.*.* | *..* | .* | *.) ip_ok=no ;;
+*.*.*.*) ip_ok=yes set_name=blocked4 ;;
+*) ip_ok=no ;;
+esac
+if [ "$ip_ok" != yes ]; then
 	echo "invalid address" >&2
 	exit 2
-	;;
-*:*) set_name=blocked6 ;;
-*) set_name=blocked4 ;;
-esac
+fi
 
 if ! nft list table inet wolf >/dev/null 2>&1; then
 	nft -f - <<'NFT'
@@ -67,7 +71,9 @@ if [ -n "$left" ] && [ "$left" -ge "$seconds" ]; then
 	exit 0
 fi
 if [ -n "$left" ]; then
+	# the add first: an element that expired since the check would fail the delete, and the batch
 	nft -f - <<NFT
+add element inet wolf $set_name { $ip }
 delete element inet wolf $set_name { $ip }
 add element inet wolf $set_name { $ip timeout ${seconds}s }
 NFT

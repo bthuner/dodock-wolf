@@ -174,9 +174,24 @@ class TestNftablesHelper(unittest.TestCase):
 		done, calls = self.run_script("2600:3c01::f03c:91ff:fe18:bb2f", "7200", expires="8m20s774ms")
 		self.assertEqual(done.returncode, 0, done.stderr)
 		self.assertIn("blocked 2600:3c01::f03c:91ff:fe18:bb2f for 7200s (inet wolf blocked6)", done.stdout)
-		batch = calls[calls.index("delete element"):]
+		batch = calls[calls.index("add element inet wolf blocked6 { 2600:3c01::f03c:91ff:fe18:bb2f }\n"):]
 		self.assertIn("delete element inet wolf blocked6 { 2600:3c01::f03c:91ff:fe18:bb2f }\nadd element inet wolf blocked6 "
 		              "{ 2600:3c01::f03c:91ff:fe18:bb2f timeout 7200s }", batch)  # fmt: skip
+
+	def test_only_addresses(self):
+		# never a name nft would resolve, nor a hex word (the shape only: the agent refuses non-public ones)
+		for ip in ("cafe", "dead.beef", "1.2.3", "1.2.3.4.5", "1..2.3", "a.b.c.d", "1:2", "1.2.3.4;id", ""):
+			with self.subTest(ip):
+				if os.path.exists(self.log):
+					os.unlink(self.log)
+				done, calls = self.run_script(ip, "60")
+				self.assertEqual(done.returncode, 2, done.stdout)
+				self.assertIn("invalid address", done.stderr)
+				self.assertNotIn("element", calls)
+		for ip in ("45.33.32.156", "2001:db8::1", "::ffff:45.33.32.156", "1:2:3:4:5:6:7:8"):
+			with self.subTest(ip):
+				done, _ = self.run_script(ip, "60")
+				self.assertEqual(done.returncode, 0, done.stderr)
 
 
 if __name__ == "__main__":
