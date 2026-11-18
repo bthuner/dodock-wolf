@@ -160,6 +160,7 @@ sudo -u wolf-agent wolf-agent discover
 ## Check it
 
 ```bash [host]
+sudo -u wolf-agent wolf-agent doctor           # what this host gives the agent, and what to fix
 sudo -u wolf-agent wolf-agent check            # collect once, print the payload, send nothing
 sudo -u wolf-agent wolf-agent check --status   # also ask the site for its health
 journalctl -u wolf-agent -f

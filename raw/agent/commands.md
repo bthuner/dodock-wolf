@@ -92,6 +92,22 @@ Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
   <tr>
     <td>
       <code>
+        doctor [--json] [--offline]
+      </code>
+    </td>
+    
+    <td>
+      Check what this host gives the agent and what to fix: registration and the Wolf site, each log, bench, queue Redis and nginx log, the Press job database or Pilot export, the auth log or journal, response actions, the daemon. Read-only. Exits 1 when a check fails. See <a href="#check-a-host">
+        Check a host
+      </a>
+      
+      .
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
         mark-deployment --bench NAME [--site S] [--note TEXT] [--silence 15m]
       </code>
     </td>
@@ -258,6 +274,26 @@ Rules look at the last minutes, so incidents open for the live cycles, not for t
 `bench --site SITE generate-demo-press` (or `-multi`, `-single`) with `--agent-config PATH` does the
 same from a bench that has the agent installed, and `--webhook URL` also sends the demo's alerts
 there. The [development page](/reference/development) runs it all in Docker.
+
+## Check a host
+
+```bash [host]
+sudo -u wolf-agent wolf-agent doctor
+```
+
+Run it as the agent's user: root can read what the daemon cannot, and would hide problems. Each line is **ok**, **WARN**, **FAIL** or `--` (for information), with the fix after a warning or a failure:
+
+```text
+logs
+  ok   18 log file(s) readable
+  --   9 not written yet (read once they appear): bench-1/frappe.web.log ...
+
+platform
+ FAIL  Press: /home/frappe/agent/jobs.sqlite3-wal is not the Press agent's: its jobs fail to write
+        fix: stop the Press agent (supervisorctl stop 'agent:'), delete ...-wal and -shm, start it
+```
+
+It checks the files the daemon would tail and the benches it works from (on Press, the ones it rediscovers), not only the config. `--json` prints the checks as a list, `--offline` skips the call to the Wolf site. Nothing is written, and it exits 1 when a check fails, so it can gate an install script.
 
 ## See the payload
 
