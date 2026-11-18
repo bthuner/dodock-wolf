@@ -12,7 +12,7 @@ import os
 import sys
 import threading
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import frappe
@@ -2101,6 +2101,122 @@ def main():
 		        "technique, IP, time and own mode apart; external: auth.log kept while Wazuh is quiet or only checks files, "
 		        "dropped under the host's Wazuh name, counted on the agent")  # fmt: skip
 
+	def three_sources_one_incident():
+		"""Real agent output, end to end (#72 tests): the agent's parsers on the real Suricata and
+		Wazuh fixtures (agent/tests/data) and on nginx and auth.log lines, all naming one attacker,
+		through the ingest path. One agent reads nginx and Suricata on the bench host, as deployed; the shipped IDS preset opens the incident, the rest joins it by IP.
+		Once per detector mode: own (all kept), both (Wolf's events are the same finding as the
+		external alert), external (Wolf's own web and SSH events give way)."""
+		from datetime import timezone
+
+		from dodock_wolf.api import entities as entities_api
+		from dodock_wolf.api import ingest as ingest_api
+		from dodock_wolf.wolf import rules as rules_mod
+
+		agent_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "agent")
+		if agent_dir not in sys.path:
+			sys.path.insert(0, agent_dir)
+		from wolf_agent.parsers import PARSERS
+
+		data = os.path.join(agent_dir, "tests", "data")
+		tz = events.system_tz()
+		agent = frappe.get_doc({"doctype": "Wolf Agent", "hostname": "three-agent", "kind": "agent"}).insert(ignore_permissions=True)
+		rule = frappe.get_doc("Wolf Alert Rule", "Network IDS alert (critical)")
+		fired_here = []  # every incident the preset opened, other checks' hosts included: resolved at the end
+
+		def mode(web, host):
+			frappe.db.set_single_value("Wolf Settings", "web_detection_mode", web)
+			frappe.db.set_single_value("Wolf Settings", "host_detection_mode", host)
+			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+
+		def parse(name, lines, host, **kw):
+			at = datetime.now(timezone.utc)
+			p = PARSERS[name](host, **kw)
+			for line in lines:
+				p.feed(line)
+			out = p.drain(at)[1]
+			for e in out:  # the fixtures' own times are days old: rules look at the last minutes
+				e["timestamp"] = at.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+			return out
+
+		def fixture(name, ip, hids_host):
+			# the Wazuh agent's host is new each run: the external SSH drop must come from this run's alerts
+			with open(os.path.join(data, name)) as f:
+				return [line.replace("198.51.100.23", ip).replace("2001:db8:4::17", ip).replace("bench-02", hids_host)
+				        for line in f.read().splitlines()]  # fmt: skip
+
+		def store(raw):
+			normalized = [schema.normalize_event(e, tz, now_datetime(), default_host=e.get("host")) for e in raw]
+			return ingest_api.store_batch(agent.name, [], normalized, correlate=True)
+
+		def scenario(run, ip):
+			ids_host, hids_host = f"three-ids-{run}", f"three-hids-{run}"
+			suricata = parse("suricata", fixture("suricata_eve_et_open.json", ip, hids_host), ids_host, log_file="eve.json", local={"192.0.2.10"},
+			                 site_benches={"erp.example.com": "b3"})  # fmt: skip
+			store(suricata)
+			fired = rules_mod.evaluate(rule)["fired"]
+			fired_here.extend(fired)
+			inc = frappe.db.get_value("Wolf Incident", {"name": ("in", fired or [""]), "host": ids_host}, "name")
+			assert inc, f"{run}: the IDS preset opened no incident for {ids_host}: {fired}"
+			store(parse("wazuh", fixture("wazuh_alerts_lab.json", ip, hids_host), "three-wazuh", log_file="alerts.json"))
+			t = datetime.now(timezone.utc)
+			web = store(parse("nginx", [
+				f'{ip} - - [{t:%d/%b/%Y:%H:%M:%S} +0000] "GET /api/method/frappe.client.get_list?doctype=User&filters='
+				f'1%27%20UNION%20ALL%20SELECT%20NULL-- HTTP/1.1" 403 466 "-" "sqlmap/1.8.2#stable (https://sqlmap.org)"',
+				f'{ip} - - [{t:%d/%b/%Y:%H:%M:%S} +0000] "GET /.env HTTP/1.1" 404 153 "-" "Mozilla/5.0"',
+			], ids_host, log_file="/var/log/nginx/access.log", default_site="three.localhost", default_bench="b3"))  # fmt: skip
+			auth = store(parse("auth", [f"{t:%b %e %H:%M:%S} {hids_host} sshd[{i}]: Failed password for root from {ip} port 5{i:04d} ssh2"
+			                            for i in range(8)]  # fmt: skip
+			                   + [f"{t:%b %e %H:%M:%S} {hids_host} sshd[99]: Accepted password for root from {ip} port 51999 ssh2"],
+			                   hids_host, log_file="/var/log/auth.log"))
+			rows = frappe.get_all("Wolf Event", filters={"incident": inc}, fields=["name", "source", "category", "duplicate_of"])
+			return inc, rows, web, auth
+
+		def sources(rows):
+			return sorted({r.source for r in rows})
+
+		try:
+			mode("own", "own")
+			inc, rows, web, auth = scenario("own", "45.33.32.214")
+			assert sources(rows) == ["nginx", "sshd", "suricata", "wazuh"], (inc, sources(rows))
+			assert not any(r.duplicate_of for r in rows), "linked in own mode"
+			own = len(rows)
+
+			mode("both", "both")
+			inc, rows, web, auth = scenario("both", "45.33.32.215")
+			assert sources(rows) == ["nginx", "sshd", "suricata", "wazuh"], (inc, sources(rows))
+			mine = [r for r in rows if r.source in ("nginx", "sshd")]
+			assert {r.source for r in mine} == {"nginx", "sshd"}, mine
+			for r in mine:
+				# the finding it joins: the other detector's alert about the same IP (any of them: the IDS
+				# preset took only its critical ones onto the incident); web pairs with Suricata, SSH with Wazuh
+				other = frappe.db.get_value("Wolf Event", r.duplicate_of, ["source", "payload"], as_dict=True) if r.duplicate_of else None
+				expected = "suricata" if r.source == "nginx" else "wazuh"
+				assert other and other.source == expected and json.loads(other.payload or "{}").get("ip") == "45.33.32.215", (
+					r.name, r.category, other)
+			assert not any(r.duplicate_of for r in rows if r.source in ("suricata", "wazuh")), "an external alert linked"
+
+			mode("external", "external")
+			inc, rows, web, auth = scenario("external", "45.33.32.216")
+			assert sources(rows) == ["suricata", "wazuh"], (inc, sources(rows))
+			assert (web["events"], web["dropped"]) == (0, 1), f"the web probe kept: {web}"
+			assert auth["events"] == 0 and auth["dropped"] >= 2, f"SSH events kept while Wazuh watches bench-02: {auth}"
+		finally:
+			mode("own", "own")
+			frappe.db.commit()  # store_batch committed the modes: a failed run must not leave them set
+		# leave nothing for later checks: the incidents the preset opened (on other checks' hosts too),
+		# these events (critical hids_alerts a later evaluation would take), the aliases learnt
+		for name in set(fired_here):
+			if frappe.db.get_value("Wolf Incident", name, "status") != "Resolved":
+				incidents.resolve(name, "smoke: three sources")
+		frappe.db.delete("Wolf Event", {"agent": agent.name})
+		frappe.db.delete("Wolf Entity Alias", {"canonical": ("like", "three-hids-%")})
+		frappe.cache.delete_value(entities_api.CACHE_KEY)
+		frappe.delete_doc("Wolf Agent", agent.name, ignore_permissions=True, force=True)
+		return (f"Suricata (ET Open), Wazuh (manager and agent), nginx and auth.log about one IP, one incident from the IDS "
+		        f"preset ({own} events); both: Wolf's web and SSH events the same finding as Suricata's and Wazuh's; "
+		        f"external: Wolf's {web['dropped']} web and {auth['dropped']} SSH events dropped")  # fmt: skip
+
 	def timeline_related():
 		"""An incident's timeline shows the changes and health of the scopes its events came from."""
 		from dodock_wolf.api import incident_view
@@ -3134,6 +3250,7 @@ def main():
 	                 ("sequence rules", sequence_rules),
 	                 ("timeline related scopes", timeline_related),
 	                 ("detector modes", detector_modes),
+	                 ("three sources, one incident", three_sources_one_incident),
 	                 ("wazuh blocking", wazuh_blocking),
 	                 ("file integrity", file_integrity),
 	                 ("outbound connections", outbound_connections),
