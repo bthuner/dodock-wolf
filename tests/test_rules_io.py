@@ -6,7 +6,7 @@ from dodock_wolf.wolf import rules_io
 # a slice of the Wolf Alert Rule and Wolf Alert Channel DocTypes: (fieldtype, default)
 FIELDS = {
 	"rule_name": ("Data", None), "enabled": ("Check", "1"), "signal_type": ("Select", "metric"),
-	"severity": ("Select", "warning"), "is_preset": ("Check", "0"), "metric_name": ("Data", None),
+	"severity": ("Select", "warning", "info\nwarning\ncritical"), "is_preset": ("Check", "0"), "metric_name": ("Data", None),
 	"aggregation": ("Select", "avg"), "operator": ("Select", ">"), "threshold": ("Float", None),
 	"window_minutes": ("Int", "5"), "group_by": ("Select", "none"), "active_from": ("Time", None),
 	"active_to": ("Time", None), "first_categories": ("Small Text", None), "last_fired": ("Datetime", None),
@@ -15,9 +15,9 @@ FIELDS = {
 CHANNEL = {
 	"channel_type": ("Select", None), "enabled": ("Check", "1"), "digest": ("Select", "none"),
 	"recipients": ("Small Text", None), "webhook_url": ("Data", None), "ntfy_server": ("Data", None),
-	"ntfy_topic": ("Data", None), "ntfy_token": ("Password", None),
+	"ntfy_topic": ("Data", None), "ntfy_token": ("Password", None), "chat_webhook_url": ("Password", None),
 }  # fmt: skip
-SECRETS = {"ntfy": ("ntfy_token",)}
+SECRETS = {"ntfy": ("ntfy_token",), "Slack": ("chat_webhook_url",)}
 
 
 def stored(**over):
@@ -97,6 +97,56 @@ class TestImport(unittest.TestCase):
 		self.assertEqual([(r.get("name"), r["enabled"]) for r in rows], [("c1", 1), (None, 0), (None, 1)])
 		self.assertEqual(notes, ["ntfy #2: imported disabled, set ntfy_token in the form, then enable it"])
 		self.assertTrue(rules_io.channel_rows_differ(stored()["channels"], rows, CHANNEL, SECRETS))
+
+
+
+class TestReviewCases(unittest.TestCase):
+	def test_values_a_field_cannot_take(self):
+		doc = {"version": 1, "rules": [{"rule_name": "A", "severity": "high", "threshold": "abc", "window_minutes": 2.5,
+		       "active_from": 1320, "active_to": "25:00", "enabled": "yes"}]}  # fmt: skip
+		errors = rules_io.parse(doc, FIELDS, CHANNEL)[0][1]
+		self.assertEqual(errors, [
+			"severity: 'high' is not one of info, warning, critical",
+			"threshold: expected a number, got 'abc'",
+			"window_minutes: expected a whole number, got 2.5",
+			"active_from: write times quoted, as '22:00' (YAML reads an unquoted 22:00 as a number)",
+			"active_to: '25:00' is not a time of day",
+			"enabled: expected 0 or 1, got 'yes'",
+		])  # fmt: skip
+		ok = {"version": 1, "rules": [{"rule_name": "B", "severity": "critical", "threshold": "90", "active_from": "22:00"}]}
+		self.assertEqual(rules_io.parse(ok, FIELDS, CHANNEL)[0][1], [])
+
+	def test_a_secret_in_a_file_is_refused(self):
+		doc = {"version": 1, "rules": [{"rule_name": "A", "channels": [{"channel_type": "ntfy", "ntfy_token": "tk"}]}]}
+		self.assertEqual(rules_io.parse(doc, FIELDS, CHANNEL)[0][1],
+		                 ["channels #1: ntfy_token: secrets are not read from a file (keep them out of git): set them in the form"])  # fmt: skip
+
+	def test_every_password_field_stays_out_of_an_export(self):
+		# a Password field of another type, left on the row: still not written
+		rule = stored(channels=[{"name": "c1", "channel_type": "ntfy", "ntfy_server": "https://n", "ntfy_topic": "t",
+		                         "ntfy_token": "*****", "chat_webhook_url": "https://hooks.slack.com/x"}])  # fmt: skip
+		self.assertNotIn("hooks.slack.com", str(rules_io.export_rules([rule], FIELDS, CHANNEL, SECRETS)))
+
+	def test_reordered_channels_keep_their_own_secrets(self):
+		existing = [{"name": "a", "channel_type": "ntfy", "ntfy_server": "https://n", "ntfy_topic": "A", "ntfy_token": "tok-a"},
+		            {"name": "b", "channel_type": "ntfy", "ntfy_server": "https://n", "ntfy_topic": "B", "ntfy_token": "tok-b"}]  # fmt: skip
+		incoming = [{"channel_type": "ntfy", "ntfy_server": "https://n", "ntfy_topic": "B"},
+		            {"channel_type": "ntfy", "ntfy_server": "https://n", "ntfy_topic": "A"}]  # fmt: skip
+		rows, notes = rules_io.merge_channels(incoming, existing, CHANNEL, SECRETS)
+		self.assertEqual([(r["ntfy_topic"], r["name"], r["ntfy_token"]) for r in rows], [("B", "b", "tok-b"), ("A", "a", "tok-a")])
+		self.assertEqual(notes, [])
+
+	def test_a_deleted_slack_row_never_lends_its_webhook(self):
+		# Slack has nothing but its secret webhook to tell rows apart: after a deletion, position says nothing
+		existing = [{"name": "s1", "channel_type": "Slack", "enabled": 1, "chat_webhook_url": "*****"},
+		            {"name": "s2", "channel_type": "Slack", "enabled": 1, "chat_webhook_url": "*****"}]  # fmt: skip
+		rows, notes = rules_io.merge_channels([{"channel_type": "Slack"}], existing, CHANNEL, SECRETS)
+		self.assertEqual((rows[0].get("name"), rows[0]["enabled"]), (None, 0))
+		self.assertIn("set chat_webhook_url in the form", notes[0])
+		# the same number of rows: kept by position, and said so when it is more than one
+		rows, notes = rules_io.merge_channels([{"channel_type": "Slack"}, {"channel_type": "Slack"}], existing, CHANNEL, SECRETS)
+		self.assertEqual([r["name"] for r in rows], ["s1", "s2"])
+		self.assertEqual(notes, ["Slack: 2 rows kept their stored secrets by position: check their order in the form"])
 
 
 if __name__ == "__main__":

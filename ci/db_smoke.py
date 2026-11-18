@@ -3269,14 +3269,19 @@ def main():
 		next(r for r in doc["rules"] if r["rule_name"] == "smoke disk")["threshold"] = 77
 		doc["rules"].append({"rule_name": "smoke yaml", "enabled": 0, "metric_name": "cpu_usage", "threshold": 50,
 		                     "channels": [{"channel_type": "ntfy", "ntfy_server": "https://ntfy.example.com", "ntfy_topic": "x"}]})  # fmt: skip
-		result = rules_yaml_api.import_document(doc, apply=True)
-		assert result["applied"] and (result["counts"]["create"], result["counts"]["update"]) == (1, 1), result["counts"]
-		assert float(frappe.db.get_value("Wolf Alert Rule", "smoke disk", "threshold")) == 77
-		assert frappe.get_doc("Wolf Alert Rule", "smoke yaml").channels[0].enabled == 0  # no ntfy_token in a file
-		bad = {"version": 1, "rules": [{"rule_name": "smoke disk", "treshold": 1}]}
-		assert not rules_yaml_api.import_document(bad, apply=True)["applied"]
-		frappe.delete_doc("Wolf Alert Rule", "smoke yaml", force=True)
-		frappe.db.set_value("Wolf Alert Rule", "smoke disk", "threshold", original)
+		try:
+			result = rules_yaml_api.import_document(doc, apply=True)
+			assert result["applied"] and (result["counts"]["create"], result["counts"]["update"]) == (1, 1), result["counts"]
+			assert float(frappe.db.get_value("Wolf Alert Rule", "smoke disk", "threshold")) == 77
+			assert frappe.get_doc("Wolf Alert Rule", "smoke yaml").channels[0].enabled == 0  # no ntfy_token in a file
+			bad = {"version": 1, "rules": [{"rule_name": "smoke disk", "treshold": 1}]}
+			assert not rules_yaml_api.import_document(bad, apply=True)["applied"]
+			severity = {"version": 1, "rules": [{"rule_name": "smoke disk", "severity": "high"}]}  # not an option
+			assert not rules_yaml_api.import_document(severity, apply=True)["applied"]
+		finally:
+			if frappe.db.exists("Wolf Alert Rule", "smoke yaml"):
+				frappe.delete_doc("Wolf Alert Rule", "smoke yaml", force=True)
+			frappe.db.set_value("Wolf Alert Rule", "smoke disk", "threshold", original)
 		return result["counts"]
 
 	for name, fn in [("ingest", ingest), ("evaluate", evaluate), ("correlate", correlate), ("timeline", timeline),

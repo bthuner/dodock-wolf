@@ -19,7 +19,7 @@ MAX_BYTES = 2 * 1024 * 1024
 
 
 def _fields(doctype):
-	return {f.fieldname: (f.fieldtype, f.default) for f in frappe.get_meta(doctype).fields if f.fieldtype not in LAYOUT}
+	return {f.fieldname: (f.fieldtype, f.default, f.options) for f in frappe.get_meta(doctype).fields if f.fieldtype not in LAYOUT}
 
 
 def _rule_dict(doc):
@@ -72,10 +72,11 @@ def import_document(document, apply=False):
 		for listname in rules_io.CHANNEL_LISTS:
 			rows[listname], notes = rules_io.merge_channels(rule.get(listname), current.get(listname), channel_fields, SECRETS)
 			item["notes"] += [f"{listname}: {n}" for n in notes]
-		changed = rules_io.changes(current, wanted, fields) if exists else []
-		changed += [listname for listname in rules_io.CHANNEL_LISTS
-		            if rules_io.channel_rows_differ(current.get(listname), rows[listname], channel_fields, SECRETS)]  # fmt: skip
-		item["changes"] = sorted(set(changed))
+		if exists:
+			changed = rules_io.changes(current, wanted, fields)
+			changed += [listname for listname in rules_io.CHANNEL_LISTS
+			            if rules_io.channel_rows_differ(current.get(listname), rows[listname], channel_fields, SECRETS)]  # fmt: skip
+			item["changes"] = sorted(set(changed))
 		item["action"] = ("update" if item["changes"] else "unchanged") if exists else "create"
 		doc.update(wanted)
 		for listname in rules_io.CHANNEL_LISTS:
@@ -90,10 +91,16 @@ def import_document(document, apply=False):
 	applied = bool(apply) and valid
 	if applied:
 		for item, doc in docs:
-			if item["action"] == "create":
-				doc.insert()
-			elif item["action"] == "update":
-				doc.save()
+			try:
+				if item["action"] == "create":
+					doc.insert()
+				elif item["action"] == "update":
+					doc.save()
+			except Exception as e:  # what validate alone does not check (lengths, links...): nothing applied
+				frappe.db.rollback()
+				item["action"], item["errors"] = "invalid", [frappe.utils.strip_html(str(e)) or type(e).__name__]
+				valid = applied = False
+				break
 	frappe.local.message_log = []  # validate's own messages are in the plan
 	counts = {a: sum(i["action"] == a for i in plan) for a in ("create", "update", "unchanged", "invalid")}
 	return {"applied": applied, "valid": valid, "counts": counts, "rules": plan}
@@ -103,7 +110,7 @@ def import_document(document, apply=False):
 def export_yaml(names=None):
 	frappe.only_for(MANAGERS)
 	if isinstance(names, str):
-		names = frappe.parse_json(names)
+		names = frappe.parse_json(names) if names.strip() else None
 	return {"filename": f"wolf-rules-{frappe.local.site}.yaml", "content": dump(export_document(names or None))}
 
 

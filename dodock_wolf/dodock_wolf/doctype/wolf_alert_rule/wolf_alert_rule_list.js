@@ -6,7 +6,7 @@ frappe.listview_settings["Wolf Alert Rule"] = {
 			const names = listview.get_checked_items(true);
 			frappe.call({
 				method: "dodock_wolf.api.rules_io.export_yaml",
-				args: { names: names.length ? names : null },
+				args: names.length ? { names } : {},
 				callback: (r) => {
 					const blob = new Blob([r.message.content], { type: "application/x-yaml" });
 					const link = document.createElement("a");
@@ -40,6 +40,7 @@ function import_dialog(listview) {
 			run(values.content, 0);
 		},
 	});
+	let previewed = null; // the text the plan shown is for: Apply writes that one only
 	function run(content, apply) {
 		frappe.call({
 			method: "dodock_wolf.api.rules_io.import_yaml",
@@ -47,14 +48,18 @@ function import_dialog(listview) {
 			freeze: true,
 			callback: (r) => {
 				const result = r.message;
+				if (!apply) previewed = content;
 				dialog.fields_dict.plan.$wrapper.html(render(result));
 				if (result.applied) {
 					frappe.show_alert({ message: __("Rules imported"), indicator: "green" });
 					dialog.hide();
 					listview.refresh();
 				} else if (result.valid && (result.counts.create || result.counts.update)) {
-					// the text as it is now: the server plans it again and applies only a valid one
-					dialog.set_primary_action(__("Apply"), () => run(dialog.get_value("content"), 1));
+					// edited since the preview: show the new plan first
+					dialog.set_primary_action(__("Apply"), () => {
+						const now = dialog.get_value("content");
+						run(now, now === previewed ? 1 : 0);
+					});
 				} else {
 					dialog.set_primary_action(__("Preview"), (values) => run(values.content, 0));
 				}
