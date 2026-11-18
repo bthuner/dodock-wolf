@@ -98,7 +98,8 @@ def normalize_setup(raw, tz_name, now):
 		"setup_checked_at": checked_at,
 		"setup_failed": sum(c["status"] == "fail" for c in checks),
 		"setup_warnings": sum(c["status"] == "warn" for c in checks),
-		"setup_checks": json.dumps(checks, ensure_ascii=False),
+		# what the page shows and what to fix: the passing checks (registration URL, paths) stay out
+		"setup_checks": json.dumps([c for c in checks if c["status"] != "ok"], ensure_ascii=False),
 	}
 
 

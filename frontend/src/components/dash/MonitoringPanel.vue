@@ -24,7 +24,9 @@ const tick = computed(() => {
 })
 const slowTick = computed(() => tickSeconds.value > 60)
 // each agent's own `wolf-agent doctor` run, every hour: what its host gives it and what to fix
-const setupProblems = computed(() => agents.value.filter((a) => a.setup && (a.setup.failed || a.setup.warnings)))
+// only agents that report: an older agent, or one within its first hour, has no setup yet
+const setupReported = computed(() => agents.value.filter((a) => a.setup && a.state === 'fresh'))
+const setupProblems = computed(() => setupReported.value.filter((a) => a.setup.failed || a.setup.warnings))
 function setupLabel(s) {
   if (!s) return 'not reported'
   const parts = []
@@ -75,7 +77,8 @@ function setupLabel(s) {
           <span style="color: var(--wolf-warning)">{{ setupProblems.length }} host{{ setupProblems.length > 1 ? 's' : '' }} to fix</span>:
           {{ setupProblems.map((a) => a.hostname).join(', ') }}
         </template>
-        <template v-else>every reporting agent has what it needs</template>
+        <template v-else-if="setupReported.length">every reporting agent has what it needs</template>
+        <template v-else>not reported yet (agents check their host every hour)</template>
       </dd>
       <template v-if="satellites.length">
         <dt>Satellites</dt>
@@ -102,9 +105,10 @@ function setupLabel(s) {
             <td class="wolf-data">{{ a.agent_version || '' }}</td>
             <td>
               <span v-if="a.kind !== 'agent'"></span>
-              <span v-else :title="a.setup ? `checked ${full(a.setup.checked_at, timeZone)}` : 'older agents do not report it'"
+              <span v-else
                 :style="a.setup && a.setup.failed ? 'color: var(--wolf-critical)' : a.setup && a.setup.warnings ? 'color: var(--wolf-warning)' : ''"
               >{{ setupLabel(a.setup) }}</span>
+              <span v-if="a.setup" class="block text-xs text-ink-gray-6">checked <time :datetime="a.setup.checked_at">{{ ago(a.setup.checked_at) }} ago</time></span>
             </td>
           </tr>
           <tr v-if="a.setup && a.setup.problems.length">
@@ -114,7 +118,7 @@ function setupLabel(s) {
                 <ul class="mt-1 space-y-1 text-sm">
                   <li v-for="(p, i) in a.setup.problems" :key="i">
                     <strong>{{ p.status === 'fail' ? 'Fail' : 'Warning' }}</strong> ({{ p.area }}): {{ p.title }}
-                    <div v-if="p.fix" class="text-ink-gray-7">Fix: <code>{{ p.fix }}</code></div>
+                    <div v-if="p.fix" class="text-ink-gray-7">Fix: {{ p.fix }}</div>
                   </li>
                 </ul>
               </details>

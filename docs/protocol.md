@@ -98,6 +98,12 @@ satellites treat 429 like a network error: the batch stays spooled and is replay
 event titles and payloads before sending (agent README, "Scrubbing"). The server stores what
 it receives as is.
 
+**`setup`.** Optional, about once an hour: the agent's own `wolf-agent doctor` run,
+`{"checked_at", "checks": [{"area", "status": "ok" | "warn" | "fail" | "info", "title", "fix"}]}`.
+The Wolf site counts the failures and warnings, keeps the checks that are not ok on the Wolf Agent
+(100 at most) and shows them on the Monitoring page. The same run sends the host metrics
+`agent_setup_failed` and `agent_setup_warnings`.
+
 **`behind_proxy`.** The proxy this host's web traffic comes through (a Press app server's
 `proxy_ip`), or `null`; older agents send nothing and the stored value stays. The Wolf site keeps it
 on Wolf Agent and proposes blocks on that host for SSH events only.
@@ -179,6 +185,7 @@ the Wolf Entity Alias rows (#72 step 3). Agents do not send it: the site compute
 | `memory_used_percent`| %        | host                              |
 | `swap_used_percent`  | %        | host                              |
 | `disk_used_percent`  | %        | host, `labels.mount`              |
+| `agent_setup_failed`, `agent_setup_warnings` | checks | host: the agent's hourly `wolf-agent doctor` run |
 | `load_1m` / `load_5m` / `load_15m` | — | host                        |
 | `load_per_core`      | —        | host (load_1m / cpu count)        |
 | `http_requests`      | count per minute of log time | host, bench, site  |

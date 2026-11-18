@@ -306,5 +306,9 @@ describe('MonitoringPanel', () => {
     const compact = mount(MonitoringPanel, { props: { monitoring, timeZone: 'UTC', compact: true } })
     expect(compact.text()).toContain('1 host to fix: f1')
     expect(compact.find('table').exists()).toBe(false)
+    expect(full.text()).toMatch(/checked .* ago/)
+    // no agent has reported yet: nothing claimed
+    const none = mount(MonitoringPanel, { props: { monitoring: { ...monitoring, agents: [agent('old', null)] }, timeZone: 'UTC' } })
+    expect(none.text()).toContain('not reported yet')
   })
 })

@@ -151,6 +151,20 @@ class TestDoctor(DoctorCase):
 		check = self.find(self.run_doctor(cfg), "is not installed")[0]
 		self.assertIn("wolf-block-fail2ban.sh", check["fix"])  # the helper the command names
 
+	def test_the_hourly_run_probes_no_sudo_and_not_its_own_service(self):
+		# `sudo -l` without a rule logs "user NOT in sudoers": the agent would report itself every hour
+		helper = os.path.join(self.tmp.name, "wolf-block")
+		write(helper)
+		cfg = {**self.cfg, "response": {"enabled": True, "command": ["sudo", "-n", helper, "{ip}", "{seconds}"]}}
+		with mock.patch.object(doctor.subprocess, "run") as run, mock.patch.object(doctor, "_agent_uid", return_value=None), \
+		     mock.patch.object(doctor, "_systemd", return_value=True), mock.patch.object(doctor, "_auth", return_value=[]):  # fmt: skip
+			checks = doctor.run(cfg, self.config, live=False, daemon=True,
+			                    collector_factory=lambda c: FakeCollector(self.paths, self.benches))  # fmt: skip
+		self.assertFalse([c for c in run.call_args_list if "sudo" in c.args[0] or "systemctl" in c.args[0]])
+		self.assertEqual(self.find(checks, "its sudo rule: run wolf-agent doctor")[0]["status"], doctor.INFO)
+		self.assertFalse(self.find(checks, "wolf-agent.service"))
+		self.assertFalse([c for c in checks if c["area"] == "wolf site"])  # its own push says whether the site answers
+
 	@unittest.skipIf(os.geteuid() == 0, "root reads a mode 000 file")
 	def test_an_unreadable_config(self):
 		# registered as root, before the chown install.sh asks for
@@ -265,8 +279,8 @@ class TestSetupWatcher(unittest.TestCase):
 		self.runs = []
 		self.collector = FakeCollector(["/var/log/x.log"], [{"name": "b"}])
 
-		def runner(cfg, path, live, collector_factory):
-			self.runs.append((live, collector_factory(cfg).sources[0].tailer.path))
+		def runner(cfg, path, live, collector_factory, daemon):
+			self.runs.append((live, daemon, collector_factory(cfg).sources[0].tailer.path))
 			return [doctor.item("logs", doctor.FAIL, "cannot read /var/log/x.log"), doctor.item("daemon", doctor.OK, "spool")]
 
 		self.watcher = doctor.SetupWatcher({"setup_checks": {"interval": 3600}}, "/etc/wolf-agent/config.json", self.collector,
@@ -280,7 +294,7 @@ class TestSetupWatcher(unittest.TestCase):
 		self.assertIsNone(self.watcher.poll())  # still running: not started twice
 		self.assertEqual(len(self.started), 1)
 		self.started[0]()  # the thread runs
-		self.assertEqual(self.runs, [(False, "/var/log/x.log")])  # its own sources, the Wolf site not called
+		self.assertEqual(self.runs, [(False, True, "/var/log/x.log")])  # its own sources, no Wolf site call
 		result = self.watcher.poll()
 		self.assertEqual([c["status"] for c in result["checks"]], ["fail", "ok"])
 		self.assertIsNone(self.watcher.poll())  # handed over once

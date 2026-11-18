@@ -133,7 +133,7 @@ class TestNormalizeSetup(unittest.TestCase):
 		out = schema.normalize_setup(raw, "UTC", now)
 		self.assertEqual((out["setup_failed"], out["setup_warnings"]), (1, 1))
 		self.assertEqual(out["setup_checked_at"], datetime(2026, 11, 18, 20, 0))
-		self.assertEqual([c["title"] for c in json.loads(out["setup_checks"])], ["cannot read /x", "Redis unreachable", "spool writable"])
+		self.assertEqual([c["title"] for c in json.loads(out["setup_checks"])], ["cannot read /x", "Redis unreachable"])  # no ok
 		long = schema.normalize_setup({"checks": [{"status": "fail", "title": "t" * 900}]}, "UTC", now)
 		self.assertEqual(len(json.loads(long["setup_checks"])[0]["title"]), 300)
 		self.assertEqual(long["setup_checked_at"], now)  # no time sent: now

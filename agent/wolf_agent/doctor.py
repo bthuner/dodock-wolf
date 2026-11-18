@@ -38,8 +38,10 @@ def item(area, status, title, fix=None):
 	return {"area": area, "status": status, "title": title, "fix": fix}
 
 
-def run(cfg, config_path, live=True, collector_factory=None, euid=None):
-	"""The checks for this host, in report order."""
+def run(cfg, config_path, live=True, collector_factory=None, euid=None, daemon=False):
+	"""The checks for this host, in report order. `daemon`: the agent's own hourly run, which skips
+	what only makes sense from a shell (probing sudo, which logs a line the agent itself parses; the
+	service it is)."""
 	euid = os.geteuid() if euid is None else euid
 	if collector_factory is None:
 		from .collector import Collector
@@ -64,13 +66,13 @@ def run(cfg, config_path, live=True, collector_factory=None, euid=None):
 		                "fix the config (benches, extra_logs) or run with -v for the traceback"))  # fmt: skip
 	for area, fn in (
 		("agent", lambda: _identity(cfg, config_path, euid)),
-		("wolf site", lambda: _site(cfg, live)),
+		("wolf site", lambda: [] if daemon else _site(cfg, live)),  # the daemon's push says it
 		("logs", lambda: _sources(seen["paths"])),
 		("benches", lambda: _benches(cfg, seen["benches"])),
 		("platform", lambda: _platform(cfg)),
 		("host signals", lambda: _auth(cfg)),
-		("response", lambda: _response(cfg)),
-		("daemon", lambda: _daemon(cfg)),
+		("response", lambda: _response(cfg, daemon)),
+		("daemon", lambda: _daemon(cfg, daemon)),
 	):
 		try:
 			out += fn()
@@ -402,7 +404,7 @@ def _journal_groups():
 	return bool(names & {"systemd-journal", "adm", "wheel"})
 
 
-def _response(cfg):
+def _response(cfg, daemon=False):
 	resp = section(cfg, "response")
 	if not resp.get("enabled"):
 		return [item("response", INFO, "response actions off: approved blocks come back Failed (response.enabled)")]
@@ -413,7 +415,11 @@ def _response(cfg):
 		script = "wolf-block-fail2ban.sh" if "fail2ban" in helper else "wolf-block.sh"
 		return [item("response", FAIL, f"response actions on, but {helper} is not installed",
 		             f"install -m 0755 -o root -g root agent/{script} {helper} (docs: agent/response-actions)")]  # fmt: skip
-	if command[:1] == ["sudo"] and helper:
+	if command[:1] == ["sudo"] and helper and daemon:
+		# `sudo -l` without a rule logs "user NOT in sudoers", which the agent's own auth parser
+		# reports as a sudo_failure: every hour, from itself. A shell run of doctor checks it.
+		out.append(item("response", INFO, f"{helper} installed; its sudo rule: run wolf-agent doctor on the host"))
+	elif command[:1] == ["sudo"] and helper:
 		try:
 			done = subprocess.run(["sudo", "-n", "-l", helper], capture_output=True, text=True, timeout=10)
 			allowed = done.returncode == 0
@@ -429,14 +435,14 @@ def _response(cfg):
 	return out
 
 
-def _daemon(cfg):
+def _daemon(cfg, daemon=False):
 	out = []
 	spool = cfg.get("spool_dir")
 	if spool:
 		ok = os.path.isdir(spool) and os.access(spool, os.W_OK)
 		out.append(item("daemon", OK if ok else FAIL, f"spool {spool} " + ("writable" if ok else "not writable"),
 		                None if ok else f"install -d -o {AGENT_USER} -g {AGENT_USER} -m 0750 {spool}"))  # fmt: skip
-	if _systemd():
+	if _systemd() and not daemon:  # the hourly run is the daemon: its unit says nothing new
 		try:
 			shown = subprocess.run(["systemctl", "show", "-p", "LoadState", "-p", "ActiveState", "wolf-agent.service"],
 			                       capture_output=True, text=True, timeout=10).stdout  # fmt: skip
@@ -500,7 +506,7 @@ class SetupWatcher:
 
 	def _work(self):
 		try:
-			checks = self.runner(self.cfg, self.config_path, live=False, collector_factory=self._view)
+			checks = self.runner(self.cfg, self.config_path, live=False, collector_factory=self._view, daemon=True)
 		except Exception as e:  # never the daemon's problem
 			checks = [item("agent", FAIL, f"setup checks failed: {type(e).__name__}: {e}")]
 		result = {"checked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "checks": checks}
