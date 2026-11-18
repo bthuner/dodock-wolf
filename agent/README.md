@@ -46,15 +46,20 @@ deploy/update/migrate jobs (`jobs.sqlite3`, read-only) into `deployment` events,
 ## Pilot benches
 
 Benches created by [Frappe Pilot](https://github.com/frappe/pilot) (`~/pilot/benches/*`,
-`bench.toml` with `[bench] name` and `python`) are read with Pilot's real schema.
-Wolf tails Pilot's process logs (`web`, `schedule`, `worker_*` and their stderr files) and
-`logs/nginx-access.log` (in the `pilot_access` format), and it reads queues on
-`[redis] queue_port`. It turns Pilot tasks (update, migrate, switch-branch, app install,
-build, restart, restore) into `deployment` events, plus `error` events for failed tasks.
-Tasks are read from the bench's Admin API (`GET /api/v1/tasks`), or from `<bench>/tasks/`
-when the agent runs as the bench user. The API token is `pilot.token`, or one Wolf mints
-from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
-[`../docs/pilot.md`](../docs/pilot.md).
+`bench.toml` with `[bench] name` and `python`) are read with Pilot's real schema, checked on
+Pilot v1.0.0-rc.1. Pilot keeps `bench.toml`, `tasks/` and the site configs readable by the bench
+user only and runs the bench as that user's systemd user units, so on a Pilot host `install.sh`
+also installs `wolf-pilot-export`: a root timer that copies the tasks (site argument only) and
+the unit states to `/var/lib/wolf-pilot-export/<bench>.json` for the `wolf-agent` user, which
+stays out of the bench's reach (no MariaDB checks there). Wolf tails the `web` process logs
+(lite mode runs workers and the scheduler in it), worker and schedule logs out of lite mode,
+Frappe's logs in `logs/workload/` on a sandboxed bench, and `logs/nginx-access.log` (the
+`pilot_access` format: no query string, no User-Agent). It reads queues on `[redis] queue_port` and
+turns Pilot tasks (update, migrate, switch-branch, app install, build, restart, restore) into
+`deployment` events, plus `error` events for failed tasks, from `<bench>/tasks/` when readable,
+else the export, else the Admin API (`GET /api/v1/tasks`, `pilot.token` or a token minted from
+`[admin] jwt_secret`). See [`../docs/pilot.md`](../docs/pilot.md)
+and `dev/pilot/` for a Pilot host to test on.
 
 ## What is collected
 

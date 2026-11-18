@@ -9,6 +9,9 @@
 #   WOLF_AGENT_REF  git ref used when installing from GitHub (default: main)
 #   WOLF_BENCHES    space-separated bench paths (default: auto-discover)
 #   WOLF_INSECURE=1 skip TLS verification during registration and pushes
+#
+# On a Frappe Pilot host it also installs wolf-pilot-export, a root timer that copies the bench
+# tasks and process states the agent cannot read itself (docs-site: Pilot benches).
 set -euo pipefail
 
 PREFIX=/opt/wolf-agent
@@ -45,7 +48,10 @@ ln -sf "$PREFIX/bin/wolf-agent" /usr/local/bin/wolf-agent
 
 echo "==> creating user $USER_NAME"
 if ! id "$USER_NAME" >/dev/null 2>&1; then
-	useradd --system --no-create-home --home-dir "$STATE_DIR" --shell /usr/sbin/nologin "$USER_NAME"
+	# a group left from an earlier install is reused
+	group_opt=(--user-group)
+	if getent group "$USER_NAME" >/dev/null; then group_opt=(--gid "$USER_NAME"); fi
+	useradd --system --no-create-home --home-dir "$STATE_DIR" --shell /usr/sbin/nologin "${group_opt[@]}" "$USER_NAME"
 fi
 for group in adm systemd-journal frappe proxy; do  # proxy: read Squid's access log
 	if getent group "$group" >/dev/null; then
@@ -79,12 +85,45 @@ else
 	chmod 0644 /etc/systemd/system/wolf-agent.service
 fi
 
+# Frappe Pilot keeps a bench's tasks private and runs it as the bench user's systemd user units:
+# a root timer copies what the agent needs (task states, unit states, no secrets) for wolf-agent
+PILOT=0
+for toml in /home/*/pilot/benches/*/bench.toml; do
+	if [[ -f "$toml" ]]; then PILOT=1; break; fi
+done
+if [[ "$PILOT" == 1 ]]; then
+	echo "==> Frappe Pilot host: installing wolf-pilot-export (root, every 20 s)"
+	fetched=$(mktemp -d)
+	got=1
+	for file in wolf-pilot-export wolf-pilot-export.service wolf-pilot-export.timer; do
+		if [[ -f "$SCRIPT_DIR/pyproject.toml" && -f "$SCRIPT_DIR/$file" ]]; then  # a checkout, not the current folder
+			cp "$SCRIPT_DIR/$file" "$fetched/$file"
+		elif ! curl -fsSL "https://raw.githubusercontent.com/bthuner/dodock-wolf/$REF/agent/$file" -o "$fetched/$file"; then
+			got=0
+		fi
+	done
+	if [[ "$got" == 1 ]]; then
+		install -m 0755 -o root -g root "$fetched/wolf-pilot-export" /usr/local/sbin/wolf-pilot-export
+		install -m 0644 "$fetched/wolf-pilot-export.service" /etc/systemd/system/wolf-pilot-export.service
+		install -m 0644 "$fetched/wolf-pilot-export.timer" /etc/systemd/system/wolf-pilot-export.timer
+		/usr/local/sbin/wolf-pilot-export || echo "wolf-pilot-export failed: Pilot tasks and process states wait for its timer" >&2
+	else
+		echo "could not download wolf-pilot-export: Pilot tasks and process states are unavailable until install.sh runs again" >&2
+		PILOT=0
+	fi
+	rm -r "$fetched"
+fi
+
 if ! command -v systemctl >/dev/null || [[ ! -d /run/systemd/system ]]; then
+	if [[ "$PILOT" == 1 ]]; then
+		echo "==> no timer without systemd: run /usr/local/sbin/wolf-pilot-export as root every 20 s (its copy older than 5 minutes is ignored)"
+	fi
 	echo "==> no systemd here (container?). Start the agent yourself, as $USER_NAME:"
 	echo "    $PREFIX/bin/wolf-agent --config $CONFIG run"
 	exit 0
 fi
 systemctl daemon-reload
+if [[ "$PILOT" == 1 ]]; then systemctl enable --now wolf-pilot-export.timer; fi
 
 if [[ -f "$CONFIG" ]]; then
 	systemctl enable --now wolf-agent

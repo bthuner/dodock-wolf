@@ -26,7 +26,16 @@ from .util import event, fingerprint, utc_iso
 log = logging.getLogger(__name__)
 
 PILOT_SEARCH_GLOBS = ("/home/*/pilot/benches/*",)
+# what wolf-pilot-export (root, every 20 s) copies from each bench for the wolf-agent user
+EXPORT_DIR = "/var/lib/wolf-pilot-export"
+EXPORT_MAX_AGE = timedelta(minutes=5)
 NGINX_ACCESS_LOG = "nginx-access.log"  # <bench>/logs/, log_format pilot_access
+# Frappe's own log files, which a sandboxed bench writes to logs/workload/
+WORKLOAD_LOGS = {
+	"frappe.web.log": ["traceback"],
+	"scheduler.log": ["scheduler"],
+	"worker.log": ["worker"],
+}
 
 # Pilot task command → Wolf category. Commands and their fields come from
 # pilot/tasks/*.py (`command: ClassVar[str]`).
@@ -91,9 +100,13 @@ def bench_log_files(logs_dir):
 
 	supervisor: `<name>.log` + `<name>.error.log`; systemd: `<name>.log` +
 	`<name>.log.error.log` (pilot/managers/processes/{supervisor,systemd_render}.py).
-	Workers are `worker_<queue>_<i>` (pilot/managers/processes/definitions.py).
+	Workers are `worker_<queue>_<i>` (pilot/managers/processes/definitions.py). In lite mode
+	(Pilot's default) one `web` process also runs the workers and the scheduler.
+
+	On a sandboxed bench Frappe's own logs are in `logs/workload/` (docs/sandbox.md): the
+	unit output stays in `logs/`.
 	"""
-	files = {}
+	files = {"workload/" + name: parsers for name, parsers in WORKLOAD_LOGS.items()}
 	for suffix in (".error.log", ".log.error.log"):
 		files["web" + suffix] = ["traceback"]
 		files["schedule" + suffix] = ["traceback"]
@@ -130,6 +143,20 @@ def describe(path, toml):
 	return info
 
 
+def read_export(bench_name, export_dir=EXPORT_DIR, now=None, path=None):
+	"""wolf-pilot-export's file for a bench, or None when missing, unreadable, about another
+	folder than `path`, or older than EXPORT_MAX_AGE (the helper stopped: better nothing than
+	stale states)."""
+	data = _load_json(os.path.join(export_dir, f"{bench_name}.json"))
+	if path and os.path.normpath(str(data.get("path") or "")) != os.path.normpath(path):
+		return None
+	generated = _parse_iso(data.get("generated_at"))
+	now = now or datetime.now(timezone.utc)
+	if not generated or now - generated > EXPORT_MAX_AGE:
+		return None
+	return data
+
+
 def _b64(data):
 	return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
 
@@ -163,14 +190,17 @@ class PilotUnavailable(Exception):
 class PilotTaskWatcher:
 	"""Pilot tasks of one bench → `deployment` events (at start) + `error` events (on failure).
 
-	Sources, in order: the Admin API (`GET /api/v1/tasks`, Bearer token: the
-	configured `token`, or one minted from the bench's `[admin] jwt_secret`), then
-	the task files `<bench>/tasks/<id>/meta.json` + `status` when readable.
+	Sources, in order: the task files `<bench>/tasks/<id>/meta.json` + `status` (mode 0700:
+	readable only when the agent runs as the bench user); the copy wolf-pilot-export makes of them
+	for the wolf-agent user (EXPORT_DIR); then the Admin API (`GET /api/v1/tasks`, Bearer token:
+	the configured `token`, or one minted from the bench's `[admin] jwt_secret`). The API comes
+	last: every token Pilot verifies shows as an Admin session.
 	Task ids already reported are kept in `state_path`; the first poll only
 	picks up tasks still queued/running (no history backfill).
 	"""
 
-	def __init__(self, host, bench, state_path=None, api_url=None, token=None, jwt_secret=None, toml_reader=None, timeout=10):
+	def __init__(self, host, bench, state_path=None, api_url=None, token=None, jwt_secret=None, toml_reader=None, timeout=10,
+	             export_dir=EXPORT_DIR):  # fmt: skip
 		self.host = host
 		self.bench = bench["name"]
 		self.path = bench["path"]
@@ -179,6 +209,7 @@ class PilotTaskWatcher:
 		self.jwt_secret = jwt_secret
 		self.toml_reader = toml_reader
 		self.timeout = timeout
+		self.export_dir = export_dir
 		self.state_path = state_path
 		self._minted = None
 		self._warned = set()
@@ -274,9 +305,15 @@ class PilotTaskWatcher:
 			tasks.append(meta)
 		return tasks
 
+	def _from_export(self):
+		data = read_export(self.bench, self.export_dir, path=self.path)
+		if not data or not isinstance(data.get("tasks"), list):
+			raise PilotUnavailable(f"no recent wolf-pilot-export file in {self.export_dir}")
+		return [t for t in data["tasks"] if isinstance(t, dict) and t.get("command")]
+
 	def fetch(self):
 		errors = []
-		for source in (self._from_api, self._from_files):
+		for source in (self._from_files, self._from_export, self._from_api):
 			try:
 				return source()
 			except PilotUnavailable as e:

@@ -1,0 +1,22 @@
+# Frappe Pilot in production mode, with a Wolf site and the Wolf agent on the same host: the real
+# bench.toml, process units, logs, tasks and Admin API that Wolf reads. See dev/pilot/README.md.
+name: wolfpilot
+
+services:
+  pilot:
+    build: .
+    image: wolf-pilot-host:local
+    hostname: pilot-host
+    # systemd as PID 1 (user units for the bench, linger for the bench user)
+    privileged: true
+    cgroup: host
+    tmpfs: [/run, /run/lock]
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - home:/home
+      - ../..:/src:ro
+    ports:
+      - "${WOLF_PILOT_HTTP:-8380}:80"
+
+volumes:
+  home:
