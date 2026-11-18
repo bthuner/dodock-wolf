@@ -711,7 +711,7 @@ The two stacks overlap on host metrics (node_exporter vs Wolf's `/proc` sampling
 - The filesystem fallback cannot tell a deploy from a manual move, and it has no failure signal.
 - A bench found after registration shows the image it was created with (its `docker-compose.yml`): Update Bench In Place changes only its `0600` config.
 - Jobs are matched by display name. If Press renames a job, it is no longer recognised. Add the new name to `DEPLOY_JOBS` in [`agent/wolf_agent/press.py`](https://github.com/bthuner/dodock-wolf/blob/main/agent/wolf_agent/press.py){rel="&#x22;nofollow&#x22;"}.
-- Shared-FS benches (`Run Benches on Shared FS`) change `benches_directory`. Wolf rereads it from the Press agent config on every rediscovery, but this path has not been tested.
+- An auto-scaling **secondary** app server runs the primary's benches from an NFS mount, its containers writing to the same bench logs: Wolf Agents on both would read those logs twice. Not checked: install the Wolf Agent on the primary only.
 
 ### Checked on a Press server
 
@@ -721,8 +721,9 @@ The two stacks overlap on host metrics (node_exporter vs Wolf's `/proc` sampling
 4. **`rq_port`.** Press sets it on every new bench and publishes it. A bench whose config has none (an older one) gets no queue metrics: the daemon keeps what registration read in it rather than derive a port from the web port.
 5. **Behind a proxy server.** Through Press's proxy (its own `proxy` role and Add Upstream / Add Host / Add Site to Upstream jobs), the app server's `access.log` keeps the real client in `$remote_addr`, and the site sees it in its failed logins. A block applied on the app server stopped nothing, the one on the proxy did: hence [Proxy servers](https://bthuner.github.io/dodock-wolf/#proxy-servers).
 6. **Backups.** A local-only Backup Site job leaves its files in `sites/<site>/private/backups` and lists them in its result. An offsite one deletes them after the upload (`upload_offsite_backup`) unless the server keeps them, and a streamed one writes none. Wolf reads the job history: a backup and a failed one (the database server stopped) both came through.
+7. **Shared FS** (Run Benches on Shared FS, primary server). Press's `link_benches_to_nfs` role makes `/home/frappe/shared` a link to `/home/frappe/benches`, and the job points `benches_directory` at it and restarts the benches. Wolf kept reading the same benches through its saved folder, jobs stayed scoped (Wolf compares the folders with links resolved, so a New Bench there is scoped before the next `wolf-agent refresh`), and `refresh` saved the new folder. Bench paths are resolved, so each log keeps its read position across the switch.
 
-Not checked: shared-FS benches.
+Not checked: an auto-scaling secondary server (see [Limitations](https://bthuner.github.io/dodock-wolf/#limitations)).
 
 ::collapsible
 Sources were read at frappe/agent [`64b9812`](https://github.com/frappe/agent/tree/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a){rel=""nofollow""} (2026-10-27) and frappe/press [`aedd7d1`](https://github.com/frappe/press/tree/aedd7d1237e49153e4852a7ca693b3a50c6028b2){rel=""nofollow""} (2026-10-29). Every link is pinned to these commits. The full write-up is [`docs/press.md`](https://github.com/bthuner/dodock-wolf/blob/main/docs/press.md){rel=""nofollow""}.
