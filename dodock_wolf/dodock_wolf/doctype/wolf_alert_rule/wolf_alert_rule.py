@@ -25,6 +25,8 @@ class WolfAlertRule(Document):
 			frappe.throw(_("Event rules need an event type"))
 		if bool(self.active_from) != bool(self.active_to):
 			frappe.throw(_("Set both Active From and Active To, or neither"))
+		if self.active_from and conditions.to_time(self.active_from) == conditions.to_time(self.active_to):
+			frappe.throw(_("Active From and Active To are the same time: the rule would never run"))
 		for field in ("fire_after_evaluations", "resolve_after_evaluations"):
 			if cint(self.get(field)) < 1:
 				self.set(field, 1)

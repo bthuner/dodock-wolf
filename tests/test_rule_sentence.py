@@ -18,7 +18,8 @@ class TestRuleSentence(unittest.TestCase):
 		self.assertEqual(text(rule), (
 			"Opens a critical incident when the lowest disk_used_percent over the last 5 min is above 90, per host, "
 			"only for bench prod. It needs at least 3 samples in the window. It resolves by itself once the "
-			"condition no longer holds; matching again within 1 h reopens the same incident. It notifies ntfy and 2 Email."
+			"condition no longer holds; if it matches again within 1 h of being resolved, the same incident reopens. "
+			"It notifies ntfy and 2 Email."
 		))  # fmt: skip
 
 	def test_values_are_marked(self):
@@ -65,6 +66,31 @@ class TestRuleSentence(unittest.TestCase):
 		             {"signal_type": "sequence"}, {"threshold": "abc", "active_from": "22:00", "active_to": "late"}):  # fmt: skip
 			self.assertTrue(text(rule).startswith("Opens a warning incident when "))
 		self.assertIn("(no metric set)", text({}))
+
+	def test_what_the_evaluator_does_besides(self):
+		# a cooldown reopens whoever resolved the incident
+		self.assertIn("It stays open until someone resolves it; if it matches again within 30 min of being resolved, the same "
+		              "incident reopens.", text({"auto_resolve": 0, "cooldown_minutes": 30}))  # fmt: skip
+		# [from, to) is empty: the rule never runs
+		self.assertIn("It is never checked: Active From and Active To are both 02:00.",
+		              text({"active_from": "02:00:00", "active_to": "2:00"}))  # fmt: skip
+		self.assertIn("between 02:00 and 02:00:30", text({"active_from": "02:00:00", "active_to": "02:00:30"}))
+		# a pager closes its own alert even when resolutions are not sent
+		self.assertIn("It notifies PagerDuty (PagerDuty still hears when it is acknowledged or resolved).",
+		              text({"channels": [{"channel_type": "PagerDuty", "enabled": 1}], "notify_on_resolve": 0}))  # fmt: skip
+		# below critical, an hourly digest batches the messages
+		rows = [{"channel_type": "Email", "digest": "hourly"}, {"channel_type": "ntfy"}]
+		self.assertIn("It notifies Email (in the hourly digest) and ntfy", text({"channels": rows}))
+		self.assertIn("It notifies Email and ntfy", text({"channels": rows, "severity": "critical"}))
+		# Min Samples counts events for an event rule, its field hidden or not
+		self.assertIn("at least 4 distinct events", text({"signal_type": "event", "event_type": "error", "min_samples": 4}))
+		self.assertIn("over the last (no window set)", text({"window_minutes": 0}))
+
+	def test_garbage_from_a_direct_call_never_raises(self):
+		for rule in ({"window_minutes": "1e999"}, {"active_from": "1e999", "active_to": "1"}, {"channels": "x"},
+		             {"operator": [">"], "use_resolve_threshold": 1, "group_by": {}, "signal_type": ["x"]},
+		             {"channels": [None, 3]}, {"aggregation": {}, "sequence_entity": []}):  # fmt: skip
+			self.assertTrue(text(rule).startswith("Opens a warning incident when "), rule)
 
 	def test_every_preset_reads(self):
 		for preset in presets.PRESETS:

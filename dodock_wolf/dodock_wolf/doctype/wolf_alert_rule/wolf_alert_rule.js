@@ -2,14 +2,25 @@
 // For license information, please see license.txt
 
 // The rule in words (wolf/rule_sentence.py), redrawn as its fields change: each sentence is a
-// list of [text, is_value] parts, a value in bold.
+// list of [text, is_value] parts, a value in bold. Channel rows go as the three fields it reads:
+// never a secret typed in a row and not saved yet.
 function draw_sentence(frm) {
 	const field = frm.fields_dict.rule_sentence;
 	if (!field) return;
+	const doc = Object.assign({}, frm.doc);
+	for (const listname of ["channels", "escalation_channels"]) {
+		doc[listname] = (frm.doc[listname] || []).map((r) => ({
+			channel_type: r.channel_type,
+			enabled: r.enabled,
+			digest: r.digest,
+		}));
+	}
+	const seq = (frm.wolf_sentence_seq = (frm.wolf_sentence_seq || 0) + 1);
 	frappe.call({
 		method: "dodock_wolf.dodock_wolf.doctype.wolf_alert_rule.wolf_alert_rule.describe",
-		args: { doc: frm.doc },
+		args: { doc },
 	}).then(({ message }) => {
+		if (seq !== frm.wolf_sentence_seq) return; // a newer one is on its way
 		const text = (message || [])
 			.map((parts) =>
 				parts.map(([t, value]) => (value ? `<strong>${frappe.wolf.esc(t)}</strong>` : frappe.wolf.esc(t))).join("")
@@ -19,12 +30,12 @@ function draw_sentence(frm) {
 			padding: var(--padding-sm) var(--padding-md); background: var(--subtle-fg); border-radius: var(--border-radius-md);">${text}</div>`);
 	});
 }
-const draw_sentence_soon = frappe.utils.debounce(draw_sentence, 400);
 
 frappe.ui.form.on("Wolf Alert Rule", {
 	onload_post_render(frm) {
 		// every change, the channel tables' included, marks the form dirty
-		$(frm.wrapper).off("dirty.wolf_sentence").on("dirty.wolf_sentence", () => draw_sentence_soon(frm));
+		frm.wolf_draw_sentence_soon = frm.wolf_draw_sentence_soon || frappe.utils.debounce(() => draw_sentence(frm), 400);
+		$(frm.wrapper).off("dirty.wolf_sentence").on("dirty.wolf_sentence", () => frm.wolf_draw_sentence_soon());
 	},
 	refresh(frm) {
 		draw_sentence(frm);

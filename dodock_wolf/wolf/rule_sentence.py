@@ -6,6 +6,7 @@ list of `(text, is_value)` parts: a value is a field's content, shown in bold.
 """
 
 from dodock_wolf.wolf import conditions
+from dodock_wolf.wolf.channels import STATEFUL
 
 OPERATOR_WORDS = {
 	">": "above",
@@ -36,14 +37,20 @@ ENTITY_WORDS = {"ip": "IP address", "user": "user", "host": "host"}
 def _int(value, default=0):
 	try:
 		return int(float(value))
-	except (TypeError, ValueError):
+	except (TypeError, ValueError, OverflowError):
 		return default
+
+
+def _word(table, value, default):
+	"""A field's value in words: the table's, else the value itself (a form being edited may hold anything)."""
+	key = default if value in (None, "") else str(value)
+	return table.get(key, key)
 
 
 def _number(value):
 	try:
 		return conditions.format_value(float(value or 0))
-	except (TypeError, ValueError):
+	except (TypeError, ValueError, OverflowError):
 		return str(value)
 
 
@@ -77,43 +84,42 @@ def _either(values, last=" or "):
 def _hhmm(value):
 	try:
 		t = conditions.to_time(value)
-	except (TypeError, ValueError):
+	except (TypeError, ValueError, OverflowError):
 		return None
-	return t.strftime("%H:%M") if t else None
+	return t.strftime("%H:%M:%S" if t.second else "%H:%M") if t else None
 
 
 def _condition(rule):
 	"""What is measured and when it breaches, as parts."""
-	op = rule.get("operator") or ">"
 	threshold = _number(rule.get("threshold"))
-	compare = [(" is ", False), (OPERATOR_WORDS.get(op, op), True), (" ", False), (threshold, True)]
-	window = [(" over the last ", False), (_minutes(rule.get("window_minutes") or 5), True)]
-	kind = rule.get("signal_type") or "metric"
+	compare = [(" is ", False), (_word(OPERATOR_WORDS, rule.get("operator"), ">"), True), (" ", False), (threshold, True)]
+	window_minutes = 5 if rule.get("window_minutes") is None else _int(rule.get("window_minutes"))  # the DocType default
+	window = [(" over the last ", False), (_minutes(window_minutes) if window_minutes >= 1 else "(no window set)", True)]
+	kind = _kind(rule)
 	if kind == "metric":
-		aggregation = rule.get("aggregation") or "avg"
-		metric = rule.get("metric_name") or "(no metric set)"
-		parts = [(AGGREGATION_WORDS.get(aggregation, aggregation), True), (" ", False), (metric, True)]
+		metric = str(rule.get("metric_name") or "(no metric set)")
+		parts = [(_word(AGGREGATION_WORDS, rule.get("aggregation"), "avg"), True), (" ", False), (metric, True)]
 		return parts + window + compare
 	if kind == "sequence":
 		first, then = _lines(rule.get("first_categories")), _lines(rule.get("then_categories"))
-		entity = ENTITY_WORDS.get(rule.get("sequence_entity") or "ip", rule.get("sequence_entity"))
+		entity = _word(ENTITY_WORDS, rule.get("sequence_entity"), "ip")
 		parts = [("the same ", False), (entity, True), (" sets off ", False)]
 		parts += _either(first) if first else [("(no first category set)", True)]
 		if rule.get("first_min_severity"):
 			worse = "" if rule["first_min_severity"] == "critical" else " or worse"
-			parts += [(" (", False), (rule["first_min_severity"], True), (f"{worse})", False)]
+			parts += [(" (", False), (str(rule["first_min_severity"]), True), (f"{worse})", False)]
 		parts += [(" and then ", False)]
 		parts += _either(then) if then else [("(no then category set)", True)]
 		parts += [(" within ", False), (_minutes(rule.get("sequence_minutes") or 60), True), (" of it", False)]
 		parts += [(", and the number of times it happens", False)] + window + compare
 		return parts
-	event = rule.get("event_type") or "(no event type set)"
+	event = str(rule.get("event_type") or "(no event type set)")
 	parts = [("the number of ", False), (event, True), (" events", False)]
 	if rule.get("event_category"):
-		parts += [(" of category ", False), (rule["event_category"], True)]
+		parts += [(" of category ", False), (str(rule["event_category"]), True)]
 	if rule.get("min_severity"):
 		worse = "" if rule["min_severity"] == "critical" else " or worse"
-		parts += [(" at ", False), (rule["min_severity"], True), (f" severity{worse}", False)]
+		parts += [(" at ", False), (str(rule["min_severity"]), True), (f" severity{worse}", False)]
 	return parts + window + compare
 
 
@@ -121,18 +127,31 @@ def _scope(rule):
 	parts = []
 	for field, word in (("filter_host", "host"), ("filter_bench", "bench"), ("filter_site", "site")):
 		if rule.get(field):
-			parts += [(", " if parts else "", False), (word + " ", False), (rule[field], True)]
+			parts += [(", " if parts else "", False), (word + " ", False), (str(rule[field]), True)]
 	return parts
 
 
-def _channels(rows):
-	"""'ntfy and 2 Email' style: the enabled channels by type."""
+def _rows(value):
+	return [row for row in value if isinstance(row, dict)] if isinstance(value, list) else []
+
+
+def _channels(rows, severity):
+	"""'ntfy and 2 Email' style: the enabled channels by type, those batched into the hourly digest
+	(below critical, conditions.should_digest) apart."""
 	counts = {}
-	for row in rows or []:
+	for row in rows:
 		if _int(row.get("enabled"), 1) and row.get("channel_type"):
-			counts[row["channel_type"]] = counts.get(row["channel_type"], 0) + 1
-	names = [f"{n} {kind}" if n > 1 else kind for kind, n in counts.items()]
-	return names, sum(counts.values()), len(rows or [])
+			hourly = row.get("digest") == "hourly" and severity != "critical"
+			key = (str(row["channel_type"]), hourly)
+			counts[key] = counts.get(key, 0) + 1
+	names = [(f"{n} {kind}" if n > 1 else kind) + (" (in the hourly digest)" if hourly else "") for (kind, hourly), n in counts.items()]
+	stateful = sorted({kind for kind, _hourly in counts if kind in STATEFUL})
+	return names, sum(counts.values()), stateful
+
+
+def _kind(rule):
+	kind = str(rule.get("signal_type") or "metric")
+	return kind if kind in ("metric", "event", "sequence") else "metric"
 
 
 def describe(rule):
@@ -140,10 +159,11 @@ def describe(rule):
 	sentences = []
 	enabled = _int(rule.get("enabled"), 1)
 	opening = "Opens" if enabled else "Disabled: would open"
-	head = [(opening + " a ", False), (rule.get("severity") or "warning", True), (" incident when ", False)]
+	severity = str(rule.get("severity") or "warning")
+	head = [(opening + " a ", False), (severity, True), (" incident when ", False)]
 	head += _condition(rule)
-	if (rule.get("signal_type") or "metric") != "sequence":
-		head += [(", ", False), (GROUP_WORDS.get(rule.get("group_by") or "none", rule.get("group_by")), True)]
+	if _kind(rule) != "sequence":
+		head += [(", ", False), (_word(GROUP_WORDS, rule.get("group_by"), "none"), True)]
 	scope = _scope(rule)
 	if scope:
 		head += [(", only for ", False)] + scope
@@ -151,10 +171,13 @@ def describe(rule):
 
 	when = []
 	min_samples = _int(rule.get("min_samples"), 1)
-	if (rule.get("signal_type") or "metric") == "metric" and min_samples > 1:
-		when.append([("It needs at least ", False), (str(min_samples), True), (" samples in the window.", False)])
+	if min_samples > 1:  # the evaluator applies it to every kind (rules.evaluate)
+		counted = {"metric": "samples", "event": "distinct events", "sequence": "occurrences"}[_kind(rule)]
+		when.append([("It needs at least ", False), (str(min_samples), True), (f" {counted} in the window.", False)])
 	start, end = _hhmm(rule.get("active_from")), _hhmm(rule.get("active_to"))
-	if start and end:
+	if start and end and start == end:  # [from, to) is empty: conditions.in_active_window
+		when.append([("It is never checked: Active From and Active To are both ", False), (start, True), (".", False)])
+	elif start and end:
 		wrap = " (over midnight)" if start > end else ""
 		when.append([("It is checked only between ", False), (start, True), (" and ", False), (end, True),
 		             (f"{wrap}, server time.", False)])  # fmt: skip
@@ -170,7 +193,7 @@ def describe(rule):
 	if _int(rule.get("auto_resolve"), 1):
 		resolve = [("It resolves by itself", False)]
 		if _int(rule.get("use_resolve_threshold")):
-			op = rule.get("operator") or ">"
+			op = str(rule.get("operator") or ">")
 			back = {">": "<=", ">=": "<", "<": ">=", "<=": ">"}.get(op)
 			if back:
 				resolve += [(" once the value is ", False), (OPERATOR_WORDS[back], True), (" ", False),
@@ -180,26 +203,29 @@ def describe(rule):
 		resolve_after = max(_int(rule.get("resolve_after_evaluations"), 1), 1)
 		if resolve_after > 1:
 			resolve += [(" for ", False), (f"{resolve_after} evaluations", True), (" in a row", False)]
-		cooldown = _int(rule.get("cooldown_minutes"))
-		if cooldown > 0:
-			resolve += [("; matching again within ", False), (_minutes(cooldown), True),
-			            (" reopens the same incident", False)]  # fmt: skip
-		sentences.append(resolve + [(".", False)])
 	else:
-		sentences.append([("It stays open until someone resolves it.", False)])
+		resolve = [("It stays open until someone resolves it", False)]
+	cooldown = _int(rule.get("cooldown_minutes"))
+	if cooldown > 0:  # whoever resolved it (incidents.open_incident)
+		resolve += [("; if it matches again within ", False), (_minutes(cooldown), True),
+		            (" of being resolved, the same incident reopens", False)]  # fmt: skip
+	sentences.append(resolve + [(".", False)])
 
-	names, enabled_count, total = _channels(rule.get("channels"))
+	channels = _rows(rule.get("channels"))
+	names, enabled_count, stateful = _channels(channels, severity)
 	if enabled_count:
 		notify = [("It notifies ", False)] + _either(names, " and ")
 		if _int(rule.get("notify_on_resolve"), 1):
 			notify += [(", and again when it resolves", False)]
-	elif total:
+		elif stateful:  # they close their own alert (rules.evaluate, notify.on_status_change)
+			notify += [(" (", False)] + _either(stateful, " and ") + [(" still hears when it is acknowledged or resolved)", False)]
+	elif channels:
 		notify = [("Its channels are all disabled: it notifies nobody", False)]
 	else:
 		notify = [("It notifies nobody: the incident shows in Wolf only", False)]
 	sentences.append(notify + [(".", False)])
 	escalate = _int(rule.get("escalate_after_minutes"))
-	esc_names, esc_count, _ = _channels(rule.get("escalation_channels"))
+	esc_names, esc_count, _ = _channels(_rows(rule.get("escalation_channels")), severity)
 	if escalate > 0 and esc_count:
 		sentences.append([("Not acknowledged after ", False), (_minutes(escalate), True), (", it also notifies ", False)]
 		                 + _either(esc_names, " and ") + [(".", False)])  # fmt: skip
