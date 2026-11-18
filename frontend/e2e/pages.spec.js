@@ -27,6 +27,9 @@ function watchConsole(page) {
 }
 
 async function axe(page) {
+  // colours read mid-transition fail contrast at random (a button fading to its enabled colour on
+  // a slow runner): measure what stays on screen
+  await page.addStyleTag({ content: '*, *::before, *::after { transition: none !important; animation: none !important; }' })
   const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()
   return result.violations
     .filter((v) => v.impact === 'serious' || v.impact === 'critical')
