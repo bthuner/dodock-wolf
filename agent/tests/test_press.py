@@ -495,6 +495,17 @@ class TestPressJobs(PressCase):
 		self.assertIn("OperationalError", events[0]["payload"]["traceback"])
 		self.assertEqual(w.poll(NOW), [])
 
+	def test_new_bench_on_shared_fs(self):
+		# Press's link_benches_to_nfs role: /home/frappe/shared is a link to the benches folder, and the
+		# Press agent's jobs now run there, before Wolf's saved folder is refreshed
+		shared = os.path.join(self.tmp.name, "home", "frappe", "shared")
+		os.symlink(self.press.benches_dir, shared)
+		w = self.watcher(known=lambda: set())
+		self.assertEqual(w.poll(NOW), [])  # baseline
+		jid = self.press.add_job("New Bench", "Success", None, start=NOW - timedelta(seconds=20), end=NOW)
+		self.press.add_step(jid, "Initialize Bench", "Success", {"command": "docker run ...", "directory": os.path.join(shared, "bench-0001-000007-f1")})
+		self.assertEqual([e["bench"] for e in w.poll(NOW)], ["bench-0001-000007-f1"])
+
 	def test_finished_jobs_land_on_the_bench_their_last_step_ran_in(self):
 		# what dev/press recorded: both jobs ended between two polls, their data `null`
 		old = self.press.add_bench("bench-0001-000001-f1", sites=("w.frappe.cloud",))
