@@ -372,7 +372,7 @@ class TestProcesses(unittest.TestCase):
 			return SimpleNamespace(returncode=3, stdout=out or "", stderr="")
 
 		return processes.ProcessWatcher("h1", manager, which=lambda n: f"/usr/bin/{n}" if n in outputs else None, run=run,
-		                                read_export=lambda name: exports.get(name))  # fmt: skip
+		                                read_export=lambda name, path=None: exports.get(name))  # fmt: skip
 
 	def test_supervisor(self):
 		w = self.watcher({"supervisorctl": SUPERVISOR_OUT})

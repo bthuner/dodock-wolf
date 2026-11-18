@@ -133,7 +133,7 @@ class ProcessWatcher:
 		for bench in benches:
 			if bench.get("platform") != "pilot":
 				continue
-			data = self.read_export(bench["name"]) or {}
+			data = self.read_export(bench["name"], path=bench.get("path")) or {}
 			for unit in data.get("units") or []:
 				if isinstance(unit, dict) and unit.get("unit"):
 					state = "auto-restart" if unit.get("active") == "activating" and unit.get("sub") == "auto-restart" else unit.get("active")

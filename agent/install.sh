@@ -94,18 +94,24 @@ done
 if [[ "$PILOT" == 1 ]]; then
 	echo "==> Frappe Pilot host: installing wolf-pilot-export (root, every 20 s)"
 	fetched=$(mktemp -d)
+	got=1
 	for file in wolf-pilot-export wolf-pilot-export.service wolf-pilot-export.timer; do
 		if [[ -f "$SCRIPT_DIR/pyproject.toml" && -f "$SCRIPT_DIR/$file" ]]; then  # a checkout, not the current folder
 			cp "$SCRIPT_DIR/$file" "$fetched/$file"
-		else
-			curl -fsSL "https://raw.githubusercontent.com/bthuner/dodock-wolf/$REF/agent/$file" -o "$fetched/$file"
+		elif ! curl -fsSL "https://raw.githubusercontent.com/bthuner/dodock-wolf/$REF/agent/$file" -o "$fetched/$file"; then
+			got=0
 		fi
 	done
-	install -m 0755 -o root -g root "$fetched/wolf-pilot-export" /usr/local/sbin/wolf-pilot-export
-	install -m 0644 "$fetched/wolf-pilot-export.service" /etc/systemd/system/wolf-pilot-export.service
-	install -m 0644 "$fetched/wolf-pilot-export.timer" /etc/systemd/system/wolf-pilot-export.timer
+	if [[ "$got" == 1 ]]; then
+		install -m 0755 -o root -g root "$fetched/wolf-pilot-export" /usr/local/sbin/wolf-pilot-export
+		install -m 0644 "$fetched/wolf-pilot-export.service" /etc/systemd/system/wolf-pilot-export.service
+		install -m 0644 "$fetched/wolf-pilot-export.timer" /etc/systemd/system/wolf-pilot-export.timer
+		/usr/local/sbin/wolf-pilot-export || echo "wolf-pilot-export failed: Pilot tasks and process states wait for its timer" >&2
+	else
+		echo "could not download wolf-pilot-export: Pilot tasks and process states are unavailable until install.sh runs again" >&2
+		PILOT=0
+	fi
 	rm -r "$fetched"
-	/usr/local/sbin/wolf-pilot-export || echo "wolf-pilot-export failed: Pilot tasks and process states wait for its timer" >&2
 fi
 
 if ! command -v systemctl >/dev/null || [[ ! -d /run/systemd/system ]]; then

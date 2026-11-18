@@ -26,16 +26,21 @@ import json
 import os
 import pwd
 import re
+import select
+import signal
 import stat
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import datetime, timezone
 
 OUT = "/var/lib/wolf-pilot-export"  # root-owned: the agent reads it, cannot swap it
 BENCHES = "/home/*/pilot/benches/*"
 MAX_TASKS = 100
 MAX_FILE = 256 * 1024  # bytes read from one meta.json or status file
+MAX_OUTPUT = 8 * 1024 * 1024  # what the reading child may send back
+CHILD_SECONDS = 10
 SAFE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 TASK_FIELDS = ("task_id", "command", "queued_at", "started_at", "finished_at", "exit_code")
 
@@ -44,7 +49,7 @@ def _read(path, binary=False):
 	"""A regular file, at most MAX_FILE bytes (a FIFO or a huge file is no task)."""
 	fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
 	try:
-		if not os.path.isfile(f"/proc/self/fd/{fd}"):
+		if not stat.S_ISREG(os.fstat(fd).st_mode):
 			raise OSError("not a regular file")
 		data = os.read(fd, MAX_FILE + 1)
 	finally:
@@ -131,6 +136,7 @@ def as_bench_user(uid, gid, read):
 	if pid == 0:  # the child: drop to the bench user for good, then read
 		os.close(rfd)
 		code = 0
+		signal.alarm(CHILD_SECONDS)  # a read stuck on a mount the bench user made
 		try:
 			os.setgroups([])
 			os.setresgid(gid, gid, gid)
@@ -141,13 +147,30 @@ def as_bench_user(uid, gid, read):
 			code = 1
 		os._exit(code)
 	os.close(wfd)
-	with os.fdopen(rfd) as pipe:
-		text = pipe.read(MAX_TASKS * 2 * MAX_FILE)
-	_, status = os.waitpid(pid, 0)
-	if status != 0:
+	chunks, size, deadline = [], 0, time.monotonic() + CHILD_SECONDS + 5
+	with os.fdopen(rfd, "rb", buffering=0) as pipe:
+		while size <= MAX_OUTPUT:
+			left = deadline - time.monotonic()
+			if left <= 0 or not select.select([pipe], [], [], left)[0]:
+				break  # too slow: given up below
+			chunk = pipe.read(65536)
+			if not chunk:
+				break
+			chunks.append(chunk)
+			size += len(chunk)
+	while True:  # the child exits right after closing the pipe: wait for it, up to the deadline
+		done, status = os.waitpid(pid, os.WNOHANG)
+		if done or time.monotonic() >= deadline:
+			break
+		time.sleep(0.01)
+	if not done:
+		os.kill(pid, signal.SIGKILL)
+		os.waitpid(pid, 0)
+		return None
+	if status != 0 or size > MAX_OUTPUT:
 		return None
 	try:
-		return json.loads(text)
+		return json.loads(b"".join(chunks))
 	except ValueError:
 		return None
 
@@ -169,11 +192,9 @@ def write(path, data, gid):
 
 def export_bench(path, now, out, gid):
 	"""Write one bench's export; the name of the file written, or None."""
-	if not os.path.isfile(os.path.join(path, "bench.toml")):
-		return None
-	st = os.stat(path)
-	if st.st_uid == 0:
-		return None  # a bench is a non-root user's
+	st = os.lstat(path)
+	if not stat.S_ISDIR(st.st_mode) or st.st_uid == 0:
+		return None  # a link to someone else's folder, or root's: no bench of a bench user
 	read = as_bench_user(st.st_uid, st.st_gid, lambda: {"name": bench_name(path), "tasks": tasks(path)})
 	folder = os.path.basename(path.rstrip("/"))
 	# the name Pilot gives its units, which must be the folder's (Pilot creates benches/<name>):
@@ -181,9 +202,13 @@ def export_bench(path, now, out, gid):
 	if not read or read.get("name") != folder or not SAFE_NAME.match(folder) or not isinstance(read.get("tasks"), list):
 		return None
 	try:
-		user = pwd.getpwuid(st.st_uid).pw_name
+		entry = pwd.getpwuid(st.st_uid)
 	except KeyError:
-		user = None
+		entry = None
+	user = entry.pw_name if entry else None
+	# a bench in /home/<user>/pilot/benches/ is that user's: another user's folder there is refused
+	if entry and path.startswith("/home/") and not path.startswith(entry.pw_dir.rstrip("/") + "/"):
+		return None
 	data = {"generated_at": now, "bench": folder, "path": path, "user": user, "tasks": read["tasks"],
 	        "units": units(user, folder) if user else None}  # fmt: skip
 	write(os.path.join(out, f"{folder}.json"), data, gid)
@@ -207,8 +232,15 @@ def main():
 		os.chown(opts.out, 0, gid)
 	os.chmod(opts.out, 0o750)
 	now = datetime.now(timezone.utc).isoformat()
-	seen, failed = set(), 0
+	written, kept, failed = set(), set(), 0
 	for path in sorted(glob.glob(opts.root)):
+		folder = os.path.basename(path.rstrip("/"))
+		if not os.path.isfile(os.path.join(path, "bench.toml")):
+			continue
+		kept.add(f"{folder}.json")  # a bench still there keeps its last copy until it goes stale
+		if f"{folder}.json" in written:
+			print(f"wolf-pilot-export: {path}: another bench is already called {folder}", file=sys.stderr)
+			continue
 		try:
 			name = export_bench(path, now, opts.out, gid)
 		except Exception as e:  # one odd bench must not stop the others
@@ -216,9 +248,9 @@ def main():
 			print(f"wolf-pilot-export: {path}: {type(e).__name__}: {e}", file=sys.stderr)
 			continue
 		if name:
-			seen.add(name)
-	for old in os.listdir(opts.out):  # a bench that was dropped
-		if old.endswith(".json") and old not in seen:
+			written.add(name)
+	for old in os.listdir(opts.out):
+		if old.startswith(".export-") or (old.endswith(".json") and old not in kept):  # a killed run's, a dropped bench's
 			os.unlink(os.path.join(opts.out, old))
 	return 1 if failed else 0
 

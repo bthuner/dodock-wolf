@@ -143,10 +143,13 @@ def describe(path, toml):
 	return info
 
 
-def read_export(bench_name, export_dir=EXPORT_DIR, now=None):
-	"""wolf-pilot-export's file for a bench, or None when missing, unreadable or older than
-	EXPORT_MAX_AGE (the helper stopped: better nothing than stale states)."""
+def read_export(bench_name, export_dir=EXPORT_DIR, now=None, path=None):
+	"""wolf-pilot-export's file for a bench, or None when missing, unreadable, about another
+	folder than `path`, or older than EXPORT_MAX_AGE (the helper stopped: better nothing than
+	stale states)."""
 	data = _load_json(os.path.join(export_dir, f"{bench_name}.json"))
+	if path and os.path.normpath(str(data.get("path") or "")) != os.path.normpath(path):
+		return None
 	generated = _parse_iso(data.get("generated_at"))
 	now = now or datetime.now(timezone.utc)
 	if not generated or now - generated > EXPORT_MAX_AGE:
@@ -303,7 +306,7 @@ class PilotTaskWatcher:
 		return tasks
 
 	def _from_export(self):
-		data = read_export(self.bench, self.export_dir)
+		data = read_export(self.bench, self.export_dir, path=self.path)
 		if not data or not isinstance(data.get("tasks"), list):
 			raise PilotUnavailable(f"no recent wolf-pilot-export file in {self.export_dir}")
 		return [t for t in data["tasks"] if isinstance(t, dict) and t.get("command")]

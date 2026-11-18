@@ -244,7 +244,7 @@ class TestPilotTasks(unittest.TestCase):
 		bench = dict(self.bench, path=os.path.join(self.tmp.name, "unreadable"))
 		task = {"task_id": "20261118-130233-f22023", "command": "migrate", "status": "running",
 		        "started_at": iso(NOW - timedelta(minutes=1)), "args": {"site": "a.example.test"}}  # fmt: skip
-		write(os.path.join(export, "systemd-prod.json"), json.dumps({"generated_at": iso(NOW), "tasks": [task]}))
+		write(os.path.join(export, "systemd-prod.json"), json.dumps({"generated_at": iso(NOW), "path": bench["path"], "tasks": [task]}))
 		w = pilot.PilotTaskWatcher("h", bench, state_path=self.state, export_dir=export, api_url="http://127.0.0.1:9", jwt_secret=SECRET)
 		with unittest.mock.patch.object(w, "_from_api", side_effect=AssertionError("Admin API called")), \
 				unittest.mock.patch.object(pilot, "datetime", wraps=datetime) as clock:  # fmt: skip
@@ -253,6 +253,8 @@ class TestPilotTasks(unittest.TestCase):
 		self.assertEqual([(e["payload"]["pilot_command"], e["site"]) for e in events], [("migrate", "a.example.test")])
 		# the helper stopped: an old copy is no source (the API, when it answers, is the last one)
 		self.assertIsNone(pilot.read_export("systemd-prod", export, now=NOW + timedelta(minutes=6)))
+		# another bench's copy under this name (a folder of the same name elsewhere) is not this bench's
+		self.assertIsNone(pilot.read_export("systemd-prod", export, now=NOW, path="/home/other/pilot/benches/systemd-prod"))
 
 	def test_static_token_preferred(self):
 		w = self.watcher(api_url="http://127.0.0.1:9", token="tok", jwt_secret=SECRET)
@@ -335,4 +337,39 @@ class TestPilotExportHelper(unittest.TestCase):
 				self.assertIn(os.listdir(out), ([], ["systemd-prod.json"]))
 			else:
 				self.assertEqual(os.listdir(out), [], "a bench whose name is not its folder's is skipped")
+
+	def helper(self):
+		import runpy
+
+		return runpy.run_path(os.path.join(os.path.dirname(__file__), "..", "wolf-pilot-export"))
+
+	@unittest.skipUnless(os.geteuid() == 0, "the child that drops to the bench user runs as root")
+	def test_a_stuck_reading_child_is_killed(self):
+		import time
+
+		h = self.helper()
+		h["as_bench_user"].__globals__["CHILD_SECONDS"] = 1
+		started = time.monotonic()
+		self.assertIsNone(h["as_bench_user"](4242, 4242, lambda: time.sleep(60)))
+		self.assertLess(time.monotonic() - started, 15)
+		self.assertEqual(h["as_bench_user"](4242, 4242, lambda: {"ok": os.getuid()}), {"ok": 4242})
+
+	def test_a_skipped_bench_keeps_its_last_copy(self):
+		import subprocess
+
+		with tempfile.TemporaryDirectory() as tmp:
+			make_pilot_bench(tmp)
+			self.own(tmp)
+			out = os.path.join(tmp, "out")
+			helper = os.path.join(os.path.dirname(__file__), "..", "wolf-pilot-export")
+			args = [sys.executable, helper, "--root", os.path.join(tmp, "home", "*", "pilot", "benches", "*"), "--out", out]
+			subprocess.run(args, check=True, capture_output=True)
+			bench = os.path.join(tmp, "home", "frappe", "pilot", "benches", "systemd-prod")
+			with open(os.path.join(bench, "bench.toml"), "a") as f:
+				f.write("\n[bench\n")  # broken for a moment, as during an edit
+			subprocess.run(args, capture_output=True)
+			self.assertEqual(os.listdir(out), ["systemd-prod.json"], "the last good copy stays until it goes stale")
+			os.remove(os.path.join(bench, "bench.toml"))
+			subprocess.run(args, capture_output=True)
+			self.assertEqual(os.listdir(out), [], "a bench that is gone loses its copy")
 
