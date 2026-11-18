@@ -118,6 +118,9 @@ class TestCollectorEndToEnd(unittest.TestCase):
 				}
 			],
 			"extra_logs": [],
+			# the exposure check reads this machine's real listening sockets (a service on 0.0.0.0:8000
+			# looks like an exposed gunicorn): not what is tested here, see test_exposure.py
+			"exposure": {"enabled": False},
 			"auth_log": self.auth,
 			"collect_host_metrics": False,
 			"tls": False,

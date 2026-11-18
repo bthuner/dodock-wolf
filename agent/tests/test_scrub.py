@@ -211,6 +211,8 @@ class TestCollectorScrubs(unittest.TestCase):
 			cfg = {
 				"hostname": "bench-01", "benches": [], "auth_log": False, "collect_host_metrics": False,
 				"platform": "generic", "extra_logs": [{"path": path, "parser": "traceback"}],
+				# the exposure check reads this machine's real listening sockets: not what is tested here
+				"exposure": {"enabled": False},
 			}
 			if scrub is not None:
 				cfg["scrub"] = scrub
