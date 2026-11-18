@@ -101,6 +101,12 @@ not applied.
 
 ### Set up
 
+<note>
+
+An agent installed before this fix has `NoNewPrivileges=yes` in `/etc/systemd/system/wolf-agent.service`, which stops `sudo`: no block ever ran. Re-run `install.sh`, or delete that line, then `systemctl daemon-reload && systemctl restart wolf-agent`.
+
+</note>
+
 <tabs>
 <tabs-item label="nftables">
 
@@ -129,6 +135,7 @@ Where fail2ban already manages the firewall, `wolf-block-fail2ban` bans in a jai
 ```bash [host]
 cp agent/fail2ban/wolf.local /etc/fail2ban/jail.d/wolf.local && fail2ban-client reload
 install -m 0755 -o root -g root agent/wolf-block-fail2ban.sh /usr/local/sbin/wolf-block-fail2ban
+install -d -m 0700 /var/lib/wolf-block   # the expiries; writable from the agent's unit
 echo 'wolf-agent ALL=(root) NOPASSWD: /usr/local/sbin/wolf-block-fail2ban' > /etc/sudoers.d/wolf-block
 chmod 0440 /etc/sudoers.d/wolf-block
 # reboots lose the scheduled unbans: sweep the expired ones every 5 minutes
