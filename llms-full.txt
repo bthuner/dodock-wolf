@@ -150,6 +150,12 @@ See [Channels](https://bthuner.github.io/dodock-wolf/alerts/channels) for Slack,
 
 Go to `https://wolf.example.com/wolf`. The overview lists hosts, benches and sites with their
 latest metrics and open incidents. Within a minute of the first push, the host shows up.
+
+To look at one moment, select a range on the **HTTP responses** chart: drag across it, or click
+its first and last point (with the keyboard: arrow keys, then Enter twice). The chart, the
+figures under **In this window** and the Events and Errors pages opened from them then cover
+that range. The figures under **Now**, the signals and the list of hosts always show the present.
+**Back to a relative window** returns to the last 24 hours.
 ::
 
 ## Mark your deployments
@@ -4244,6 +4250,11 @@ Every response that reads a window returns what it actually read, in UTC:
 
 `time_zone` is the site's. Stored times are in that zone. The UI converts with it, never with the
 browser's zone.
+
+In the Wolf UI, the window is in the URL (`?range=7d` or `?since=…&until=…`). A range selected on
+the HTTP chart of a dashboard, or on the chart of the metrics explorer, becomes an explicit
+`since`/`until`: the dashboard's counts and chart, and the event and error explorers opened from
+it, are read with it. **Back to a relative window** drops it.
 
 ### Scope
 
