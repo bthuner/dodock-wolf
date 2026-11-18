@@ -101,7 +101,8 @@ and `dev/pilot/` for a Pilot host to test on.
   -t sshd-session -t sudo -t useradd -t usermod -t gpasswd`): failed SSH logins aggregated per
   source IP, root logins, a successful login from an address that failed 5+ times in the hour
   before (`ssh_login_after_failures`, critical), failed sudo attempts and users outside
-  sudoers (`sudo_failure`), new local accounts (`account_created`) and users added to `sudo`,
+  sudoers (`sudo_failure`), new local accounts (`account_created`; a package's service account,
+  system UID and no login shell, is `service_account_created` at info) and users added to `sudo`,
   `wheel`, `admin`, `root`, `adm`, `docker` or `lxd` (`admin_group_change`, critical).
 - **Redis / RQ** (the bench's `redis_queue`): `queue_length` for every `rq:queue:*` list;
   `rq_failed_jobs` (failed-job registry size) and `rq_failed_jobs_added` (its increase per push);

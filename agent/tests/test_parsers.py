@@ -486,6 +486,27 @@ class TestAuthSecurity(unittest.TestCase):
 		self.assertEqual(events["sudo_failure"]["timestamp"], "2026-10-29T02:00:09Z")
 		self.assertEqual(events["ssh_failed_login"]["timestamp"], "2026-10-29T02:00:10Z")
 
+	def test_service_account_from_a_package(self):
+		# what `apt install openssh-server` logs (Debian 12, dev/pilot): no shell to log in with
+		parser = auth.AuthParser("h")
+		parser.feed("2026-11-18T17:16:02+0000 h useradd[17001]: new user: name=sshd, UID=101, GID=65534, home=/run/sshd, "
+		            "shell=/usr/sbin/nologin, from=none")  # fmt: skip
+		parser.feed("Oct 29 02:00:01 h useradd[42]: new user: name=svc, UID=998, GID=998, home=/, shell=/bin/false, from=none")
+		# a system UID with a shell, a second root, a login account: still account_created
+		parser.feed("Oct 29 02:00:02 h useradd[43]: new user: name=sysbash, UID=997, GID=997, home=/, shell=/bin/bash, from=none")
+		parser.feed("Oct 29 02:00:03 h useradd[44]: new user: name=toor, UID=0, GID=0, home=/root, shell=/usr/sbin/nologin, from=none")
+		parser.feed("Oct 29 02:00:04 h useradd[45]: new user: name=alice, UID=1001, GID=1001, home=/home/alice, shell=/usr/sbin/nologin, from=none")
+		parser.feed("Oct 29 02:00:05 h useradd[46]: new user: name=old, UID=996")  # no shell logged: unknown, alerts
+		events = {e["payload"]["users"][0]: e for e in parser.drain(NOW)[1]}
+		got = {u: (e["category"], e["severity"]) for u, e in events.items()}
+		self.assertEqual(got, {
+			"sshd": ("service_account_created", "info"), "svc": ("service_account_created", "info"),
+			"sysbash": ("account_created", "warning"), "toor": ("account_created", "warning"),
+			"alice": ("account_created", "warning"), "old": ("account_created", "warning"),
+		})  # fmt: skip
+		self.assertEqual(events["sshd"]["title"], "New service account sshd (no login shell)")
+		self.assertEqual((events["sshd"]["payload"]["uid"], events["sshd"]["payload"]["shell"]), (101, "/usr/sbin/nologin"))
+
 	def test_account_and_admin_group(self):
 		parser = auth.AuthParser("bench-01")
 		parser.feed("Oct 29 02:00:01 h useradd[42]: new user: name=backdoor, UID=1001, GID=1001, home=/home/backdoor, "

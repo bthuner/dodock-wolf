@@ -146,7 +146,9 @@ logs the agent already tails):
 - `ssh_login_after_failures` (critical): a successful login from an address that failed 5 or
   more times in the hour before. Failure counts survive push intervals.
 - `sudo_failure`: wrong sudo passwords and users outside sudoers.
-- `account_created`: a `useradd` creates an account.
+- `account_created`: a `useradd` creates an account. A package's service account (system UID
+  1-999, `nologin`/`false` shell) is `service_account_created` at info, with no preset: no one
+  logs in with it, and each package install that adds a service user would alert.
 - `admin_group_change` (critical): a user is added to `sudo`, `wheel`, `admin`, `root`, `adm`,
   `docker` or `lxd`.
 - The journal follower now reads `sshd`, `sshd-session` (OpenSSH 9.8+), `sudo` and the
@@ -625,6 +627,7 @@ Wolf alone stays fully supported.
 | `ssh_login_after_failures` | agent (auth) | T1110, T1078 |
 | `sudo_failure` | agent (auth) | T1548.003 Sudo and Sudo Caching |
 | `account_created` | agent (auth) | T1136.001 Create Local Account |
+| `service_account_created` | agent (auth) | T1136.001 Create Local Account |
 | `admin_group_change` | agent (auth) | T1098 Account Manipulation |
 | `web_attack_probe` | agent (nginx) | T1595.003, plus the technique of each rule hit (T1190, T1189, T1552, T1595.002 for scanners and edge appliances, T1110 for bursts on Frappe's account endpoints…) |
 | `web_sensitive_file_exposed` | agent (nginx) | T1552.001 Credentials In Files |

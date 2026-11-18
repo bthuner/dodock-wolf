@@ -31,7 +31,7 @@ DETECTORS = {
 	"host": {
 		"setting": "host_detection_mode",
 		"own": ("ssh_failed_login", "ssh_root_login", "ssh_login_after_failures", "sudo_failure", "account_created",
-		        "admin_group_change"),  # fmt: skip
+		        "service_account_created", "admin_group_change"),  # fmt: skip
 		"external": ("hids_alert",),
 	},
 }

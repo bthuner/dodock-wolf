@@ -5,7 +5,9 @@ login from an address that failed `BRUTE_FORCE_MIN_FAILURES` times in the last h
 (`ssh_login_after_failures`: the brute force probably worked).
 sudo: wrong passwords and users outside sudoers (`sudo_failure`).
 shadow-utils: new accounts (`account_created`) and users added to an admin group
-(`admin_group_change`), the classic persistence and privilege escalation steps.
+(`admin_group_change`), the classic persistence and privilege escalation steps. A service account a
+package adds (a system UID, 1-999, and a no-login shell: nologin or false) is `service_account_created`,
+at info: no one can log in with it, and every package install that adds a service user would alert.
 """
 
 import re
@@ -25,7 +27,11 @@ _SUDO_INCORRECT_RE = re.compile(r"sudo(?:\[\d+\])?:\s+(?P<user>\S+) : (?P<n>\d+)
 _SUDO_NOT_ALLOWED_RE = re.compile(
 	r"sudo(?:\[\d+\])?:\s+(?P<user>\S+) : (?:user NOT in sudoers|command not allowed)"
 )
-_USERADD_RE = re.compile(r"useradd(?:\[\d+\])?: new user: name=(?P<user>[^,\s]+)(?:, UID=(?P<uid>\d+))?")
+_USERADD_RE = re.compile(
+	r"useradd(?:\[\d+\])?: new user: name=(?P<user>[^,\s]+)(?:, UID=(?P<uid>\d+))?(?:.*?, shell=(?P<shell>[^,\s]+))?"
+)
+NO_LOGIN_SHELLS = ("nologin", "false")
+SYSTEM_UID_MAX = 999  # UID_MIN is 1000 on Debian, Ubuntu and RHEL (login.defs)
 _GROUP_ADD_RE = re.compile(
 	r"(?:usermod|gpasswd)(?:\[\d+\])?: (?:add '(?P<user>[^']+)' to (?:shadow )?group '(?P<group>[^']+)'|"
 	r"user (?P<user2>\S+) added by \S+ to group (?P<group2>\S+))"
@@ -45,6 +51,7 @@ _KINDS = {
 	"ssh_login_after_failures": ("critical", "T1110"),
 	"sudo_failure": ("warning", "T1548.003"),
 	"account_created": ("warning", "T1136.001"),
+	"service_account_created": ("info", "T1136.001"),
 	"admin_group_change": ("critical", "T1098"),
 }
 
@@ -76,9 +83,13 @@ def parse_line(line):
 
 	m = _USERADD_RE.search(line)
 	if m:
+		uid = int(m.group("uid")) if m.group("uid") else None
+		shell = m.group("shell")
+		# UID 0 (a second root) or any account with a shell to log in with stays account_created
+		service = uid is not None and 0 < uid <= SYSTEM_UID_MAX and bool(shell) and shell.rsplit("/", 1)[-1] in NO_LOGIN_SHELLS
 		return {
-			"kind": "account_created", "ip": None, "user": m.group("user"), "count": 1, "timestamp": ts,
-			"uid": int(m.group("uid")) if m.group("uid") else None,
+			"kind": "service_account_created" if service else "account_created", "ip": None, "user": m.group("user"),
+			"count": 1, "timestamp": ts, "uid": uid, "shell": shell,
 		}  # fmt: skip
 
 	m = _GROUP_ADD_RE.search(line)
@@ -157,7 +168,7 @@ class AuthParser:
 		g["count"] += 1 if failures is not None else parsed["count"]
 		if failures is not None:
 			g["failures_before"] = max(g.get("failures_before", 0), failures)
-		for extra in ("uid", "group"):
+		for extra in ("uid", "shell", "group"):
 			if parsed.get(extra) is not None:
 				g[extra] = parsed[extra]
 		if parsed["user"] not in g["users"] and len(g["users"]) < 10:
@@ -176,6 +187,8 @@ class AuthParser:
 			return f"{g['count']} failed sudo attempt(s) by {subject}", severity
 		if kind == "account_created":
 			return f"New system account {subject}", severity
+		if kind == "service_account_created":
+			return f"New service account {subject} (no login shell)", severity
 		if kind == "admin_group_change":
 			return f"{subject} added to admin group {g.get('group')}", severity
 		severity = "critical" if g["count"] >= CRITICAL_THRESHOLD else "warning"
@@ -196,7 +209,7 @@ class AuthParser:
 			}
 			if kind.startswith("ssh_"):
 				payload["ip"] = subject
-			for extra in ("failures_before", "uid", "group"):
+			for extra in ("failures_before", "uid", "shell", "group"):
 				if extra in g:
 					payload[extra] = g[extra]
 			events.append(
