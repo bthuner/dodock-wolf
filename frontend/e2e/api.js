@@ -47,14 +47,22 @@ const METRIC = { metric: 'disk_used_percent', label: 'Disk used', unit: '%', kin
 export function fixtures() {
   return {
     'dodock_wolf.api.spa.get_boot': () => BOOT,
-    'dodock_wolf.api.scope.get_counts': () => ({
+    'dodock_wolf.api.scope.get_counts': (args) => ({
       restricted: false,
-      incidents: { unresolved: 3, critical_unresolved: 1, unacknowledged: 2, sites_with_unresolved: 2, unresolved_without_site: 0 },
+      // the window asked for, described back as the server does
+      window: args.since ? { since: args.since, until: args.until, relative: null } : { since: ago(1440), until: NOW.toISOString(), relative: args.range || '24h' },
+      events: { records: 12, occurrences: 40, by_type: { error: { records: 5, occurrences: 30 }, cron_failure: { records: 2, occurrences: 2 } } },
+      incidents: { unresolved: 3, critical_unresolved: 1, unacknowledged: 2, sites_with_unresolved: 2, unresolved_without_site: 0,
+        opened_in_window: 4, resolved_in_window: 1 },
       agents: { agent: { fresh: 2, stale: 0, never_seen: 0, disabled: 0 }, satellite: { fresh: 0, stale: 0, never_seen: 0, disabled: 0 } },
     }),
     'dodock_wolf.api.dashboard.get_http': () => ({
       window: { since: ago(60), until: NOW.toISOString() }, bucket_seconds: 60, resolution: '1m', deployments: [],
-      series: { http_requests: [[ago(2), 120], [ago(1), 118]], http_5xx: [[ago(2), 3], [ago(1), 0]], http_502: [[ago(2), 2], [ago(1), 0]] },
+      series: {
+        http_requests: [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((m, i) => [ago(m), 100 + 10 * (i % 4)]),
+        http_5xx: [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((m) => [ago(m), m === 6 ? 9 : 0]),
+        http_502: [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((m) => [ago(m), m === 6 ? 4 : 0]),
+      },
       has_data: { http_requests: true, http_5xx: true, http_502: true },
     }),
     'dodock_wolf.api.dashboard.get_signals': () => ({

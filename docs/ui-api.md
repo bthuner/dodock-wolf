@@ -23,6 +23,11 @@ reads a window returns what it actually read, in UTC:
 "window": {"since": "2026-10-29T13:00:00Z", "until": "2026-10-30T13:00:00Z", "relative": "24h", "time_zone": "Europe/Paris"}
 ```
 
+In the Wolf UI, the window is in the URL (`?range=7d` or `?since=…&until=…`). A range selected on
+the HTTP chart of a dashboard, or on the chart of the metrics explorer, becomes an explicit
+`since`/`until`: the dashboard's counts and chart, and the event and error explorers opened from
+it, are read with it. **Back to a relative window** drops it.
+
 `time_zone` is the site's. Stored times are in that zone; the UI converts with it, never with
 the browser's zone.
 

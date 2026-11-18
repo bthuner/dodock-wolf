@@ -4,6 +4,8 @@ defineProps({ counts: { type: Object, required: true } })
 </script>
 
 <template>
+  <section aria-label="Now" class="space-y-2">
+  <h2 class="wolf-label">Now</h2>
   <dl class="wolf-tiles">
     <div class="wolf-tile">
       <dt>Unresolved incidents</dt>
@@ -33,4 +35,5 @@ defineProps({ counts: { type: Object, required: true } })
       </dd>
     </div>
   </dl>
+  </section>
 </template>

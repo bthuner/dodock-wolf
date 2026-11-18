@@ -8,12 +8,14 @@ import LoadingNote from '@/components/LoadingNote.vue'
 import PageTitle from '@/components/PageTitle.vue'
 import SeverityGlyph from '@/components/SeverityGlyph.vue'
 import { useLive } from '@/composables/useLive'
-import { useQueryParam } from '@/composables/useQueryParam'
+import { useWindow } from '@/composables/useWindow'
 import CountTiles from '@/components/dash/CountTiles.vue'
 import HttpChart from '@/components/dash/HttpChart.vue'
 import InventoryPanel from '@/components/dash/InventoryPanel.vue'
 import MonitoringPanel from '@/components/dash/MonitoringPanel.vue'
 import SignalsPanel from '@/components/dash/SignalsPanel.vue'
+import WindowTiles from '@/components/dash/WindowTiles.vue'
+import WindowNote from '@/components/WindowNote.vue'
 import { call, failure } from '@/services/api'
 import { clock, full } from '@/services/time'
 
@@ -23,7 +25,8 @@ const boot = inject('boot')
 const tz = boot.time_zone
 
 const RANGES = ['1h', '6h', '24h', '7d'].map((r) => ({ value: r, label: r }))
-const range = useQueryParam('range', '24h', RANGES.map((r) => r.value))
+// relative (the tabs) or explicit (a range selected on the HTTP chart): counts and HTTP read it
+const win = useWindow(RANGES.map((r) => r.value))
 const scope = computed(() => {
   const { site, host, bench } = route.params
   return Object.fromEntries(Object.entries({ site, host, bench }).filter(([, v]) => v))
@@ -49,7 +52,7 @@ const PANELS = { counts: 'these counts', http: 'HTTP activity', signals: 'these 
 async function load() {
   const mine = ++ticket
   loading.value = true
-  const args = { ...scope.value, range: range.value }
+  const args = { ...scope.value, ...win.args.value }
   const jobs = {
     counts: call('dodock_wolf.api.scope.get_counts', args),
     http: call('dodock_wolf.api.dashboard.get_http', args),
@@ -84,7 +87,7 @@ watch(scope, () => {
   data.value = {}
   errors.value = {}
 })
-watch([scope, range], load, { immediate: true })
+watch([scope, win.args], load, { immediate: true })
 
 // incidents and events are announced; metrics are not (they arrive every 30 s), so the
 // dashboard also refreshes on the polling timer while live. Its windows are relative: they move.
@@ -107,7 +110,7 @@ const live = useLive(hub, {
   <PageHeader>
     <PageTitle :title="title" />
     <div class="flex items-center gap-2">
-      <TabButtons v-model="range" :options="RANGES" />
+      <TabButtons :model-value="win.explicit.value ? null : win.range.value" :options="RANGES" @update:model-value="win.choose" />
       <LiveStatus :live="live" :poll-seconds="hub?.pollSeconds" />
       <Button label="Refresh" icon-left="lucide-refresh-cw" :loading="loading" @click="live.apply()" />
     </div>
@@ -115,6 +118,8 @@ const live = useLive(hub, {
 
   <div class="wolf-page space-y-5">
     <p v-if="data.counts?.restricted" class="text-sm text-ink-gray-6">You see the sites, benches and hosts you were granted.</p>
+
+    <WindowNote v-if="win.explicit.value" v-bind="win.explicit.value" :time-zone="tz" @reset="win.reset" />
 
     <LoadingNote v-if="loading && !data.counts && !errors.counts" what="the counts" />
     <CountTiles v-if="data.counts" :counts="data.counts" />
@@ -143,7 +148,9 @@ const live = useLive(hub, {
       </p>
     </section>
 
-    <HttpChart v-if="data.http" :http="data.http" :time-zone="tz" />
+    <WindowTiles v-if="data.counts?.events" :counts="data.counts" :window-query="win.query.value" :scope="scope" :incidents="hasIncidents" :time-zone="tz" />
+
+    <HttpChart v-if="data.http" :http="data.http" :time-zone="tz" @select="win.select" />
     <p v-else-if="errors.http" role="alert" class="wolf-alert">HTTP: {{ errors.http }}</p>
     <LoadingNote v-else-if="loading" what="HTTP activity" />
 
