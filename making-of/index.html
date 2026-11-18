@@ -750,9 +750,9 @@ Deployment shortly before: 2026-10-29 01:47:12
         <div class="tiles rooms wide" role="list" data-reveal>
           <div class="tile" role="listitem"><div class="k"><span class="idx">Room 1 · Overview</span><span class="status">● built</span></div><h3>“Is anyone howling?”</h3><p>Exact counts, never the length of a list. Then the newest unresolved incidents, HTTP responses with deployments marked, and every signal (workers, Redis, database, backups, TLS, host) in one of five states that are never merged: missing, stale, unwatched, within its rules, firing. The same page serves each site, host and bench.</p></div>
           <div class="tile" role="listitem"><div class="k"><span class="idx">Room 2 · Incident</span><span class="status">● built</span></div><h3>“What happened?”</h3><p>The timeline above, scope first, with acknowledge, assign and resolve when the server allows them. Merge and split too, once the server has said what would move. Proposed responses wait there for a manager's approval. The postmortem starts there and is written in Desk.</p></div>
-          <div class="tile" role="listitem"><div class="k"><span class="idx">Room 3 · Rules</span><span class="status">● built, in Desk</span></div><h3>“When should it wake me?”</h3><p>One form that reads like a sentence: <em>when</em> a metric or event, <em>is</em> an operator and threshold, <em>over</em> a window, <em>per</em> a group, <em>between</em> two hours, <em>tell</em> these channels.</p></div>
+          <div class="tile" role="listitem"><div class="k"><span class="idx">Room 3 · Rules</span><span class="status">● built, in Desk</span></div><h3>“When should it wake me?”</h3><p>One form that reads like a sentence: <em>when</em> a metric or event, <em>is</em> an operator and threshold, <em>over</em> a window, <em>per</em> a group, <em>between</em> two hours, <em>tell</em> these channels. It reads the rule back in plain words as you edit it, and rules also live in YAML, to be kept in git.</p></div>
           <div class="tile" role="listitem"><div class="k"><span class="idx">Room 4 · Security</span><span class="status">● built</span></div><h3>“How exposed is this site?”</h3><p>A score out of 100 per site, with every check, what Wolf read and the fix. A check Wolf cannot read is unknown, and says so. The journal's anchor sits below, with a Verify button.</p></div>
-          <div class="tile" role="listitem"><div class="k"><span class="idx">Room 5 · Monitoring</span><span class="status">● built</span></div><h3>“Is Wolf itself awake?”</h3><p>When the rules were last evaluated, the scheduler's pace, the ingest queue, how far the rollups got, and which agents report, with their clock skew.</p></div>
+          <div class="tile" role="listitem"><div class="k"><span class="idx">Room 5 · Monitoring</span><span class="status">● built</span></div><h3>“Is Wolf itself awake?”</h3><p>When the rules were last evaluated, the scheduler's pace, the ingest queue, how far the rollups got, and which agents report, with their clock skew and what their host is missing.</p></div>
         </div>
         <div class="prose" data-reveal>
           <p>Explorers came after the rooms. <strong>Events</strong> lists deduplicated records with their counts, and <strong>Errors</strong> groups them by fingerprint. In <strong>Metrics</strong>, the catalog decides how a metric may be read: a disk level is averaged, a count of 5xx responses is summed, and a sum of disk levels is refused. Every page says what it read: window, resolution, buckets, retention, what was left out. <strong>Logs</strong> explains why there is no log search yet: Wolf stores parsed events, not raw lines.</p>
@@ -1106,6 +1106,21 @@ X-Wolf-Agent-Secret: ••••••••
           <li><span class="tag">Console</span><div><b>One story per incident; overlapping detectors.</b><p>An incident that took events from other scopes also shows their deployments and health events, so an attack on one host and an outage on another read as one story, for the users allowed to see both. Where Wolf's own detector and Suricata or Wazuh overlap, the operator picks: Wolf's own, both as one finding, or the external one only.</p></div></li>
           <li><span class="tag">Docs</span><div><b>A documentation site, in English and French.</b><p>User documentation in <code>docs-site/</code>, the same page at the same path in both languages. A change users can see updates both in the same pull request.</p></div></li>
           <li><span class="tag">This page</span><div><b>The making-of, redesigned.</b><p>Chapters for security and the load test, and the log grouped by day.</p></div></li>
+          <li><span class="tag">Evidence</span><div><b>Evidence that belongs to the incident.</b><p>An event used to join the newest open incident of its site, whatever it was about: since the MVP, the 502s of an outage could land under <em>Server Script can run new code</em>. An incident's evidence is now what its rule matched.</p></div></li>
+          <li><span class="tag">Security</span><div><b>Standalone parity (#72).</b><p>File integrity of the bench every 15 minutes, critical when files change under an unchanged git commit. Outbound connections of bench users to new destinations, read from <code>/proc</code> without root, then in containers and behind a proxy, then every connection from the kernel log with an optional root helper. Blocks can go through Wazuh active response, for the host that was attacked.</p></div></li>
+          <li><span class="tag">Wolf UI</span><div><b>One look for every page.</b><p>The security score sits next to a weight bar, one segment per check, unknown hatched so a state is never colour alone.</p></div></li>
+        </ol>
+      </section>
+
+      <section class="day" aria-labelledby="d1118">
+        <h3 id="d1118"><time datetime="2026-11-18">18 Nov</time><small>Wednesday</small></h3>
+        <ol class="log">
+          <li><span class="tag">Demo bench</span><div><b>Live demos through the real agent.</b><p>A Press app server, several plain benches, one bench, each backfilling history through the agent. Log signals are now aggregated at log time, so a restart or a spool replay no longer bends a chart.</p></div></li>
+          <li><span class="tag">Security</span><div><b>Detection kept up to date (#72).</b><p>Edge appliance paths, more secret files, and two Frappe rules that count bursts, written from the list of every method a guest can call. Fixtures from real Suricata and Wazuh, a coverage table for Wolf alone, with Suricata and with Wazuh, and a bench smoke where the three report one IP and open one incident. An incident a rule opens also takes the same attacker's earlier events: on the demo bench, nginx, Suricata and Wazuh saw one attack within seconds, and the incident opened a minute later held only its own.</p></div></li>
+          <li><span class="tag">Wolf UI</span><div><b>Dashboards.</b><p>Hosts, benches and sites drawn as a schematic, with a filter. A range dragged on the HTTP chart becomes the window of the page.</p></div></li>
+          <li><span class="tag">Press &amp; Pilot</span><div><b>Press and Pilot, for real (#17, #114).</b><p>A Press app server built by Press's own Ansible roles, then its proxy server, its backups and its shared filesystem; a Pilot host on v1.0.0-rc.1, then rc.2. Each found what the source alone had missed. The worst: opening the Press agent's <code>jobs.sqlite3</code> read-only, after its last connection closed, created files that then made every Press job fail. Also checked on real hosts: blocks through nftables and fail2ban, and the auth log on a journald-only host.</p></div></li>
+          <li><span class="tag">Onboarding</span><div><b>What a host gives the agent (#23).</b><p><code>wolf-agent doctor</code> says what a host gives the agent and the fix for each problem. The agent runs it every hour, and the Monitoring page shows each host's setup.</p></div></li>
+          <li><span class="tag">Rules</span><div><b>Rules in YAML, and in words.</b><p>Export and import as YAML, a dry run first and all or nothing, secrets never in a file. The rule form reads the rule back in plain words as it is edited.</p></div></li>
         </ol>
       </section>
     </div>
@@ -1131,9 +1146,10 @@ X-Wolf-Agent-Secret: ••••••••
         <div data-reveal>
           <h3 class="sub">Next</h3>
           <ol class="decisions" style="margin-top:24px">
-              <li><div><b>Standalone parity.</b><p>File integrity on the bench and outbound connections of bench processes, for benches without Suricata or Wazuh.</p></div></li>
+            <li><div><b>French in the app.</b><p>The documentation is in English and French; Desk and the Wolf UI are in English only.</p></div></li>
+            <li><div><b>An onboarding checklist.</b><p>In the Wolf UI, from the first agent to the first test alert.</p></div></li>
+            <li><div><b>Packages.</b><p><code>.deb</code>, <code>.rpm</code> and PyPI for the agent, with auto-update, then the Frappe Marketplace.</p></div></li>
             <li><div><b>Log search.</b><p>Once raw-line storage exists, which Wolf deliberately doesn't have yet.</p></div></li>
-            <li><div><b>A real Press server and a real Pilot host.</b><p>The integrations still need to run on one.</p></div></li>
             <li><div><b>The overview's first visit at 100 hosts.</b><p>A visit the background reads do not cover, the first in 10 quiet minutes, still takes 0.9 to 1.2 s (<a href="https://github.com/bthuner/dodock-wolf/blob/main/docs/load-test.md">load test</a>).</p></div></li>
           </ol>
         </div>
@@ -1155,7 +1171,7 @@ X-Wolf-Agent-Secret: ••••••••
         <li><a href="https://github.com/bthuner/dodock-wolf/blob/main/docs/making-of/brand.md"><span>Identity tokens</span><span>docs/making-of/brand.md</span></a></li>
       </ul>
       <footer class="colophon">
-        <span>Dodock Wolf · MIT · Making-of, edition 0.3</span>
+        <span>Dodock Wolf · MIT · Making-of, edition 0.4</span>
         <span>Type: Instrument Serif, Inter Tight, JetBrains Mono · Palette: Bleu Wolf #035AEC, Nuit, Os · Logo © the founder</span>
       </footer>
     </div>
