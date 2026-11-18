@@ -101,7 +101,7 @@ Turn Press agent jobs into `deployment` events. Default `true`.
 
 <field name="backups.press" type="boolean">
 
-Backup age checks on Press benches. Default `false`.
+Read Press benches' backups from their `sites/<site>/private/backups` folder, as on other benches. Default `false`: from the Press agent's Backup Site jobs.
 
 </field>
 </field-group>
@@ -500,19 +500,31 @@ The Press agent writes its configs `0600`, so the daemon reads them only through
     </td>
     
     <td>
-      <strong>
-        Skipped
-      </strong>
-      
-       by default (<code>
-        backups.press: false
+      From the Press agent's job history: <code>
+        backup_age_hours
       </code>
       
-      ). Press takes backups through its agent and uploads them offsite
+       per site from its newest successful <strong>
+        Backup Site
+      </strong>
+      
+       job, and a <code>
+        backup_failed
+      </code>
+      
+       event (critical, the <em>
+        Backup failed
+      </em>
+      
+       preset) when one fails. Press deletes offsite backups from the server after the upload, or streams them, so the backups folder says nothing. <code>
+        backups.press: true
+      </code>
+      
+       reads the folder instead
     </td>
     
     <td>
-      off
+      checked
     </td>
   </tr>
   
@@ -904,8 +916,9 @@ Timestamps are naive server local time. Wolf converts them to UTC as local time.
 
 ### How events are produced
 
-- **Read-only access.** Wolf opens `jobs.sqlite3` with `file:…?mode=ro`, which needs the agent's `-wal` and `-shm` files to be readable. If that fails, it retries with `immutable=1`. Wolf never writes to the database.
+- **Read-only access, creating no file.** Wolf opens `jobs.sqlite3` with `file:…?mode=ro` while the Press agent's `-wal` and `-shm` files are there, else with `immutable=1`. A reader creates them when they are missing (after the Press agent's last connection closed), the agent's folder is writable by the `frappe` group, and files Wolf created would leave the Press agent unable to write its own database. Wolf never writes to the database.
 - **One deployment event per job**, sent as soon as the job has started. Its timestamp is the job's `start`, so the "502 spike after deployment" [preset](/alerts/presets) links incidents that happen during a long migrate. If the bench cannot be determined yet, the event waits up to 2 minutes for a step to name it, then ships host-scoped. Incident correlation also matches host-scoped deployments. Fields: `category: "press"`, `source: "press-agent"`, and `payload.press_job`, `agent_job_id`, `local_job_id`, `sites`.
+- **One backup_failed event per failed Backup Site job** (an `error`, critical, the *Backup failed* preset), read apart from the deployment jobs: the backups Press queues for every site at once never hold a deployment event back, and the first poll after an install or an upgrade replays no old failure. Successful Backup Site jobs, local, offsite or streamed, give the sites' `backup_age_hours`.
 - **One error event** (`category: "press_job_failed"`, warning) when such a job ends in `Failure`. Its payload holds the failed step names and the tail of the traceback or output.
 - **Deduplication.** Emitted job ids and a floor id are saved in `<spool_dir>/press-jobs.json`, so restarts never emit an event twice. On the first run, history is skipped and only jobs still Pending or Running are picked up. A job stuck in Pending or Running for more than 24 h (for example, a crashed RQ worker) is dropped, so it cannot block progress.
 - **Fallback without database access.** `<spool_dir>/press-benches.json` keeps a bench → site snapshot. A new bench directory, or a site whose directory moved to another bench, produces a `deployment` event stamped with the time it was noticed.
@@ -943,7 +956,6 @@ The two stacks overlap on host metrics (node_exporter vs Wolf's `/proc` sampling
 - A bench found after registration shows the image it was created with (its `docker-compose.yml`): Update Bench In Place changes only its `0600` config.
 - Jobs are matched by display name. If Press renames a job, it is no longer recognised. Add the new name to `DEPLOY_JOBS` in [`agent/wolf_agent/press.py`](https://github.com/bthuner/dodock-wolf/blob/main/agent/wolf_agent/press.py).
 - Shared-FS benches (`Run Benches on Shared FS`) change `benches_directory`. Wolf rereads it from the Press agent config on every rediscovery, but this path has not been tested.
-- Whether local backup copies stay in `sites/<site>/private/backups` has not been checked, which is why backups are off by default.
 
 ### Checked on a Press server
 
@@ -952,8 +964,9 @@ The two stacks overlap on host metrics (node_exporter vs Wolf's `/proc` sampling
 3. **$host.** Every site request carries the site in `"$host"`. The Press agent's own vhost on 443 logs the server's name there, which is no site: Wolf leaves those lines out.
 4. **rq_port.** Press sets it on every new bench and publishes it. A bench whose config has none (an older one) gets no queue metrics: the daemon keeps what registration read in it rather than derive a port from the web port.
 5. **Behind a proxy server.** Through Press's proxy (its own `proxy` role and Add Upstream / Add Host / Add Site to Upstream jobs), the app server's `access.log` keeps the real client in `$remote_addr`, and the site sees it in its failed logins. A block applied on the app server stopped nothing, the one on the proxy did: hence [Proxy servers](#proxy-servers).
+6. **Backups.** A local-only Backup Site job leaves its files in `sites/<site>/private/backups` and lists them in its result. An offsite one deletes them after the upload (`upload_offsite_backup`) unless the server keeps them, and a streamed one writes none. Wolf reads the job history: a backup and a failed one (the database server stopped) both came through.
 
-Not checked: shared-FS benches and local backup copies.
+Not checked: shared-FS benches.
 
 <collapsible>
 
