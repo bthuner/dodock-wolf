@@ -16,6 +16,7 @@
   "count",
   "fingerprint",
   "incident",
+  "incident_by_entity",
   "duplicate_of",
   "scope_section",
   "host",
@@ -105,6 +106,15 @@
    "search_index": 1
   },
   {
+   "default": "0",
+   "depends_on": "incident",
+   "description": "The event joined its incident by sharing a public IP or an e-mail user with it, not as a rule's evidence. A rule that matches it takes it back.",
+   "fieldname": "incident_by_entity",
+   "fieldtype": "Check",
+   "label": "Joined by IP or User",
+   "read_only": 1
+  },
+  {
    "description": "Another source's event about the same finding, seen first (Wolf Settings: overlapping detectors in both mode). This one is not sent again to CrowdSec or the SIEM.",
    "fieldname": "duplicate_of",
    "fieldtype": "Link",
@@ -168,7 +178,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-17 12:00:00.000000",
+ "modified": "2026-11-18 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Event",

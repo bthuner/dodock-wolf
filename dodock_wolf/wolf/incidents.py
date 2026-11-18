@@ -152,8 +152,8 @@ def resolve(name, reason="Condition cleared"):
 
 def link_events(incident, names):
 	"""Link a rule's matching events to its incident. Events another incident took only because
-	they share an IP or user with it (outside that incident's scope) come over: a rule's evidence
-	is its own."""
+	they share an IP or user with it (`incident_by_entity`, or outside that incident's scope) come
+	over: a rule's evidence is its own."""
 	if not names:
 		return
 	params = {"incident": incident, "names": tuple(names)}
@@ -162,13 +162,15 @@ def link_events(incident, names):
 		for r in frappe.db.sql(
 			f"""select distinct e.incident from `tabWolf Event` e
 			join `tabWolf Incident` i on i.name = e.incident
-			where e.name in %(names)s and e.incident != %(incident)s and {out_of_scope("e")}""",
+			where e.name in %(names)s and e.incident != %(incident)s
+				and (e.incident_by_entity = 1 or {out_of_scope("e")})""",
 			params,
 		)
 	]
 	frappe.db.sql(
-		f"""update `tabWolf Event` set incident = %(incident)s
-		where name in %(names)s and (coalesce(incident, '') = '' or exists (
+		f"""update `tabWolf Event` set incident = %(incident)s, incident_by_entity = 0
+		where name in %(names)s and (coalesce(incident, '') = '' or incident = %(incident)s
+			or incident_by_entity = 1 or exists (
 			select 1 from `tabWolf Incident` i where i.name = `tabWolf Event`.incident
 			and i.name != %(incident)s and {out_of_scope("`tabWolf Event`")}))""",
 		params,
@@ -263,6 +265,82 @@ def entity_incident(event_name, event):
 	return rows[0][0] if rows else None
 
 
+def adopt_related(incident, names):
+	"""The other side of entity_incident, for an incident a rule just opened or reopened with its
+	evidence (`names`): the security events sharing a correlation key with that evidence that no
+	incident holds yet, within the bounds ingest uses (Entity Correlation Minutes before, 5 after;
+	not for an incident older than ENTITY_MAX_HOURS; not info). They arrived before the incident
+	opened: the rule runs every minute, nginx, Suricata and Wazuh report the same attack within one
+	push, and would otherwise stay apart. They are marked `incident_by_entity`, and the incident
+	starts at the earliest of them. Returns how many it took."""
+	settings = frappe.get_cached_doc("Wolf Settings")
+	if not names or not cint(settings.get("correlate_by_entity")):
+		return 0
+	started = frappe.db.get_value("Wolf Incident", incident, "started_at")
+	if started and get_datetime(started) < add_to_date(now_datetime(), hours=-ENTITY_MAX_HOURS):
+		return 0
+	from dodock_wolf.wolf.entities import normal_ip
+
+	evidence = {r.name: r for r in frappe.get_all(
+		"Wolf Event", filters={"name": ("in", list(names)), "event_type": "security"},
+		fields=["name", "category", "payload", "timestamp", "last_seen"])}  # fmt: skip
+	if not evidence:
+		return 0
+	ips = {}
+	for name, row in evidence.items():
+		try:
+			payload = json.loads(row.payload or "{}")
+		except (TypeError, ValueError):
+			payload = {}
+		ips[name] = normal_ip(payload.get("ip")) if isinstance(payload, dict) else None
+	keys = set()  # as correlation_keys, in one query for all the evidence
+	for event, kind, value in frappe.db.sql(
+		"select event, kind, value from `tabWolf Event Entity` where event in %(names)s and kind in ('ip', 'user')",
+		{"names": tuple(evidence)},
+	):
+		if kind == "ip" and value == ips.get(event) and ipaddress.ip_address(value).is_global:
+			keys.add((kind, value))
+		elif kind == "user" and "@" in value and evidence[event].category not in ATTEMPT_CATEGORIES:
+			keys.add((kind, value))
+	if not keys:
+		return 0
+	times = [get_datetime(r.last_seen or r.timestamp) for r in evidence.values()]
+	minutes = cint(settings.get("entity_correlation_minutes")) or ENTITY_MINUTES
+	params = {
+		"since": add_to_date(min(times), minutes=-minutes),
+		"until": add_to_date(max(times), minutes=5),
+		"attempts": ATTEMPT_CATEGORIES,
+	}
+	match = []
+	for n, (kind, value) in enumerate(sorted(keys)):
+		params[f"k{n}"], params[f"v{n}"] = kind, value
+		match.append(f"(x.kind = %(k{n})s and x.value = %(v{n})s)")
+	rows = frappe.db.sql(
+		f"""select e.name, min(coalesce(e.last_seen, e.`timestamp`)) as seen from `tabWolf Event Entity` x
+		join `tabWolf Event` e on e.name = x.event
+		where ({" or ".join(match)}) and coalesce(e.incident, '') = '' and e.event_type = 'security'
+			and e.severity != 'info'
+			and (x.kind = 'ip' or coalesce(e.category, '') not in %(attempts)s)
+			and coalesce(e.last_seen, e.`timestamp`) between %(since)s and %(until)s
+		group by e.name
+		order by seen
+		limit 500""",
+		params,
+	)
+	if not rows:
+		return 0
+	frappe.db.sql(
+		"""update `tabWolf Event` set incident = %(incident)s, incident_by_entity = 1
+		where name in %(names)s and coalesce(incident, '') = ''""",
+		{"incident": incident, "names": tuple(r[0] for r in rows)},
+	)
+	earliest = get_datetime(rows[0][1])
+	if not started or earliest < get_datetime(started):
+		frappe.db.set_value("Wolf Incident", incident, "started_at", earliest, update_modified=False)
+	refresh_event_count(incident)
+	return len(rows)
+
+
 def attach_to_open_incident(event_name, event):
 	"""Correlate a freshly ingested event with an open incident: the one it is already linked to (a
 	repeat folded into its record), or one sharing an IP or e-mail user with it (security events,
@@ -280,12 +358,13 @@ def attach_to_open_incident(event_name, event):
 		return _attach(event_name, event, current)
 	incident = entity_incident(event_name, event)
 	if incident:
-		return _attach(event_name, event, incident)
+		return _attach(event_name, event, incident, by_entity=True)
 	return None
 
 
-def _attach(event_name, event, incident):
-	frappe.db.set_value("Wolf Event", event_name, "incident", incident, update_modified=False)
+def _attach(event_name, event, incident, by_entity=None):
+	values = {"incident": incident} if by_entity is None else {"incident": incident, "incident_by_entity": int(by_entity)}
+	frappe.db.set_value("Wolf Event", event_name, values, update_modified=False)
 	frappe.db.set_value("Wolf Incident", incident, "last_event_at", event["timestamp"], update_modified=False)
 	refresh_event_count(incident)
 	return incident

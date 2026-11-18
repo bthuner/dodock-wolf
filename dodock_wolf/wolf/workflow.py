@@ -201,7 +201,8 @@ def merge(source, target):
 
 	moved = frappe.db.count("Wolf Event", {"incident": src.name})
 	frappe.db.sql(
-		"update `tabWolf Event` set incident = %(target)s where incident = %(source)s",
+		# a person put them there: no rule takes them back (incident_by_entity)
+		"update `tabWolf Event` set incident = %(target)s, incident_by_entity = 0 where incident = %(source)s",
 		{"source": src.name, "target": tgt.name},
 	)
 	comments = moved_comment_count(src.name)
@@ -268,7 +269,7 @@ def split(incident, events, title=None):
 	)
 	doc.insert()
 	frappe.db.sql(
-		"update `tabWolf Event` set incident = %(new)s where incident = %(source)s and name in %(names)s",
+		"update `tabWolf Event` set incident = %(new)s, incident_by_entity = 0 where incident = %(source)s and name in %(names)s",
 		{"new": doc.name, "source": src.name, "names": tuple(names)},
 	)
 	refresh_event_count(doc.name)
