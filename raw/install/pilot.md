@@ -4,7 +4,7 @@
 
 [Pilot](https://github.com/frappe/pilot) is **Frappe's** server manager ("Frappe Server Manager"). It is not a Dokos tool: Dokos' public GitLab group has no Pilot repository. The Dokos documentation mentions Pilot only through the `pilot_endpoint` / `pilot_auth_token` site keys used by the Cloud Settings panel for Frappe Cloud v2 sites. These are the same keys Pilot writes into `site_config.json`.
 
-Everything on this page was checked on a live Pilot host: **Pilot v1.0.0-rc.1** in production mode (systemd user units, nginx, the Admin), a Frappe 16 bench and a site running the Wolf App. The repository's [`dev/pilot`](https://github.com/bthuner/dodock-wolf/tree/main/dev/pilot) sets the same host up in a container.
+Everything on this page was checked on a live Pilot host: **Pilot v1.0.0-rc.1**, and again on **v1.0.0-rc.2** (which changes only Pilot's release CI), in production mode (systemd user units, nginx, the Admin), a Frappe 16 bench and a site running the Wolf App. The repository's [`dev/pilot`](https://github.com/bthuner/dodock-wolf/tree/main/dev/pilot) sets the same host up in a container.
 
 ## Install
 
@@ -18,6 +18,8 @@ Pilot keeps a bench's `bench.toml`, its `tasks/` and its site configs readable b
 It reads the bench's files as the bench user, in a child process with a time limit: a link that user plants there gives access to nothing more than they could already read. It takes a bench only when its `[bench] name` is its folder's name and the folder belongs to the user whose home holds it. It copies nothing else: not `bench.toml` (its Admin secret), not the site configs (their database passwords). Registration runs as root, so discovery still reads `bench.toml` and the site configs once, for the bench's name, sites, domains and ports.
 
 What this costs on Pilot: the [MariaDB checks](/agent/collected), which need a site's database password.
+
+To remove Wolf from a Pilot host, run `systemctl disable --now wolf-pilot-export.timer` before deleting the `wolf-agent` user: the helper's unit runs with that group, and fails at every run without it.
 
 <steps level="3">
 
@@ -100,7 +102,7 @@ With `wolf-pilot-export`, Wolf needs neither. The full config is on [Configurati
     </th>
     
     <th>
-      On v1.0.0-rc.1
+      On v1.0.0-rc.1 and rc.2
     </th>
   </tr>
 </thead>
