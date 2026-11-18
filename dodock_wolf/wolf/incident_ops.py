@@ -8,13 +8,15 @@ import json
 from datetime import datetime
 from html import escape
 
+from dodock_wolf.wolf import i18n
+from dodock_wolf.wolf.i18n import _, fmt
+
 SEVERITY_RANK = {"info": 0, "warning": 1, "critical": 2}
 # Version entries and the incident's own fields describe the same ack/resolve; an entry
 # closer than this to acknowledged_at/resolved_at counts as covering it.
 SAME_ACTION_SECONDS = 120
 COMMENT_TYPES = ("Comment", "Info", "Assigned", "Assignment Completed")
 TRACKED_FIELDS = ("status", "severity", "assigned_to", "merged_into")
-FIELD_LABELS = {"severity": "the severity", "assigned_to": "the owner", "merged_into": "the merge target"}
 
 
 def to_datetime(value):
@@ -24,9 +26,9 @@ def to_datetime(value):
 	if isinstance(value, datetime):
 		return value
 	text = str(value).strip().replace("T", " ")
-	for fmt in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+	for pattern in ("%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
 		try:
-			return datetime.strptime(text, fmt)
+			return datetime.strptime(text, pattern)
 		except ValueError:
 			continue
 	return None
@@ -51,15 +53,16 @@ def _latest(*values):
 
 
 def check_merge(source, target):
-	"""Returns an error message, or None when `source` may be merged into `target`."""
+	"""Returns an error message (in the reader's language), or None when `source` may be merged
+	into `target`."""
 	if not source or not target:
-		return "Both incidents must exist."
+		return _("Both incidents must exist.")
 	if source.get("name") == target.get("name"):
-		return "An incident cannot be merged into itself."
+		return _("An incident cannot be merged into itself.")
 	if source.get("merged_into"):
-		return f"{source['name']} was already merged into {source['merged_into']}."
+		return fmt(_("{0} was already merged into {1}."), source["name"], source["merged_into"])
 	if target.get("merged_into"):
-		return f"{target['name']} was merged into {target['merged_into']}: merge into that incident instead."
+		return fmt(_("{0} was merged into {1}: merge into that incident instead."), target["name"], target["merged_into"])
 	return None
 
 
@@ -118,16 +121,17 @@ def parse_names(value):
 
 
 def check_split(linked, selected):
-	"""Returns (error, names). Selected events must be linked to the incident, and some must stay."""
+	"""Returns (error, names). Selected events must be linked to the incident, and some must stay.
+	The error is in the reader's language."""
 	names = parse_names(selected)
 	if not names:
-		return "Select at least one event to move to the new incident.", []
+		return _("Select at least one event to move to the new incident."), []
 	linked = set(linked)
 	foreign = [n for n in names if n not in linked]
 	if foreign:
-		return f"Not linked to this incident: {', '.join(foreign[:5])}.", []
+		return fmt(_("Not linked to this incident: {0}."), ", ".join(foreign[:5])), []
 	if len(names) >= len(linked):
-		return "Keep at least one event in this incident (to move everything, edit the incident instead).", []
+		return _("Keep at least one event in this incident (to move everything, edit the incident instead)."), []
 	return None, names
 
 
@@ -232,28 +236,50 @@ def build_activity(incident, versions, comments):
 	return out
 
 
-def describe_activity(entry, user_label=None):
-	"""One line of plain text for an activity entry (postmortem snapshot, tests)."""
+def _english(text):
+	return text
+
+
+def describe_activity(entry, user_label=None, translate=False):
+	"""One line of plain text for an activity entry. English by default (the postmortem snapshot is
+	stored); `translate` gives the reader's language (the timeline, made per request)."""
+	_ = i18n._ if translate else _english
 	who = user_label or entry.get("user") or ("Wolf" if entry.get("auto") or entry.get("kind") == "opened" else "")
 	kind = entry.get("kind")
 	if kind == "opened":
-		return f"Incident opened by rule {entry['rule']}" if entry.get("rule") else f"Incident opened by {who}"
+		return fmt(_("Incident opened by rule {0}"), entry["rule"]) if entry.get("rule") else fmt(_("Incident opened by {0}"), who)
 	if kind == "status":
-		verb = {"Acknowledged": "acknowledged", "Resolved": "resolved", "Open": "re-opened"}.get(entry.get("to"))
-		verb = verb or f"set status to {entry.get('to')}"
+		to = entry.get("to")
 		if entry.get("auto"):
-			return f"Automatically {verb} (condition cleared)" if entry.get("to") == "Resolved" else f"{verb.capitalize()}"
-		return f"{who} {verb}".strip()
+			if to == "Resolved":
+				return _("Automatically resolved (condition cleared)")
+			if to == "Acknowledged":
+				return _("Acknowledged")
+			if to == "Open":
+				return _("Re-opened")
+			return fmt(_("Set status to {0}"), str(to).lower())
+		if to == "Acknowledged":
+			return fmt(_("{0} acknowledged"), who).strip()
+		if to == "Resolved":
+			return fmt(_("{0} resolved"), who).strip()
+		if to == "Open":
+			return fmt(_("{0} re-opened"), who).strip()
+		return fmt(_("{0} set status to {1}"), who, to).strip()
 	if kind == "field":
 		field = entry.get("field") or ""
-		if field == "merged_into" and entry.get("to"):
-			return f"{who} merged it into {entry['to']}" if who else f"Merged into {entry['to']}"
-		label = FIELD_LABELS.get(field) or field.replace("_", " ")
-		if not entry.get("to"):
-			return f"{who} cleared {label}".strip()
-		return f"{who} set {label} to {entry.get('to')}".strip()
+		to = entry.get("to")
+		if field == "merged_into" and to:
+			return fmt(_("{0} merged it into {1}"), who, to) if who else fmt(_("Merged into {0}"), to)
+		if field == "severity":
+			return (fmt(_("{0} set the severity to {1}"), who, to) if to else fmt(_("{0} cleared the severity"), who)).strip()
+		if field == "assigned_to":
+			return (fmt(_("{0} set the owner to {1}"), who, to) if to else fmt(_("{0} cleared the owner"), who)).strip()
+		if field == "merged_into":
+			return fmt(_("{0} cleared the merge target"), who).strip()
+		label = field.replace("_", " ")
+		return (fmt(_("{0} set {1} to {2}"), who, label, to) if to else fmt(_("{0} cleared {1}"), who, label)).strip()
 	if kind == "comment":
-		return f"{who} commented".strip()
+		return fmt(_("{0} commented"), who).strip()
 	return entry.get("content") or ""
 
 

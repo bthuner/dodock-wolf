@@ -13,6 +13,9 @@ value no rule watches, a value its rules accept, and a value a rule has opened a
 
 from datetime import timedelta
 
+from dodock_wolf.wolf.i18n import N_, _, fmt
+
+
 # Default agent cadences. An agent configured with a longer `tls.interval` or
 # `backups.interval` will look stale sooner than it is: the server does not know the setting.
 PUSH_SECONDS = 30
@@ -20,47 +23,47 @@ MIN_STALE = timedelta(minutes=5)
 
 # metric -> (group, label, kind, unit, level, cadence seconds)
 _SPEC = [
-	("http_requests", "http", "Requests", "interval_count", "requests", "site", PUSH_SECONDS),
-	("http_5xx", "http", "5xx responses", "interval_count", "responses", "site", PUSH_SECONDS),
+	("http_requests", "http", N_("Requests"), "interval_count", N_("requests"), "site", PUSH_SECONDS),
+	("http_5xx", "http", N_("5xx responses"), "interval_count", N_("responses"), "site", PUSH_SECONDS),
 	# a subset of 5xx: never added to it
-	("http_502", "http", "502 responses (part of 5xx)", "interval_count", "responses", "site", PUSH_SECONDS),
-	("rq_workers", "workers", "RQ workers", "gauge", "workers", "bench", PUSH_SECONDS),
-	("queue_length", "workers", "Queue length", "gauge", "jobs", "bench", PUSH_SECONDS),
-	("rq_failed_jobs_added", "workers", "Failed jobs added", "interval_count", "jobs", "bench", PUSH_SECONDS),
+	("http_502", "http", N_("502 responses (part of 5xx)"), "interval_count", N_("responses"), "site", PUSH_SECONDS),
+	("rq_workers", "workers", N_("RQ workers"), "gauge", N_("workers"), "bench", PUSH_SECONDS),
+	("queue_length", "workers", N_("Queue length"), "gauge", N_("jobs"), "bench", PUSH_SECONDS),
+	("rq_failed_jobs_added", "workers", N_("Failed jobs added"), "interval_count", N_("jobs"), "bench", PUSH_SECONDS),
 	# jobs held in RQ's failed registry now (they expire): not the number that failed lately
-	("rq_failed_jobs", "workers", "Jobs in the failed registry", "gauge", "jobs", "bench", PUSH_SECONDS),
-	("rq_long_running_jobs", "workers", "Long-running jobs", "gauge", "jobs", "bench", PUSH_SECONDS),
-	("bench_processes_down", "processes", "Bench processes down", "gauge", "processes", "bench", PUSH_SECONDS),
-	("redis_used_memory_percent", "redis", "Redis memory used", "gauge", "%", "bench", PUSH_SECONDS),
-	("redis_evicted_keys", "redis", "Redis evicted keys", "interval_count", "keys", "bench", PUSH_SECONDS),
-	("db_connections_used_percent", "database", "Database connections used", "gauge", "%", "bench", PUSH_SECONDS),
-	("db_threads_connected", "database", "Database connections", "gauge", "connections", "bench", PUSH_SECONDS),
-	("db_slow_queries", "database", "Slow queries", "interval_count", "queries", "bench", PUSH_SECONDS),
-	("db_replication_running", "database", "Replication running", "gauge", "1 = yes", "bench", PUSH_SECONDS),
-	("db_replication_lag_seconds", "database", "Replication lag", "gauge", "s", "bench", PUSH_SECONDS),
-	("backup_age_hours", "backups", "Newest backup age", "gauge", "h", "site", 600),
-	("tls_days_left", "tls", "Certificate expires in", "gauge", "days", "site", 3600),
-	("hsts_max_age_days", "tls", "HSTS max-age", "gauge", "days", "site", 3600),
-	("agent_setup_failed", "host", "Agent setup checks failed", "gauge", "", "host", 3600),
-	("agent_setup_warnings", "host", "Agent setup warnings", "gauge", "", "host", 3600),
-	("cpu_usage", "host", "CPU", "gauge", "%", "host", PUSH_SECONDS),
-	("memory_used_percent", "host", "Memory used", "gauge", "%", "host", PUSH_SECONDS),
-	("disk_used_percent", "host", "Disk used", "gauge", "%", "host", PUSH_SECONDS),
-	("load_per_core", "host", "Load per core", "gauge", "per core", "host", PUSH_SECONDS),
-	("load_1m", "host", "Load (1 min)", "gauge", "", "host", PUSH_SECONDS),
-	("load_5m", "host", "Load (5 min)", "gauge", "", "host", PUSH_SECONDS),
-	("load_15m", "host", "Load (15 min)", "gauge", "", "host", PUSH_SECONDS),
-	("swap_used_percent", "host", "Swap used", "gauge", "%", "host", PUSH_SECONDS),
-	("exposed_services", "security", "Bench services listening beyond loopback", "gauge", "services", "host", 600),
-	("site_config_risks", "security", "Risky site_config settings", "gauge", "settings", "site", 600),
-	("integrity_files", "security", "Files under integrity watch", "gauge", "files", "bench", 900),
-	("integrity_unreadable", "security", "Files the integrity check cannot read", "gauge", "files", "bench", 900),
-	("bench_outbound_destinations", "security", "Outbound destinations of the bench user", "gauge", "destinations", "bench", 60),
-	("bench_new_outbound_usual", "security", "New outbound destinations on usual ports", "gauge", "destinations", "bench", 60),
-	("security_score", "security", "Security score", "gauge", "/ 100", "site", 3600),
-	("site_setting", "security", "System Settings value", "gauge", "", "site", 3600),
+	("rq_failed_jobs", "workers", N_("Jobs in the failed registry"), "gauge", N_("jobs"), "bench", PUSH_SECONDS),
+	("rq_long_running_jobs", "workers", N_("Long-running jobs"), "gauge", N_("jobs"), "bench", PUSH_SECONDS),
+	("bench_processes_down", "processes", N_("Bench processes down"), "gauge", N_("processes"), "bench", PUSH_SECONDS),
+	("redis_used_memory_percent", "redis", N_("Redis memory used"), "gauge", "%", "bench", PUSH_SECONDS),
+	("redis_evicted_keys", "redis", N_("Redis evicted keys"), "interval_count", N_("keys"), "bench", PUSH_SECONDS),
+	("db_connections_used_percent", "database", N_("Database connections used"), "gauge", "%", "bench", PUSH_SECONDS),
+	("db_threads_connected", "database", N_("Database connections"), "gauge", N_("connections"), "bench", PUSH_SECONDS),
+	("db_slow_queries", "database", N_("Slow queries"), "interval_count", N_("queries"), "bench", PUSH_SECONDS),
+	("db_replication_running", "database", N_("Replication running"), "gauge", N_("1 = yes"), "bench", PUSH_SECONDS),
+	("db_replication_lag_seconds", "database", N_("Replication lag"), "gauge", "s", "bench", PUSH_SECONDS),
+	("backup_age_hours", "backups", N_("Newest backup age"), "gauge", "h", "site", 600),
+	("tls_days_left", "tls", N_("Certificate expires in"), "gauge", N_("days"), "site", 3600),
+	("hsts_max_age_days", "tls", N_("HSTS max-age"), "gauge", N_("days"), "site", 3600),
+	("agent_setup_failed", "host", N_("Agent setup checks failed"), "gauge", "", "host", 3600),
+	("agent_setup_warnings", "host", N_("Agent setup warnings"), "gauge", "", "host", 3600),
+	("cpu_usage", "host", N_("CPU"), "gauge", "%", "host", PUSH_SECONDS),
+	("memory_used_percent", "host", N_("Memory used"), "gauge", "%", "host", PUSH_SECONDS),
+	("disk_used_percent", "host", N_("Disk used"), "gauge", "%", "host", PUSH_SECONDS),
+	("load_per_core", "host", N_("Load per core"), "gauge", N_("per core"), "host", PUSH_SECONDS),
+	("load_1m", "host", N_("Load (1 min)"), "gauge", "", "host", PUSH_SECONDS),
+	("load_5m", "host", N_("Load (5 min)"), "gauge", "", "host", PUSH_SECONDS),
+	("load_15m", "host", N_("Load (15 min)"), "gauge", "", "host", PUSH_SECONDS),
+	("swap_used_percent", "host", N_("Swap used"), "gauge", "%", "host", PUSH_SECONDS),
+	("exposed_services", "security", N_("Bench services listening beyond loopback"), "gauge", N_("services"), "host", 600),
+	("site_config_risks", "security", N_("Risky site_config settings"), "gauge", N_("settings"), "site", 600),
+	("integrity_files", "security", N_("Files under integrity watch"), "gauge", N_("files"), "bench", 900),
+	("integrity_unreadable", "security", N_("Files the integrity check cannot read"), "gauge", N_("files"), "bench", 900),
+	("bench_outbound_destinations", "security", N_("Outbound destinations of the bench user"), "gauge", N_("destinations"), "bench", 60),
+	("bench_new_outbound_usual", "security", N_("New outbound destinations on usual ports"), "gauge", N_("destinations"), "bench", 60),
+	("security_score", "security", N_("Security score"), "gauge", "/ 100", "site", 3600),
+	("site_setting", "security", N_("System Settings value"), "gauge", "", "site", 3600),
 	# major * 1e6 + minor * 1e3 + patch: a step on the chart is an upgrade
-	("app_version", "security", "App version", "gauge", "version", "bench", 3600),
+	("app_version", "security", N_("App version"), "gauge", N_("version"), "bench", 3600),
 ]
 CATALOG = {
 	m: {"metric": m, "group": g, "label": label, "kind": kind, "unit": unit, "level": level, "cadence_seconds": cadence}
@@ -70,16 +73,29 @@ GROUPS = ("workers", "processes", "redis", "database", "backups", "tls", "securi
 
 # what a gauge means for the reader, said once: backup age is not proof a restore works
 CAVEATS = {
-	"backup_age_hours": "Age of the newest backup file; it does not prove the backup restores.",
-	"agent_setup_failed": "From the agent's hourly wolf-agent doctor run; Monitoring lists what failed and the fix.",
-	"tls_days_left": "Days until the certificate served on port 443 expires; not a full validity check.",
-	"app_version": "Version of each app in the bench (apps/<app>/<app>/__init__.py) as major * 1e6 + minor * 1e3 + patch: 15100000 is 15.100.0; development versions are not sent.",
-	"hsts_max_age_days": "Strict-Transport-Security max-age of the first response to HEAD / (0: no header); redirects are not followed.",
-	"site_setting": "A System Settings value as stored in the site's database (unset: 0); system_manager_2fa is the System Manager role's two-factor flag.",
-	"exposed_services": "A listening socket, not proof of reachability: a firewall may still block it.",
-	"integrity_files": "Files whose content the agent checks: app code, site configs, nginx and supervisor config.",
-	"security_score": "Share of the checks Wolf could prove passed; a check it cannot read counts as not passed.",
+	"backup_age_hours": N_("Age of the newest backup file; it does not prove the backup restores."),
+	"agent_setup_failed": N_("From the agent's hourly wolf-agent doctor run; Monitoring lists what failed and the fix."),
+	"tls_days_left": N_("Days until the certificate served on port 443 expires; not a full validity check."),
+	"app_version": N_("Version of each app in the bench (apps/<app>/<app>/__init__.py) as major * 1e6 + minor * 1e3 + patch: 15100000 is 15.100.0; development versions are not sent."),
+	"hsts_max_age_days": N_("Strict-Transport-Security max-age of the first response to HEAD / (0: no header); redirects are not followed."),
+	"site_setting": N_("A System Settings value as stored in the site's database (unset: 0); system_manager_2fa is the System Manager role's two-factor flag."),
+	"exposed_services": N_("A listening socket, not proof of reachability: a firewall may still block it."),
+	"integrity_files": N_("Files whose content the agent checks: app code, site configs, nginx and supervisor config."),
+	"security_score": N_("Share of the checks Wolf could prove passed; a check it cannot read counts as not passed."),
 }
+
+
+def shown(spec):
+	"""A catalog entry with its label and unit in the reader's language (a copy: CATALOG stays English).
+	A custom metric's label is its name: left as it is."""
+	if spec.get("metric") not in CATALOG:
+		return dict(spec)
+	return {**spec, "label": _(spec["label"]), "unit": _(spec["unit"])}
+
+
+def caveats():
+	"""CAVEATS in the reader's language."""
+	return {metric: _(text) for metric, text in CAVEATS.items()}
 
 
 def stale_after(metric):
@@ -173,12 +189,12 @@ def describe(metric):
 	label = LABELS.get(metric) or ("label" if spec["kind"] == "unknown" else None)
 	group_bys = GROUP_BYS[spec["level"]] + (("host_label",) if label and "host_label" not in GROUP_BYS[spec["level"]] else ())
 	return {
-		**spec,
+		**shown(spec),
 		"label_key": label,
 		"aggregations": AGGREGATIONS[spec["kind"]],
 		"default_aggregation": DEFAULT_AGGREGATION[spec["kind"]],
 		"group_bys": group_bys,
-		"caveat": CAVEATS.get(metric),
+		"caveat": _(CAVEATS[metric]) if metric in CAVEATS else None,
 	}
 
 
@@ -188,7 +204,7 @@ def validate(metric, aggregation, group_by):
 	aggregation = aggregation or d["default_aggregation"]
 	group_by = group_by or "none"
 	if aggregation not in d["aggregations"]:
-		raise ValueError(f"{aggregation} is not meaningful for {metric} ({d['kind']}): use {', '.join(d['aggregations'])}")
+		raise ValueError(fmt(_("{0} is not meaningful for {1} ({2}): use {3}"), aggregation, metric, d["kind"], ", ".join(d["aggregations"])))
 	if group_by not in d["group_bys"]:
-		raise ValueError(f"{metric} cannot be grouped by {group_by}: use {', '.join(d['group_bys'])}")
+		raise ValueError(fmt(_("{0} cannot be grouped by {1}: use {2}"), metric, group_by, ", ".join(d["group_bys"])))
 	return aggregation, group_by

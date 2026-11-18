@@ -86,7 +86,7 @@ function setupLabel(s) {
           <template v-if="health.queues.error">{{ __('unreachable: {0}', [health.queues.error]) }}</template>
           <template v-else-if="health.queues.ingest_backlog_seconds != null">{{ __('oldest push waiting {0} min', [Math.round(health.queues.ingest_backlog_seconds / 60)]) }}</template>
           <template v-else>{{ __('empty') }}</template>
-          <template v-if="health.queues.workers != null"> · {{ __('{0} workers', [health.queues.workers]) }}</template>
+          <template v-if="health.queues.workers != null"> · {{ health.queues.workers === 1 ? __('{0} worker', [1]) : __('{0} workers', [health.queues.workers]) }}</template>
         </dd>
       </template>
       <dt>{{ __('Rollups done until') }}</dt>

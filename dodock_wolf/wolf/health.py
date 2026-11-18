@@ -12,6 +12,7 @@ from frappe.utils import cint, get_datetime, now_datetime
 
 from dodock_wolf import __version__
 from dodock_wolf.wolf import events, heartbeat
+from dodock_wolf.wolf.i18n import _
 from dodock_wolf.wolf.schema import fingerprint
 
 # Queued pushes are stored by a worker of this queue (dodock_wolf.api.ingest).
@@ -19,6 +20,9 @@ INGEST_QUEUE = "short"
 
 # Same as the "Scheduler stalled" preset window: while stalled, one event is bumped.
 STALL_DEDUPE_MINUTES = 15
+
+# scheduler_inactive_reason(): the other reasons are site_config keys, shown as they are
+SCHEDULER_OFF_IN_SETTINGS = "enable_scheduler unset in System Settings"
 
 
 def _max(sql):
@@ -35,7 +39,7 @@ def scheduler_inactive_reason():
 	if frappe.conf.get("disable_scheduler"):
 		return "disable_scheduler"
 	if not cint(frappe.db.get_single_value("System Settings", "enable_scheduler")):
-		return "enable_scheduler unset in System Settings"
+		return SCHEDULER_OFF_IN_SETTINGS
 	return None
 
 
@@ -107,6 +111,21 @@ def get_health():
 	health["problems"] = heartbeat.assess(health)
 	health["ok"] = not health["problems"]
 	return health
+
+
+def for_display(health):
+	"""A copy of a get_health() dict for the Wolf UI, its fixed texts in the reader's language.
+
+	get_health() itself stays English: agents put it in their own alerts and report_stall stores it.
+	"""
+	if not health:
+		return health
+	scheduler = dict(health.get("scheduler") or {})
+	if scheduler.get("reason") == SCHEDULER_OFF_IN_SETTINGS:
+		scheduler["reason"] = _("enable_scheduler unset in System Settings")
+	shown = {**health, "scheduler": scheduler}
+	shown["problems"] = heartbeat.assess(shown, _=_)
+	return shown
 
 
 def safe_health():

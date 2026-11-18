@@ -24,6 +24,8 @@ import hashlib
 import hmac
 import json
 
+from dodock_wolf.wolf.i18n import _, fmt
+
 GENESIS = "0" * 64
 PURGE_KIND = "journal_purge"
 
@@ -79,16 +81,16 @@ def verify(key, entries, anchor=None):
 			result["first_seq"] = seq
 			prev_mac = first_prev_mac = e["prev_mac"]
 			if seq == 1 and prev_mac != GENESIS:
-				return fail(seq, "the first entry does not start from the genesis value")
+				return fail(seq, _("the first entry does not start from the genesis value"))
 		elif seq != prev_seq + 1:
-			return fail(seq, f"entry {prev_seq + 1} is missing (sequence jumps from {prev_seq} to {seq})")
+			return fail(seq, fmt(_("entry {0} is missing (sequence jumps from {1} to {2})"), prev_seq + 1, prev_seq, seq))
 		if e["prev_mac"] != prev_mac:
-			return fail(seq, "prev_mac does not match the previous entry: an entry was removed, edited or reordered")
+			return fail(seq, _("prev_mac does not match the previous entry: an entry was removed, edited or reordered"))
 		if digest(e["content"]) != e["digest"]:
-			return fail(seq, "content does not match its digest: the content was edited")
+			return fail(seq, _("content does not match its digest: the content was edited"))
 		expected = mac(key, seq, e["at"], e["kind"], e.get("ref_doctype"), e.get("ref_name"), e["digest"], prev_mac)
 		if not hmac.compare_digest(expected, e["mac"] or ""):
-			return fail(seq, "mac does not match: the entry was edited or the key is not the one that signed it")
+			return fail(seq, _("mac does not match: the entry was edited or the key is not the one that signed it"))
 		if e["kind"] == PURGE_KIND:
 			purge = purge_record(e["content"])
 		seen[seq] = e["mac"]
@@ -100,21 +102,21 @@ def verify(key, entries, anchor=None):
 		result["purged_through"] = purge["through_seq"]
 	if first and first > 1:
 		if not purge:
-			return fail(first, f"entries 1 to {first - 1} were removed without a purge record")
+			return fail(first, fmt(_("entries 1 to {0} were removed without a purge record"), first - 1))
 		if first != purge["through_seq"] + 1 or first_prev_mac != purge["through_mac"]:
-			return fail(first, f"the journal should start at entry {purge['through_seq'] + 1}, where the last purge "
-			                   f"stopped: entries were removed after it")  # fmt: skip
+			template = _("the journal should start at entry {0}, where the last purge stopped: entries were removed after it")
+			return fail(first, fmt(template, purge["through_seq"] + 1))
 	if anchor:
 		a_seq, a_mac = int(anchor[0]), anchor[1]
 		if purge and a_seq <= purge["through_seq"]:
 			if a_seq == purge["through_seq"] and hmac.compare_digest(purge["through_mac"], a_mac):
 				return result  # the purge record kept its mac
-			return fail(a_seq, f"anchored entry {a_seq} was purged by the retention (entries up to "
-			                   f"{purge['through_seq']}): copy a newer anchor")  # fmt: skip
+			template = _("anchored entry {0} was purged by the retention (entries up to {1}): copy a newer anchor")
+			return fail(a_seq, fmt(template, a_seq, purge["through_seq"]))
 		if a_seq not in seen:
-			return fail(a_seq, f"anchored entry {a_seq} is not in the journal any more (newest is {prev_seq})")
+			return fail(a_seq, fmt(_("anchored entry {0} is not in the journal any more (newest is {1})"), a_seq, prev_seq))
 		if not hmac.compare_digest(seen[a_seq], a_mac):
-			return fail(a_seq, "anchored entry has another mac than the one copied")
+			return fail(a_seq, _("anchored entry has another mac than the one copied"))
 	return result
 
 

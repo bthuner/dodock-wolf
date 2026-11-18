@@ -21,6 +21,9 @@ import json
 import re
 import urllib.request
 
+from dodock_wolf.wolf.i18n import _
+from dodock_wolf.wolf.i18n import fmt as fill
+
 # app name -> repository whose security advisories cover it
 REPOS = {"frappe": "frappe/frappe", "erpnext": "frappe/erpnext"}
 SEVERITIES = ("critical", "high", "medium", "low")
@@ -142,7 +145,7 @@ def _next_link(header):
 def fetch(repo, opener=urllib.request.urlopen, timeout=20):
 	"""Published advisories of `repo`, every page. Raises OSError/ValueError on failure."""
 	url, raw = API.format(repo=repo), []
-	for _ in range(MAX_PAGES):
+	for _page in range(MAX_PAGES):
 		req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "dodock-wolf"})
 		with opener(req, timeout=timeout) as resp:
 			page = json.loads(resp.read().decode("utf-8"))
@@ -184,19 +187,35 @@ def assess(app, version, advisories):
 		out["status"] = "clear"
 		return out
 	out["status"] = "unknown"
-	out["why"] = (f"{app} {fmt(version)}: the last year's advisories name {', '.join(f'{n}.x' for n in named) or 'no line'}, "
-	              f"not {version[0]}.x (a fork such as Dodock, numbered differently, or a line out of support)")  # fmt: skip
+	template = _("{0} {1}: the last year's advisories name {2}, not {3}.x (a fork such as Dodock, numbered differently, or a line out of support)")
+	out["why"] = fill(template, app, fmt(version), ", ".join(f"{n}.x" for n in named) or _("no line"), version[0])
 	return out
 
 
 def summary(result):
 	"""'frappe 15.100.0: 12 advisories (2 critical, 5 high, 5 medium), fixed in 15.123.0'."""
 	found = result["found"]
+	app, version, fixed_in = result["app"], result["version"], result["fixed_in"]
 	if not found:
-		return f"{result['app']} {result['version']}: no advisory applies"
+		return fill(_("{0} {1}: no advisory applies"), app, version)
 	counts = {}
 	for a in found:
 		counts[a["severity"]] = counts.get(a["severity"], 0) + 1
-	parts = ", ".join(f"{counts[s]} {s}" for s in (*SEVERITIES, "unknown") if counts.get(s))
-	text = f"{result['app']} {result['version']}: {len(found)} advisor{'y' if len(found) == 1 else 'ies'} ({parts})"
-	return text + (f", fixed in {result['fixed_in']}" if result["fixed_in"] else "")
+	parts = ", ".join(_severity_count(s, counts[s]) for s in (*SEVERITIES, "unknown") if counts.get(s))
+	if len(found) == 1:
+		if fixed_in:
+			return fill(_("{0} {1}: 1 advisory ({2}), fixed in {3}"), app, version, parts, fixed_in)
+		return fill(_("{0} {1}: 1 advisory ({2})"), app, version, parts)
+	if fixed_in:
+		return fill(_("{0} {1}: {2} advisories ({3}), fixed in {4}"), app, version, len(found), parts, fixed_in)
+	return fill(_("{0} {1}: {2} advisories ({3})"), app, version, len(found), parts)
+
+
+def _severity_count(severity, n):
+	"""'2 critical', '1 high' and so on, in the reader's language (the severity itself is a code):
+	singular and plural apart, as the adjective agrees in French."""
+	if n == 1:
+		one = {"critical": _("1 critical"), "high": _("1 high"), "medium": _("1 medium"), "low": _("1 low")}
+		return one.get(severity) or _("1 unknown")
+	many = {"critical": _("{0} critical"), "high": _("{0} high"), "medium": _("{0} medium"), "low": _("{0} low")}
+	return fill(many.get(severity) or _("{0} unknown"), n)

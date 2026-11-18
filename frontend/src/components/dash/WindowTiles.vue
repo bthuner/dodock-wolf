@@ -56,7 +56,7 @@ const label = computed(() => {
       <div v-if="incidents" class="wolf-tile">
         <dt>{{ __('Incidents opened') }}</dt>
         <dd class="wolf-data wolf-tile-figure">{{ counts.incidents.opened_in_window }}</dd>
-        <dd class="wolf-tile-note">{{ counts.incidents.resolved_in_window === 1 ? __('1 resolved') : __('{0} resolved', [counts.incidents.resolved_in_window]) }}</dd>
+        <dd class="wolf-tile-note">{{ counts.incidents.resolved_in_window === 1 ? __('1 resolved') : __('{0} resolved', [counts.incidents.resolved_in_window], 'Incident count') }}</dd>
       </div>
       <div v-else class="wolf-tile">
         <dt>{{ __('Security events') }}</dt>

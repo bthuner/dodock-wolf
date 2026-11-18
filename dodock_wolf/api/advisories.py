@@ -14,9 +14,11 @@ import os
 from datetime import timedelta
 
 import frappe
+from frappe import _
 from frappe.utils import cint, get_datetime, now_datetime
 
 from dodock_wolf.wolf import advisories
+from dodock_wolf.wolf.i18n import fmt
 from dodock_wolf.wolf.spa import MANAGER_ROLES
 
 REFRESH_AFTER = timedelta(hours=23)
@@ -95,10 +97,12 @@ def sources(now=None):
 		data = apps.get(app) or {}
 		fetched = data.get("fetched_at")
 		if data.get("advisories") is None or not fetched:
-			why = f"advisories not fetched yet ({data['error']})" if data.get("error") else "advisories not fetched yet"
+			why = fmt(_("advisories not fetched yet ({0})"), data["error"]) if data.get("error") else _("advisories not fetched yet")
 			out[app] = {"advisories": None, "why": why}
 		elif now - get_datetime(fetched) > timedelta(days=STALE_DAYS):
-			out[app] = {"advisories": None, "why": f"advisories last fetched on {str(fetched)[:10]}" + (f" ({data['error']})" if data.get("error") else "")}
+			when = str(fetched)[:10]
+			why = fmt(_("advisories last fetched on {0} ({1})"), when, data["error"]) if data.get("error") else fmt(_("advisories last fetched on {0}"), when)
+			out[app] = {"advisories": None, "why": why}
 		else:
 			out[app] = {"advisories": data["advisories"], "why": None}
 	return out

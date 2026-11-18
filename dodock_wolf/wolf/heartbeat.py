@@ -2,10 +2,15 @@
 
 Kept free of frappe imports so it can be unit tested without a bench. The agent
 watchdog (agent/wolf_agent/watchdog.py) mirrors `assess`; keep the two in sync.
+
+The problems are English by default: agents put them in their own alerts and report_stall
+stores them. Pass `_` (wolf.i18n._) for the reader's language, as health.for_display does.
 """
 
 from datetime import timezone
 from zoneinfo import ZoneInfo
+
+from dodock_wolf.wolf.i18n import fmt
 
 STALE_MINUTES = 5
 
@@ -24,20 +29,24 @@ def age_seconds(then, now):
 	return int((now - then).total_seconds())
 
 
-def _context(health):
+def _english(text):
+	return text
+
+
+def _context(health, _):
 	scheduler = health.get("scheduler") or {}
 	queues = health.get("queues") or {}
 	notes = []
 	if scheduler.get("enabled") is False:
-		notes.append(f"scheduler disabled ({scheduler.get('reason') or 'unknown reason'})")
+		notes.append(fmt(_("scheduler disabled ({0})"), scheduler.get("reason") or _("unknown reason")))
 	if queues.get("error"):
-		notes.append(f"job queue unreachable: {queues['error']}")
+		notes.append(fmt(_("job queue unreachable: {0}"), queues["error"]))
 	elif queues.get("workers") == 0:
-		notes.append("no background worker running")
+		notes.append(_("no background worker running"))
 	return notes
 
 
-def assess(health, stale_minutes=STALE_MINUTES):
+def assess(health, stale_minutes=STALE_MINUTES, _=_english):
 	"""Return the problems found in a health dict, as short sentences (empty = healthy).
 
 	Only lasting conditions raise a problem: a paused scheduler, a Redis blip or a burst of
@@ -45,37 +54,41 @@ def assess(health, stale_minutes=STALE_MINUTES):
 	"""
 	if not isinstance(health, dict):
 		return []
-	return [p for p in (staleness(health, stale_minutes), ingest_backlog(health, stale_minutes)) if p]
+	return [p for p in (staleness(health, stale_minutes, _), ingest_backlog(health, stale_minutes, _)) if p]
 
 
 def _limit(stale_minutes):
 	return max(float(stale_minutes or STALE_MINUTES), 0.1) * 60
 
 
-def staleness(health, stale_minutes=STALE_MINUTES):
+def staleness(health, stale_minutes=STALE_MINUTES, _=_english):
 	"""Rules (or scheduled jobs) not run for `stale_minutes`, with context; None if fresh."""
 	if not isinstance(health, dict):
 		return None
 	limit = _limit(stale_minutes)
 	rules_age = (health.get("rules") or {}).get("age_seconds")
 	job_age = (health.get("scheduler") or {}).get("age_seconds")
-	what, age = ("alert rules", rules_age) if rules_age is not None else ("scheduled jobs", job_age)
+	rules = rules_age is not None
+	age = rules_age if rules else job_age
 	if age is None:
 		return None
 
 	if age >= limit:
-		problem = f"{what} not evaluated for {int(age // 60)} min"
+		template = _("alert rules not evaluated for {0} min") if rules else _("scheduled jobs not evaluated for {0} min")
+		problem = fmt(template, int(age // 60))
 	elif age <= -limit:
 		# A time-zone change leaves stored times in the future: the scheduler then
 		# considers nothing due until that time is reached.
-		problem = f"last run of {what} is {int(-age // 60)} min in the future (time zone changed?)"
+		template = (_("last run of alert rules is {0} min in the future (time zone changed?)") if rules
+		            else _("last run of scheduled jobs is {0} min in the future (time zone changed?)"))  # fmt: skip
+		problem = fmt(template, int(-age // 60))
 	else:
 		return None
-	notes = _context(health)
+	notes = _context(health, _)
 	return problem + (f"; {', '.join(notes)}" if notes else "")
 
 
-def ingest_backlog(health, stale_minutes=STALE_MINUTES):
+def ingest_backlog(health, stale_minutes=STALE_MINUTES, _=_english):
 	"""Queued pushes waiting `stale_minutes` for a worker; None otherwise.
 
 	Agents get their answer before a queued push is stored, so their heartbeat stays fresh
@@ -87,7 +100,7 @@ def ingest_backlog(health, stale_minutes=STALE_MINUTES):
 	age = queues.get("ingest_backlog_seconds")
 	if not isinstance(age, (int, float)) or age < _limit(stale_minutes):
 		return None
-	problem = f"pushes waiting {int(age // 60)} min in the {queues.get('ingest_queue') or 'ingest'} queue, not stored yet"
+	problem = fmt(_("pushes waiting {0} min in the {1} queue, not stored yet"), int(age // 60), queues.get("ingest_queue") or "ingest")
 	if queues.get("workers") == 0:
-		problem += "; no background worker running"
+		problem += "; " + _("no background worker running")
 	return problem

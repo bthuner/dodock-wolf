@@ -24,7 +24,9 @@ TIMELINE_LIMIT = 100
 def serialize(rows, tz):
 	from dodock_wolf.wolf import window
 
-	return [{**r, "due_at": window.to_utc(r["due_at"], tz), "done_at": window.to_utc(r["done_at"], tz)} for r in rows]
+	# per request: the labels in the reader's language (the reminders keep the English)
+	return [{**r, "due_at": window.to_utc(r["due_at"], tz), "done_at": window.to_utc(r["done_at"], tz)}
+	        for r in compliance.translated(rows)]  # fmt: skip
 
 
 def _flagged():
@@ -72,7 +74,9 @@ def _text(html):
 
 def _timeline(inc):
 	rows = []
-	for label, field in (("Incident started", "started_at"), ("Acknowledged", "acknowledged_at"), ("Resolved", "resolved_at")):
+	# the report is made per request, in the reader's language; event titles and comments are stored text
+	for label, field in ((_("Incident started"), "started_at"), (_("Acknowledged", context="Wolf Incident"), "acknowledged_at"),
+	                     (_("Resolved", context="Wolf Incident"), "resolved_at")):  # fmt: skip
 		if inc.get(field):
 			rows.append((inc.get(field), label))
 	for ev in frappe.get_all("Wolf Event", filters={"incident": inc.name}, fields=["timestamp", "title"],
@@ -91,7 +95,7 @@ def get_deadlines(incident):
 	inc = frappe.get_doc("Wolf Incident", incident)
 	if not frappe.has_permission("Wolf Incident", "read", doc=inc):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
-	return compliance.deadlines(inc.as_dict(), now_datetime())
+	return compliance.translated(compliance.deadlines(inc.as_dict(), now_datetime()))
 
 
 @frappe.whitelist()

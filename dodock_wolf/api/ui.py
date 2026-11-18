@@ -4,7 +4,7 @@ import frappe
 from frappe.utils import add_to_date, cint, now_datetime
 
 from dodock_wolf import satellite
-from dodock_wolf.wolf import access, detectors, inventory, rollups, schema, spa, storage, window
+from dodock_wolf.wolf import access, inventory, rollups, schema, spa, storage, timeline, window
 from dodock_wolf.wolf.incidents import get_timeline, parse_payload
 from dodock_wolf.wolf.series import bucket_series
 from dodock_wolf.wolf.workflow import get_activity
@@ -147,7 +147,7 @@ def get_incident_timeline(incident):
 	for r in rows:
 		r.payload = parse_payload(r)
 		r.linked = r.incident == doc.name
-		r.source_label = detectors.source_label(r.source)
+		r.source_label = timeline.source_label(r.source)
 		r.pop("incident", None)
 	return {
 		"incident": doc.name,
