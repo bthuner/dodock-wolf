@@ -1,26 +1,28 @@
 <script setup>
 import { Sidebar, SidebarHeader, SidebarItem, SidebarLabel, useColorScheme } from 'frappe-ui'
 
-import { logout } from '@/services/boot'
 import { computed, inject } from 'vue'
+
+import { logout } from '@/services/boot'
+import { __ } from '@/services/i18n'
 
 const boot = inject('boot')
 const { colorScheme, setColorScheme } = useColorScheme()
 
 const SCHEMES = [
-  { value: 'light', label: 'Light theme' },
-  { value: 'dark', label: 'Dark theme' },
-  { value: 'system', label: 'System theme' },
+  { value: 'light', label: () => __('Light theme') },
+  { value: 'dark', label: () => __('Dark theme') },
+  { value: 'system', label: () => __('System theme') },
 ]
 
 const menu = computed(() => [
   ...SCHEMES.map((s) => ({
-    label: s.label,
+    label: s.label(),
     selected: colorScheme.value === s.value,
     onClick: () => setColorScheme(s.value),
   })),
-  { label: 'Open Desk', icon: 'lucide-external-link', onClick: () => window.location.assign(boot.desk.home) },
-  { label: 'Log out', icon: 'lucide-log-out', onClick: () => logout() },
+  { label: __('Open Desk'), icon: 'lucide-external-link', onClick: () => window.location.assign(boot.desk.home) },
+  { label: __('Log out'), icon: 'lucide-log-out', onClick: () => logout() },
 ])
 </script>
 
@@ -33,24 +35,24 @@ const menu = computed(() => [
       :menu-items="menu"
     />
     <div class="flex-1 overflow-y-auto px-2 pb-2">
-      <SidebarItem label="Overview" icon="lucide-layout-dashboard" :route="{ name: 'overview' }" />
+      <SidebarItem :label="__('Overview')" icon="lucide-layout-dashboard" :route="{ name: 'overview' }" />
       <SidebarItem
         v-if="boot.capabilities.incidents.available"
-        label="Incidents"
+        :label="__('Incidents')"
         icon="lucide-siren"
         :route="{ name: 'incidents' }"
       />
-      <SidebarItem label="Events" icon="lucide-list" :route="{ name: 'events' }" />
-      <SidebarItem label="Errors" icon="lucide-bug" :route="{ name: 'errors' }" />
-      <SidebarItem label="Security" icon="lucide-shield" :route="{ name: 'security' }" />
-      <SidebarLabel>Explore</SidebarLabel>
-      <SidebarItem label="Metrics" icon="lucide-chart-line" :route="{ name: 'metrics' }" />
-      <SidebarItem label="Logs" icon="lucide-scroll-text" :route="{ name: 'logs' }" />
+      <SidebarItem :label="__('Events')" icon="lucide-list" :route="{ name: 'events' }" />
+      <SidebarItem :label="__('Errors')" icon="lucide-bug" :route="{ name: 'errors' }" />
+      <SidebarItem :label="__('Security')" icon="lucide-shield" :route="{ name: 'security' }" />
+      <SidebarLabel>{{ __('Explore') }}</SidebarLabel>
+      <SidebarItem :label="__('Metrics')" icon="lucide-chart-line" :route="{ name: 'metrics' }" />
+      <SidebarItem :label="__('Logs')" icon="lucide-scroll-text" :route="{ name: 'logs' }" />
       <SidebarLabel>Wolf</SidebarLabel>
-      <SidebarItem label="Monitoring" icon="lucide-activity" :route="{ name: 'monitoring' }" />
+      <SidebarItem :label="__('Monitoring')" icon="lucide-activity" :route="{ name: 'monitoring' }" />
       <SidebarItem
         v-if="boot.can.configure"
-        label="Alert rules (Desk)"
+        :label="__('Alert rules (Desk)')"
         icon="lucide-bell"
         :href="boot.desk.fallbacks.alert_rules"
       />

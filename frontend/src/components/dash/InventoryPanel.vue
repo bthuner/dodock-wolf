@@ -3,7 +3,8 @@ import { Button, TextInput } from 'frappe-ui'
 import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import { ago, full } from '@/services/time'
+import { __ } from '@/services/i18n'
+import { timeAgo, full } from '@/services/time'
 
 // Hosts > benches > sites as get_inventory answers them, drawn as a schematic: a host, the
 // rail to its benches, each bench's sites. Nothing is judged here: the panel says where each
@@ -23,7 +24,18 @@ watch(() => props.host, () => {
   query.value = ''
 })
 
-const REGISTERED = { agent: 'Agent registered', satellite: 'Known through a satellite' }
+function registeredLabel(r) {
+  if (r === 'agent') return __('Agent registered')
+  if (r === 'satellite') return __('Known through a satellite')
+  return __('No agent registered')
+}
+// a kind of telemetry received from a host
+function telemetryLabel(s) {
+  if (s === 'events') return __('events')
+  if (s === 'metrics') return __('metrics')
+  if (s === 'incidents') return __('incidents')
+  return s
+}
 const TELEMETRY = ['events', 'metrics', 'incidents']
 
 // a host's rows: its benches, then the sites seen on it with no bench named
@@ -55,10 +67,13 @@ const totals = computed(() => {
   }
   return { hosts: hosts.value.length, benches, sites: sites.size }
 })
-const plural = (n, word) => (n === 1 ? word : `${word === 'bench' ? 'benche' : word}s`)
 const figures = computed(() => {
   const t = totals.value
-  const all = [{ n: t.hosts, label: plural(t.hosts, 'host') }, { n: t.benches, label: plural(t.benches, 'bench') }, { n: t.sites, label: plural(t.sites, 'site') }]
+  const all = [
+    { key: 'hosts', n: t.hosts, label: t.hosts === 1 ? __('host') : __('hosts') },
+    { key: 'benches', n: t.benches, label: t.benches === 1 ? __('bench') : __('benches') },
+    { key: 'sites', n: t.sites, label: t.sites === 1 ? __('site') : __('sites') },
+  ]
   return props.host ? all.slice(1) : all
 })
 const canFilter = computed(() => totals.value.hosts >= 4 || totals.value.sites >= 10)
@@ -80,6 +95,14 @@ const matched = computed(() => {
 })
 const matchedUnplaced = computed(() => (needle.value ? unplaced.value.filter((s) => hit(s.site)) : unplaced.value))
 const shown = computed(() => (allHosts.value ? matched.value : matched.value.slice(0, FIRST_HOSTS)))
+const matchNote = computed(() =>
+  hosts.value.length === 1 ? __('{0} of {1} host match.', [matched.value.length, 1]) : __('{0} of {1} hosts match.', [matched.value.length, hosts.value.length]),
+)
+const moreLabel = computed(() =>
+  allHosts.value
+    ? __('Show the first {0} hosts only', [FIRST_HOSTS])
+    : __('Show the other {0} of {1} hosts', [matched.value.length - FIRST_HOSTS, matched.value.length]),
+)
 
 // a site name reads by its first label; the rest of the domain repeats across the list
 function parts(site) {
@@ -89,12 +112,12 @@ function parts(site) {
 </script>
 
 <template>
-  <section class="wolf-card wolf-estate" aria-label="Hosts, benches and sites">
+  <section class="wolf-card wolf-estate" :aria-label="__('Hosts, benches and sites')">
     <div class="wolf-estate-head">
       <div>
-        <h2 class="wolf-h2">{{ host ? 'Benches and sites on this host' : 'Hosts, benches and sites' }}</h2>
+        <h2 class="wolf-h2">{{ host ? __('Benches and sites on this host') : __('Hosts, benches and sites') }}</h2>
         <dl class="wolf-estate-totals">
-          <div v-for="f in figures" :key="f.label">
+          <div v-for="f in figures" :key="f.key">
             <dt>{{ f.label }}</dt>
             <dd class="wolf-data">{{ f.n }}</dd>
           </div>
@@ -105,15 +128,15 @@ function parts(site) {
         v-model="query"
         type="search"
         class="w-64 max-w-full"
-        placeholder="Find a host, bench or site"
-        aria-label="Find a host, bench or site"
+        :placeholder="__('Find a host, bench or site')"
+        :aria-label="__('Find a host, bench or site')"
       />
     </div>
 
     <div class="wolf-estate-cols" aria-hidden="true">
-      <span>Host</span>
-      <span>Bench</span>
-      <span>Sites</span>
+      <span>{{ __('Host') }}</span>
+      <span>{{ __('Bench') }}</span>
+      <span>{{ __('Sites') }}</span>
     </div>
 
     <ul class="wolf-estate-list">
@@ -125,11 +148,11 @@ function parts(site) {
             <span v-if="h.rows.length" class="wolf-estate-lead" aria-hidden="true" />
           </div>
           <p class="wolf-estate-meta">
-            {{ REGISTERED[h.registered] || 'No agent registered' }}<template v-if="h.last_seen">
-              · <span :title="full(h.last_seen, timeZone)">seen {{ ago(h.last_seen) }} ago</span></template>
+            {{ registeredLabel(h.registered) }}<template v-if="h.last_seen">
+              · <span :title="full(h.last_seen, timeZone)">{{ __('seen {0}', [timeAgo(h.last_seen)]) }}</span></template>
           </p>
-          <ul v-if="h.telemetry.length" class="wolf-estate-srcs" aria-label="Telemetry received">
-            <li v-for="s in h.telemetry" :key="s">{{ s }}</li>
+          <ul v-if="h.telemetry.length" class="wolf-estate-srcs" :aria-label="__('Telemetry received')">
+            <li v-for="s in h.telemetry" :key="s">{{ telemetryLabel(s) }}</li>
           </ul>
         </div>
 
@@ -137,23 +160,23 @@ function parts(site) {
           <li v-for="r in h.rows" :key="r.key" class="wolf-estate-bench" :data-unknown="r.bench ? null : ''">
             <div class="wolf-estate-benchname">
               <RouterLink v-if="r.bench" class="wolf-data" :to="{ name: 'bench', params: { host: h.host, bench: r.bench } }">{{ r.bench }}</RouterLink>
-              <span v-else class="wolf-estate-nobench">bench not known</span>
-              <span v-if="r.sites.length > 1" class="wolf-data wolf-estate-count" :aria-label="`${r.sites.length} sites`">{{ r.sites.length }}</span>
+              <span v-else class="wolf-estate-nobench">{{ __('bench not known') }}</span>
+              <span v-if="r.sites.length > 1" class="wolf-data wolf-estate-count" :aria-label="__('{0} sites', [r.sites.length])">{{ r.sites.length }}</span>
             </div>
             <ul v-if="r.sites.length" class="wolf-estate-sites">
               <li v-for="s in r.sites" :key="s.site">
                 <RouterLink class="wolf-data wolf-estate-site" :to="{ name: 'site', params: { site: s.site } }">{{ parts(s.site)[0] }}<span>{{ parts(s.site)[1] }}</span></RouterLink>
               </li>
             </ul>
-            <p v-else class="wolf-estate-none">no site seen</p>
+            <p v-else class="wolf-estate-none">{{ __('no site seen') }}</p>
           </li>
         </ul>
-        <p v-else class="wolf-estate-none wolf-estate-bare">no bench seen</p>
+        <p v-else class="wolf-estate-none wolf-estate-bare">{{ __('no bench seen') }}</p>
       </li>
     </ul>
 
     <div v-if="matchedUnplaced.length" class="wolf-estate-unplaced">
-      <h3 class="wolf-label">Sites with no known host</h3>
+      <h3 class="wolf-label">{{ __('Sites with no known host') }}</h3>
       <ul class="wolf-estate-sites">
         <li v-for="s in matchedUnplaced" :key="s.site">
           <RouterLink class="wolf-data wolf-estate-site" :to="{ name: 'site', params: { site: s.site } }">{{ parts(s.site)[0] }}<span>{{ parts(s.site)[1] }}</span></RouterLink>
@@ -162,17 +185,17 @@ function parts(site) {
     </div>
 
     <p v-if="needle && !matched.length && !matchedUnplaced.length" class="wolf-estate-empty" role="status">
-      No host, bench or site contains “{{ query.trim() }}”.
-      <button type="button" class="wolf-link" @click="query = ''">Clear the filter</button>
+      {{ __('No host, bench or site contains “{0}”.', [query.trim()]) }}
+      <button type="button" class="wolf-link" @click="query = ''">{{ __('Clear the filter') }}</button>
     </p>
 
     <div class="wolf-estate-foot">
-      <p v-if="needle && matched.length" role="status">{{ matched.length }} of {{ hosts.length }} {{ plural(hosts.length, 'host') }} match.</p>
+      <p v-if="needle && matched.length" role="status">{{ matchNote }}</p>
       <Button
         v-if="matched.length > FIRST_HOSTS"
         size="sm"
         variant="ghost"
-        :label="allHosts ? `Show the first ${FIRST_HOSTS} hosts only` : `Show the other ${matched.length - FIRST_HOSTS} of ${matched.length} hosts`"
+        :label="moreLabel"
         @click="allHosts = !allHosts"
       />
       <p v-if="inventory.note">{{ inventory.note }}</p>

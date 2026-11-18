@@ -1,9 +1,18 @@
 <script setup>
 // Says a view is reading, before it has anything to show, so an empty area is never mistaken
 // for "nothing there". Announced politely to screen readers.
-defineProps({ what: { type: String, default: '' } })
+//
+// `text` is the whole sentence, already translated: `:text="__('Loading the timeline…')"`.
+import { computed } from 'vue'
+
+import { __ } from '@/services/i18n'
+
+const props = defineProps({
+  text: { type: String, default: '' },
+})
+const said = computed(() => props.text || __('Loading…'))
 </script>
 
 <template>
-  <p role="status" class="text-sm text-ink-gray-6">Loading{{ what ? ` ${what}` : '' }}…</p>
+  <p role="status" class="text-sm text-ink-gray-6">{{ said }}</p>
 </template>

@@ -15,6 +15,7 @@ import { useLive } from '@/composables/useLive'
 import { useQueryParam } from '@/composables/useQueryParam'
 import { useTimeline } from '@/composables/useTimeline'
 import { call, failure } from '@/services/api'
+import { __ } from '@/services/i18n'
 import { clock, day, duration, full } from '@/services/time'
 
 const route = useRoute()
@@ -22,12 +23,13 @@ const router = useRouter()
 const boot = inject('boot')
 const tz = boot.time_zone
 
+// labels translated when shown: the module loads before the translations
 const SHOW = [
-  { value: 'all', label: 'All', families: ['evidence', 'context', 'activity', 'delivery'] },
-  { value: 'evidence', label: 'Evidence', families: ['evidence'] },
-  { value: 'context', label: 'Context', families: ['context'] },
-  { value: 'activity', label: 'Activity', families: ['activity'] },
-  { value: 'delivery', label: 'Notifications', families: ['delivery'] },
+  { value: 'all', label: () => __('All'), families: ['evidence', 'context', 'activity', 'delivery'] },
+  { value: 'evidence', label: () => __('Evidence'), families: ['evidence'] },
+  { value: 'context', label: () => __('Context'), families: ['context'] },
+  { value: 'activity', label: () => __('Activity'), families: ['activity'] },
+  { value: 'delivery', label: () => __('Notifications'), families: ['delivery'] },
 ]
 const GAP_MINUTES = 60
 
@@ -46,9 +48,11 @@ const expanded = ref(new Set())
 const timeline = useTimeline(() => name.value)
 const commentBox = ref(null)
 
-// "1 record", "2 records": counts read as English
-function count(n, noun) {
-  return `${n} ${n === 1 ? noun : `${noun}s`}`
+// "1 record", "2 records": one sentence per form, Frappe has no plurals
+function linkedEvents(records, occurrences) {
+  const r = records === 1 ? __('1 record') : __('{0} records', [records])
+  const o = occurrences === 1 ? __('1 reported occurrence') : __('{0} reported occurrences', [occurrences])
+  return __('{0}, {1}', [r, o])
 }
 
 function anchor(row) {
@@ -92,7 +96,9 @@ const scope = computed(() => {
 const openFor = computed(() => {
   const i = incident.value
   if (!i) return ''
-  return i.resolved.at ? `lasted ${duration(i.started_at, i.resolved.at)}` : `open for ${duration(i.started_at, new Date().toISOString())}`
+  return i.resolved.at
+    ? __('lasted {0}', [duration(i.started_at, i.resolved.at)])
+    : __('open for {0}', [duration(i.started_at, new Date().toISOString())])
 })
 
 async function loadIncident() {
@@ -101,7 +107,7 @@ async function loadIncident() {
     incident.value = await call('dodock_wolf.api.incident_view.get_incident', { incident: name.value })
   } catch (e) {
     incident.value = null
-    loadError.value = failure(e, 'this incident')
+    loadError.value = failure(e, __('this incident'))
   }
 }
 
@@ -145,12 +151,21 @@ async function showFresh() {
 }
 
 // NIS2 / GDPR deadlines (api/compliance.py): tracked here, set in Desk, nothing sent anywhere
-const REG_STATUS = {
-  open: 'Open',
-  due_soon: 'Due within 6 h',
-  overdue: 'Overdue',
-  done: 'Sent on time',
-  done_late: 'Sent late',
+function regStatus(status) {
+  switch (status) {
+    case 'open':
+      return __('Open')
+    case 'due_soon':
+      return __('Due within 6 h')
+    case 'overdue':
+      return __('Overdue')
+    case 'done':
+      return __('Sent on time')
+    case 'done_late':
+      return __('Sent late')
+    default:
+      return undefined
+  }
 }
 const report = ref(null)
 const reportError = ref(null)
@@ -185,7 +200,7 @@ function onMerged(target) {
   router.push({ name: 'incident', params: { incident: target } })
 }
 async function onSplit(name) {
-  workflowNote.value = { text: 'Events moved to', link: name }
+  workflowNote.value = { link: name } // "Events moved to <name>."
   await refresh()
 }
 const postmortemBusy = ref(false)
@@ -257,128 +272,128 @@ watch(name, () => {
 
 <template>
   <PageHeader>
-    <PageTitle :title="`Incident ${name}`" />
+    <PageTitle :title="__('Incident {0}', [name])" />
     <div class="flex items-center gap-2">
       <LiveStatus :live="live" :poll-seconds="hub?.pollSeconds" />
-      <Button label="Refresh" icon-left="lucide-refresh-cw" :loading="timeline.loading.value" @click="live.apply()" />
+      <Button :label="__('Refresh')" icon-left="lucide-refresh-cw" :loading="timeline.loading.value" @click="live.apply()" />
     </div>
   </PageHeader>
 
   <section v-if="loadError" class="max-w-2xl space-y-3 p-5 text-base text-ink-gray-8">
     <p role="alert" class="wolf-alert">{{ loadError }}</p>
-    <RouterLink class="wolf-link" :to="{ name: 'incidents' }">Back to incidents</RouterLink>
+    <RouterLink class="wolf-link" :to="{ name: 'incidents' }">{{ __('Back to incidents') }}</RouterLink>
   </section>
 
-  <div v-else-if="!incident" class="p-5"><LoadingNote what="the incident" /></div>
+  <div v-else-if="!incident" class="p-5"><LoadingNote :text="__('Loading the incident…')" /></div>
   <div v-else class="wolf-page wolf-incident space-y-5">
     <header class="wolf-card wolf-incident-head" :data-severity="incident.resolved.at ? null : incident.severity">
       <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-gray-6">
         <SeverityGlyph :severity="incident.severity" />
-        <span class="wolf-badge">{{ incident.status }}</span>
+        <span class="wolf-badge">{{ __(incident.status, null, 'Wolf Incident') }}</span>
         <span v-if="scope">{{ scope }}</span>
       </div>
       <h1 class="wolf-incident-title">{{ incident.title }}</h1>
       <dl class="wolf-factgrid">
         <div>
-          <dt>Started</dt>
+          <dt>{{ __('Started') }}</dt>
           <dd><time class="wolf-data" :datetime="incident.started_at">{{ full(incident.started_at, tz) }}</time>, {{ openFor }}</dd>
         </div>
         <div v-if="incident.acknowledged.at">
-          <dt>Acknowledged</dt>
+          <dt>{{ __('Acknowledged') }}</dt>
           <dd>{{ incident.acknowledged.by_name || incident.acknowledged.by }}, <time class="wolf-data">{{ clock(incident.acknowledged.at, tz) }}</time></dd>
         </div>
         <div v-if="incident.resolved.at">
-          <dt>Resolved</dt>
-          <dd>{{ incident.resolved.by_name || incident.resolved.by || 'automatically' }}, <time class="wolf-data">{{ clock(incident.resolved.at, tz) }}</time></dd>
+          <dt>{{ __('Resolved') }}</dt>
+          <dd>{{ incident.resolved.by_name || incident.resolved.by || __('automatically') }}, <time class="wolf-data">{{ clock(incident.resolved.at, tz) }}</time></dd>
         </div>
         <div>
-          <dt>Owner</dt>
-          <dd>{{ incident.assigned_to ? incident.assigned_to.name : 'Nobody yet' }}</dd>
+          <dt>{{ __('Owner') }}</dt>
+          <dd>{{ incident.assigned_to ? incident.assigned_to.name : __('Nobody yet') }}</dd>
         </div>
         <div v-if="incident.deployment">
-          <dt>Deployment before it</dt>
+          <dt>{{ __('Deployment before it') }}</dt>
           <dd>
             <time class="wolf-data">{{ full(incident.deployment.at, tz) }}</time>
-            <span v-if="!incident.deployment.available">, details deleted by retention</span>
+            <span v-if="!incident.deployment.available">, {{ __('details deleted by retention') }}</span>
           </dd>
         </div>
         <div v-if="incident.alert_rule">
-          <dt>Rule</dt>
+          <dt>{{ __('Rule') }}</dt>
           <dd>{{ incident.alert_rule.name }}</dd>
         </div>
         <div v-if="incident.silenced">
-          <dt>Silenced</dt>
-          <dd>Yes: no notifications are sent for it</dd>
+          <dt>{{ __('Silenced') }}</dt>
+          <dd>{{ __('Yes: no notifications are sent for it') }}</dd>
         </div>
         <div>
-          <dt>Linked events</dt>
-          <dd>{{ count(incident.event_records, 'record') }}, {{ count(incident.event_occurrences, 'reported occurrence') }}</dd>
+          <dt>{{ __('Linked events') }}</dt>
+          <dd>{{ linkedEvents(incident.event_records, incident.event_occurrences) }}</dd>
         </div>
       </dl>
-      <section v-if="incident.regulatory" class="wolf-incident-part space-y-2" aria-label="Regulatory reporting">
+      <section v-if="incident.regulatory" class="wolf-incident-part space-y-2" :aria-label="__('Regulatory reporting')">
         <h2 class="text-sm font-semibold text-ink-gray-9">
-          Regulatory reporting:
           {{
-            [
-              incident.regulatory.nis2 && 'NIS2 significant incident',
-              incident.regulatory.dora && 'DORA major ICT-related incident',
-              incident.regulatory.gdpr && 'GDPR personal data breach',
-            ]
-              .filter(Boolean)
-              .join(', ')
+            __('Regulatory reporting: {0}', [
+              [
+                incident.regulatory.nis2 && __('NIS2 significant incident'),
+                incident.regulatory.dora && __('DORA major ICT-related incident'),
+                incident.regulatory.gdpr && __('GDPR personal data breach'),
+              ]
+                .filter(Boolean)
+                .join(', '),
+            ])
           }}
-          <span v-if="incident.regulatory.reference" class="font-normal text-ink-gray-6">· reference {{ incident.regulatory.reference }}</span>
+          <span v-if="incident.regulatory.reference" class="font-normal text-ink-gray-6">· {{ __('reference {0}', [incident.regulatory.reference]) }}</span>
         </h2>
         <table class="w-full text-left text-sm">
           <thead class="text-ink-gray-6">
             <tr>
-              <th class="py-1 font-normal">Obligation</th>
-              <th class="py-1 font-normal">Due</th>
-              <th class="py-1 font-normal">Sent</th>
-              <th class="py-1 font-normal">Status</th>
+              <th class="py-1 font-normal">{{ __('Obligation') }}</th>
+              <th class="py-1 font-normal">{{ __('Due') }}</th>
+              <th class="py-1 font-normal">{{ __('Sent') }}</th>
+              <th class="py-1 font-normal">{{ __('Status') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="d in incident.regulatory.deadlines" :key="d.id" class="border-t border-outline-gray-1">
               <td class="py-1 pr-3">{{ d.label }}</td>
               <td class="wolf-data py-1 pr-3">
-                <template v-if="d.due_at">{{ full(d.due_at, tz) }}<span v-if="d.estimated"> (estimated)</span></template>
-                <template v-else>as asked</template>
+                <template v-if="d.due_at">{{ full(d.due_at, tz) }}<span v-if="d.estimated">{{ ' ' + __('(estimated)') }}</span></template>
+                <template v-else>{{ __('as asked') }}</template>
               </td>
               <td class="wolf-data py-1 pr-3">{{ d.done_at ? full(d.done_at, tz) : '—' }}</td>
               <td class="py-1" :style="d.status === 'overdue' ? { color: 'var(--wolf-critical)', fontWeight: 600 } : null">
-                {{ REG_STATUS[d.status] }}
+                {{ regStatus(d.status) }}
               </td>
             </tr>
           </tbody>
         </table>
         <p class="text-sm text-ink-gray-6">
-          Wolf tracks the dates; it does not decide whether the incident is reportable and sends nothing. Record the
-          sending times in Desk.
-          <Button size="sm" variant="ghost" label="Report draft" @click="loadReport" />
+          {{ __('Wolf tracks the dates; it does not decide whether the incident is reportable and sends nothing. Record the sending times in Desk.') }}
+          <Button size="sm" variant="ghost" :label="__('Report draft')" @click="loadReport" />
         </p>
         <p v-if="reportError" role="alert" class="wolf-alert">{{ reportError }}</p>
         <pre v-if="report" class="wolf-data wolf-details">{{ report }}</pre>
       </section>
       <p v-if="incident.merged_into" class="text-sm">
-        Merged into
+        {{ __('Merged into') }}
         <RouterLink class="wolf-link" :to="{ name: 'incident', params: { incident: incident.merged_into } }">{{ incident.merged_into }}</RouterLink>.
       </p>
       <div class="wolf-incident-part flex flex-wrap items-center gap-2">
-        <Button v-if="incident.can.acknowledge" variant="solid" label="Acknowledge" :loading="acting === 'acknowledge'" @click="act('acknowledge')" />
-        <Button v-if="incident.can.assign_to_me" label="Assign to me" :loading="acting === 'assign_to_me'" @click="act('assign_to_me')" />
-        <Button v-if="incident.can.resolve" label="Resolve" :loading="acting === 'resolve'" @click="act('resolve')" />
-        <Button v-if="incident.can.merge" label="Merge…" @click="merging = true" />
-        <Button v-if="incident.can.split" label="Split…" @click="splitting = true" />
+        <Button v-if="incident.can.acknowledge" variant="solid" :label="__('Acknowledge')" :loading="acting === 'acknowledge'" @click="act('acknowledge')" />
+        <Button v-if="incident.can.assign_to_me" :label="__('Assign to me')" :loading="acting === 'assign_to_me'" @click="act('assign_to_me')" />
+        <Button v-if="incident.can.resolve" :label="__('Resolve')" :loading="acting === 'resolve'" @click="act('resolve')" />
+        <Button v-if="incident.can.merge" :label="__('Merge…')" @click="merging = true" />
+        <Button v-if="incident.can.split" :label="__('Split…')" @click="splitting = true" />
         <a v-if="incident.can.postmortem && incident.postmortem" class="wolf-link text-sm"
-           :href="`/app/wolf-postmortem/${encodeURIComponent(incident.postmortem)}`">Postmortem {{ incident.postmortem }} (Desk)</a>
-        <Button v-else-if="incident.can.postmortem" label="Write the postmortem" :loading="postmortemBusy" @click="writePostmortem" />
+           :href="`/app/wolf-postmortem/${encodeURIComponent(incident.postmortem)}`">{{ __('Postmortem {0} (Desk)', [incident.postmortem]) }}</a>
+        <Button v-else-if="incident.can.postmortem" :label="__('Write the postmortem')" :loading="postmortemBusy" @click="writePostmortem" />
         <span v-else-if="incident.can.workflow && !incident.merged_into && incident.status !== 'Resolved'" class="text-sm text-ink-gray-6">
-          The postmortem comes once it is resolved.
+          {{ __('The postmortem comes once it is resolved.') }}
         </span>
       </div>
       <p v-if="workflowNote" role="status" class="text-sm">
-        {{ workflowNote.text }}
+        {{ __('Events moved to') }}
         <RouterLink class="wolf-link" :to="{ name: 'incident', params: { incident: workflowNote.link } }">{{ workflowNote.link }}</RouterLink>.
       </p>
       <p v-if="actionError" role="alert" class="wolf-alert">{{ actionError }}</p>
@@ -388,19 +403,26 @@ watch(name, () => {
 
     <ResponsePanel :incident="incident.name" :time-zone="tz" @changed="refresh" />
 
-    <section class="wolf-card wolf-timeline space-y-3" aria-label="Timeline">
+    <section class="wolf-card wolf-timeline space-y-3" :aria-label="__('Timeline')">
       <div class="flex flex-wrap items-center gap-3">
-        <h2 class="wolf-h2 mr-auto">Timeline</h2>
-        <TabButtons v-model="show" :options="SHOW.map(({ value, label }) => ({ value, label }))" />
-        <TextInput v-model="query" type="search" placeholder="Search loaded rows" class="w-56" aria-label="Search loaded rows" />
-        <span class="text-sm text-ink-gray-6">Times in {{ tz }}</span>
+        <h2 class="wolf-h2 mr-auto">{{ __('Timeline') }}</h2>
+        <TabButtons v-model="show" :options="SHOW.map(({ value, label }) => ({ value, label: label() }))" />
+        <TextInput v-model="query" type="search" :placeholder="__('Search loaded rows')" class="w-56" :aria-label="__('Search loaded rows')" />
+        <span class="text-sm text-ink-gray-6">{{ __('Times in {0}', [tz]) }}</span>
       </div>
       <p v-if="query.trim()" class="text-sm text-ink-gray-6">
-        {{ visible.length }} of {{ timeline.rows.value.length }} loaded rows match<span v-if="timeline.paging.value.has_more">; more rows are not loaded yet</span>.
+        {{
+          timeline.paging.value.has_more
+            ? __('{0} of {1} loaded rows match; more rows are not loaded yet.', [visible.length, timeline.rows.value.length])
+            : __('{0} of {1} loaded rows match.', [visible.length, timeline.rows.value.length])
+        }}
       </p>
       <p v-for="(cut, key) in timeline.meta.value.truncated" :key="key" class="text-sm text-ink-gray-6">
-        Activity shows the newest {{ cut.shown }} of {{ cut.total }} {{ key === 'activity_version' ? 'recorded changes' : 'comments' }};
-        older ones are in Desk.
+        {{
+          key === 'activity_version'
+            ? __('Activity shows the newest {0} of {1} recorded changes; older ones are in Desk.', [cut.shown, cut.total])
+            : __('Activity shows the newest {0} of {1} comments; older ones are in Desk.', [cut.shown, cut.total])
+        }}
       </p>
       <p v-if="timeline.error.value" role="alert" class="wolf-alert">{{ timeline.error.value }}</p>
 
@@ -408,7 +430,7 @@ watch(name, () => {
         <template v-for="item in items" :key="item.key">
           <li v-if="item.type === 'day'" class="wolf-day">{{ item.label }}</li>
           <li v-else-if="item.type === 'gap'" class="wolf-gap">
-            {{ item.label }} with no {{ filtered ? 'matching rows' : 'recorded activity' }}
+            {{ filtered ? __('{0} with no matching rows', [item.label]) : __('{0} with no recorded activity', [item.label]) }}
           </li>
           <TimelineRow
             v-else
@@ -422,22 +444,22 @@ watch(name, () => {
           />
         </template>
       </ol>
-      <LoadingNote v-if="!timeline.loaded.value && !timeline.error.value" what="the timeline" />
+      <LoadingNote v-if="!timeline.loaded.value && !timeline.error.value" :text="__('Loading the timeline…')" />
       <p v-if="timeline.loaded.value && !timeline.loading.value && !timeline.error.value && !visible.length" class="text-sm text-ink-gray-6">
-        {{ filtered ? 'No rows match this filter.' : 'Nothing recorded in this window.' }}
+        {{ filtered ? __('No rows match this filter.') : __('Nothing recorded in this window.') }}
       </p>
       <Button
         v-if="freshVisible.length"
         variant="subtle"
-        :label="`${freshVisible.length} new ${freshVisible.length === 1 ? 'row' : 'rows'}: show`"
+        :label="freshVisible.length === 1 ? __('1 new row: show') : __('{0} new rows: show', [freshVisible.length])"
         @click="showFresh"
       />
-      <Button v-if="timeline.paging.value.has_more" label="Load more" :loading="timeline.loading.value" @click="timeline.more(families)" />
+      <Button v-if="timeline.paging.value.has_more" :label="__('Load more')" :loading="timeline.loading.value" @click="timeline.more(families)" />
     </section>
 
-    <section ref="commentBox" class="wolf-card space-y-2" aria-label="Comment">
-      <Textarea v-model="comment" :rows="3" placeholder="Add a comment for the team" aria-label="Comment" />
-      <Button label="Comment" :disabled="!comment.trim()" :loading="posting" @click="postComment" />
+    <section ref="commentBox" class="wolf-card space-y-2" :aria-label="__('Comment')">
+      <Textarea v-model="comment" :rows="3" :placeholder="__('Add a comment for the team')" :aria-label="__('Comment')" />
+      <Button :label="__('Comment')" :disabled="!comment.trim()" :loading="posting" @click="postComment" />
     </section>
   </div>
 </template>

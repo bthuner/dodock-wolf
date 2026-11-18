@@ -92,6 +92,21 @@ class TestRuleSentence(unittest.TestCase):
 		             {"channels": [None, 3]}, {"aggregation": {}, "sequence_entity": []}):  # fmt: skip
 			self.assertTrue(text(rule).startswith("Opens a warning incident when "), rule)
 
+	def test_a_translation_moves_the_values_with_its_words(self):
+		french = {
+			"Opens a {0} incident when {1}": "Ouvre un incident {0} quand {1}",
+			"{0} over the last {1} is {2} {3}": "{0} sur les {1} dernières est {2} {3}",
+			"the lowest {0}": "la plus basse valeur de {0}",
+			"above": "supérieure à",
+			"{0} min": "{0} min",
+			"per host": "par hôte",
+		}
+		head = rule_sentence.describe({"severity": "critical", "aggregation": "min", "metric_name": "disk", "threshold": 90,
+		                               "group_by": "host"}, lambda t: french.get(t, t))[0]  # fmt: skip
+		self.assertEqual("".join(t for t, _v in head),
+		                 "Ouvre un incident critical quand la plus basse valeur de disk sur les 5 min dernières est supérieure à 90, par hôte.")  # fmt: skip
+		self.assertEqual([t for t, v in head if v], ["critical", "disk", "5 min", "supérieure à", "90", "par hôte"])
+
 	def test_every_preset_reads(self):
 		for preset in presets.PRESETS:
 			out = text(preset)

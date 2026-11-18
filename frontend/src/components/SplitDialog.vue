@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 
 import SeverityGlyph from '@/components/SeverityGlyph.vue'
 import { call } from '@/services/api'
+import { __ } from '@/services/i18n'
 import { clock, full } from '@/services/time'
 
 // Split some linked events into a new incident (api/incident.py split). The server says what the
@@ -68,7 +69,7 @@ const preview = computed(() => {
   const same = p.selection.length === selected.value.length && p.selection.every((n) => selected.value.includes(n))
   return same ? p : null
 })
-const plural = (n, noun) => `${n} ${n === 1 ? noun : `${noun}s`}`
+const events = (n) => (n === 1 ? __('1 event') : __('{0} events', [n]))
 
 async function split() {
   splitting.value = true
@@ -90,15 +91,18 @@ async function split() {
 </script>
 
 <template>
-  <Dialog v-model:open="open" :title="`Split events out of ${incident}`" size="2xl">
+  <Dialog v-model:open="open" :title="__('Split events out of {0}', [incident])" size="2xl">
     <div class="space-y-3 text-base text-ink-gray-8">
       <p class="text-sm text-ink-gray-7">
-        The events you tick move to a new incident with the same scope; the others stay. The new incident has no alert rule:
-        it never resolves by itself.
+        {{
+          __(
+            'The events you tick move to a new incident with the same scope; the others stay. The new incident has no alert rule: it never resolves by itself.',
+          )
+        }}
       </p>
       <fieldset class="max-h-80 overflow-auto rounded border border-outline-gray-1">
-        <legend class="sr-only">Events linked to {{ incident }}</legend>
-        <p v-if="!data" class="p-3 text-sm text-ink-gray-6">Loading…</p>
+        <legend class="sr-only">{{ __('Events linked to {0}', [incident]) }}</legend>
+        <p v-if="!data" class="p-3 text-sm text-ink-gray-6">{{ __('Loading…') }}</p>
         <label
           v-for="e in data?.events || []"
           :key="e.name"
@@ -108,20 +112,26 @@ async function split() {
           <time class="wolf-data shrink-0" :datetime="e.at" :title="full(e.at, timeZone)">{{ clock(e.at, timeZone) }}</time>
           <SeverityGlyph :severity="e.severity" :show-label="false" />
           <span class="min-w-0 flex-1 text-ink-gray-9">{{ e.title }}</span>
-          <span v-if="e.count > 1" class="wolf-data text-ink-gray-6">{{ e.count }} reported</span>
+          <span v-if="e.count > 1" class="wolf-data text-ink-gray-6">{{ __('{0} reported', [e.count]) }}</span>
         </label>
       </fieldset>
-      <p v-if="data?.more_events" class="text-sm text-ink-gray-6">The first {{ data.events.length }} linked events are listed.</p>
-      <TextInput v-model="title" placeholder="Title of the new incident (optional)" aria-label="Title of the new incident" />
+      <p v-if="data?.more_events" class="text-sm text-ink-gray-6">{{ __('The first {0} linked events are listed.', [data.events.length]) }}</p>
+      <TextInput v-model="title" :placeholder="__('Title of the new incident (optional)')" :aria-label="__('Title of the new incident')" />
 
       <div v-if="preview" class="wolf-card space-y-2" aria-live="polite" data-testid="split-preview">
         <p v-if="preview.error" role="alert" class="wolf-alert">{{ preview.error }}</p>
         <template v-else>
-          <p><b>Moves</b> {{ plural(preview.moved, 'event') }} to a new incident; {{ plural(preview.kept, 'event') }} {{ preview.kept === 1 ? 'stays' : 'stay' }} in {{ incident }}.</p>
+          <p>
+            <b>{{ __('Moves') }}</b>
+            {{
+              preview.kept === 1
+                ? __('{0} to a new incident; 1 event stays in {1}.', [events(preview.moved), incident])
+                : __('{0} to a new incident; {1} events stay in {2}.', [events(preview.moved), preview.kept, incident])
+            }}</p>
           <p class="flex flex-wrap items-baseline gap-x-2">
-            <b>New incident</b> {{ preview.new_incident.status }},
+            <b>{{ __('New incident') }}</b> {{ __(preview.new_incident.status, null, 'Wolf Incident') }},
             <SeverityGlyph :severity="preview.new_incident.severity" />
-            <span>since <time :datetime="preview.new_incident.started_at">{{ full(preview.new_incident.started_at, timeZone) }}</time>:</span>
+            <span>{{ __('since') }} <time :datetime="preview.new_incident.started_at">{{ full(preview.new_incident.started_at, timeZone) }}</time>:</span>
             <span>{{ title.trim() || preview.new_incident.title }}</span>
           </p>
         </template>
@@ -130,10 +140,10 @@ async function split() {
     </div>
     <template #actions>
       <div class="flex justify-end gap-2">
-        <Button label="Cancel" @click="open = false" />
+        <Button :label="__('Cancel')" @click="open = false" />
         <Button
           variant="solid"
-          :label="selected.length ? `Split ${plural(selected.length, 'event')}` : 'Split'"
+          :label="!selected.length ? __('Split') : selected.length === 1 ? __('Split 1 event') : __('Split {0} events', [selected.length])"
           :disabled="!preview || !!preview.error || loading"
           :loading="splitting"
           @click="split"

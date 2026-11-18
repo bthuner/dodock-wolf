@@ -3,6 +3,7 @@ import { Button } from 'frappe-ui'
 import { onMounted, ref, watch } from 'vue'
 
 import { call } from '@/services/api'
+import { __ } from '@/services/i18n'
 import { full } from '@/services/time'
 
 // Response actions (dodock_wolf/api/response.py): Wolf proposes, a Wolf Manager confirms each
@@ -20,7 +21,11 @@ const hours = ref(24)
 const busy = ref(false)
 
 const key = (p) => `${p.action}|${p.target}|${p.host || p.agent || ''}` // a block is one address on one host
-const STATUS = { Approved: 'Approved, waiting for the agent', Applied: 'Applied', Failed: 'Failed', Expired: 'Expired' }
+// a Wolf Response Action status, as the reader sees it
+function status(s) {
+  if (s === 'Approved') return __('Approved, waiting for the agent')
+  return __(s, null, 'Wolf Response Action')
+}
 
 async function load() {
   error.value = null
@@ -59,10 +64,10 @@ defineExpose({ load })
 </script>
 
 <template>
-  <section v-if="data && (data.proposals.length || data.actions.length || data.held.length)" class="wolf-card space-y-3" aria-label="Response">
+  <section v-if="data && (data.proposals.length || data.actions.length || data.held.length)" class="wolf-card space-y-3" :aria-label="__('Response')">
     <div class="flex flex-wrap items-baseline justify-between gap-2">
-      <h2 class="wolf-h2">Response</h2>
-      <span class="text-sm text-ink-gray-6">proposed from the incident's security events; each one needs your confirmation</span>
+      <h2 class="wolf-h2">{{ __('Response') }}</h2>
+      <span class="text-sm text-ink-gray-6">{{ __("proposed from the incident's security events; each one needs your confirmation") }}</span>
     </div>
     <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>
 
@@ -71,49 +76,51 @@ defineExpose({ load })
         <span class="text-ink-gray-9">{{ p.label }}</span>
         <span class="text-ink-gray-6">({{ p.reason }})</span>
         <template v-if="data.can_approve">
-          <Button v-if="confirming !== key(p)" size="sm" label="Approve…" @click="confirming = key(p)" />
+          <Button v-if="confirming !== key(p)" size="sm" :label="__('Approve…')" @click="confirming = key(p)" />
           <template v-else>
             <label v-if="p.action === 'block_ip' && (p.executors || ['wolf_agent']).includes('wolf_agent')" class="flex items-center gap-1 text-ink-gray-7">
-              for
-              <input v-model.number="hours" type="number" min="1" :max="data.max_hours" class="w-16 rounded border px-1" aria-label="Hours" />
-              h
+              {{ __('for') }}
+              <input v-model.number="hours" type="number" min="1" :max="data.max_hours" class="w-16 rounded border px-1" :aria-label="__('Hours')" />
+              {{ __('h') }}
             </label>
-            <Button size="sm" variant="solid" theme="red" :loading="busy" label="Confirm" @click="confirm(p)" />
-            <Button size="sm" variant="ghost" label="Cancel" @click="confirming = null" />
+            <Button size="sm" variant="solid" theme="red" :loading="busy" :label="__('Confirm')" @click="confirm(p)" />
+            <Button size="sm" variant="ghost" :label="__('Cancel')" @click="confirming = null" />
           </template>
         </template>
       </li>
     </ul>
-    <p v-if="data.proposals.length && !data.can_approve" class="text-sm text-ink-gray-6">Only a Wolf Manager can approve these.</p>
+    <p v-if="data.proposals.length && !data.can_approve" class="text-sm text-ink-gray-6">{{ __('Only a Wolf Manager can approve these.') }}</p>
 
     <!-- a block on a host the address reached through a proxy would stop nothing there -->
     <ul v-if="data.held.length" class="space-y-1 text-sm text-ink-gray-7">
       <li v-for="h in data.held" :key="`${h.target}|${h.host}`">
-        Not proposed: block {{ h.target }}<span v-if="h.host"> on {{ h.host }}</span>. It reached that host through the
-        proxy {{ h.via_proxy }}, so its packets come from the proxy there: block it on the proxy, where a Wolf Agent
-        reading the proxy's access log proposes it.
+        {{
+          h.host
+            ? __("Not proposed: block {0} on {1}. It reached that host through the proxy {2}, so its packets come from the proxy there: block it on the proxy, where a Wolf Agent reading the proxy's access log proposes it.", [h.target, h.host, h.via_proxy])
+            : __("Not proposed: block {0}. It reached that host through the proxy {1}, so its packets come from the proxy there: block it on the proxy, where a Wolf Agent reading the proxy's access log proposes it.", [h.target, h.via_proxy])
+        }}
       </li>
     </ul>
 
     <table v-if="data.actions.length" class="w-full text-left text-sm">
       <thead class="text-ink-gray-6">
         <tr>
-          <th class="py-1 font-normal">Action</th>
-          <th class="py-1 font-normal">Status</th>
-          <th class="py-1 font-normal">Approved</th>
-          <th class="py-1 font-normal">Result</th>
+          <th class="py-1 font-normal">{{ __('Action') }}</th>
+          <th class="py-1 font-normal">{{ __('Status') }}</th>
+          <th class="py-1 font-normal">{{ __('Approved') }}</th>
+          <th class="py-1 font-normal">{{ __('Result') }}</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="a in data.actions" :key="a.name" class="border-t border-outline-gray-1 align-top">
           <td class="py-1 pr-3">
-            {{ a.action }} {{ a.target }}<span v-if="a.host" class="text-ink-gray-6"> on {{ a.host }}</span>
-            <span v-if="a.executor === 'wazuh'" class="text-ink-gray-6"> with Wazuh</span>
+            {{ a.action }} {{ a.target }}<span v-if="a.host" class="text-ink-gray-6">{{ ' ' + __('on {0}', [a.host]) }}</span>
+            <span v-if="a.executor === 'wazuh'" class="text-ink-gray-6">{{ ' ' + __('with Wazuh') }}</span>
           </td>
-          <td class="py-1 pr-3" :style="a.status === 'Failed' ? { color: 'var(--wolf-critical)' } : null">{{ STATUS[a.status] || a.status }}</td>
+          <td class="py-1 pr-3" :style="a.status === 'Failed' ? { color: 'var(--wolf-critical)' } : null">{{ status(a.status) }}</td>
           <td class="wolf-data py-1 pr-3">{{ a.approved_by }}, {{ full(a.approved_at, timeZone) }}</td>
           <td class="py-1 text-ink-gray-7">
-            {{ a.result || '—' }}<span v-if="a.expires_at"> · until {{ full(a.expires_at, timeZone) }}</span>
+            {{ a.result || '—' }}<span v-if="a.expires_at"> · {{ __('until {0}', [full(a.expires_at, timeZone)]) }}</span>
           </td>
         </tr>
       </tbody>

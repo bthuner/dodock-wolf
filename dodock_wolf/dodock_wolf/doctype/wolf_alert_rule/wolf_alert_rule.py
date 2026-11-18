@@ -126,4 +126,4 @@ def describe(doc):
 	data = frappe.parse_json(doc) if isinstance(doc, str) else doc
 	if not isinstance(data, dict):
 		frappe.throw(_("Expected the rule's fields"))
-	return rule_sentence.describe(data)
+	return rule_sentence.describe(data, _)

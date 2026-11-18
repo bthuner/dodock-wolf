@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 
 import SeverityGlyph from '@/components/SeverityGlyph.vue'
+import { __ } from '@/services/i18n'
 import { clock, full } from '@/services/time'
 
 const props = defineProps({
@@ -15,7 +16,12 @@ const props = defineProps({
 defineEmits(['toggle'])
 
 const ICONS = { event: 'lucide-zap', deployment: 'lucide-rocket', activity: 'lucide-user', delivery: 'lucide-send' }
-const RELATION = { linked: 'Evidence', context: 'Context, same scope', preceding_change: 'Preceding change' }
+// translated when shown: the module loads before the translations
+const RELATION = {
+  linked: () => __('Evidence'),
+  context: () => __('Context, same scope'),
+  preceding_change: () => __('Preceding change'),
+}
 
 const scope = computed(() => [props.row.scope?.site, props.row.scope?.bench, props.row.scope?.host].filter(Boolean).join(' · '))
 const repeated = computed(() => props.row.count > 1)
@@ -39,30 +45,30 @@ const detailText = computed(() => (details.value ? JSON.stringify(details.value,
       <div class="flex flex-wrap items-baseline gap-x-2">
         <SeverityGlyph v-if="row.severity" :severity="row.severity" :show-label="false" />
         <span class="text-ink-gray-9">{{ row.summary }}</span>
-        <span v-if="RELATION[row.relation]" class="wolf-badge">{{ RELATION[row.relation] }}</span>
-        <span v-if="row.kind === 'delivery'" class="wolf-badge">{{ row.result === 'accepted' ? 'accepted by the endpoint' : 'failed' }}</span>
+        <span v-if="RELATION[row.relation]" class="wolf-badge">{{ RELATION[row.relation]() }}</span>
+        <span v-if="row.kind === 'delivery'" class="wolf-badge">{{ row.result === 'accepted' ? __('accepted by the endpoint') : __('failed') }}</span>
       </div>
       <div class="text-sm text-ink-gray-6">
         <span v-if="scope">{{ scope }}</span>
-        <span v-if="row.source_label && row.kind !== 'activity' && row.kind !== 'delivery'"> · by {{ row.source_label }}</span>
+        <span v-if="row.source_label && row.kind !== 'activity' && row.kind !== 'delivery'"> · {{ __('by {0}', [row.source_label]) }}</span>
         <span v-if="row.duplicate_of">
-          · same finding as <a v-if="duplicateAnchor" class="wolf-link" :href="`#${duplicateAnchor}`">{{ row.duplicate_of }}</a>
+          · {{ __('same finding as') }} <a v-if="duplicateAnchor" class="wolf-link" :href="`#${duplicateAnchor}`">{{ row.duplicate_of }}</a>
           <span v-else class="wolf-data">{{ row.duplicate_of }}</span>
         </span>
         <span v-if="row.kind === 'activity' && row.user_name"> {{ row.user_name }}</span>
         <span v-if="repeated" class="wolf-data">
-          · {{ row.count }} reported, last <time :datetime="row.last_seen" :title="full(row.last_seen, timeZone)">{{ clock(row.last_seen, timeZone) }}</time>
+          · {{ __('{0} reported, last', [row.count]) }} <time :datetime="row.last_seen" :title="full(row.last_seen, timeZone)">{{ clock(row.last_seen, timeZone) }}</time>
         </span>
       </div>
       <p v-if="row.text" class="whitespace-pre-wrap text-ink-gray-8">{{ row.text }}</p>
       <p v-if="row.unavailable" class="text-sm text-ink-gray-6">
-        The deployment event was deleted by retention; the incident kept its time.
+        {{ __('The deployment event was deleted by retention; the incident kept its time.') }}
       </p>
       <button v-if="details" type="button" class="wolf-link text-sm" :aria-expanded="expanded" @click="$emit('toggle')">
-        {{ expanded ? 'Hide details' : 'Details' }}
+        {{ expanded ? __('Hide details') : __('Details') }}
       </button>
       <pre v-if="expanded && details" class="wolf-data wolf-details">{{ detailText }}</pre>
     </div>
-    <a class="wolf-row-anchor text-sm" :href="`#${anchor}`" :aria-label="`Link to this row (${clock(row.at, timeZone)})`">#</a>
+    <a class="wolf-row-anchor text-sm" :href="`#${anchor}`" :aria-label="__('Link to this row ({0})', [clock(row.at, timeZone)])">#</a>
   </li>
 </template>

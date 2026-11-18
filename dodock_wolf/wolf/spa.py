@@ -75,8 +75,11 @@ def capabilities(is_satellite, restricted, socketio=None):
 	}
 
 
-def boot(user, full_name, roles, time_zone, server_version, is_satellite, restricted, desk_url="/app", socketio=None):
+def boot(user, full_name, roles, time_zone, server_version, is_satellite, restricted, desk_url="/app", socketio=None,
+         lang="en", messages=None):  # fmt: skip
 	return {
+		"lang": lang or "en",
+		"messages": messages or {},
 		"user": {"name": user, "full_name": full_name or user},
 		"can": permissions(user, roles),
 		"capabilities": capabilities(is_satellite, restricted, socketio),

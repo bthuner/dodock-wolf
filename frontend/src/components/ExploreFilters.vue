@@ -7,6 +7,7 @@ import WindowNote from '@/components/WindowNote.vue'
 import { useQueryParam } from '@/composables/useQueryParam'
 import { useWindow } from '@/composables/useWindow'
 import { EVENT_TYPES, RANGES, SEVERITIES } from '@/services/filters'
+import { __ } from '@/services/i18n'
 
 // Window, scope and search shared by the event and error explorers; all of it in the URL.
 defineProps({ types: { type: Boolean, default: false } })
@@ -30,19 +31,19 @@ watch(q, (value) => {
 // leaving the page must not let a pending search rewrite the next page's URL
 onBeforeUnmount(() => clearTimeout(timer))
 
-const TYPES = ['any', ...EVENT_TYPES].map((v) => ({ value: v, label: v === 'any' ? 'Any type' : v.replace(/_/g, ' ') }))
-const SEVERITY_OPTIONS = ['any', ...SEVERITIES].map((v) => ({ value: v, label: v === 'any' ? 'Any severity' : v }))
+const TYPES = ['any', ...EVENT_TYPES].map((v) => ({ value: v, label: v === 'any' ? __('Any type') : v.replace(/_/g, ' ') }))
+const SEVERITY_OPTIONS = ['any', ...SEVERITIES].map((v) => ({ value: v, label: v === 'any' ? __('Any severity') : v }))
 </script>
 
 <template>
   <WindowNote v-if="win.explicit.value" v-bind="win.explicit.value" :time-zone="tz" @reset="win.reset" />
   <div class="flex flex-wrap items-center gap-2">
     <TabButtons :model-value="win.explicit.value ? null : win.range.value" :options="RANGES.map((r) => ({ value: r, label: r }))" @update:model-value="win.choose" />
-    <TextInput v-model="draft" type="search" placeholder="Title contains" class="w-52" aria-label="Title contains" />
+    <TextInput v-model="draft" type="search" :placeholder="__('Title contains')" class="w-52" :aria-label="__('Title contains')" />
     <ScopeInputs />
     <template v-if="types">
-      <Select v-model="type" :options="TYPES" class="w-44" aria-label="Event type" />
-      <Select v-model="severity" :options="SEVERITY_OPTIONS" class="w-40" aria-label="Severity" />
+      <Select v-model="type" :options="TYPES" class="w-44" :aria-label="__('Event type')" />
+      <Select v-model="severity" :options="SEVERITY_OPTIONS" class="w-40" :aria-label="__('Severity')" />
     </template>
   </div>
 </template>
