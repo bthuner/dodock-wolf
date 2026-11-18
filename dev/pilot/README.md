@@ -27,7 +27,7 @@ docker compose up -d --build   # a Debian host with systemd as PID 1 (privileged
 | `WOLF_PILOT_HTTP` | `8380`: nginx's port on the machine (`curl -H 'Host: wolf.localhost' localhost:8380`) |
 | `WOLF_PILOT_BENCH`, `WOLF_PILOT_SITE` | `wolf`, `wolf.localhost` |
 | `WOLF_PILOT_FRAPPE_BRANCH` | `version-16` |
-| `WOLF_PILOT_REF` | the latest Pilot release; a tag such as `v1.0.0-rc.1` pins one |
+| `WOLF_PILOT_REF` | the latest Pilot release; a tag such as `v1.0.0-rc.2` pins one |
 | `WOLF_PILOT_ADMIN_PASSWORD` | `Wolf-pilot-1` (Pilot wants 8+ characters, mixed case, a digit and a symbol) |
 | `WOLF_PILOT_ADMIN_DOMAIN` | `admin.localhost` |
 

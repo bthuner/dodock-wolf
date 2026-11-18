@@ -54,11 +54,12 @@ reports it (`behind_proxy`): web clients are blocked on the proxy, where the blo
 
 Benches created by [Frappe Pilot](https://github.com/frappe/pilot) (`~/pilot/benches/*`,
 `bench.toml` with `[bench] name` and `python`) are read with Pilot's real schema, checked on
-Pilot v1.0.0-rc.1. Pilot keeps `bench.toml`, `tasks/` and the site configs readable by the bench
+Pilot v1.0.0-rc.1 and rc.2. Pilot keeps `bench.toml`, `tasks/` and the site configs readable by the bench
 user only and runs the bench as that user's systemd user units, so on a Pilot host `install.sh`
 also installs `wolf-pilot-export`: a root timer that copies the tasks (site argument only) and
 the unit states to `/var/lib/wolf-pilot-export/<bench>.json` for the `wolf-agent` user, which
-stays out of the bench's reach (no MariaDB checks there). Wolf tails the `web` process logs
+stays out of the bench's reach (no MariaDB checks there; to remove Wolf, `systemctl disable --now
+wolf-pilot-export.timer` before deleting that user, whose group the unit runs with). Wolf tails the `web` process logs
 (lite mode runs workers and the scheduler in it), worker and schedule logs out of lite mode,
 Frappe's logs in `logs/workload/` on a sandboxed bench, and `logs/nginx-access.log` (the
 `pilot_access` format: no query string, no User-Agent). It reads queues on `[redis] queue_port` and

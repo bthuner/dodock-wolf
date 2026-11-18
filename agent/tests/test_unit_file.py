@@ -49,6 +49,15 @@ class TestUnitFile(unittest.TestCase):
 		self.assertEqual(d["ReadWritePaths"][0], "/var/lib/wolf-agent")
 		self.assertTrue(all(p == "/var/lib/wolf-agent" or p.lstrip("-").startswith("/var/lib/") for p in d["ReadWritePaths"]))
 
+class TestPilotExportUnit(unittest.TestCase):
+	def test_its_folder_keeps_the_agent_group(self):
+		# on a group mismatch systemd chowns a StateDirectory to the unit's user and group at every
+		# start: root:root for a moment, when the agent could not read the export (dev/pilot, 532 of
+		# 1862 reads failed while it ran)
+		d = directives(os.path.join(os.path.dirname(__file__), "..", "wolf-pilot-export.service"))
+		self.assertEqual(d.get("StateDirectory"), ["wolf-pilot-export"])
+		self.assertEqual(d.get("Group"), ["wolf-agent"])
+		self.assertNotIn("User", d)  # root: it reads each bench as its own user
 
 if __name__ == "__main__":
 	unittest.main()

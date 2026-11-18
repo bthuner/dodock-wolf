@@ -5,7 +5,10 @@ Description=Copy what the Wolf agent needs from Frappe Pilot (tasks, unit states
 [Service]
 Type=oneshot
 ExecStart=/usr/local/sbin/wolf-pilot-export
-# its folder, root-owned so the agent can read it and cannot swap it
+# its folder, root-owned so the agent can read it and cannot swap it. Group= matches the group the
+# helper gives it: on a mismatch systemd chowns a StateDirectory to the unit's user and group at every
+# start, root:root for a moment, and the agent could not read the export then (seen on dev/pilot)
+Group=wolf-agent
 StateDirectory=wolf-pilot-export
 StateDirectoryMode=0750
 TimeoutStartSec=60
