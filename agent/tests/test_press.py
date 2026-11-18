@@ -505,6 +505,10 @@ class TestPressJobs(PressCase):
 		jid = self.press.add_job("New Bench", "Success", None, start=NOW - timedelta(seconds=20), end=NOW)
 		self.press.add_step(jid, "Initialize Bench", "Success", {"command": "docker run ...", "directory": os.path.join(shared, "bench-0001-000007-f1")})
 		self.assertEqual([e["bench"] for e in w.poll(NOW)], ["bench-0001-000007-f1"])
+		# discovered through the link, a bench keeps its real path (its logs' read positions are keyed by it)
+		path = self.press.add_bench("bench-0001-000007-f1", sites=("s.frappe.cloud",))
+		found = press.discover_press_benches(self.press.agent_dir, nginx_access_log=None, benches_dir=shared)
+		self.assertEqual([b["path"] for b in found], [os.path.realpath(path)])
 
 	def test_finished_jobs_land_on_the_bench_their_last_step_ran_in(self):
 		# what dev/press recorded: both jobs ended between two polls, their data `null`

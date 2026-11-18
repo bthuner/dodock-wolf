@@ -261,7 +261,7 @@ queue lengths. Wolf's are light, and you can turn them off with `collect_host_me
   add the new name to `DEPLOY_JOBS` in `agent/wolf_agent/press.py`.
 - Shared FS: checked on a primary server (item 7 below). An auto-scaling secondary app server runs
   the primary's benches from an NFS mount, its containers writing to the same bench logs: Wolf
-  agents on both would read them twice. Not checked; tail bench logs on the primary only.
+  agents on both would read them twice. Not checked: install the Wolf agent on the primary only.
 - Frappe Cloud's hosted servers are not open to customers. This is for **self-hosted Press**
   deployments, where you control the server.
 

@@ -228,7 +228,9 @@ def _site_domains(path, sites):
 
 
 def describe_press_bench(path, nginx_access_log=DEFAULT_NGINX_ACCESS_LOG):
-	path = os.path.abspath(path)
+	# resolved: after Run Benches on Shared FS the same bench is also /home/frappe/shared/<bench> (a
+	# link); one path keeps its logs' read positions, which are keyed by path, across the switch
+	path = os.path.realpath(path)
 	bench_config = _load_json(os.path.join(path, "config.json"))
 	sites = _sites(path)
 	rq_port = _rq_port(bench_config, path)
