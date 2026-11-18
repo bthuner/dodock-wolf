@@ -3258,6 +3258,27 @@ def main():
 			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
 		return f"purged up to the SIEM cursor, then to the cut, then all but the newest; journal from {first}, deletion caught"
 
+	def rules_yaml():
+		# alert rules as YAML (api/rules_io.py): a round trip, an applied change, a typo applying nothing
+		from dodock_wolf.api import rules_io as rules_yaml_api
+
+		doc = rules_yaml_api.load(rules_yaml_api.dump(rules_yaml_api.export_document()))
+		plan = rules_yaml_api.import_document(doc)
+		assert plan["valid"] and plan["counts"]["unchanged"] == len(doc["rules"]), plan["counts"]
+		original = frappe.db.get_value("Wolf Alert Rule", "smoke disk", "threshold")
+		next(r for r in doc["rules"] if r["rule_name"] == "smoke disk")["threshold"] = 77
+		doc["rules"].append({"rule_name": "smoke yaml", "enabled": 0, "metric_name": "cpu_usage", "threshold": 50,
+		                     "channels": [{"channel_type": "ntfy", "ntfy_server": "https://ntfy.example.com", "ntfy_topic": "x"}]})  # fmt: skip
+		result = rules_yaml_api.import_document(doc, apply=True)
+		assert result["applied"] and (result["counts"]["create"], result["counts"]["update"]) == (1, 1), result["counts"]
+		assert float(frappe.db.get_value("Wolf Alert Rule", "smoke disk", "threshold")) == 77
+		assert frappe.get_doc("Wolf Alert Rule", "smoke yaml").channels[0].enabled == 0  # no ntfy_token in a file
+		bad = {"version": 1, "rules": [{"rule_name": "smoke disk", "treshold": 1}]}
+		assert not rules_yaml_api.import_document(bad, apply=True)["applied"]
+		frappe.delete_doc("Wolf Alert Rule", "smoke yaml", force=True)
+		frappe.db.set_value("Wolf Alert Rule", "smoke disk", "threshold", original)
+		return result["counts"]
+
 	for name, fn in [("ingest", ingest), ("evaluate", evaluate), ("correlate", correlate), ("timeline", timeline),
 	                 ("deployment link", deployment_link),
 	                 ("reopen after resolve", reopen_after_resolve), ("skew", skew),
@@ -3291,7 +3312,7 @@ def main():
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
 	                 ("response actions", response_actions), ("response links", response_links), ("journal", journal_chain),
-	                 ("siem export", siem_export), ("journal retention", journal_retention)]:
+	                 ("siem export", siem_export), ("journal retention", journal_retention), ("rules YAML", rules_yaml)]:
 		check(name, fn)
 
 	for name in ("smoke disk", "smoke 502", "smoke last", "smoke cron"):
