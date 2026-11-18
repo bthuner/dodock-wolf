@@ -55,6 +55,12 @@ class TestSuggest(unittest.TestCase):
 		held = response.held_blocks(events)
 		self.assertEqual(held, [{"target": "45.33.32.156", "host": "f1", "via_proxy": "10.0.0.3"},
 		                        {"target": "45.33.32.157", "host": "f1", "via_proxy": "10.0.0.3"}])  # fmt: skip
+		# direct packets: an accepted SSH login, Wazuh, a network IDS alert on the packet's own source
+		direct = [proxied("ssh_accepted", "45.33.32.160"), proxied("hids_alert", "45.33.32.161"),
+		          {**proxied("network_ids_alert", "45.33.32.162"), "payload": {"ip": "45.33.32.162", "src_ip": "45.33.32.162"}},
+		          {**proxied("network_ids_alert", "45.33.32.163"), "payload": {"ip": "45.33.32.163", "src_ip": "10.0.0.3"}}]  # fmt: skip
+		self.assertEqual([p["target"] for p in response.suggest(direct)], ["45.33.32.160", "45.33.32.161", "45.33.32.162"])
+		self.assertEqual([h["target"] for h in response.held_blocks(direct)], ["45.33.32.163"])  # an X-Forwarded-For client
 		# no proxy: proposed as before, nothing held
 		plain = [ev("web_attack_probe", {"ip": "45.33.32.156"})]
 		self.assertEqual(len(response.suggest(plain)), 1)

@@ -292,7 +292,11 @@ class TestPressAsWolfAgent(PressCase):
 		cfg = {"press": {"agent_dir": self.press.agent_dir}}
 		cli._remember_press(cfg)
 		self.assertEqual(cfg["press"]["proxy_ip"], "10.0.0.3")
+		self.assertEqual(cfg["press"]["server_name"], "f1-mumbai.frappe.cloud")
 		self.assertNotIn("extra_logs", cfg)
+		write_json(path, agent_cfg)  # the proxy removed in Press: refresh forgets it
+		cli._remember_press(cfg)
+		self.assertNotIn("proxy_ip", cfg["press"])
 		# a proxy server: Press's proxy role creates nginx/proxy.conf; no bench, its access log is read
 		os.makedirs(os.path.join(self.press.agent_dir, "nginx"), exist_ok=True)
 		open(os.path.join(self.press.agent_dir, "nginx", "proxy.conf"), "w").close()
@@ -317,6 +321,11 @@ class TestPressAsWolfAgent(PressCase):
 			parser.feed(f'45.33.32.156 - - [29/Oct/2026:02:00:13 +0000] "GET /x HTTP/2.0" 200 1 "-" "curl" "45.33.32.156" "{host}" 0.002')
 		sites = sorted({m["site"] or "" for m in parser.drain(NOW)[0] if m["metric_name"] == "http_requests"})
 		self.assertEqual(sites, ["", "a.frappe.cloud", "b.frappe.cloud"])  # the proxy's own name and "-": no site
+		# X-Forwarded-For is the client's to choose: never the site, whatever it holds
+		for xff in ("evil.example.com", "1.2.3.4, 5.6.7.8", "x.y"):
+			parser.feed(f'45.33.32.156 - - [29/Oct/2026:02:00:14 +0000] "GET /.env HTTP/2.0" 404 1 "-" "curl" "{xff}" "a.frappe.cloud" 0.002')
+		sites = {m["site"] for m in parser.drain(NOW)[0] if m["metric_name"] == "http_requests"}
+		self.assertEqual(sites, {"a.frappe.cloud"})
 
 	def test_refresh_saves_what_root_reads_without_registering(self):
 		import argparse

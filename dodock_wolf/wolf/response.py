@@ -130,20 +130,27 @@ def suggest(events, block_with="wolf_agent", wazuh=False):
 	return out
 
 
-# the categories whose address reaches the host itself, not through its web proxy
-DIRECT_CATEGORIES = ("ssh_failed_login", "ssh_root_login", "ssh_login_after_failures")
+# the categories whose address reaches the host itself, not through its web proxy: SSH (the auth
+# log, Wazuh), and a network IDS alert on the packet's own source
+DIRECT_CATEGORIES = ("ssh_failed_login", "ssh_root_login", "ssh_login_after_failures", "ssh_accepted", "hids_alert")
+
+
+def _direct(ev):
+	payload = ev.get("payload") or {}
+	if ev.get("category") == "network_ids_alert":
+		return bool(payload.get("ip")) and payload.get("ip") == payload.get("src_ip")  # not an X-Forwarded-For client
+	return ev.get("category") in DIRECT_CATEGORIES
 
 
 def _through_proxy(ev):
-	return bool(ev.get("block_proxy")) and ev.get("category") not in DIRECT_CATEGORIES
+	return bool(ev.get("block_proxy")) and not _direct(ev)
 
 
 def held_blocks(events):
 	"""`{target, host, via_proxy}` for each address a block is not proposed for because it reached
 	that host through a proxy."""
 	# an address also seen on SSH gets its block proposed there: nothing to explain
-	direct = {(str((e.get("payload") or {}).get("ip")), e.get("block_host")) for e in events
-	          if e.get("category") in DIRECT_CATEGORIES}  # fmt: skip
+	direct = {(str((e.get("payload") or {}).get("ip")), e.get("block_host")) for e in events if _direct(e)}
 	out, seen = [], set(direct)
 	for ev in events:
 		ip = (ev.get("payload") or {}).get("ip")

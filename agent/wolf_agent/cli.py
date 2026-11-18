@@ -75,9 +75,15 @@ def _remember_press(cfg):
 	if cfg.get("platform") != "press":
 		return None
 	agent_cfg = press.read_agent_config(press_cfg["agent_dir"]) or {}
-	saved = {k: agent_cfg[k] for k in ("benches_directory", "proxy_ip") if agent_cfg.get(k)}
-	if saved:
-		cfg["press"] = {**(cfg.get("press") or {}), **saved}
+	if agent_cfg:  # read as root: what it says now, a removed proxy included
+		press_now = dict(cfg.get("press") or {})
+		for key, value in (("benches_directory", agent_cfg.get("benches_directory")), ("proxy_ip", agent_cfg.get("proxy_ip")),
+		                   ("server_name", agent_cfg.get("name"))):  # fmt: skip
+			if value:
+				press_now[key] = value
+			elif key != "benches_directory":
+				press_now.pop(key, None)
+		cfg["press"] = press_now
 	# a Press proxy server (n*): no bench, the sites' traffic in its nginx log, with the real clients
 	if press.is_proxy(press_cfg["agent_dir"]):
 		log_path = press_cfg.get("nginx_access_log") or press.DEFAULT_NGINX_ACCESS_LOG

@@ -64,9 +64,11 @@ def _events(incident):
 
 def _proxied_hosts(aliases):
 	"""{canonical host: proxy address} for the hosts whose agent reports web traffic through a proxy."""
-	rows = frappe.get_all("Wolf Agent", filters={"status": ("!=", "Disabled"), "behind_proxy": ("is", "set")},
-	                      fields=["hostname", "behind_proxy"])  # fmt: skip
-	return {aliases.host(r.hostname): r.behind_proxy for r in rows if r.hostname}
+	rows = frappe.get_all("Wolf Agent", filters={"status": ("!=", "Disabled")}, fields=["hostname", "kind", "behind_proxy"],
+	                      order_by="last_seen asc")  # fmt: skip
+	# as _wolf_agents: the latest seen agent of a host wins, so an older row of it says nothing
+	latest = {aliases.host(r.hostname): r.behind_proxy for r in rows if r.hostname and (r.kind or "agent") == "agent"}
+	return {host: proxy for host, proxy in latest.items() if proxy}
 
 
 def _wolf_agents(aliases):

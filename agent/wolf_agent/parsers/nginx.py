@@ -97,7 +97,7 @@ def client_address(parsed):
 
 def _host_name(value):
 	"""A DNS name as nginx logs `$host`: not `-`/`_`, not an address (the X-Forwarded-For field)."""
-	if not value or "." not in value or value in ("-", "_"):
+	if not value or "." not in value or value in ("-", "_") or any(ch in value for ch in ", \t"):
 		return False
 	try:
 		ipaddress.ip_address(value)
@@ -156,9 +156,11 @@ class NginxParser:
 			if c and self.site_aliases.get(c) in self.site_benches:
 				return self.site_aliases[c]
 		if self.site_from_host:
-			for c in candidates:
-				if _host_name(c) and c not in self.ignore_hosts:
-					return self.site_aliases.get(c, c)
+			# $host only: the vhost field, else the last quoted field (Press's `main` format); the
+			# fields before it include X-Forwarded-For, which the client chooses
+			c = parsed["vhost"] or (parsed["extra"][-1] if parsed["extra"] else None)
+			if _host_name(c) and c not in self.ignore_hosts:
+				return self.site_aliases.get(c, c)
 		if self.file_site:
 			return self.file_site
 		if self.default_site:
