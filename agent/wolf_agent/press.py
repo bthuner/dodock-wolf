@@ -206,8 +206,22 @@ def describe_press_bench(path, nginx_access_log=DEFAULT_NGINX_ACCESS_LOG):
 		"site_domains": {**_nginx_domains(path), **_site_domains(path, sites)},
 		"platform": "press",
 		"docker_image": bench_config.get("docker_image") or _compose_image(path),
+		# read from the bench's config.json (root, at registration), or around it (the daemon)
+		"config_read": bool(bench_config),
 		"bench_toml": False,
 	}
+
+
+def keep_registered(found, known):
+	"""Benches the daemon found around their 0600 config keep what root read in it at registration:
+	`rq_port` (an older bench has none, and its Redis is not published) and the image (the
+	compose file keeps the one the bench was created with)."""
+	read = {b["name"]: b for b in known or () if b.get("config_read")}
+	for bench in found:
+		old = read.get(bench["name"])
+		if old and not bench.get("config_read") and old.get("path") == bench.get("path"):
+			bench.update(redis_queue=old.get("redis_queue"), docker_image=old.get("docker_image"), config_read=True)
+	return found
 
 
 def discover_press_benches(agent_dir=DEFAULT_AGENT_DIR, nginx_access_log=DEFAULT_NGINX_ACCESS_LOG, benches_dir=None):

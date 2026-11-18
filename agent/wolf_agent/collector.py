@@ -105,7 +105,7 @@ class Collector:
 	def _setup_press(self, press_cfg, state_path):
 		"""Press benches come and go with every deploy: rediscover them at runtime."""
 		self.press = press_cfg
-		found = self._discover_press()
+		found = press.keep_registered(self._discover_press(), self.benches)
 		if found or not self.benches:
 			self.benches = found
 		self._next_discovery = self.clock() + float(press_cfg.get("rediscover_interval") or 60)
@@ -190,7 +190,7 @@ class Collector:
 		if not self.press or self.clock() < self._next_discovery:
 			return
 		self._next_discovery = self.clock() + float(self.press.get("rediscover_interval") or 60)
-		found = self._discover_press()
+		found = press.keep_registered(self._discover_press(), self.benches)
 		if _signature(found) == _signature(self.benches):
 			self.benches = found  # same layout; refresh domains etc. without reopening files
 			return

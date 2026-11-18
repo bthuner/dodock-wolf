@@ -282,15 +282,36 @@ class TestPressAsWolfAgent(PressCase):
 		self.assertIsNotNone(c.press_jobs)
 		self.assertEqual([b["name"] for b in c.benches], ["bench-0001-000002-f1-mumbai"])
 
+	def test_what_registration_read_is_kept(self):
+		# an older bench: its config (read by root at registration) has no rq_port, so its Redis is not
+		# published; the daemon, unable to read it, must not probe 11000 + its offset instead
+		path = self.bench()
+		os.chmod(os.path.join(path, "config.json"), 0o600)
+		with open(os.path.join(path, "config.json"), "w") as f:
+			json.dump({"docker_image": "registry.frappe.cloud/old:2", "web_port": 18007}, f)
+		registered = press.discover_press_benches(self.press.agent_dir, nginx_access_log=None)
+		self.assertEqual((registered[0]["redis_queue"], registered[0]["config_read"]), (None, True))
+		os.chmod(os.path.join(path, "config.json"), 0)
+		found = press.discover_press_benches(self.press.agent_dir, nginx_access_log=None)
+		self.assertEqual(found[0]["redis_queue"], "redis://127.0.0.1:11007")  # derived, alone
+		kept = press.keep_registered(found, registered)
+		self.assertEqual((kept[0]["redis_queue"], kept[0]["docker_image"]), (None, "registry.frappe.cloud/old:2"))
+		# and on the next rediscovery, from the kept values
+		again = press.keep_registered(press.discover_press_benches(self.press.agent_dir, nginx_access_log=None), kept)
+		self.assertIsNone(again[0]["redis_queue"])
+		# a bench new since registration keeps what it was found with
+		fresh = press.discover_press_benches(self.press.agent_dir, nginx_access_log=None)
+		self.assertEqual(press.keep_registered(fresh, [])[0]["redis_queue"], "redis://127.0.0.1:11007")
+
 	def test_registration_remembers_press(self):
 		from wolf_agent import cli
 
 		cfg = {"press": {"agent_dir": self.press.agent_dir}}
-		cli._remember_press(cfg)  # registration: root reads the config
+		self.assertEqual(cli._remember_press(cfg), "f1-mumbai.frappe.cloud")  # registration: root reads the config
 		self.assertEqual(cfg["platform"], "press")
 		self.assertEqual(cfg["press"]["benches_directory"], self.press.benches_dir)
 		cfg = {"platform": "generic", "press": {"agent_dir": self.press.agent_dir}}
-		cli._remember_press(cfg)  # --platform generic stays
+		self.assertIsNone(cli._remember_press(cfg))  # --platform generic stays
 		self.assertEqual(cfg["platform"], "generic")
 
 

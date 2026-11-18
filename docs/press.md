@@ -34,7 +34,7 @@ Sources were read at these commits. Every link below is pinned to them:
 | Site config risks | Need the 0600 site configs: no `site_config_risks` sample (unknown) | checked |
 | Exposed services | Each bench's queue and cache Redis are published on all interfaces by the Press agent (for secondary servers): `service_exposed`, which the server's firewall must cover | checked |
 | Deploy correlation | Emits a `deployment` event for each deploy, update or migrate job in the Press agent's `jobs.sqlite3`, and an `error` event when one fails | checked |
-| Site events | The Wolf App on a Press bench (`frappe_cloud` in its config) names its bench from the container hostname and its server from Press's `supervisor.conf` (`<server>-gunicorn.access.log`) | checked |
+| Site events | The Wolf App on a Press bench (`frappe_cloud` in its config) names its bench from the container hostname and its server from Press's `supervisor.conf` (`<server>-gunicorn.access.log`, its name in Press); registration names the agent's host after the same Press name unless `--hostname` is given or it was registered before | checked (the test server's hostname is its Press name) |
 | Fallback | If `jobs.sqlite3` cannot be read, emits a `deployment` event when a new bench appears or a site moves to another bench | done, unit tested |
 | Press credentials | None are needed. Everything is read from local files. | — |
 | Real Press server | **Not tested yet** (see [Unverified](#unverified)) | — |
@@ -275,7 +275,10 @@ On `dev/press` (Press's roles `essentials`, `user`, `nginx`, `agent`, `bench`, `
 3. **`$host`.** Site requests carry the site in the last quoted field. The Press agent's vhost on
    443 logs the server name there (`"f1-press"`), which is no site: those lines count for nothing.
 4. **`rq_port`.** Set on every new bench and published `0.0.0.0:<rq_port>:11000`, with the cache
-   on `<rq_cache_port>`: Wolf's exposure check reports both.
+   on `<rq_cache_port>`: Wolf's exposure check reports both. For a bench registration read, the
+   daemon keeps that `rq_port` and image (`press.keep_registered`); a bench found later gets
+   `11000 + offset` and the image from its `docker-compose.yml`, which Update Bench In Place does
+   not change.
 
 Still unchecked: a Press proxy server in front (`$remote_addr` is then the proxy), shared-FS
 benches, MariaDB on the database server, and local backup copies.

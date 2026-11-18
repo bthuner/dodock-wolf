@@ -66,14 +66,18 @@ def _discover(args, cfg=None):
 
 def _remember_press(cfg):
 	"""Registration runs as root; the daemon runs as wolf-agent, which cannot read the Press agent's
-	config.json (mode 0600). Keep what root found: that this is Press, and the benches folder."""
+	config.json (mode 0600). Keep what root found: that this is Press, and the benches folder.
+	Returns the server's name in Press (`agent setup config --name`), or None."""
 	press_cfg = press_settings(cfg)
 	if cfg.get("platform") in (None, "auto") and press.detect(press_cfg["agent_dir"]):
 		cfg["platform"] = "press"
-	if cfg.get("platform") == "press":
-		agent_cfg = press.read_agent_config(press_cfg["agent_dir"]) or {}
-		if agent_cfg.get("benches_directory"):
-			cfg["press"] = {**(cfg.get("press") or {}), "benches_directory": agent_cfg["benches_directory"]}
+	if cfg.get("platform") != "press":
+		return None
+	agent_cfg = press.read_agent_config(press_cfg["agent_dir"]) or {}
+	if agent_cfg.get("benches_directory"):
+		cfg["press"] = {**(cfg.get("press") or {}), "benches_directory": agent_cfg["benches_directory"]}
+	name = agent_cfg.get("name")
+	return name if isinstance(name, str) and name.strip() else None
 
 
 def cmd_discover(args):
@@ -87,12 +91,13 @@ def cmd_register(args):
 	except (FileNotFoundError, ValueError):
 		cfg = dict(DEFAULTS)
 	cfg["url"] = args.url.rstrip("/")
-	cfg["hostname"] = args.hostname or cfg.get("hostname") or socket.getfqdn() or socket.gethostname()
 	cfg["verify_tls"] = not args.insecure
 	if args.platform and args.platform != "auto":
 		cfg["platform"] = args.platform
+	# on Press, the server's name in Press: what its benches' sites report as their host
+	press_name = _remember_press(cfg)
+	cfg["hostname"] = args.hostname or cfg.get("hostname") or press_name or socket.getfqdn() or socket.gethostname()
 	cfg["benches"] = _discover(args, cfg)
-	_remember_press(cfg)
 	if not cfg["benches"]:
 		log.warning("no bench found; only host metrics and auth logs will be collected")
 

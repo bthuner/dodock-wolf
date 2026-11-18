@@ -80,7 +80,8 @@ ctx=$(mktemp -d)
 trap 'rm -rf "$ctx"' EXIT
 cp bench/Dockerfile "$ctx/"
 mkdir "$ctx/dodock_wolf"
-# this checkout, uncommitted changes included (git stash create leaves the working tree alone)
+# this checkout, with uncommitted changes to tracked files (git stash create leaves the working
+# tree alone; untracked files are not in it: commit or `git add` them first)
 tree=$(git -C ../.. stash create 2>/dev/null || true)
 git -C ../.. archive "${tree:-HEAD}" -- . ':!docs-site' ':!dev' ':!docs' | tar -x -C "$ctx/dodock_wolf"
 docker build -q --build-arg "BASE=$BASE" --build-arg "PRESS_REF=$PRESS_REF" -t wolf-press-bench:local "$ctx"
@@ -106,7 +107,8 @@ root "docker container inspect $BENCH >/dev/null 2>&1 || { rm -rf /home/frappe/b
 # a deploy (Update Site Migrate) moves the site to another bench: look for it on all of them
 root "ls -d /home/frappe/benches/*/sites/$SITE >/dev/null 2>&1 || PRESS_DB_PASSWORD=$DB_PASSWORD press-api new-site $BENCH $SITE frappe dodock_wolf"
 # the bench whose nginx serves it (a failed New Site can leave a folder elsewhere)
-SITE_BENCH=$(root "grep -lw '$SITE' /home/frappe/benches/*/nginx.conf | head -1 | cut -d/ -f5" | tr -d '[:space:]')
+SITE_BENCH=$(root "grep -lFw '$SITE' /home/frappe/benches/*/nginx.conf | head -1 | cut -d/ -f5" | tr -d '[:space:]')
+[ -n "$SITE_BENCH" ] || { echo "no bench serves $SITE" >&2; exit 1; }
 root "docker ps --format '{{.Names}} {{.Status}}' | grep bench-"
 
 step "The Wolf agent, with agent/install.sh from this checkout"
@@ -116,6 +118,7 @@ token=$(root "docker exec -w /home/frappe/frappe-bench/sites $SITE_BENCH ../env/
 import frappe; frappe.init('$SITE', sites_path='.'); frappe.connect()
 from frappe.utils.password import get_decrypted_password
 print(get_decrypted_password('Wolf Settings', 'Wolf Settings', 'registration_token'))\"" | tail -1 | tr -d '[:space:]')
+[ -n "$token" ] || { echo "no registration token on $SITE" >&2; exit 1; }
 # registered once; later runs upgrade it in place and keep its config, as on a real host
 root "apt-get install -y -qq python3-venv >/dev/null && rm -rf /tmp/wolf-agent-src && cp -r /src/agent /tmp/wolf-agent-src \
   && if [ -f /etc/wolf-agent/config.json ]; then WOLF_AGENT_SRC=/tmp/wolf-agent-src bash /tmp/wolf-agent-src/install.sh \
