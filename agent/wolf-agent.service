@@ -15,7 +15,9 @@ RestartSec=10
 # exit code 2 = credentials rejected by the Wolf App: restarting won't help
 RestartPreventExitStatus=2
 
-NoNewPrivileges=yes
+# No NoNewPrivileges=, RestrictSUIDSGID= or an empty CapabilityBoundingSet=: each stops sudo, and
+# the agent runs its root helpers through sudo (wolf-block for approved blocks, wolf-outbound-log),
+# each allowed only with its own arguments in /etc/sudoers.d. tests/test_unit_file.py checks it.
 ProtectSystem=strict
 ProtectHome=read-only
 PrivateTmp=yes
