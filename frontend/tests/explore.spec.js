@@ -53,6 +53,21 @@ describe('EventsPage', () => {
     expect(page.find('[role=radio][data-state=checked], [role=radio][aria-checked=true]').text()).toBe('24h')
   })
 
+  it('reads a range selected on a chart instead of the relative one, and goes back to it', async () => {
+    const fetchFn = server({ 'dodock_wolf.api.explore.list_events': () => ({ events: [], paging: { has_more: false } }) })
+    const { page, router } = await open(EventsPage, '/events?since=2026-10-30T10:00:00Z&until=2026-10-30T10:24:00Z&range=7d&site=a.example.com')
+    const first = fetchFn.mock.calls[0][0]
+    expect(first).toContain('since=2026-10-30T10%3A00%3A00Z')
+    expect(first).toContain('until=2026-10-30T10%3A24%3A00Z')
+    expect(first).not.toContain('range=')
+    expect(page.text()).toContain('Selected range: 30/10/2026, 10:00:00 to 30/10/2026, 10:24:00 (UTC)')
+    await page.findAll('button').find((b) => b.text() === 'Back to a relative window').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query).toEqual({ range: '7d', site: 'a.example.com' })
+    expect(fetchFn.mock.calls.at(-1)[0]).toContain('range=7d')
+    expect(page.text()).not.toContain('Selected range')
+  })
+
   it('drops a bench without its host', async () => {
     const fetchFn = server({ 'dodock_wolf.api.explore.list_events': () => ({ events: [], paging: { has_more: false } }) })
     await open(EventsPage, '/events?bench=b1')

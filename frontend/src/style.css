@@ -1276,3 +1276,35 @@ div.wolf-table-sub {
     padding-left: 32px;
   }
 }
+
+/* a chart a range can be selected on: the band follows a drag */
+.wolf-brush {
+  position: relative;
+  cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.wolf-brush-band {
+  position: absolute;
+  pointer-events: none;
+  border-inline: 1px solid var(--wolf-brand-text);
+  background: color-mix(in srgb, var(--wolf-brand-text) 14%, transparent);
+}
+/* the explicit window of a page, and the way back */
+.wolf-window {
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+.wolf-note.wolf-window::before {
+  content: none;
+}
+.wolf-note > .wolf-link {
+  margin-left: auto;
+}
+/* data inside a small label keeps its case */
+.wolf-label-data {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}

@@ -7,7 +7,9 @@ import { useRoute, useRouter } from 'vue-router'
 import LoadingNote from '@/components/LoadingNote.vue'
 import PageTitle from '@/components/PageTitle.vue'
 import ScopeInputs from '@/components/ScopeInputs.vue'
+import { useChartRange } from '@/composables/useChartRange'
 import { useQueryParam } from '@/composables/useQueryParam'
+import { useWindow } from '@/composables/useWindow'
 import { call, failure } from '@/services/api'
 import { RANGES } from '@/services/filters'
 import { ago, axisLabel, full } from '@/services/time'
@@ -27,12 +29,12 @@ const catalogError = ref(null)
 const catalogLoaded = ref(false)
 const loading = ref(false)
 const showTable = ref(false)
-const pending = ref(null) // first point of a range being selected
 let ticket = 0
 let labelTicket = 0
 
 const metric = useQueryParam('metric', 'cpu_usage')
-const range = useQueryParam('range', '24h', RANGES)
+const win = useWindow(RANGES)
+const { range, explicit } = win
 const site = useQueryParam('site')
 const host = useQueryParam('host')
 const bench = useQueryParam('bench')
@@ -48,7 +50,6 @@ const spec = computed(() =>
 )
 const aggregation = useQueryParam('agg', '')
 const groupBy = useQueryParam('group', '')
-const explicit = computed(() => (route.query.since ? { since: route.query.since, until: route.query.until } : null))
 
 const GROUP_LABELS = { none: 'All together', host: 'Per host', bench: 'Per bench', site: 'Per site', host_label: 'Per host and label' }
 const metricOptions = computed(() =>
@@ -125,25 +126,22 @@ const rows = computed(() => {
 })
 const unit = computed(() => result.value?.metric.unit || '')
 
-function onSelect(event) {
-  const iso = event?.row?.iso
-  if (!iso) return
-  if (!pending.value) {
-    pending.value = iso
-    return
-  }
-  const [a, b] = [pending.value, iso].sort()
-  pending.value = null
-  const end = new Date(new Date(b).getTime() + result.value.bucket_seconds * 1000).toISOString()
-  router.replace({ query: { ...route.query, since: a, until: end, range: undefined } })
-}
+// a range of the chart becomes an explicit window: by dragging, or point by point
+const chart = ref(null)
+const selection = useChartRange({
+  chart,
+  buckets: () => rows.value.map((r) => r.iso),
+  bucketSeconds: () => result.value.bucket_seconds,
+  onSelect: win.select,
+})
+const { pending, band } = selection
 function resetRange() {
-  pending.value = null
-  router.replace({ query: { ...route.query, since: undefined, until: undefined } })
+  selection.cancel()
+  win.reset()
 }
 function chooseRange(value) {
-  pending.value = null
-  router.replace({ query: { ...route.query, range: value === '24h' ? undefined : value, since: undefined, until: undefined } })
+  selection.cancel()
+  win.choose(value)
 }
 const value = (v) => (v == null ? '' : `${Number(v).toLocaleString('en', { maximumFractionDigits: 2 })} ${unit.value}`)
 
@@ -208,13 +206,14 @@ watch([metric, site, host, bench], loadLabels)
       <p v-if="pending" class="wolf-note" data-tone="brand">
         Range starts at {{ full(pending, tz, { zone: false }) }}: select the point where it ends.
       </p>
-      <div v-if="rows.length" class="h-72">
-        <!-- drawn points: a click selects one, as Enter does on the keyboard cursor -->
-        <LineChart :data="rows" x="at" :y="result.series.map((s) => s.name)" :x-axis="{ type: 'category' }" show-data-points @select="onSelect" />
+      <div v-if="rows.length" class="wolf-brush h-72" @pointerdown="selection.down">
+        <!-- a click in the plot selects its bucket, as Enter does on the keyboard cursor -->
+        <LineChart ref="chart" :data="rows" x="at" :y="result.series.map((s) => s.name)" :x-axis="{ type: 'category' }" show-data-points @select="selection.onPoint" />
+        <div v-if="band" class="wolf-brush-band" aria-hidden="true" :style="{ left: `${band.left}px`, width: `${band.width}px`, top: `${band.top}px`, height: `${band.height}px` }" />
       </div>
       <p v-else class="text-sm text-ink-gray-6">No samples of this metric for this scope and window. That is no data, not zero.</p>
       <p v-if="rows.length" class="text-sm text-ink-gray-6">
-        Click two points (or move along the chart with the arrow keys and press Enter twice) to look at the range between them.
+        Drag across the chart, or click two points (or move along the chart with the arrow keys and press Enter twice), to look at the range between them.
         Breaks in a line are buckets without samples.
       </p>
 

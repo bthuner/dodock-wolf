@@ -207,3 +207,74 @@ test('merge: the dialog says what moves, passes axe, gives focus back, and merge
     { source: 'WINC-00001', target: 'WINC-00002' },
   ])
 })
+
+// A range selected on the HTTP chart, with the pointer as a browser really sends it.
+test.describe('range selected on the HTTP chart', () => {
+  const plot = async (page) => {
+    await mockApi(page)
+    await page.goto('/wolf/')
+    const chart = page.locator('.wolf-brush svg, .wolf-brush canvas').first()
+    await expect(chart).toBeVisible()
+    await page.waitForLoadState('networkidle')
+    return chart.boundingBox()
+  }
+  const selected = async (page) => {
+    await expect(page.getByText('Selected range:')).toBeVisible()
+    const url = new URL(page.url())
+    const [since, until] = [url.searchParams.get('since'), url.searchParams.get('until')]
+    expect(url.searchParams.get('range')).toBeNull()
+    return (new Date(until) - new Date(since)) / 60000
+  }
+
+  test('a drag draws a band and becomes the window of the page and of its links', async ({ page }) => {
+    const box = await plot(page)
+    const y = box.y + box.height / 2
+    await page.mouse.move(box.x + box.width * 0.3, y)
+    await page.mouse.down()
+    await page.mouse.move(box.x + box.width * 0.5, y, { steps: 4 })
+    await expect(page.locator('.wolf-brush-band')).toBeVisible()
+    await page.mouse.move(box.x + box.width * 0.7, y, { steps: 4 })
+    await page.mouse.up()
+    const minutes = await selected(page)
+    expect(minutes).toBeGreaterThanOrEqual(3) // 12 one-minute buckets drawn, 40 % of the plot dragged
+    expect(minutes).toBeLessThanOrEqual(7)
+    await expect(page.locator('.wolf-brush-band')).toHaveCount(0)
+    await expect(page.getByText('Range starts at')).toHaveCount(0) // the drag's last click starts nothing
+    // the explorer opens on the same window
+    await page.locator('[aria-label="In this window"]').getByRole('link', { name: 'Events' }).click()
+    await expect(page).toHaveURL(/\/wolf\/events\?since=.*until=/)
+    await expect(page.getByText('Selected range:')).toBeVisible()
+    await page.getByRole('button', { name: 'Back to a relative window' }).click()
+    await expect(page).toHaveURL(/\/wolf\/events$/)
+  })
+
+  test('two clicks select it too, and the first one says what it waits for', async ({ page }) => {
+    const box = await plot(page)
+    const y = box.y + box.height / 2
+    await page.mouse.click(box.x + box.width * 0.7, y)
+    await expect(page.getByText('select the point where it ends')).toBeVisible()
+    await page.mouse.click(box.x + box.width * 0.3, y)
+    expect(await selected(page)).toBeGreaterThanOrEqual(3)
+    await page.getByRole('button', { name: 'Back to a relative window' }).click()
+    await expect(page.getByText('Selected range:')).toHaveCount(0)
+    expect(new URL(page.url()).search).toBe('')
+  })
+})
+
+test('range selected on the HTTP chart with the keyboard: arrows, then Enter twice', async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/wolf/')
+  const plot = page.locator('.wolf-brush [tabindex="0"]').first()
+  await expect(plot).toBeVisible()
+  await page.waitForLoadState('networkidle')
+  await plot.focus()
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('Enter')
+  await expect(page.getByText('select the point where it ends')).toBeVisible()
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowRight')
+  await page.keyboard.press('Enter')
+  await expect(page.getByText('Selected range:')).toBeVisible()
+  const url = new URL(page.url())
+  expect((new Date(url.searchParams.get('until')) - new Date(url.searchParams.get('since'))) / 60000).toBe(5)
+})

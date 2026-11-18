@@ -11,7 +11,10 @@ const OLD = new Date(Date.now() - 40 * 60000).toISOString()
 
 const COUNTS = {
   restricted: false,
-  incidents: { unresolved: 60, critical_unresolved: 7, unacknowledged: 40, sites_with_unresolved: 3, unresolved_without_site: 5 },
+  window: { since: OLD, until: NOW, relative: '24h' },
+  events: { records: 12, occurrences: 40, by_type: { error: { records: 5, occurrences: 30 }, cron_failure: { records: 2, occurrences: 2 } } },
+  incidents: { unresolved: 60, critical_unresolved: 7, unacknowledged: 40, sites_with_unresolved: 3, unresolved_without_site: 5,
+    opened_in_window: 4, resolved_in_window: 1 },
   agents: { agent: { fresh: 3, stale: 1, never_seen: 0, disabled: 0 }, satellite: { fresh: 0, stale: 0, never_seen: 0, disabled: 0 } },
 }
 const HTTP = {
@@ -204,6 +207,43 @@ describe('DashboardPage', () => {
     expect(panel.findAll('.wolf-estate-host')).toHaveLength(1)
     expect(panel.find('.wolf-estate-totals').text()).toBe('bench1site1')
     expect(panel.text()).not.toContain('nohost.example.com')
+  })
+
+  it('reads the counts and the chart for a range selected on the chart, and goes back', async () => {
+    const fetchFn = server()
+    const { page, router } = await open('/sites/a.example.com?range=7d')
+    const asked = (method) => fetchFn.mock.calls.map(([url]) => String(url)).filter((u) => u.includes(method)).at(-1)
+    expect(asked('get_http')).toContain('range=7d')
+    // the window's figures, each linked to its explorer with the same window and scope
+    const tiles = page.find('[aria-label="In this window"]')
+    expect(tiles.text()).toContain('In this window · last 24h')
+    expect(tiles.text()).toContain('40 occurrences')
+    expect(tiles.text()).toContain('1 resolved')
+    expect(tiles.findAll('a').map((a) => [a.text(), a.attributes('href')])).toEqual([
+      ['Events', '/wolf/events?range=7d&site=a.example.com'],
+      ['Error groups', '/wolf/errors?range=7d&site=a.example.com'],
+      ['2 cron', '/wolf/events?range=7d&site=a.example.com&type=cron_failure'],
+      ['0 worker', '/wolf/events?range=7d&site=a.example.com&type=worker_failure'],
+    ])
+
+    page.findComponent({ name: 'HttpChart' }).vm.$emit('select', '2026-11-18T10:00:00Z', '2026-11-18T10:24:00.000Z')
+    await flushPromises()
+    const q = router.currentRoute.value.query
+    expect([q.since, q.until, q.range]).toEqual(['2026-11-18T10:00:00Z', '2026-11-18T10:24:00.000Z', undefined])
+    for (const method of ['get_counts', 'get_http']) {
+      expect(asked(method)).toContain('since=2026-11-18T10%3A00%3A00Z')
+      expect(asked(method)).toContain('until=2026-11-18T10%3A24%3A00.000Z')
+      expect(asked(method)).not.toContain('range=')
+    }
+    expect(asked('get_signals')).not.toContain('since=') // signals are their newest values, whatever the window
+    expect(page.text()).toContain('Selected range: 18/11/2026, 10:00:00 to 18/11/2026, 10:24:00 (UTC)')
+    expect(page.find('[aria-label="In this window"] a').attributes('href')).toBe('/wolf/events?since=2026-11-18T10:00:00Z&until=2026-11-18T10:24:00.000Z&site=a.example.com')
+
+    await page.findAll('button').find((b) => b.text() === 'Back to a relative window').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query.since).toBeUndefined()
+    expect(asked('get_http')).toContain('range=24h')
+    expect(page.text()).not.toContain('Selected range')
   })
 
   it('scopes a bench by its host and keeps the range in the URL', async () => {

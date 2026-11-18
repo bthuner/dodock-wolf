@@ -19,7 +19,9 @@ export function useExplore(method, key, { extraArgs = () => ({}), itemKey }) {
   const args = computed(() => {
     const q = route.query
     // the same values the filter controls show: an unknown one falls back to the default
-    const out = { range: pick(q.range, RANGES, '24h'), q: q.q, site: q.site, host: q.host, bench: q.host ? q.bench : undefined, ...extraArgs(q) }
+    // a range selected on a chart (since/until) wins over the relative one, as on the server
+    const window = q.since ? { since: q.since, until: q.until } : { range: pick(q.range, RANGES, '24h') }
+    const out = { ...window, q: q.q, site: q.site, host: q.host, bench: q.host ? q.bench : undefined, ...extraArgs(q) }
     return Object.fromEntries(Object.entries(out).filter(([, v]) => v != null && v !== ''))
   })
 

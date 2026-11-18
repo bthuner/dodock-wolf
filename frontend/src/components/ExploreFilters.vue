@@ -1,15 +1,18 @@
 <script setup>
 import { Select, TabButtons, TextInput } from 'frappe-ui'
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { inject, onBeforeUnmount, ref, watch } from 'vue'
 
 import ScopeInputs from '@/components/ScopeInputs.vue'
+import WindowNote from '@/components/WindowNote.vue'
 import { useQueryParam } from '@/composables/useQueryParam'
+import { useWindow } from '@/composables/useWindow'
 import { EVENT_TYPES, RANGES, SEVERITIES } from '@/services/filters'
 
 // Window, scope and search shared by the event and error explorers; all of it in the URL.
 defineProps({ types: { type: Boolean, default: false } })
 
-const range = useQueryParam('range', '24h', RANGES)
+const win = useWindow(RANGES)
+const tz = inject('boot').time_zone
 const q = useQueryParam('q')
 const type = useQueryParam('type', 'any', EVENT_TYPES)
 const severity = useQueryParam('severity', 'any', SEVERITIES)
@@ -32,8 +35,9 @@ const SEVERITY_OPTIONS = ['any', ...SEVERITIES].map((v) => ({ value: v, label: v
 </script>
 
 <template>
+  <WindowNote v-if="win.explicit.value" v-bind="win.explicit.value" :time-zone="tz" @reset="win.reset" />
   <div class="flex flex-wrap items-center gap-2">
-    <TabButtons v-model="range" :options="RANGES.map((r) => ({ value: r, label: r }))" />
+    <TabButtons :model-value="win.explicit.value ? null : win.range.value" :options="RANGES.map((r) => ({ value: r, label: r }))" @update:model-value="win.choose" />
     <TextInput v-model="draft" type="search" placeholder="Title contains" class="w-52" aria-label="Title contains" />
     <ScopeInputs />
     <template v-if="types">
