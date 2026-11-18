@@ -102,7 +102,7 @@ docker compose --profile ids up -d --build   # Suricata pulls ET Open on its fir
 python3 ids_scenario.py                      # a few minutes: Suricata's rules, Wazuh's first alert
 ```
 
-- `suricata` (`jasonish/suricata:7.0`) shares the frontend's network and sniffs its interface, with
+- `suricata` (`jasonish/suricata:7.0.17`) shares the frontend's network and sniffs its interface, with
   ET Open (kept in the `suricata-rules` volume). It writes `eve.json` to the `suricata-logs` volume,
   which the bench's agent mounts at `/var/log/suricata`: the agent finds it by itself.
 - `wazuh-manager` (`wazuh/wazuh-manager:4.9.2`, without indexer or dashboard) reads the attacker
@@ -111,9 +111,10 @@ python3 ids_scenario.py                      # a few minutes: Suricata's rules, 
   `alerts.json` and nothing else, in the `wazuh` group as on a real manager.
 - The client address. Wolf groups by public address only, and every address inside Docker is
   private. So the attacks come from inside the stack (the `catcher` container) to nginx's port
-  8081, which is not published. There, as behind a load balancer, `X-Forwarded-For` names the
-  client, and Suricata reads it too (`xff` in `compose.yaml`): the scenario attacks as
-  `45.33.32.156` (scanme.nmap.org). Port 8080 (the site, published as 8099) trusts no header.
+  8081, which is not published (only the Docker host and the demo's containers reach it). There,
+  as behind a load balancer, `X-Forwarded-For` names the client, and Suricata reads it too (`xff`
+  in `compose.yaml`): the scenario attacks as `45.33.32.156` (scanme.nmap.org). Port 8080 (the
+  site, published as 8099) trusts no header.
   Demo only: never trust `X-Forwarded-For` from clients who can set it.
 - Suricata listens to the frontend's ports only, so nginx's calls to the backend do not count each
   attack twice, with `EXTERNAL_NET` set to `any`: in Docker the attacker's address is private too.

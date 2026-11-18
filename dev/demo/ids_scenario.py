@@ -15,6 +15,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import datetime, timezone
 
 from scenario import URL, WEBHOOK, api, step
 
@@ -51,12 +52,22 @@ for label, path, headers in json.load(sys.stdin):
 
 
 def compose(*args, capture=False, stdin=None):
+	# stdout only: docker's own errors still reach the terminal
 	return subprocess.run(["docker", "compose", "--profile", "ids", *args], check=True, text=True, cwd=HERE,
-	                      input=stdin, capture_output=capture).stdout  # fmt: skip
+	                      input=stdin, stdout=subprocess.PIPE if capture else None).stdout  # fmt: skip
 
 
-def logs(service):
-	return compose("logs", "--no-log-prefix", service, capture=True)
+def logs(service, since):
+	"""The service's log lines from `since` on: earlier runs and restarts do not count."""
+	return compose("logs", "--no-log-prefix", "--since", since, service, capture=True)
+
+
+def running(service):
+	return service in compose("ps", "--status", "running", "--services", capture=True).split()
+
+
+def now():
+	return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def wait(what, ready, seconds):
@@ -78,16 +89,21 @@ def events():
 
 def main():
 	step("Suricata has loaded ET Open and listens")
-	wait("Suricata", lambda: "Engine started" in logs("suricata"), 600)
+	# since the container started: a first start downloads ET Open before the engine starts
+	started = compose("ps", "--format", "{{.CreatedAt}}", "suricata", capture=True).strip()
+	since = datetime.strptime(started[:19], "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%dT%H:%M:%S") if started else now()
+	wait("Suricata", lambda: running("suricata") and "Engine started" in logs("suricata", since), 600)
 	# the agents re-check for these logs every 5 minutes; a restart reads them now
+	since = now()
 	compose("restart", "agent")
-	wait("the agent to read eve.json", lambda: "Suricata EVE log: /var/log/suricata/eve.json" in logs("agent"), 180)
+	wait("the agent to read eve.json", lambda: "Suricata EVE log: /var/log/suricata/eve.json" in logs("agent", since), 180)
 	step("Wazuh writes alerts.json; the Wolf agent on its host reads it")
 	wait("Wazuh's first alert", lambda: subprocess.run(
 		["docker", "compose", "--profile", "ids", "exec", "-T", "wazuh-manager", "test", "-s", "/var/ossec/logs/alerts/alerts.json"],
 		cwd=HERE, capture_output=True).returncode == 0, 600)  # fmt: skip
+	since = now()
 	compose("restart", "wazuh-wolf-agent")
-	wait("the agent to read alerts.json", lambda: "Wazuh alerts log" in logs("wazuh-wolf-agent"), 180)
+	wait("the agent to read alerts.json", lambda: "Wazuh alerts log" in logs("wazuh-wolf-agent", since), 180)
 
 	step("Log in as Administrator; the IDS and HIDS presets alert the webhook sink")
 	api("POST", "/api/method/login", {"usr": "Administrator", "pwd": "admin"})
