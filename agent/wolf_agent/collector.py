@@ -6,7 +6,7 @@ import threading
 import time
 from datetime import datetime, timezone
 
-from . import app_versions, database, pilot, press, site_settings, tls_expiry
+from . import app_versions, database, pilot, press, site_settings, suricata_discovery, tls_expiry
 from .backups import backup_metrics
 from .config import pilot_settings, press_settings, resolve_auth_log, section
 from .discovery import discover_benches, read_bench_toml, resolve_platform
@@ -129,6 +129,36 @@ class Collector:
 			press_agent_dir=self.press["agent_dir"],
 		)
 
+	def _suricata_source(self, eve):
+		"""Read `eve` (or nothing) as the Suricata source, replacing the one before."""
+		if self.suricata_source:
+			self.suricata_source.tailer.close()
+			self.sources.remove(self.suricata_source)
+		self.eve_path, self.suricata_source = eve, None
+		if not eve:
+			return
+		suricata = section(self.cfg, "suricata")
+		sites, aliases = {}, {}
+		for bench in self.benches:
+			for site in bench.get("sites") or []:
+				sites[site] = bench["name"]
+			aliases.update(bench.get("site_domains") or {})
+		parser = PARSERS["suricata"](self.host, log_file=eve, max_priority=suricata.get("max_priority"),
+		                             site_benches=sites, site_aliases=aliases)  # fmt: skip
+		self.suricata_source = Source(FileTailer(eve, self.state.data, from_start=self.from_start), [parser])
+		self.sources.append(self.suricata_source)
+
+	def _recheck_suricata(self):
+		"""A Suricata started, moved or stopped since: follow it (unless `suricata.eve_log` is set)."""
+		suricata = section(self.cfg, "suricata")
+		if not suricata.get("enabled", True) or suricata.get("eve_log") or self.clock() < self._next_eve_check:
+			return
+		self._next_eve_check = self.clock() + suricata_discovery.RECHECK
+		eve, how = _discover_eve()
+		if eve != self.eve_path:
+			(log.info if eve or how == "no Suricata found" else log.warning)("Suricata EVE log is now %s (%s)", eve or "none", how)
+			self._suricata_source(eve)
+
 	def _rediscover(self):
 		if not self.press or self.clock() < self._next_discovery:
 			return
@@ -201,17 +231,13 @@ class Collector:
 				ctx = {"default_site": extra.get("site"), "default_bench": extra.get("bench")}
 			self._file_source(extra["path"], [parser_name], **ctx)
 
+		self.eve_path, self.suricata_source = None, None
 		suricata = section(self.cfg, "suricata")
-		eve = suricata.get("eve_log") or (DEFAULT_EVE_LOG if os.path.exists(DEFAULT_EVE_LOG) else None)
-		if suricata.get("enabled", True) and eve:
-			sites, aliases = {}, {}
-			for bench in benches:
-				for site in bench.get("sites") or []:
-					sites[site] = bench["name"]
-				aliases.update(bench.get("site_domains") or {})
-			parser = PARSERS["suricata"](self.host, log_file=eve, max_priority=suricata.get("max_priority"),
-			                             site_benches=sites, site_aliases=aliases)  # fmt: skip
-			self.sources.append(Source(FileTailer(eve, self.state.data, from_start=self.from_start), [parser]))
+		if suricata.get("enabled", True):
+			eve, how = _discover_eve(suricata.get("eve_log"))
+			(log.info if eve or how == "no Suricata found" else log.warning)("Suricata EVE log: %s (%s)", eve or "none", how)
+			self._suricata_source(eve)
+		self._next_eve_check = self.clock() + suricata_discovery.RECHECK
 
 		wazuh = section(self.cfg, "wazuh")
 		alerts = wazuh.get("alerts_log") or (DEFAULT_WAZUH_ALERTS if os.path.exists(DEFAULT_WAZUH_ALERTS) else None)
@@ -230,6 +256,7 @@ class Collector:
 		"""Poll every source once; return `(metrics, events)` for this interval."""
 		now = now or datetime.now(timezone.utc)
 		self._rediscover()
+		self._recheck_suricata()
 		metrics, events = [], []
 		for source in self.sources:
 			try:
@@ -456,3 +483,12 @@ class InfraChecks:
 
 def _signature(benches):
 	return sorted((b["name"], tuple(b.get("sites") or ()), b.get("redis_queue") or "") for b in benches)
+
+
+def _discover_eve(configured=None):
+	"""suricata_discovery.discover(), never failing the agent: a Suricata host is optional."""
+	try:
+		return suricata_discovery.discover(configured, default=DEFAULT_EVE_LOG)
+	except Exception as exc:  # an odd /proc or config must not stop the other sources
+		log.warning("Suricata EVE log discovery failed: %s", exc)
+		return None, "discovery failed"

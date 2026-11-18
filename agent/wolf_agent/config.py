@@ -57,8 +57,8 @@ DEFAULTS = {
 	# System Settings of each site (2FA, password policy, lockout, guest uploads), read from its
 	# database with the site's credentials, for the posture score of sites other than the Wolf site
 	"site_settings": {"enabled": True, "interval": 3600},
-	# Suricata's EVE log (optional, #72): alerts → network_ids_alert events. `eve_log` null finds
-	# /var/log/suricata/eve.json when it exists; rule priorities above `max_priority` are skipped
+	# Suricata's EVE log (optional, #72): alerts → network_ids_alert events. `eve_log` null finds it
+	# from Suricata itself (suricata_discovery.py); rule priorities above `max_priority` are skipped
 	"suricata": {"enabled": True, "eve_log": None, "max_priority": 3},
 	# Wazuh manager alerts (optional, #72): alerts.json → hids_alert events. `alerts_log` null
 	# finds /var/ossec/logs/alerts/alerts.json when it exists; levels under `min_level` are skipped
