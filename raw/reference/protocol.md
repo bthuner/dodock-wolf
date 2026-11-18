@@ -544,6 +544,26 @@ The same two headers authenticate the deployment marker, the status call and the
       .
     </td>
   </tr>
+  
+  <tr>
+    <td>
+      <code>
+        setup
+      </code>
+    </td>
+    
+    <td>
+      Optional, about once an hour: the agent's own <code>
+        wolf-agent doctor
+      </code>
+      
+       run, <code>
+        {"checked_at", "checks": [{"area", "status": "ok" | "warn" | "fail" | "info", "title", "fix"}]}
+      </code>
+      
+      . The Wolf site counts failures and warnings, keeps the checks that are not ok on Wolf Agent (100 at most) and shows them on the Monitoring page.
+    </td>
+  </tr>
 </tbody>
 </table>
 
@@ -2914,6 +2934,30 @@ Metrics emitted by the agent, unless noted.
       host, <code>
         labels.mount
       </code>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        agent_setup_failed
+      </code>
+      
+      , <code>
+        agent_setup_warnings
+      </code>
+    </td>
+    
+    <td>
+      checks
+    </td>
+    
+    <td>
+      host: from the agent's hourly <code>
+        wolf-agent doctor
+      </code>
+      
+       run
     </td>
   </tr>
   

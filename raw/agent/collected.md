@@ -88,6 +88,28 @@ From `/proc`, every push (`push_interval`, 30 s):
       </code>
     </td>
   </tr>
+  
+  <tr>
+    <td>
+      <code>
+        agent_setup_failed
+      </code>
+      
+      , <code>
+        agent_setup_warnings
+      </code>
+    </td>
+    
+    <td>
+      every hour: the failures and warnings of the agent's own <a href="/agent/commands#check-a-host">
+        <code>
+          wolf-agent doctor
+        </code>
+      </a>
+      
+       run, listed on the Monitoring page
+    </td>
+  </tr>
 </tbody>
 </table>
 

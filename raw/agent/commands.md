@@ -295,6 +295,8 @@ platform
 
 It checks the files the daemon would tail and the benches it works from (on Press, the ones it rediscovers), not only the config. `--json` prints the checks as a list, `--offline` skips the call to the Wolf site. Nothing is written, and it exits 1 when a check fails, so it can gate an install script.
 
+The daemon runs the same checks every hour (`setup_checks`) and sends them with a push: the Wolf UI's **Monitoring** page shows each host's setup, its problems and their fixes, and the *Host setup problem* preset opens an incident while a check fails.
+
 ## See the payload
 
 ```bash [host]

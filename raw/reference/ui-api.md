@@ -1342,8 +1342,9 @@ includes deployments recorded for its whole bench (no site), as incidents link t
 ### `dodock_wolf.api.dashboard.get_monitoring`
 
 Whether Wolf itself works: the site's health (rules, scheduler, ingest queue), rollup watermarks,
-every agent and satellite with its state, last contact, clock skew and version, and this site's
-mode. Each part is reported on its own.
+every agent and satellite with its state, last contact, clock skew and version, its `setup` (the
+agent's last `wolf-agent doctor` run: `checked_at`, `failed`, `warnings`, and the `problems` with
+their fix), and this site's mode. Each part is reported on its own.
 
 <note>
 

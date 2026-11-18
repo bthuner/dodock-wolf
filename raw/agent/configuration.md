@@ -505,6 +505,30 @@ others) turns a check off.
   <tr>
     <td>
       <code>
+        setup_checks
+      </code>
+    </td>
+    
+    <td>
+      <code>
+        enabled
+      </code>
+      
+      , <code>
+        interval
+      </code>
+      
+       (3600 s): the agent's own <code>
+        wolf-agent doctor
+      </code>
+      
+       run, sent to the Monitoring page
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
         wazuh
       </code>
     </td>

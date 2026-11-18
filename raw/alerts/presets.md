@@ -528,6 +528,30 @@ Presets have no channels. They open incidents but notify nobody until you add a
       ◐ warning
     </td>
   </tr>
+  
+  <tr>
+    <td>
+      Host setup problem
+    </td>
+    
+    <td>
+      <code>
+        last(agent_setup_failed)
+      </code>
+      
+       >= 1 in 120 min
+    </td>
+    
+    <td>
+      <code>
+        host
+      </code>
+    </td>
+    
+    <td>
+      ◐ warning
+    </td>
+  </tr>
 </tbody>
 </table>
 
