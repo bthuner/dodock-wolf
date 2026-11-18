@@ -20,6 +20,10 @@ one event, not a thousand. What the alert record itself carries is kept as conte
      client, and an outbound connection names the remote server;
   3. failing that, the end that opened the connection.
 - **Site**: the HTTP host name or TLS SNI, when it is one of the bench's sites or domains.
+- **Skipped**: rules in `suricata.exclude_sids` (by default ET's "password in a request body",
+  priority 1, which fires on every Frappe login where Suricata sees traffic after TLS
+  termination), and alerts with no address at all (decoder events such as truncated packets:
+  nothing to correlate or block).
 """
 
 import ipaddress
@@ -31,6 +35,8 @@ from ..util import event, fingerprint, log_minute, utc_iso
 MAX_GROUPS = 500  # per push interval: past that, alerts are only counted (groups are per minute of log time)
 MAX_TARGETS = 10
 SEVERITY = {1: "critical", 2: "warning"}
+# ET INFO Http Client Body contains pwd= in cleartext: every login form posted over HTTP
+DEFAULT_EXCLUDE_SIDS = (2012888,)
 
 
 def _public(address):
@@ -116,10 +122,17 @@ def context(record):
 
 
 class SuricataParser:
-	def __init__(self, host, log_file=None, max_priority=3, site_benches=None, site_aliases=None, local=None, **_):
+	def __init__(self, host, log_file=None, max_priority=3, site_benches=None, site_aliases=None, local=None,
+	             exclude_sids=DEFAULT_EXCLUDE_SIDS, **_):  # fmt: skip
 		self.host, self.log_file = host, log_file
 		self.local = set(local) if local is not None else local_addresses()
 		self.max_priority = int(max_priority or 3)
+		self.exclude_sids = set()
+		for sid in exclude_sids or ():
+			try:
+				self.exclude_sids.add(int(sid))
+			except (TypeError, ValueError):
+				continue
 		self.site_benches = dict(site_benches or {})  # site -> bench
 		self.site_aliases = dict(site_aliases or {})  # custom domain -> site
 		self.groups = {}
@@ -153,6 +166,13 @@ class SuricataParser:
 			priority = 3
 		if priority > self.max_priority:
 			return
+		try:
+			if int(alert.get("signature_id")) in self.exclude_sids:
+				return
+		except (TypeError, ValueError):
+			pass
+		if not (record.get("src_ip") or record.get("dest_ip") or (record.get("flow") or {}).get("src_ip")):
+			return  # a decoder event (truncated packet...): no address to correlate or block
 		ip = remote_address(record, self.local)
 		key = (log_minute(timestamp(record.get("timestamp"))), alert.get("signature_id"), ip)
 		g = self.groups.get(key)

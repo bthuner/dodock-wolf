@@ -144,6 +144,7 @@ class Collector:
 				sites[site] = bench["name"]
 			aliases.update(bench.get("site_domains") or {})
 		parser = PARSERS["suricata"](self.host, log_file=eve, max_priority=suricata.get("max_priority"),
+		                             exclude_sids=suricata.get("exclude_sids"),
 		                             site_benches=sites, site_aliases=aliases)  # fmt: skip
 		self.suricata_source = Source(FileTailer(eve, self.state.data, from_start=self.from_start), [parser])
 		self.sources.append(self.suricata_source)
