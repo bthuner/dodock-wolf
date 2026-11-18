@@ -299,10 +299,11 @@ Desk keeps the configuration DocTypes; a view the Wolf UI does not have yet link
 
 ## Language
 
-Desk shows Wolf in each user's language (**My Settings → Language**). English and French are
-available: field labels, descriptions, buttons and messages. DocType names, event types, metric
-names and Select values stay in English, as in the code. The Wolf UI and the rule sentence are in
-English for now.
+Desk and the Wolf UI show Wolf in each user's language (**My Settings → Language**). English and
+French are available: field labels, descriptions, buttons, messages, the Wolf UI's pages and the
+rule sentence. DocType names, event types, metric names and Select values stay in English, as in
+the code. Some text the server writes is still in English: security check details, signal
+labels, notes and error messages.
 
 ## Signals with no agent
 
@@ -1724,10 +1725,11 @@ opens one incident per group and notifies its channels.
 The top of the form reads the rule back in plain words, and redraws it as you change a field or
 a channel, before you save:
 
-> Opens a **critical** incident when **the lowest** **disk_used_percent** over the last **5 min**
-> is **above** **90**, **per host and series (a disk, a queue...)**. It needs at least **3** samples in the window. It
-> resolves by itself once the condition no longer holds; if it matches again within **1 h** of being
-> resolved, the same incident reopens. It notifies **ntfy** and **Email**, and again when it resolves.
+> Opens a **critical** incident when the lowest **disk_used_percent** over the last **5 min** is
+> **above** **90**, **per host and series (a disk, a queue...)**. It needs at least **3** samples in
+> the window. It resolves by itself once the condition no longer holds; if it matches again within
+> **1 h** of being resolved, the same incident reopens. It notifies **ntfy** and **Email**, and
+> again when it resolves.
 
 If the sentence is not what you meant, the rule is not either.
 
