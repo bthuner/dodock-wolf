@@ -57,6 +57,10 @@ configuration, `wolf-agent check` and `wolf-agent mark-deployment`.
 
 A rule reads like the brief: *when X > Y for Z minutes, send alert*.
 
+Rules can also live in YAML: `bench --site <site> wolf-rules export` / `import` (a dry run unless
+`--apply`; channel secrets never written), or **Export to YAML** / **Import from YAML** in the
+Wolf Alert Rule list's menu.
+
 | Field | Meaning |
 |---|---|
 | Signal | `metric` (aggregate metric samples, or their rollups for windows over 3 h, see [Metric storage](#metric-storage)), `event` (count Wolf Events) or `sequence` (see below) |
