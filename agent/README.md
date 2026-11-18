@@ -54,7 +54,7 @@ reports it (`behind_proxy`): web clients are blocked on the proxy, where the blo
 
 Benches created by [Frappe Pilot](https://github.com/frappe/pilot) (`~/pilot/benches/*`,
 `bench.toml` with `[bench] name` and `python`) are read with Pilot's real schema, checked on
-Pilot v1.0.0-rc.1. Pilot keeps `bench.toml`, `tasks/` and the site configs readable by the bench
+Pilot v1.0.0-rc.1 and rc.2. Pilot keeps `bench.toml`, `tasks/` and the site configs readable by the bench
 user only and runs the bench as that user's systemd user units, so on a Pilot host `install.sh`
 also installs `wolf-pilot-export`: a root timer that copies the tasks (site argument only) and
 the unit states to `/var/lib/wolf-pilot-export/<bench>.json` for the `wolf-agent` user, which

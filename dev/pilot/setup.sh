@@ -8,7 +8,7 @@ cd "$(dirname "$0")"
 BENCH="${WOLF_PILOT_BENCH:-wolf}"
 SITE="${WOLF_PILOT_SITE:-wolf.localhost}"
 BRANCH="${WOLF_PILOT_FRAPPE_BRANCH:-version-16}"
-PILOT_REF="${WOLF_PILOT_REF:-}"  # a Pilot release tag (v1.0.0-rc.1...); empty: the latest release
+PILOT_REF="${WOLF_PILOT_REF:-}"  # a Pilot release tag (v1.0.0-rc.2...); empty: the latest release
 # Pilot's Admin wants 8+ characters with upper and lower case, a digit and a symbol
 ADMIN_PASSWORD="${WOLF_PILOT_ADMIN_PASSWORD:-Wolf-pilot-1}"
 

@@ -6,7 +6,9 @@ User documentation: [docs-site `2.install/5.pilot.md`](../docs-site/content/en/2
 ## Checked on a live host
 
 [Frappe Pilot](https://github.com/frappe/pilot) **v1.0.0-rc.1**
-([`30c876a`](https://github.com/frappe/pilot/tree/30c876a0f5bcb506158b78ea25b4f4f0fed93737)),
+([`30c876a`](https://github.com/frappe/pilot/tree/30c876a0f5bcb506158b78ea25b4f4f0fed93737)), and again
+on **v1.0.0-rc.2** ([`da7a283`](https://github.com/frappe/pilot/tree/da7a283da4f0dbc82d0a1338b12ce0816b602255): its changes are Pilot's
+release CI only),
 installed with its own `install.sh` on Debian 12, in production mode (`pilot setup production`:
 systemd user units, nginx, the Admin), with a Frappe `version-16` bench and a site running the
 Wolf App, and the Wolf agent installed with `agent/install.sh`. `dev/pilot/` sets this host up
