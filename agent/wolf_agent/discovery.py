@@ -151,12 +151,14 @@ def discover_benches(
 	nginx_default=DEFAULT_NGINX_ACCESS_LOG,
 	platform="generic",
 	press_agent_dir=press.DEFAULT_AGENT_DIR,
+	press_benches_dir=None,
 ):
-	"""Benches on this host. `platform` is `generic`, `press`, or None to auto-detect."""
+	"""Benches on this host. `platform` is `generic`, `press`, or None to auto-detect.
+	`press_benches_dir`: the Press benches folder registration read, for when the agent's config is not readable."""
 	platform = resolve_platform(platform, press_agent_dir)
 	benches, seen = [], set()
 	if platform == "press" and not paths:
-		for bench in press.discover_press_benches(press_agent_dir, nginx_access_log=nginx_default):
+		for bench in press.discover_press_benches(press_agent_dir, nginx_access_log=nginx_default, benches_dir=press_benches_dir):
 			seen.add(os.path.realpath(bench["path"]))
 			benches.append(bench)
 	if paths:

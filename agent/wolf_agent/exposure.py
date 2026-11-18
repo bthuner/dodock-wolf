@@ -8,7 +8,8 @@ A firewall may still block it: the agent cannot see that, and says so.
 
 Each site's `site_config.json` (over `common_site_config.json`) is read for settings that
 should never reach production: `developer_mode`, `allow_tests`, a `host_name` over plain HTTP
-and `allow_cors: "*"`.
+and `allow_cors: "*"`. A config the agent cannot read (Press and Pilot keep them 0600 for the
+bench user) gives no `site_config_risks` sample: unknown, never "no risk".
 
 Metrics `exposed_services` (host) and `site_config_risks` (site) carry the counts on every
 run. Events (`service_exposed`, `insecure_site_config`) are sent only when the set changes,
@@ -89,6 +90,18 @@ def read_json(path):
 		return data if isinstance(data, dict) else {}
 	except (OSError, ValueError):
 		return {}
+
+
+def read_config(path):
+	"""The JSON object at `path`, {} when there is none, or None when it is there but unreadable."""
+	try:
+		with open(path) as f:
+			data = json.load(f)
+	except FileNotFoundError:
+		return {}
+	except (OSError, ValueError):
+		return None
+	return data if isinstance(data, dict) else {}
 
 
 def bench_ports(benches, extra=None):
@@ -191,9 +204,12 @@ class ExposureWatcher:
 
 		for bench in benches:
 			sites_dir = os.path.join(bench.get("path") or "", "sites")
-			common = read_json(os.path.join(sites_dir, "common_site_config.json"))
+			common = read_config(os.path.join(sites_dir, "common_site_config.json"))
 			for site in bench.get("sites") or []:
-				config = {**common, **read_json(os.path.join(sites_dir, site, "site_config.json"))}
+				own = read_config(os.path.join(sites_dir, site, "site_config.json"))
+				if common is None or own is None:
+					continue  # unknown: no sample rather than a "no risk" it never checked
+				config = {**common, **own}
 				findings = site_config_findings(config)
 				metrics.append(metric("site_config_risks", len(findings), ts, self.host, bench["name"], site))
 				key = (bench["name"], site)

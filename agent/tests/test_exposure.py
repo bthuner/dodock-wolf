@@ -101,6 +101,25 @@ class TestWatcher(unittest.TestCase):
 		self.assertEqual([e["category"] for e in events], ["insecure_site_config"])
 		self.assertIn("allow_tests", events[0]["title"])
 
+	@unittest.skipIf(os.geteuid() == 0, "root reads a mode 000 file")
+	def test_unreadable_site_config_is_unknown(self):
+		# Press and Pilot keep site configs 0600 for the bench user: no sample, never a "0 risks"
+		os.chmod(self.site_a, 0)
+		self.addCleanup(os.chmod, self.site_a, 0o600)
+		metrics, _ = exposure.ExposureWatcher("h1", proc_root=self.proc).collect(self.benches, NOW)
+		risks = {m["site"]: m["value"] for m in metrics if m["metric_name"] == "site_config_risks"}
+		self.assertEqual(risks, {"b.example.com": 0})
+		os.chmod(self.common, 0)
+		self.addCleanup(os.chmod, self.common, 0o600)
+		metrics, _ = exposure.ExposureWatcher("h1", proc_root=self.proc).collect(self.benches, NOW)
+		self.assertFalse([m for m in metrics if m["metric_name"] == "site_config_risks"])
+
+	def test_missing_site_config_is_an_empty_one(self):
+		os.unlink(self.site_a)
+		metrics, _ = exposure.ExposureWatcher("h1", proc_root=self.proc).collect(self.benches, NOW)
+		risks = {m["site"]: m["value"] for m in metrics if m["metric_name"] == "site_config_risks"}
+		self.assertEqual(risks, {"a.example.com": 0, "b.example.com": 0})
+
 	def test_bench_ports_from_common_site_config(self):
 		self.write(self.common, json.dumps({"redis_queue": "redis://127.0.0.1:11311", "db_port": 3307}))
 		ports = exposure.bench_ports(self.benches, {"5000": "custom api"})

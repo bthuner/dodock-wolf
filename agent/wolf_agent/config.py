@@ -26,6 +26,7 @@ DEFAULTS = {
 	# Press servers only (docs/press.md)
 	"press": {
 		"agent_dir": "/home/frappe/agent",
+		"benches_directory": None,  # registration saves the Press agent's (its config is 0600)
 		"nginx_access_log": "/var/log/nginx/access.log",
 		"rediscover_interval": 60,
 		"deployments": True,

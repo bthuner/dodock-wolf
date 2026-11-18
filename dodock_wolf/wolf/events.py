@@ -1,6 +1,8 @@
 """Storage of Wolf Events and Metric Samples."""
 
+import functools
 import os
+import re
 import socket
 
 import frappe
@@ -13,13 +15,31 @@ def system_tz():
 	return get_system_timezone() or "UTC"
 
 
+_PRESS_ACCESS_LOG = re.compile(r"--access-logfile\s+\S*/logs/([A-Za-z0-9._-]+)-gunicorn\.access\.log")
+
+
+@functools.lru_cache(maxsize=4)
+def _bench_scope(bench_path, press):
+	"""(host, bench) as the agent on the server names them.
+
+	A Press bench (`frappe_cloud` in its common_site_config) runs in one container started with
+	`--hostname <bench>`, its folder is always `frappe-bench`, and Press's supervisor.conf names
+	gunicorn's access log after the server: `<server>-gunicorn.access.log`."""
+	host, bench = socket.gethostname(), os.path.basename(bench_path)
+	if not press:
+		return host, bench
+	try:
+		with open(os.path.join(bench_path, "config", "supervisor.conf")) as f:
+			m = _PRESS_ACCESS_LOG.search(f.read(256 * 1024))
+	except OSError:
+		m = None
+	return (m.group(1) if m else host), host
+
+
 def local_scope():
 	"""Host/bench/site of the Frappe process itself, matching what the agent reports."""
-	return {
-		"host": socket.gethostname(),
-		"bench": os.path.basename(os.path.abspath(frappe.utils.get_bench_path())),
-		"site": frappe.local.site,
-	}
+	host, bench = _bench_scope(os.path.abspath(frappe.utils.get_bench_path()), bool(frappe.conf.get("frappe_cloud")))
+	return {"host": host, "bench": bench, "site": frappe.local.site}
 
 
 def insert_metrics(rows, agent=None):

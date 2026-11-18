@@ -40,8 +40,11 @@ the Press `benches_directory` and rescans them every minute, since each deploy c
 a new bench. It maps custom domains in the shared `/var/log/nginx/access.log` to sites,
 and it reads queue lengths on each bench's `rq_port`. It also turns the Press agent's
 deploy/update/migrate jobs (`jobs.sqlite3`, read-only) into `deployment` events, plus an
-`error` event when one fails. Details, source references and limitations are in
-[`../docs/press.md`](../docs/press.md).
+`error` event when one fails. The Press agent writes its configs mode 0600: registration (root)
+reads them and saves `"platform": "press"` and `press.benches_directory`; the daemon finds new
+benches from their readable `docker-compose.yml` and `nginx.conf`. Details, source references
+and limitations are in [`../docs/press.md`](../docs/press.md), and `dev/press/` sets up a Press
+app server with Press's own roles to test on.
 
 ## Pilot benches
 
@@ -257,7 +260,7 @@ credentials (401/403) the agent exits with status 2 and systemd stops restarting
   "auth_log": null,
   "collect_host_metrics": true,
   "platform": null,
-  "press": {"agent_dir": "/home/frappe/agent", "nginx_access_log": "/var/log/nginx/access.log",
+  "press": {"agent_dir": "/home/frappe/agent", "benches_directory": null, "nginx_access_log": "/var/log/nginx/access.log",
             "rediscover_interval": 60, "deployments": true},
   "pilot": {"deployments": true, "api_url": null, "token": null, "jwt_secret": null},
   "benches": [
