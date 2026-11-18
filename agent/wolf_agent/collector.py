@@ -116,6 +116,7 @@ class Collector:
 				agent_dir=press_cfg["agent_dir"],
 				state_path=os.path.join(spool, "press-jobs.json") if spool else None,
 				known_benches=lambda: {b["name"] for b in self.benches},
+				benches_dir=press.benches_directory(press_cfg["agent_dir"], default=press_cfg.get("benches_directory")),
 			)
 			self.press_fs = press.PressBenchWatcher(
 				self.host, state_path=os.path.join(spool, "press-benches.json") if spool else None
@@ -127,6 +128,7 @@ class Collector:
 			search_globs=(),
 			nginx_default=self.press.get("nginx_access_log"),
 			press_agent_dir=self.press["agent_dir"],
+			press_benches_dir=self.press.get("benches_directory"),
 		)
 
 	def _suricata_source(self, eve):

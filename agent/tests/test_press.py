@@ -187,12 +187,143 @@ class TestPressDiscovery(PressCase):
 		self.assertEqual(events[0]["bench"], "bench-a")
 
 
+# what the Press agent renders in a bench folder (mode 0644), as on the dev/press server
+COMPOSE = """version: "3.8"
+services:
+  web:
+    image: localhost:5000/wolf-press-bench:latest
+    ports:
+      - "18007:8000"
+  redis-cache:
+    image: redis:6.0
+"""
+NGINX = """upstream bench-0001-000002-f1-mumbai-web-server {
+	server 127.0.0.1:18007 fail_timeout=0;
+}
+
+upstream bench-0001-000002-f1-mumbai-socketio-server {
+	server 127.0.0.1:19007 fail_timeout=0;
+}
+
+map $host $site_name_bench_0001_000002_f1_mumbai {
+
+	erp.example.com a.frappe.cloud;
+	a.frappe.cloud a.frappe.cloud;
+	default $host;
+}
+"""
+
+
+@unittest.skipIf(os.geteuid() == 0, "root reads mode 000 files")
+class TestPressAsWolfAgent(PressCase):
+	"""The daemon runs as wolf-agent, in the frappe group: the Press agent's config.json, each bench's
+	config.json and every site_config.json are 0600 (checked on dev/press), so it reads around them."""
+
+	def setUp(self):
+		super().setUp()
+		self.locked = []
+
+	def tearDown(self):
+		for path in self.locked:  # before the folder goes
+			if os.path.exists(path):
+				os.chmod(path, 0o600)
+		super().tearDown()
+
+	def lock(self, path):
+		os.chmod(path, 0)
+		self.locked.append(path)
+
+	def bench(self):
+		path = self.press.add_bench("bench-0001-000002-f1-mumbai", sites=("a.frappe.cloud",), rq_port=11007,
+		                            domains={"a.frappe.cloud": ["erp.example.com"]})  # fmt: skip
+		for name, text in (("docker-compose.yml", COMPOSE), ("nginx.conf", NGINX)):
+			with open(os.path.join(path, name), "w") as f:
+				f.write(text)
+		self.lock(os.path.join(path, "config.json"))
+		self.lock(os.path.join(path, "sites", "a.frappe.cloud", "site_config.json"))
+		return path
+
+	def test_detects_press_without_reading_its_config(self):
+		self.lock(os.path.join(self.press.agent_dir, "config.json"))
+		self.assertIsNone(press.read_agent_config(self.press.agent_dir))
+		self.assertTrue(press.detect(self.press.agent_dir))
+		self.assertEqual(discovery.resolve_platform(None, self.press.agent_dir), "press")
+		os.unlink(self.press.db)  # a config.json alone is not enough
+		self.assertFalse(press.detect(self.press.agent_dir))
+
+	def test_rediscovers_from_readable_files(self):
+		self.lock(os.path.join(self.press.agent_dir, "config.json"))
+		path = self.bench()
+		# the benches folder is what registration read as root
+		found = press.discover_press_benches(self.press.agent_dir, nginx_access_log=self.press.access_log,
+		                                     benches_dir=self.press.benches_dir)  # fmt: skip
+		self.assertEqual(len(found), 1)
+		b = found[0]
+		self.assertEqual((b["name"], b["path"], b["sites"]), ("bench-0001-000002-f1-mumbai", path, ["a.frappe.cloud"]))
+		self.assertEqual(b["docker_image"], "localhost:5000/wolf-press-bench:latest")
+		self.assertEqual(b["redis_queue"], "redis://127.0.0.1:11007")  # web 18007: offset 7
+		self.assertEqual(b["site_domains"], {"erp.example.com": "a.frappe.cloud"})
+
+	def test_a_readable_config_wins(self):
+		path = self.press.add_bench("bench-r", sites=("r.frappe.cloud",), rq_port=None)
+		with open(os.path.join(path, "nginx.conf"), "w") as f:
+			f.write(NGINX)
+		b = press.describe_press_bench(path)
+		self.assertIsNone(b["redis_queue"])  # an older bench without rq_port: its Redis is not published
+		self.assertEqual(b["docker_image"], "registry.frappe.cloud/bench-r:1")
+
+	def test_the_daemon_watches_jobs(self):
+		self.lock(os.path.join(self.press.agent_dir, "config.json"))
+		self.bench()
+		cfg = {"hostname": "f1", "benches": [], "press": {"agent_dir": self.press.agent_dir,
+		       "benches_directory": self.press.benches_dir}, "logs": {}}  # fmt: skip
+		c = Collector(cfg, state_path=os.path.join(self.spool, "tail-state.json"))
+		self.addCleanup(c.close)
+		self.assertIsNotNone(c.press_jobs)
+		self.assertEqual([b["name"] for b in c.benches], ["bench-0001-000002-f1-mumbai"])
+
+	def test_registration_remembers_press(self):
+		from wolf_agent import cli
+
+		cfg = {"press": {"agent_dir": self.press.agent_dir}}
+		cli._remember_press(cfg)  # registration: root reads the config
+		self.assertEqual(cfg["platform"], "press")
+		self.assertEqual(cfg["press"]["benches_directory"], self.press.benches_dir)
+		cfg = {"platform": "generic", "press": {"agent_dir": self.press.agent_dir}}
+		cli._remember_press(cfg)  # --platform generic stays
+		self.assertEqual(cfg["platform"], "generic")
+
+
 class TestPressJobs(PressCase):
-	def watcher(self):
-		benches = lambda: {n for n in os.listdir(self.press.benches_dir)}  # noqa: E731
+	def watcher(self, known=None):
+		benches = known or (lambda: {n for n in os.listdir(self.press.benches_dir)})
 		return press.PressJobWatcher(
-			"f1", agent_dir=self.press.agent_dir, state_path=os.path.join(self.spool, "press-jobs.json"), known_benches=benches
+			"f1", agent_dir=self.press.agent_dir, state_path=os.path.join(self.spool, "press-jobs.json"), known_benches=benches,
+			benches_dir=self.press.benches_dir,
 		)
+
+	def test_finished_jobs_land_on_the_bench_their_last_step_ran_in(self):
+		# what dev/press recorded: both jobs ended between two polls, their data `null`
+		old = self.press.add_bench("bench-0001-000001-f1", sites=("w.frappe.cloud",))
+		new = os.path.join(self.press.benches_dir, "bench-0001-000002-f1")
+		w = self.watcher(known=lambda: {"bench-0001-000001-f1"})  # the new bench is not rediscovered yet
+		self.assertEqual(w.poll(NOW), [])  # baseline
+		jid = self.press.add_job("New Bench", "Success", None, start=NOW - timedelta(seconds=20), end=NOW)
+		self.press.add_step(jid, "Initialize Bench", "Success", {"command": "docker run --rm --net none -v ...", "directory": new})
+		self.press.add_step(jid, "Bench Setup NGINX", "Success", {"command": "sudo systemctl reload nginx", "directory": self.press.agent_dir})
+		jid = self.press.add_job("Update Site Migrate", "Success", None, start=NOW - timedelta(seconds=10), end=NOW)
+		self.press.add_step(jid, "Enable Maintenance Mode", "Success", {
+			"command": "docker exec  -w /home/frappe/frappe-bench  bench-0001-000001-f1 bench --site w.frappe.cloud set-maintenance-mode on",
+			"directory": old})  # fmt: skip
+		self.press.add_step(jid, "Move Site", "Success", None)
+		self.press.add_step(jid, "Reload NGINX", "Success", {"command": "sudo systemctl reload nginx", "directory": self.press.agent_dir})
+		self.press.add_step(jid, "Migrate Site", "Success", {
+			"command": "docker exec  -w /home/frappe/frappe-bench  bench-0001-000002-f1 bench --site w.frappe.cloud migrate",
+			"directory": new})  # fmt: skip
+		events = w.poll(NOW)
+		got = [(e["payload"]["press_job"], e["bench"], e["site"]) for e in events]
+		self.assertEqual(got, [("New Bench", "bench-0001-000002-f1", None),
+		                       ("Update Site Migrate", "bench-0001-000002-f1", "w.frappe.cloud")])  # fmt: skip
 
 	def test_first_run_skips_history_then_dedupes(self):
 		self.press.add_bench("bench-old", sites=("a.frappe.cloud",))

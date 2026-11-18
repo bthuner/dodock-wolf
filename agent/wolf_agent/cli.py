@@ -10,7 +10,7 @@ import socket
 import sys
 import threading
 
-from . import __version__
+from . import __version__, press
 from .collector import Collector
 from .config import DEFAULTS, config_path, load_config, press_settings, save_config, section
 from .discovery import discover_benches
@@ -60,7 +60,20 @@ def _discover(args, cfg=None):
 		args.bench or None,
 		platform=_platform(args, cfg),
 		press_agent_dir=press_cfg["agent_dir"],
+		press_benches_dir=press_cfg.get("benches_directory"),
 	)
+
+
+def _remember_press(cfg):
+	"""Registration runs as root; the daemon runs as wolf-agent, which cannot read the Press agent's
+	config.json (mode 0600). Keep what root found: that this is Press, and the benches folder."""
+	press_cfg = press_settings(cfg)
+	if cfg.get("platform") in (None, "auto") and press.detect(press_cfg["agent_dir"]):
+		cfg["platform"] = "press"
+	if cfg.get("platform") == "press":
+		agent_cfg = press.read_agent_config(press_cfg["agent_dir"]) or {}
+		if agent_cfg.get("benches_directory"):
+			cfg["press"] = {**(cfg.get("press") or {}), "benches_directory": agent_cfg["benches_directory"]}
 
 
 def cmd_discover(args):
@@ -79,6 +92,7 @@ def cmd_register(args):
 	if args.platform and args.platform != "auto":
 		cfg["platform"] = args.platform
 	cfg["benches"] = _discover(args, cfg)
+	_remember_press(cfg)
 	if not cfg["benches"]:
 		log.warning("no bench found; only host metrics and auth logs will be collected")
 

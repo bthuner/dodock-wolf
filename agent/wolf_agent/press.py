@@ -13,6 +13,12 @@ Layout, as set up by the Press agent:
   `config/`; the apps live inside the bench's Docker image, not on the host.
 - The agent's job history is the SQLite database `jobs.sqlite3` in the agent
   directory (peewee tables `jobmodel` and `stepmodel`).
+
+File modes, as checked on a server set up by Press's roles (dev/press): the Press agent writes
+its config.json, each bench's config.json and every site_config.json mode 0600, so the Wolf
+agent (its own user, in the `frappe` group) reads them only at registration, which runs as root.
+At run time it relies on what the group can read: jobs.sqlite3, the bench logs, the bench's
+docker-compose.yml (its image) and nginx.conf (its web port, sites and custom domains).
 """
 
 import json
@@ -75,12 +81,17 @@ def read_agent_config(agent_dir=DEFAULT_AGENT_DIR):
 
 
 def detect(agent_dir=DEFAULT_AGENT_DIR):
-	return read_agent_config(agent_dir) is not None
+	"""A Press server: the agent's config is readable (root), or it and the job database are there
+	(the Wolf agent's user cannot read the 0600 config.json, but can see that it exists)."""
+	if read_agent_config(agent_dir) is not None:
+		return True
+	return os.path.isfile(os.path.join(agent_dir, "config.json")) and os.path.isfile(os.path.join(agent_dir, JOBS_DB))
 
 
-def benches_directory(agent_dir=DEFAULT_AGENT_DIR):
+def benches_directory(agent_dir=DEFAULT_AGENT_DIR, default=None):
+	"""From the agent's config, else `default` (what registration read as root), else Press's own."""
 	cfg = read_agent_config(agent_dir) or {}
-	return cfg.get("benches_directory") or DEFAULT_BENCHES_DIR
+	return cfg.get("benches_directory") or default or DEFAULT_BENCHES_DIR
 
 
 def _load_json(path):
@@ -92,11 +103,64 @@ def _load_json(path):
 		return {}
 
 
+def _read_text(path, limit=1024 * 1024):
+	try:
+		with open(path, errors="replace") as f:
+			return f.read(limit)
+	except OSError:
+		return ""
+
+
 def is_press_bench(path):
-	"""Press bench: `config.json` with a `docker_image`, plus `sites/` (no apps/ on the host)."""
+	"""Press bench: `sites/` (no apps/ on the host) and `config.json` with a `docker_image`, or, when
+	that config is not readable (mode 0600), `config.json` next to the agent's docker-compose.yml."""
 	if not os.path.isdir(os.path.join(path, "sites")):
 		return False
-	return bool(_load_json(os.path.join(path, "config.json")).get("docker_image"))
+	if _load_json(os.path.join(path, "config.json")).get("docker_image"):
+		return True
+	return os.path.isfile(os.path.join(path, "config.json")) and bool(_compose_image(path))
+
+
+_IMAGE_RE = re.compile(r"^\s+image:\s*['\"]?([^\s'\"]+)", re.M)
+_WEB_UPSTREAM_RE = re.compile(r"upstream\s+\S+-web-server\s*\{\s*server\s+127\.0\.0\.1:(\d+)")
+_DOMAIN_MAP_RE = re.compile(r"map\s+\$host\s+\$site_name_\w+\s*\{([^}]*)\}")
+
+
+def _compose_image(path):
+	"""The bench image, from the docker-compose.yml the agent renders at bench init (mode 0644)."""
+	images = _IMAGE_RE.findall(_read_text(os.path.join(path, "docker-compose.yml")))
+	return next((i for i in images if not i.startswith("redis:")), None)
+
+
+def _nginx_web_port(path):
+	"""The bench's web port, from the nginx.conf the agent renders for it (mode 0644)."""
+	m = _WEB_UPSTREAM_RE.search(_read_text(os.path.join(path, "nginx.conf")))
+	return int(m.group(1)) if m else None
+
+
+def _nginx_domains(path):
+	"""Custom domain → site, from the bench nginx.conf `map $host $site_name_<bench>` block."""
+	m = _DOMAIN_MAP_RE.search(_read_text(os.path.join(path, "nginx.conf")))
+	aliases = {}
+	for line in (m.group(1) if m else "").splitlines():
+		parts = line.strip().rstrip(";").split()
+		if len(parts) == 2 and parts[0] != "default" and parts[0] != parts[1]:
+			aliases[parts[0]] = parts[1]
+	return aliases
+
+
+def _rq_port(bench_config, path):
+	"""`rq_port` from the bench config; unreadable, from the web port: Press gives a bench one
+	offset for all its ports (web 18000 + offset, rq 11000 + offset, press Bench doctype)."""
+	rq_port = bench_config.get("rq_port")
+	if str(rq_port or "").isdigit():
+		return int(rq_port)
+	if bench_config:
+		return None  # a readable config without rq_port: an older bench whose Redis is not published
+	web_port = _nginx_web_port(path)
+	if web_port and 18000 <= web_port < 19000:
+		return 11000 + web_port - 18000
+	return None
 
 
 def _sites(path):
@@ -127,7 +191,7 @@ def describe_press_bench(path, nginx_access_log=DEFAULT_NGINX_ACCESS_LOG):
 	path = os.path.abspath(path)
 	bench_config = _load_json(os.path.join(path, "config.json"))
 	sites = _sites(path)
-	rq_port = bench_config.get("rq_port")
+	rq_port = _rq_port(bench_config, path)
 	nginx = nginx_access_log if nginx_access_log and os.path.exists(nginx_access_log) else None
 	return {
 		"name": os.path.basename(path),
@@ -137,16 +201,17 @@ def describe_press_bench(path, nginx_access_log=DEFAULT_NGINX_ACCESS_LOG):
 		"nginx_access_log": nginx,
 		# rq_port is published on the host (docker run -p 0.0.0.0:<rq_port>:11000);
 		# common_site_config's redis_queue is the in-container address.
-		"redis_queue": f"redis://127.0.0.1:{int(rq_port)}" if str(rq_port or "").isdigit() else None,
-		"site_domains": _site_domains(path, sites),
+		"redis_queue": f"redis://127.0.0.1:{rq_port}" if rq_port else None,
+		# site configs are 0600: the bench nginx.conf maps the same domains
+		"site_domains": {**_nginx_domains(path), **_site_domains(path, sites)},
 		"platform": "press",
-		"docker_image": bench_config.get("docker_image"),
+		"docker_image": bench_config.get("docker_image") or _compose_image(path),
 		"bench_toml": False,
 	}
 
 
-def discover_press_benches(agent_dir=DEFAULT_AGENT_DIR, nginx_access_log=DEFAULT_NGINX_ACCESS_LOG):
-	root = benches_directory(agent_dir)
+def discover_press_benches(agent_dir=DEFAULT_AGENT_DIR, nginx_access_log=DEFAULT_NGINX_ACCESS_LOG, benches_dir=None):
+	root = benches_directory(agent_dir, default=benches_dir)
 	try:
 		names = sorted(os.listdir(root))
 	except OSError as e:
@@ -215,12 +280,13 @@ class PressJobWatcher:
 	still pending/running are picked up (no history backfill).
 	"""
 
-	def __init__(self, host, agent_dir=DEFAULT_AGENT_DIR, state_path=None, known_benches=None):
+	def __init__(self, host, agent_dir=DEFAULT_AGENT_DIR, state_path=None, known_benches=None, benches_dir=None):
 		self.host = host
 		self.agent_dir = agent_dir
 		self.db_path = os.path.join(agent_dir, JOBS_DB)
 		self.state_path = state_path
 		self.known_benches = known_benches or (lambda: set())
+		self.benches_dir = os.path.normpath(benches_dir or DEFAULT_BENCHES_DIR)
 		self.state = self._load_state()
 		self._warned = False
 
@@ -283,20 +349,27 @@ class PressJobWatcher:
 			if isinstance(values.get("sites"), list):
 				sites += [s for s in values["sites"] if isinstance(s, str)]
 
-		known = self.known_benches()
-		texts = [row.get("data") or ""] + [s.get("data") or "" for s in steps]
-		if not bench and known:
-			for text in texts:
-				found = next((b for b in sorted(known, key=len, reverse=True) if b in text), None)
-				if found:
-					bench = found
-					break
+		# A finished job's data is its result, its arguments gone (agent/job.py): the bench is then
+		# the one its last step worked in, which for a site move is the target (checked on dev/press:
+		# Update Site Migrate enables maintenance on the source, migrates on the target).
+		texts = [s.get("data") or "" for s in reversed(steps)] + [row.get("data") or ""]
+		if not bench:
+			bench = next((b for b in map(self._bench_in, texts) if b), None)
 		if not sites:
 			for text in texts:
 				for site in _SITE_FLAG_RE.findall(text):
 					if site not in sites:
 						sites.append(site)
 		return bench, sites
+
+	def _bench_in(self, text):
+		"""The bench a step ran in: its `directory` under the benches folder (a bench Wolf has not
+		rediscovered yet, e.g. New Bench's), else a known bench named in it."""
+		data = _json(text)
+		directory = data.get("directory") if isinstance(data, dict) else None
+		if isinstance(directory, str) and os.path.dirname(os.path.normpath(directory)) == self.benches_dir:
+			return os.path.basename(os.path.normpath(directory))
+		return next((b for b in sorted(self.known_benches(), key=len, reverse=True) if b in text), None)
 
 	def _deployment_event(self, row, bench, sites, start):
 		category, _ = DEPLOY_JOBS[row["name"]]

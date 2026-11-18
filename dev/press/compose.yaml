@@ -1,0 +1,50 @@
+# A Press app server set up by Press's own Ansible roles, a database server, and a bench run by the
+# Press agent through its API, as Press drives it: the real benches directory, jobs.sqlite3, nginx
+# and Redis ports that Wolf reads. See dev/press/README.md.
+name: wolfpress
+
+services:
+  server:
+    build: .
+    image: wolf-press-host:local
+    hostname: f1-press
+    # systemd as PID 1, and Docker inside for the benches
+    privileged: true
+    cgroup: host
+    tmpfs: [/run, /run/lock]
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - home:/home
+      - docker:/var/lib/docker
+      - ../..:/src:ro
+    ports:
+      - "${WOLF_PRESS_HTTP:-8480}:80"
+    networks:
+      press:
+        ipv4_address: 172.30.80.2
+
+  # Press's database server: the benches reach it at its private address
+  db:
+    image: mariadb:10.6
+    environment:
+      MARIADB_ROOT_PASSWORD: ${WOLF_PRESS_DB_PASSWORD:-admin}
+    command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --skip-character-set-client-handshake]
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 3s
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      press:
+        ipv4_address: 172.30.80.10
+
+networks:
+  press:
+    ipam:
+      config:
+        - subnet: 172.30.80.0/24
+
+volumes:
+  home:
+  docker:
+  db:

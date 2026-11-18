@@ -6,6 +6,11 @@ a Flask + RQ service that runs on each server. This page covers what the Wolf ag
 does on an *app server* managed that way, which source files each behaviour relies on,
 and what is still unverified.
 
+Checked on a Press app server set up by Press's own Ansible roles (frappe/press `7ce25f2`,
+frappe/agent `6bbd199`, 2026-11-18), with benches and sites created through the Press agent's API
+and real deploys (New Bench, Update Site Migrate, Bench Restart, Archive Bench, failed jobs):
+`dev/press/` sets it up. See "Checked on a Press server" at the end.
+
 Sources were read at these commits. Every link below is pinned to them:
 
 - frappe/agent [`64b9812`](https://github.com/frappe/agent/tree/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a) (2026-10-27)
@@ -16,17 +21,20 @@ Sources were read at these commits. Every link below is pinned to them:
 
 | Area | What Wolf does | Status |
 |------|----------------|--------|
-| Detection | Press mode turns on when `/home/frappe/agent/config.json` has a `benches_directory` key, or when `"platform": "press"` is set | done, unit tested |
-| Benches | Lists `<benches_directory>/*` that have `config.json` with a `docker_image` and a `sites/` directory | done, unit tested |
-| Rediscovery | Rescans every `press.rediscover_interval` seconds (default 60), because each deploy creates a new bench directory | done, unit tested |
+| Detection | Press mode turns on when `/home/frappe/agent/config.json` has a `benches_directory` key, when it is there next to `jobs.sqlite3` (the daemon cannot read it: 0600), or when `"platform": "press"` is set (registration saves it) | checked |
+| Benches | Lists `<benches_directory>/*` that have `sites/` and `config.json` with a `docker_image`, or, unreadable, `config.json` next to a `docker-compose.yml` | checked |
+| Rediscovery | Rescans every `press.rediscover_interval` seconds (default 60), because each deploy creates a new bench directory; a bench's image, web port and domains come from its readable `docker-compose.yml` and `nginx.conf` | checked |
 | Bench logs | Tails `<bench>/logs/*` (bind-mounted from the container) and `sites/<site>/logs/*`, using the same parsers as other benches | done |
 | nginx | Tails `/var/log/nginx/access.log` (Press's `main` format, which logs `$host`) and maps custom domains to sites | done, unit tested |
-| Redis queue | Reads `queue_length`, the RQ failed/started registries, live workers and Redis memory/evictions from `redis://127.0.0.1:<rq_port>` (bench `config.json`) | done |
+| Redis queue | Reads `queue_length`, the RQ failed/started registries, live workers and Redis memory/evictions from `redis://127.0.0.1:<rq_port>` (bench `config.json`, or 11000 + the bench's port offset) | checked |
 | TLS expiry | Checks every site and custom domain like on other benches. On Press the certificates live on the proxy server, so the public handshake measures what customers see | done (generic) |
 | Backups | **Skipped** by default (`backups.press: false`): Press takes backups through its agent and uploads them offsite; whether local copies stay in `sites/<site>/private/backups` has not been checked | off |
 | Processes | **Skipped**: supervisor runs inside each bench container and Wolf never runs `docker` | — |
-| MariaDB | Uses the site's `db_host`, which on Press points at the separate database server; it works only if the app server can reach it with the site user and has a `mariadb` client | unverified |
-| Deploy correlation | Emits a `deployment` event for each deploy, update or migrate job in the Press agent's `jobs.sqlite3`, and an `error` event when one fails | done, unit tested |
+| MariaDB | Not on Press: the site's database password is in its `site_config.json`, mode 0600 for `frappe` | — |
+| Site config risks | Need the 0600 site configs: no `site_config_risks` sample (unknown) | checked |
+| Exposed services | Each bench's queue and cache Redis are published on all interfaces by the Press agent (for secondary servers): `service_exposed`, which the server's firewall must cover | checked |
+| Deploy correlation | Emits a `deployment` event for each deploy, update or migrate job in the Press agent's `jobs.sqlite3`, and an `error` event when one fails | checked |
+| Site events | The Wolf App on a Press bench (`frappe_cloud` in its config) names its bench from the container hostname and its server from Press's `supervisor.conf` (`<server>-gunicorn.access.log`) | checked |
 | Fallback | If `jobs.sqlite3` cannot be read, emits a `deployment` event when a new bench appears or a site moves to another bench | done, unit tested |
 | Press credentials | None are needed. Everything is read from local files. | — |
 | Real Press server | **Not tested yet** (see [Unverified](#unverified)) | — |
@@ -236,26 +244,38 @@ queue lengths. Wolf's are light, and you can turn them off with `collect_host_me
 
 - Only app servers with benches are supported directly. Proxy and database servers have no
   bench, so add their logs through `extra_logs`.
-- Bench and site detection for `Bench`/`Site` jobs is heuristic (step command lines). A job
-  that finishes without any step naming its bench is reported host-scoped.
+- A finished job's `data` is its result, its arguments gone. A job Wolf first sees finished
+  takes the bench its last step ran in (the step's `directory` under the benches folder, else a
+  known bench named in it: a site move ends on its target) and the site from `--site`. A job
+  without any such step is reported host-scoped.
 - The filesystem fallback cannot tell a deploy from a manual move, and it has no failure
   signal.
 - Jobs are matched by display name. If Press renames a job, it is no longer recognised;
   add the new name to `DEPLOY_JOBS` in `agent/wolf_agent/press.py`.
 - Shared-FS benches (`Run Benches on Shared FS`, [`agent/server.py#L312-L370`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/server.py#L312-L370)) change
-  `benches_directory`. Wolf rereads it from the agent config on every rediscovery, but this
-  path has not been tested.
+  `benches_directory`. Registration saves it (`press.benches_directory`), but this path has not
+  been tested.
 - Frappe Cloud's hosted servers are not open to customers. This is for **self-hosted Press**
   deployments, where you control the server.
 
-## Unverified
+## Checked on a Press server
 
-Everything above comes from reading the two repositories. These points still need a real Press server:
+On `dev/press` (Press's roles `essentials`, `user`, `nginx`, `agent`, `bench`, `docker`,
+`statsd_exporter` on Ubuntu 22.04; the Wolf agent installed with `agent/install.sh`):
 
-1. File and directory modes under `/home/frappe` and on `jobs.sqlite3*`, i.e. whether `mode=ro` works for a
-   group member or `immutable=1` is needed.
-2. Actual contents of `jobmodel.data` / `stepmodel.data` on a production agent (job names, the
-   command strings Wolf searches for bench names).
-3. That `/var/log/nginx/access.log` lines carry the site in `$host` behind the Press proxy for every
-   request type (including the agent's own vhost on 443).
-4. That `rq_port` is published on every bench (older benches may predate it).
+1. **Modes.** `/home/frappe` is 0750, the bench logs, `jobs.sqlite3`, `-wal` and `-shm` 0644:
+   `mode=ro` works for a member of the `frappe` group. The Press agent writes its own
+   `config.json`, each bench's `config.json` and every `site_config.json` /
+   `common_site_config.json` 0600, so the daemon (`wolf-agent`) cannot read them: detection,
+   rediscovery and site config checks read around them (see Summary).
+2. **Job data.** Job names match `DEPLOY_JOBS`; `agent_job_id` is the `X-Agent-Job-Id`. A finished
+   job's `data` is `null`; each step keeps `command` and `directory`, e.g. Update Site Migrate:
+   `set-maintenance-mode on` in the source bench, then `docker exec … <target> bench --site <site>
+   migrate` in the target.
+3. **`$host`.** Site requests carry the site in the last quoted field. The Press agent's vhost on
+   443 logs the server name there (`"f1-press"`), which is no site: those lines count for nothing.
+4. **`rq_port`.** Set on every new bench and published `0.0.0.0:<rq_port>:11000`, with the cache
+   on `<rq_cache_port>`: Wolf's exposure check reports both.
+
+Still unchecked: a Press proxy server in front (`$remote_addr` is then the proxy), shared-FS
+benches, MariaDB on the database server, and local backup copies.
