@@ -169,7 +169,8 @@ PRESETS = [
 	},
 	{
 		"rule_name": "Backup failed",
-		"description": "An Error Log reported a failed backup (local or S3/Dropbox/Google Drive).",
+		"description": "An Error Log reported a failed backup (local or S3/Dropbox/Google Drive), or a Press agent "
+		"Backup Site job failed.",
 		"signal_type": "event", "event_type": "error", "event_category": "backup_failed",
 		"operator": ">=", "threshold": 1, "window_minutes": 60, "group_by": "site",
 		"severity": "critical", "auto_resolve": 0, "cooldown_minutes": 0,

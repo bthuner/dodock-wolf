@@ -117,9 +117,10 @@ and `dev/pilot/` for a Pilot host to test on.
   `redis_cache.conf` sets `maxmemory` with `allkeys-lru`), so a full cache and evictions are normal.
 - **Backups**: `backup_age_hours` per site, from the newest
   `sites/<site>/private/backups/*-database.sql*` (every `backups.interval`, 10 min). A site that
-  never had a backup sends nothing, so "No backup for 26 h" cannot fire for it. Press benches are
-  skipped (`backups.press`), since Press uploads backups offsite and its local copies are not a
-  reliable signal. Offsite-only setups can point `backups.dirs` at a mounted directory per site.
+  never had a backup sends nothing, so "No backup for 26 h" cannot fire for it. On Press benches it
+  comes from the Press agent's newest successful Backup Site job (Press deletes offsite backups from
+  the server; `backups.press: true` reads the folder instead), and a failed Backup Site job is a
+  `backup_failed` event. Other offsite-only setups can point `backups.dirs` at a mounted directory.
 - **Suricata** (optional, #72): when Suricata writes an EVE log, the agent tails it like the other
   logs. The path is `suricata.eve_log`, else found from a running Suricata (its `-c`/`-l` flags and
   the `eve-log` output of its `suricata.yaml`, through the bind mounts of a container), else from
