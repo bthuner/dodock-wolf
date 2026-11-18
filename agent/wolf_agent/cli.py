@@ -156,8 +156,15 @@ def cmd_doctor(args):
 
 	if not args.verbose:  # the report is the output: no collector chatter around it
 		logging.getLogger("wolf_agent").setLevel(logging.WARNING)
-	path, cfg = _load(args)
-	checks = doctor.run(cfg, path, live=not args.offline)
+	try:
+		path, cfg = _load(args)
+	except PermissionError:
+		# the classic case: registered as root, the chown install.sh prints not done yet
+		path = config_path(args.config)
+		checks = [doctor.item("agent", doctor.FAIL, f"cannot read {path}: permission denied",
+		                      f"sudo chown {doctor.AGENT_USER}: {path}")]  # fmt: skip
+	else:
+		checks = doctor.run(cfg, path, live=not args.offline)
 	print(json.dumps(checks, indent=2) if args.json else doctor.render(checks))
 	sys.exit(doctor.exit_code(checks))
 

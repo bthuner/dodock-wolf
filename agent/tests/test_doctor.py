@@ -2,7 +2,8 @@
 
 import json
 import os
-import socket
+import contextlib
+import io
 import sqlite3
 import sys
 import tempfile
@@ -23,14 +24,6 @@ def write(path, text=""):
 	os.makedirs(os.path.dirname(path), exist_ok=True)
 	with open(path, "w") as f:
 		f.write(text)
-
-
-def closed_port():
-	s = socket.socket()
-	s.bind(("127.0.0.1", 0))
-	port = s.getsockname()[1]
-	s.close()
-	return port
 
 
 class FakeCollector:
@@ -59,7 +52,7 @@ class DoctorCase(unittest.TestCase):
 		write(self.config, "{}")
 		os.chmod(self.config, 0o600)
 		self.benches = [{"name": "main", "path": self.bench, "sites": ["a.example.com"], "platform": "generic",
-		                 "nginx_access_log": self.nginx, "redis_queue": f"redis://127.0.0.1:{closed_port()}"}]  # fmt: skip
+		                 "nginx_access_log": self.nginx, "redis_queue": "redis://:s3cret@127.0.0.1:1"}]  # fmt: skip
 		self.cfg = {"url": "https://wolf.example", "agent_id": "WAG-1", "agent_secret": "s", "hostname": "h",
 		            "spool_dir": self.spool, "benches": self.benches, "auth_log": False,
 		            "press": {"agent_dir": os.path.join(root, "no-press")}}  # fmt: skip
@@ -87,8 +80,9 @@ class TestDoctor(DoctorCase):
 		self.assertIn("frappe-bench/worker.log", missing["title"])
 		self.assertEqual(self.find(checks, "parsed (5 of its last 5 lines)")[0]["status"], doctor.OK)
 		redis = self.find(checks, "queue Redis")[0]
-		self.assertEqual(redis["status"], doctor.WARN)  # nothing listens there
+		self.assertEqual(redis["status"], doctor.WARN)  # nothing listens on port 1
 		self.assertTrue(redis["fix"])
+		self.assertNotIn("s3cret", json.dumps(checks))  # a password in the URL stays out of the report
 		self.assertEqual(self.find(checks, "registered as WAG-1")[0]["status"], doctor.OK)
 		self.assertEqual(doctor.exit_code(checks), 0)
 		self.assertIn("fix:", doctor.render(checks))
@@ -107,6 +101,70 @@ class TestDoctor(DoctorCase):
 		checks = self.run_doctor({**self.cfg, "benches": press_bench})
 		self.assertEqual(self.find(checks, "site config(s) unreadable")[0]["status"], doctor.INFO)  # 0600 by design
 
+	@unittest.skipIf(os.geteuid() == 0, "root enters mode 000 folders")
+	def test_a_folder_it_cannot_enter_is_not_a_missing_one(self):
+		# a 0750 home the agent's user is not in the group of: Ubuntu's default since 21.04
+		os.chmod(self.bench, 0)
+		self.addCleanup(os.chmod, self.bench, 0o755)
+		checks = self.run_doctor()
+		bench = self.find(checks, "cannot enter")[0]
+		self.assertEqual(bench["status"], doctor.FAIL)
+		self.assertIn("group", bench["fix"])
+		self.assertFalse(self.find(checks, "is gone"))
+		self.assertEqual(len(self.find(checks, "permission denied, on it or a folder above")), 2)  # web.log, worker.log
+		self.assertFalse(self.find(checks, "not written yet"))
+
+	def test_a_collector_that_cannot_start(self):
+		def broken(cfg):
+			raise ValueError("bench entry without a path")
+
+		with mock.patch.object(doctor, "_agent_uid", return_value=None), mock.patch.object(doctor, "_systemd", return_value=False):
+			checks = doctor.run(self.cfg, self.config, live=False, collector_factory=broken)
+		self.assertEqual(self.find(checks, "collector cannot start: ValueError")[0]["status"], doctor.FAIL)
+
+	def test_journal_and_auth_log(self):
+		with mock.patch.object(doctor, "_journal_groups", return_value=False), \
+		     mock.patch.object(doctor, "resolve_auth_log", return_value="journal"):  # fmt: skip
+			self.assertEqual(self.find(self.run_doctor(), "none of the groups")[0]["status"], doctor.FAIL)
+		hint = SimpleNamespace(stdout="", stderr="Hint: You are currently not seeing messages from other users and the system.")
+		with mock.patch.object(doctor, "_journal_groups", return_value=True), \
+		     mock.patch.object(doctor, "resolve_auth_log", return_value="journal"), \
+		     mock.patch.object(doctor.subprocess, "run", return_value=hint):  # fmt: skip
+			self.assertEqual(self.find(self.run_doctor(), "cannot read the system journal")[0]["status"], doctor.FAIL)
+		cfg = {**self.cfg, "auth_log": os.path.join(self.tmp.name, "nope.log")}
+		self.assertEqual(self.find(self.run_doctor(cfg), "does not exist")[0]["status"], doctor.FAIL)
+
+	def test_sudo_for_the_block_helper(self):
+		helper = os.path.join(self.tmp.name, "wolf-block-fail2ban")
+		write(helper)
+		cfg = {**self.cfg, "response": {"enabled": True, "command": ["sudo", "-n", helper, "{ip}", "{seconds}"]}}
+		with mock.patch.object(doctor.subprocess, "run", return_value=SimpleNamespace(returncode=1)):
+			check = self.find(self.run_doctor(cfg), "sudo refuses")[0]
+		self.assertEqual(check["status"], doctor.FAIL)
+		self.assertIn(f"NOPASSWD: {helper}", check["fix"])
+		with mock.patch.object(doctor.subprocess, "run", return_value=SimpleNamespace(returncode=0)), \
+		     mock.patch.object(doctor.shutil, "which", return_value="/usr/bin/fail2ban-client"):  # fmt: skip
+			checks = self.run_doctor(cfg)
+		self.assertEqual(self.find(checks, "sudo allows")[0]["status"], doctor.OK)
+		self.assertEqual(self.find(checks, "blocks go through fail2ban-client")[0]["status"], doctor.OK)
+		os.unlink(helper)
+		check = self.find(self.run_doctor(cfg), "is not installed")[0]
+		self.assertIn("wolf-block-fail2ban.sh", check["fix"])  # the helper the command names
+
+	@unittest.skipIf(os.geteuid() == 0, "root reads a mode 000 file")
+	def test_an_unreadable_config(self):
+		# registered as root, before the chown install.sh asks for
+		from wolf_agent import cli
+
+		os.chmod(self.config, 0)
+		self.addCleanup(os.chmod, self.config, 0o600)
+		args = SimpleNamespace(config=self.config, offline=True, json=False, verbose=False)
+		with contextlib.redirect_stdout(io.StringIO()) as out, self.assertRaises(SystemExit) as done:
+			cli.cmd_doctor(args)
+		self.assertEqual(done.exception.code, 1)
+		self.assertIn("permission denied", out.getvalue())
+		self.assertIn(f"chown wolf-agent: {self.config}", out.getvalue())
+
 	def test_an_nginx_log_in_an_unknown_format(self):
 		write(self.nginx, "this is not an access log\n" * 3)
 		check = self.find(self.run_doctor(), "format Wolf reads")[0]
@@ -117,7 +175,7 @@ class TestDoctor(DoctorCase):
 		checks = self.run_doctor(cfg)
 		self.assertEqual(self.find(checks, "not registered")[0]["status"], doctor.FAIL)
 		os.chmod(self.config, 0o644)
-		with mock.patch.object(doctor, "_agent_uid", return_value=4242):
+		with mock.patch.object(doctor, "_agent_uid", return_value=4242), mock.patch.object(doctor, "_systemd", return_value=False):
 			checks = doctor.run(self.cfg, self.config, live=False, euid=0,
 			                    collector_factory=lambda c: FakeCollector([], self.benches))  # fmt: skip
 		self.assertIn("sudo -u wolf-agent", self.find(checks, "running as root")[0]["fix"])

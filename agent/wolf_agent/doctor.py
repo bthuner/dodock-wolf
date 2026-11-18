@@ -10,6 +10,7 @@ raises is reported as failed, never stops the others. Nothing is written: no tai
 no SQLite file (the Press job database is opened the way the daemon opens it).
 """
 
+import grp
 import json
 import os
 import pwd
@@ -23,6 +24,7 @@ from .config import press_settings, resolve_auth_log, section
 from .parsers.nginx import parse_line as parse_nginx_line
 from .redis_queue import RedisClient
 from .tailer import JournalTailer
+from .watchdog import DEFAULT_STALE_MINUTES
 
 OK, WARN, FAIL, INFO = "ok", "warn", "fail", "info"
 AGENT_USER = "wolf-agent"
@@ -43,7 +45,7 @@ def run(cfg, config_path, live=True, collector_factory=None, euid=None):
 			return Collector(c, state_path=None, sync_checks=True)
 
 	# what the daemon works from: its log sources and, on Press, the benches it rediscovers
-	seen = {"paths": [], "benches": list(cfg.get("benches") or [])}
+	seen = {"paths": [], "benches": list(cfg.get("benches") or []), "error": None}
 	try:
 		collector = collector_factory(cfg)
 		try:
@@ -51,9 +53,12 @@ def run(cfg, config_path, live=True, collector_factory=None, euid=None):
 			seen["benches"] = list(collector.benches)
 		finally:
 			collector.close()
-	except Exception:
-		pass
+	except Exception as e:  # what the daemon itself would hit at start
+		seen["error"] = f"{type(e).__name__}: {e}"
 	out = []
+	if seen["error"]:
+		out.append(item("logs", FAIL, f"the collector cannot start: {seen['error']}",
+		                "fix the config (benches, extra_logs) or run with -v for the traceback"))  # fmt: skip
 	for area, fn in (
 		("agent", lambda: _identity(cfg, config_path, euid)),
 		("wolf site", lambda: _site(cfg, live)),
@@ -88,6 +93,31 @@ def render(checks):
 	counts = {s: sum(c["status"] == s for c in checks) for s in (FAIL, WARN, OK)}
 	lines.append(f"\n{counts[FAIL]} failed, {counts[WARN]} warning(s), {counts[OK]} ok")
 	return "\n".join(lines).lstrip("\n")
+
+
+def presence(path):
+	"""`ok`, `missing` or `denied`: os.path.exists says False for both of the last two, and a folder
+	the agent cannot enter (a 0750 home) is not one that is gone."""
+	try:
+		os.stat(path)
+	except FileNotFoundError:
+		return "missing"
+	except PermissionError:
+		return "denied"
+	except OSError:
+		return "missing"
+	return "ok" if os.access(path, os.R_OK) else "denied"
+
+
+DENIED_FIX = f"give {AGENT_USER} access: add it to the group of the user who owns the folder (frappe...)"
+
+
+def _redact(url):
+	"""A Redis URL without its password, for the report."""
+	if "@" not in url:
+		return url
+	scheme, _, rest = url.partition("://")
+	return f"{scheme}://***@{rest.rpartition('@')[2]}"
 
 
 def _agent_uid():
@@ -162,11 +192,11 @@ def _sources(paths):
 	for path in paths:
 		if path.startswith("journal:"):
 			continue  # checked with the host signals
-		if not os.path.exists(path):
+		state = presence(path)
+		if state == "missing":
 			missing.append(path)
-		elif not os.access(path, os.R_OK):
-			out.append(item("logs", FAIL, f"cannot read {path}",
-			                f"give {AGENT_USER} read access (its group: adm, frappe...), or remove it from the config"))  # fmt: skip
+		elif state == "denied":
+			out.append(item("logs", FAIL, f"cannot read {path} (permission denied, on it or a folder above)", DENIED_FIX))
 	readable = len(paths) - len(missing) - len(out) - sum(p.startswith("journal:") for p in paths)
 	out.insert(0, item("logs", OK if readable else WARN, f"{readable} log file(s) readable",
 	                   None if readable else "no log is read: check the benches below"))  # fmt: skip
@@ -193,7 +223,11 @@ def _benches(cfg, benches):
 	out = []
 	for bench in benches:
 		name, path = bench.get("name"), bench.get("path") or ""
-		if not os.path.isdir(path):
+		state = presence(path)
+		if state == "denied":
+			out.append(item("benches", FAIL, f"{name}: cannot enter {path} (permission denied)", DENIED_FIX))
+			continue
+		if state == "missing" or not os.path.isdir(path):
 			out.append(item("benches", FAIL, f"{name}: {path} is gone", "re-register, or remove the bench from the config"))
 			continue
 		out.append(item("benches", OK, f"{name}: {len(bench.get('sites') or [])} site(s), {bench.get('platform') or 'generic'}"))
@@ -229,14 +263,19 @@ def _redis(bench, url):
 		with RedisClient(url, timeout=3) as r:
 			pong = r.command("PING")
 	except Exception as e:
-		return item("benches", WARN, f"{bench}: queue Redis {url} unreachable: {e}",
+		return item("benches", WARN, f"{bench}: queue Redis {_redact(url)} unreachable: {e}",
 		            "start the bench's queue Redis, or check redis_queue in the config")  # fmt: skip
-	ok = pong in ("PONG", b"PONG")
-	return item("benches", OK if ok else WARN, f"{bench}: queue Redis {url} answers")
+	if pong in ("PONG", b"PONG"):
+		return item("benches", OK, f"{bench}: queue Redis {_redact(url)} answers")
+	return item("benches", WARN, f"{bench}: queue Redis {_redact(url)} does not answer PING ({pong!r})",
+	            "check redis_queue: the port may be another service")  # fmt: skip
 
 
 def _nginx(bench, path):
-	if not os.path.exists(path):
+	state = presence(path)
+	if state == "denied":
+		return item("benches", FAIL, f"{bench}: cannot read {path} (permission denied)", f"add {AGENT_USER} to the adm group")
+	if state == "missing":
 		return item("benches", INFO, f"{bench}: {path} not written yet")
 	try:
 		with open(path, "rb") as f:
@@ -293,7 +332,7 @@ def _press(cfg, press_cfg):
 		logs = [e for e in cfg.get("extra_logs") or [] if e.get("site_from_host")]
 		out.append(item("platform", OK if logs else FAIL, "Press proxy server: " + ("its access log is read" if logs else "its access log is not read"),
 		                None if logs else "sudo wolf-agent --config <config> refresh"))  # fmt: skip
-	elif press_cfg.get("proxy_ip"):
+	elif press_cfg.get("proxy_ip") and cfg.get("platform") == "press":
 		out.append(item("platform", INFO, f"Press: behind the proxy {press_cfg['proxy_ip']}: web clients are blocked there"))
 	return out
 
@@ -301,10 +340,11 @@ def _press(cfg, press_cfg):
 def _pilot(bench):
 	name = bench["name"]
 	path = os.path.join(pilot.EXPORT_DIR, f"{name}.json")
-	if not os.path.exists(path):
+	state = presence(path)
+	if state == "missing":
 		return [item("platform", WARN, f"Pilot {name}: no export ({path}): no tasks nor process states",
 		             "re-run agent/install.sh as root (it installs wolf-pilot-export)")]  # fmt: skip
-	if not os.access(path, os.R_OK):
+	if state == "denied":
 		return [item("platform", FAIL, f"Pilot {name}: cannot read {path}",
 		             f"systemctl restart wolf-pilot-export.service (it sets the {AGENT_USER} group)")]  # fmt: skip
 	data = pilot.read_export(name, path=bench.get("path"))
@@ -324,19 +364,39 @@ def _auth(cfg):
 		return [item("host signals", WARN, "no auth log and no journal: no SSH, sudo or account events",
 		             "install journalctl, or set auth_log to the file sshd logs to")]  # fmt: skip
 	if where != "journal":
-		ok = os.access(where, os.R_OK)
+		state = presence(where)
+		if state == "missing":
+			return [item("host signals", FAIL, f"auth log {where} does not exist", "set auth_log to the file sshd logs to, or null")]
+		ok = state == "ok"
 		return [item("host signals", OK if ok else FAIL, f"auth log {where}" + (" readable" if ok else " unreadable"),
 		             None if ok else f"add {AGENT_USER} to the adm group")]  # fmt: skip
+	if not _journal_groups():
+		return [item("host signals", FAIL, "journal: this user is in none of the groups that read the system journal",
+		             f"add {AGENT_USER} to the systemd-journal group")]  # fmt: skip
 	try:
-		done = subprocess.run(["journalctl", "-n", "1", "-q", "--no-pager", "-t", "sshd", "-t", "sshd-session"],
+		# no -q: journalctl's hint that it is "not seeing messages from other users" goes to stderr
+		done = subprocess.run(["journalctl", "-n", "1", "--no-pager", "-t", "sshd", "-t", "sshd-session"],
 		                      capture_output=True, text=True, timeout=10)  # fmt: skip
 	except (OSError, subprocess.SubprocessError) as e:
 		return [item("host signals", FAIL, f"journalctl: {e}")]
 	text = (done.stdout + done.stderr).lower()
-	if "not seeing messages" in text or "permission" in text or "no journal files" in text:
+	if "not seeing messages" in text or "insufficient permissions" in text or "no journal files" in text:
 		return [item("host signals", FAIL, "journal: this user cannot read the system journal",
 		             f"add {AGENT_USER} to the systemd-journal group")]  # fmt: skip
 	return [item("host signals", OK, "journal readable (sshd, sudo, account changes)")]
+
+
+def _journal_groups():
+	"""Root, or a member of a group that reads the system journal."""
+	if os.geteuid() == 0:
+		return True
+	names = set()
+	for gid in os.getgroups():
+		try:
+			names.add(grp.getgrgid(gid).gr_name)
+		except KeyError:
+			continue
+	return bool(names & {"systemd-journal", "adm", "wheel"})
 
 
 def _response(cfg):
@@ -347,8 +407,9 @@ def _response(cfg):
 	helper = next((p for p in command if p.startswith("/")), None)
 	out = []
 	if helper and not os.path.exists(helper):
+		script = "wolf-block-fail2ban.sh" if "fail2ban" in helper else "wolf-block.sh"
 		return [item("response", FAIL, f"response actions on, but {helper} is not installed",
-		             "install agent/wolf-block.sh (docs: agent/response-actions)")]  # fmt: skip
+		             f"install -m 0755 -o root -g root agent/{script} {helper} (docs: agent/response-actions)")]  # fmt: skip
 	if command[:1] == ["sudo"] and helper:
 		try:
 			done = subprocess.run(["sudo", "-n", "-l", helper], capture_output=True, text=True, timeout=10)
@@ -386,7 +447,8 @@ def _daemon(cfg):
 			out.append(item("daemon", OK if state == "active" else FAIL, f"wolf-agent.service {state}",
 			                None if state == "active" else "systemctl enable --now wolf-agent; journalctl -u wolf-agent"))  # fmt: skip
 	if spool:
-		out += _last_push(os.path.join(spool, "watchdog-state.json"))
+		stale = float(section(cfg, "watchdog").get("stale_minutes") or DEFAULT_STALE_MINUTES)
+		out += _last_push(os.path.join(spool, "watchdog-state.json"), stale)
 	return out
 
 
@@ -394,7 +456,7 @@ def _systemd():
 	return bool(shutil.which("systemctl")) and os.path.isdir("/run/systemd/system")
 
 
-def _last_push(path):
+def _last_push(path, stale=DEFAULT_STALE_MINUTES):
 	try:
 		with open(path) as f:
 			state = json.load(f)
@@ -404,6 +466,6 @@ def _last_push(path):
 	if not isinstance(last, (int, float)):
 		return []
 	minutes = (time.time() - last) / 60
-	return [item("daemon", OK if minutes < 5 else WARN, f"last successful push {minutes:.0f} min ago",
-	             None if minutes < 5 else "journalctl -u wolf-agent: the Wolf site or the network")]  # fmt: skip
+	return [item("daemon", OK if minutes < stale else WARN, f"last successful push {minutes:.0f} min ago",
+	             None if minutes < stale else "journalctl -u wolf-agent: the Wolf site or the network")]  # fmt: skip
 
