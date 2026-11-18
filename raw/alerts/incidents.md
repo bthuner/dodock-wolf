@@ -48,6 +48,14 @@ attacker chose.
 hour does not keep one incident growing.
 - A rule's evidence is its own: when a rule fires on events another incident took by IP, they move
 to the rule's incident.
+- It works both ways. When a rule opens or reopens an incident, the incident also takes the security
+events already stored that share an IP or user with its evidence and that no incident holds yet,
+with the same bounds: from **Entity Correlation Minutes** before the evidence to 5 minutes after,
+no info events, not for an incident started over 24 hours ago. The incident then starts at the
+earliest of them. nginx, Suricata and Wazuh report one attack within seconds, while rules run
+every minute: without this, the events that arrived first would stay out.
+- An event that joined by IP or user is marked **Joined by IP or User**. A rule that matches it
+later takes it back for its own incident; an event a person moved (merge, split) stays put.
 
 Both settings are in **Wolf Settings → Correlation**. Untick **Group Incidents by IP or User** (on by
 default) and events become evidence only of the rules that match them.
