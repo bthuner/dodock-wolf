@@ -134,7 +134,7 @@ Development settings in production.
 | Admin login from new country | `security` / `admin_login_new_country` (site) | a privileged login from a country none of the user's earlier logins came from (critical, needs a GeoIP database) |
 | SSH login after brute force | `security` / `ssh_login_after_failures` (agent) | a login succeeded from an address that failed 5+ times in the hour before (critical) |
 | Repeated sudo failures | `security` / `sudo_failure` (agent) | 3+ failed sudo attempts in 10 min, per host (warning) |
-| New system account / User added to admin group | `security` / `account_created`, `admin_group_change` (agent) | `useradd` (warning) / a user joined sudo, wheel, docker... (critical) |
+| New system account / User added to admin group | `security` / `account_created`, `admin_group_change` (agent) | `useradd` (warning; a package's service account, system UID and no login shell, is `service_account_created` at info, without an alert) / a user joined sudo, wheel, docker... (critical) |
 | Web attack scan | `security` / `web_attack_probe` (agent, nginx) | 100+ probe requests (secrets, CMS panels, traversal, injections, scanners) in 10 min, per site (warning) |
 | Sensitive file served | `security` / `web_sensitive_file_exposed` (agent, nginx) | `.env`, `.git/`, keys or a dump answered with a 2xx (critical) |
 | Server / Client Script can run new code | `security` / `server_script_change`, `client_script_change` (site) | a script created, enabled, or its code, type or trigger changed (warning; the event is critical for API and scheduled Server Scripts or guest access) |

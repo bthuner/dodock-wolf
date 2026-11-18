@@ -48,6 +48,7 @@ CATEGORIES = {
 	"ssh_login_after_failures": ["T1110", "T1078"],
 	"sudo_failure": ["T1548.003"],
 	"account_created": ["T1136.001"],
+	"service_account_created": ["T1136.001"],
 	"admin_group_change": ["T1098"],
 	# web (agent, nginx)
 	"web_attack_probe": ["T1595.003"],
