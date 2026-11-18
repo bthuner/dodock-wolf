@@ -91,6 +91,41 @@ docker compose logs catcher                         # the alerts
   docker volume rm wolfdemo_demo-<kind>`. Its host and data stay on the site until the full reset,
   which needs every profile: `docker compose --profile press --profile multi --profile single down -v`.
 
+## Suricata and Wazuh
+
+The `ids` profile runs a real Suricata and a real Wazuh manager next to the bench, and
+`ids_scenario.py` sends one attacker at it: nginx, Suricata and Wazuh each see the attack, and Wolf
+puts the three in one incident.
+
+```bash
+docker compose --profile ids up -d --build   # Suricata pulls ET Open on its first start
+python3 ids_scenario.py                      # a few minutes: Suricata's rules, Wazuh's first alert
+```
+
+- `suricata` (`jasonish/suricata:7.0`) shares the frontend's network and sniffs its interface, with
+  ET Open (kept in the `suricata-rules` volume). It writes `eve.json` to the `suricata-logs` volume,
+  which the bench's agent mounts at `/var/log/suricata`: the agent finds it by itself.
+- `wazuh-manager` (`wazuh/wazuh-manager:4.9.2`, without indexer or dashboard) reads the attacker
+  port's log in the standard `combined` format (`wazuh-wolf.sh` adds it to `ossec.conf`).
+- `wazuh-wolf-agent` is the Wolf agent on the manager's host (`wazuh-agent-init.sh`): it reads
+  `alerts.json` and nothing else, in the `wazuh` group as on a real manager.
+- The client address. Wolf groups by public address only, and every address inside Docker is
+  private. So the attacks come from inside the stack (the `catcher` container) to nginx's port
+  8081, which is not published. There, as behind a load balancer, `X-Forwarded-For` names the
+  client, and Suricata reads it too (`xff` in `compose.yaml`): the scenario attacks as
+  `45.33.32.156` (scanme.nmap.org). Port 8080 (the site, published as 8099) trusts no header.
+  Demo only: never trust `X-Forwarded-For` from clients who can set it.
+- Suricata listens to the frontend's ports only, so nginx's calls to the backend do not count each
+  attack twice, with `EXTERNAL_NET` set to `any`: in Docker the attacker's address is private too.
+- The scenario waits for Suricata's rules and Wazuh's first alert, restarts the two agents so they
+  read `eve.json` and `alerts.json` at once (they re-check every 5 minutes otherwise), turns on and
+  routes the IDS and HIDS presets, sends log4j, Shellshock, sqlmap, the Fortinet VPN traversal and
+  secret file probes, then prints the events of each detector and the incident that holds them.
+- `scenario.py` (the 2AM scenario) reloads nginx instead of restarting the frontend: Suricata
+  shares the frontend's network and would be left on an interface that no longer exists.
+- Another port: `WOLF_DEMO_URL=http://localhost:8199 python3 ids_scenario.py`, with the
+  frontend's port changed in a compose override.
+
 ## Setup wizard
 
 `create-site` marks setup as complete, so Desk opens directly. To go through Dodock's wizard

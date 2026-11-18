@@ -7,6 +7,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -85,6 +86,41 @@ class TestWazuhParser(unittest.TestCase):
 		off = collector.Collector({**cfg, "wazuh": False}, state_path=os.path.join(tmp.name, "s2.json"), from_start=True)
 		self.assertFalse(any(isinstance(p, WazuhParser) for s in off.sources for p in s.parsers))
 		off.close()
+
+	def test_an_alerts_log_written_after_the_agent_started(self):
+		"""Wazuh writes alerts.json at its first alert: the agent finds it later and reads it all."""
+		tmp = tempfile.TemporaryDirectory()
+		self.addCleanup(tmp.cleanup)
+		alerts = os.path.join(tmp.name, "alerts", "alerts.json")
+		cfg = {"hostname": "wazuh-manager", "benches": [], "auth_log": False, "collect_host_metrics": False, "suricata": False,
+		       "mariadb": False, "processes": False, "exposure": False, "backups": False, "tls": False, "rq": {},
+		       "versions": False, "site_settings": False, "pilot": {"enabled": False}, "platform": "generic"}  # fmt: skip
+		now = [0.0]
+
+		def agent(name, **overrides):
+			c = collector.Collector({**cfg, **overrides}, state_path=os.path.join(tmp.name, f"{name}.json"), clock=lambda: now[0])
+			self.addCleanup(c.close)
+			return c
+
+		with mock.patch.object(collector, "DEFAULT_WAZUH_ALERTS", alerts):
+			c = agent("default")
+			off = agent("off", wazuh=False)
+			other = agent("other", wazuh={"alerts_log": os.path.join(tmp.name, "elsewhere.json")})
+			self.assertIsNone(c.wazuh_source)
+			os.makedirs(os.path.dirname(alerts))
+			with open(alerts, "w") as f:
+				f.write("\n".join(lines()) + "\n")
+			c.collect(NOW)
+			self.assertIsNone(c.wazuh_source, "not before the re-check")
+			now[0] += collector.suricata_discovery.RECHECK
+			_, events = c.collect(NOW)
+			for quiet in (off, other):  # turned off, or told to read another file: the default stays unread
+				quiet.collect(NOW)
+				self.assertNotEqual(quiet.wazuh_source and quiet.wazuh_source.parsers[0].log_file, alerts)
+		self.assertEqual([e["payload"]["rule_id"] for e in events if e["category"] == "hids_alert"], ["5404"],
+		                 "read from its start: the first alerts are not lost")  # fmt: skip
+		_, again = c.collect(NOW)
+		self.assertFalse([e for e in again if e["category"] == "hids_alert"], "read once")
 
 
 if __name__ == "__main__":

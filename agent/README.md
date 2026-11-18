@@ -128,7 +128,8 @@ from `pilot.jwt_secret` / `bench.toml` `[admin] jwt_secret`. See
     server. The HTTP host or SNI maps the alert to a site.
   - Without Suricata nothing changes: the agent's own web and auth-log detection stays on.
 - **Wazuh** (optional, #72): on the Wazuh manager's host, the agent tails its alerts log
-  (`wazuh.alerts_log`, else `/var/ossec/logs/alerts/alerts.json` if it exists). The agent's
+  (`wazuh.alerts_log`, else `/var/ossec/logs/alerts/alerts.json` if it exists, or once it appears:
+  checked every 5 minutes, then read from its start). The agent's
   user must be able to read it: add it to the `wazuh` group.
   - Alerts at or above `wazuh.min_level` (7) become `hids_alert` events, one per rule and
     subject (source IP, else host) per minute of log time, with a count. Level 12 and above is

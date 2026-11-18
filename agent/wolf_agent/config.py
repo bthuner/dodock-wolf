@@ -62,7 +62,8 @@ DEFAULTS = {
 	# and so are the rules in `exclude_sids` (ET's "pwd= in cleartext" fires on every login)
 	"suricata": {"enabled": True, "eve_log": None, "max_priority": 3, "exclude_sids": [2012888]},
 	# Wazuh manager alerts (optional, #72): alerts.json → hids_alert events. `alerts_log` null
-	# finds /var/ossec/logs/alerts/alerts.json when it exists; levels under `min_level` are skipped
+	# finds /var/ossec/logs/alerts/alerts.json when it exists, or once it appears (checked every 5 minutes);
+	# levels under `min_level` are skipped
 	"wazuh": {"enabled": True, "alerts_log": None, "min_level": 7, "exclude_groups": ["sca"]},
 	# version of each app in each bench (apps/<app>/<app>/__init__.py), for the advisory check
 	"versions": {"enabled": True, "interval": 3600},
