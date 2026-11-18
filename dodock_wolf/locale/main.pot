@@ -1,0 +1,4513 @@
+# Translations template for Dodock Wolf.
+# Copyright (C) 2026 Dodock Wolf contributors
+# This file is distributed under the same license as the Dodock Wolf project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Dodock Wolf VERSION\n"
+"Report-Msgid-Bugs-To: https://github.com/bthuner/dodock-wolf/issues\n"
+"POT-Creation-Date: 2026-11-18 22:37+0000\n"
+"PO-Revision-Date: 2026-11-18 22:37+0000\n"
+"Last-Translator: Dodock Wolf contributors\n"
+"Language-Team: Dodock Wolf contributors\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#. Option for the 'Operator' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:250
+msgid "!="
+msgstr ""
+
+#. Label of the hour_retention_days (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:750
+msgid "1-Hour Rollup Retention (days)"
+msgstr ""
+
+#. Label of the minute_retention_days (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:738
+msgid "1-Minute Rollup Retention (days)"
+msgstr ""
+
+#. Description of the '1-Hour Rollup Retention (days)' (Int) field in DocType
+#. 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:747
+msgid "1-hour rollups (7-day charts and longer)."
+msgstr ""
+
+#. Description of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:5
+msgid "1-minute and 1-hour aggregates of Wolf Metric Samples, written by the rollup job."
+msgstr ""
+
+#. Description of the '1-Minute Rollup Retention (days)' (Int) field in DocType
+#. 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:735
+msgid "1-minute rollups (charts up to 2 days, long rule windows)."
+msgstr ""
+
+#. Description of the 'Max Length' (Select) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:215
+msgid "160: one SMS. 320: up to two concatenated SMS (306 characters). Text that needs Unicode (e.g. emoji) fits 70 / 134."
+msgstr ""
+
+#. Description of the 'Resolution' (Data) field in DocType 'Wolf Rollup State'
+#: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:24
+msgid "1m or 1h"
+msgstr ""
+
+#. Description of the 'Resolution (seconds)' (Int) field in DocType 'Wolf
+#. Metric Rollup'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:42
+msgid "60 (1 minute) or 3600 (1 hour)"
+msgstr ""
+
+#. Option for the 'Operator' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:250
+msgid "<"
+msgstr ""
+
+#. Option for the 'Operator' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:250
+msgid "<="
+msgstr ""
+
+#. Header text in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:3
+msgid "<span class=\"h4\"><b>Dodock Wolf</b></span>"
+msgstr ""
+
+#. Option for the 'Operator' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:250
+msgid "=="
+msgstr ""
+
+#. Option for the 'Operator' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:250
+msgid ">"
+msgstr ""
+
+#. Option for the 'Operator' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:250
+msgid ">="
+msgstr ""
+
+#. Description of the 'Wazuh API User' (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:522
+msgid "A Wazuh API user allowed to read agents and run active response commands."
+msgstr ""
+
+#. Description of the 'Apply approved blocks' (Check) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:612
+msgid "A block a Wolf Manager approves also goes to CrowdSec as a ban for the approved duration, so every bouncer applies it."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:105
+msgid "A draft to start the authority's form from. Wolf sends nothing: check every fact first."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.py:27
+#, python-brace-format
+msgid "A merged incident stays resolved: work on {0} instead."
+msgstr ""
+
+#. Description of the 'Wazuh Active Response Command' (Data) field in DocType
+#. 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:504
+msgid "A named command with its timeout, as Wazuh lists it in shared/ar.conf: an <active-response> block for firewall-drop with <timeout>86400</timeout> gives firewall-drop86400. Wazuh removes the block when the timeout runs out; that is the block's duration."
+msgstr ""
+
+#. Description of the 'Group Incidents by IP or User' (Check) field in DocType
+#. 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:278
+msgid "A security event joins the open incident holding an event that names the same IP or e-mail user, whatever its source, host or site. Off: events are attached by site, bench or host only."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.py:16
+msgid "A site alias is a domain, not an address."
+msgstr ""
+
+#. Label of the api_key (Data) field in DocType 'Wolf API Key IP'
+#: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:19
+msgid "API Key"
+msgstr ""
+
+#. Description of the 'Secret' (Password) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:206
+#, python-brace-format
+msgid "API key or password, inserted where {secret} appears. Stored encrypted."
+msgstr ""
+
+#. Label of the matrix_access_token (Password) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:111
+msgid "Access Token"
+msgstr ""
+
+#. Description of the 'Access Token' (Password) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:114
+msgid "Access token of the bot account that posts the alerts."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:21
+msgid "Acknowledge"
+msgstr ""
+
+#. Description of the 'Action Link Hours' (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:781
+msgid "Acknowledge/resolve links in alerts stay valid this long. 0 disables them."
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:89
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:73
+msgid "Acknowledged"
+msgstr ""
+
+#. Label of the acknowledged_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:141
+msgid "Acknowledged At"
+msgstr ""
+
+#. Label of the acknowledged_by (Data) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:135
+msgid "Acknowledged By"
+msgstr ""
+
+#. Label of the action (Data) field in DocType 'Wolf Delivery'
+#. Label of the description (Small Text) field in DocType 'Wolf Postmortem
+#. Action Item'
+#. Label of the action (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:78
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:55
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:140
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:18
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:35
+msgid "Action"
+msgstr ""
+
+#. Label of the actions_section (Section Break) field in DocType 'Wolf
+#. Postmortem'
+#. Label of the action_items (Table) field in DocType 'Wolf Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:155
+msgid "Action Items"
+msgstr ""
+
+#. Label of the action_link_hours (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:784
+msgid "Action Link Hours"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:30
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:31
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:47
+msgid "Actions"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:48
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence_list.js:10
+msgid "Active"
+msgstr ""
+
+#. Label of the active_from (Time) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:356
+msgid "Active From"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:29
+msgid "Active From and Active To are the same time: the rule would never run"
+msgstr ""
+
+#. Label of the active_to (Time) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:361
+msgid "Active To"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:173
+msgid "Add"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:156
+msgid "Add comment"
+msgstr ""
+
+#. Description of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:4
+msgid "Addresses each API key was used from (wolf/api_keys.py): a key used from an address outside them raises api_key_new_ip. Delete a row to forget an address."
+msgstr ""
+
+#. Description of the 'Cooldown Minutes' (Int) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:382
+msgid "After an incident is resolved, re-fire into the same incident instead of opening a new one during this period."
+msgstr ""
+
+#. Label of the agent (Link) field in DocType 'Wolf Event'
+#. Label of the agent (Link) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:163
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:71
+msgid "Agent"
+msgstr ""
+
+#. Label of the agent_silence_minutes (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:216
+msgid "Agent Silence Minutes"
+msgstr ""
+
+#. Label of the agent_version (Data) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:127
+msgid "Agent Version"
+msgstr ""
+
+#. Description of the 'Clock Skew (seconds)' (Int) field in DocType 'Wolf
+#. Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:104
+msgid "Agent clock minus server clock at the last push (from sent_at). Positive = agent ahead."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:29
+msgid "Agent install command"
+msgstr ""
+
+#: dodock_wolf/api/agent.py:92
+msgid "Agent is disabled"
+msgstr ""
+
+#. Label of the agents_section (Section Break) field in DocType 'Wolf Settings'
+#. Label of a shortcut in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:196
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:24
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:124
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:187
+msgid "Agents"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:39
+msgid "Agents already registered keep working. New registrations need the new token. Continue?"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:104
+msgid "Agents online"
+msgstr ""
+
+#. Label of the aggregation (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:149
+msgid "Aggregation"
+msgstr ""
+
+#. Label of the alert_rule (Link) field in DocType 'Wolf Delivery'
+#. Label of the alert_rule (Link) field in DocType 'Wolf Digest Item'
+#. Label of the alert_rule (Link) field in DocType 'Wolf Incident'
+#. Label of the alert_rule (Link) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:35
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:47
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:105
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:56
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:28
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:36
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:62
+msgid "Alert Rule"
+msgstr ""
+
+#. Label of a shortcut in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:23
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:180
+msgid "Alert Rules"
+msgstr ""
+
+#. Label of a Card Break in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:56
+msgid "Alerting"
+msgstr ""
+
+#. Label of the alias (Data) field in DocType 'Wolf Entity Alias'
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:28
+msgid "Alias"
+msgstr ""
+
+#. Description of the 'Notify On Resolve' (Check) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:407
+msgid "Also notify the channels when the incident resolves, automatically or by hand. PagerDuty channels always hear it."
+msgstr ""
+
+#. Description of the 'Send the journal' (Check) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:715
+msgid "Also send every signed journal entry (seq, digest, mac): an external copy of the chain."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.py:25
+msgid "An incident cannot be merged into itself."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:222
+msgid "An incident needs at least two linked events to be split."
+msgstr ""
+
+#. Label of the summary_section (Section Break) field in DocType 'Wolf
+#. Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:130
+msgid "Analysis"
+msgstr ""
+
+#. Description of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:5
+msgid "Another name for a host or a site: a host's address or Wazuh agent name, a site's domain. Wolf adds them from its agents and from Wazuh alerts (source Auto); add one by hand when a name differs between tools (source Manual)."
+msgstr ""
+
+#. Description of the 'Same Finding As' (Link) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:118
+msgid "Another source's event about the same finding, seen first (Wolf Settings: overlapping detectors in both mode). This one is not sent again to CrowdSec or the SIEM."
+msgstr ""
+
+#. Description of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:136
+msgid "Append-only, HMAC-chained journal of security events, incident decisions, response actions and Wolf Settings changes. Check it with `bench --site <site> wolf-verify-journal`."
+msgstr ""
+
+#. Label of the gotify_token (Password) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:150
+msgid "Application Token"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:53
+msgid "Applied"
+msgstr ""
+
+#. Label of the applied_at (Datetime) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:133
+msgid "Applied At"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:59
+msgid "Apply"
+msgstr ""
+
+#. Label of the crowdsec_apply_blocks (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:615
+msgid "Apply approved blocks"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:53
+msgid "Approved"
+msgstr ""
+
+#. Label of the approved_at (Datetime) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:127
+msgid "Approved At"
+msgstr ""
+
+#. Label of the approved_by (Link) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:120
+msgid "Approved By"
+msgstr ""
+
+#. Description of the 'Status' (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:55
+msgid "Approved: a Wolf Manager confirmed it; block_ip then waits for the agent's next push. Applied / Failed: the result. Expired: the block's time is over."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:27
+msgid "Assign to me"
+msgstr ""
+
+#. Label of the assigned_to (Link) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:297
+msgid "Assigned To"
+msgstr ""
+
+#. Label of the at (Datetime) field in DocType 'Wolf Delivery'
+#. Label of the at (Datetime) field in DocType 'Wolf Event Entity'
+#. Label of the at (Datetime) field in DocType 'Wolf Journal Entry'
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:42
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:40
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:139
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:36
+msgid "At"
+msgstr ""
+
+#. Label of the audit_section (Section Break) field in DocType 'Wolf Response
+#. Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:115
+msgid "Audit"
+msgstr ""
+
+#. Description of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:204
+msgid "Audit trail of response actions a Wolf Manager approved. Created only through Wolf (api/response.py), never by hand."
+msgstr ""
+
+#. Label of the sms_auth_header (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:197
+msgid "Auth Header"
+msgstr ""
+
+#. Label of the gdpr_notified_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:420
+msgid "Authority notified at"
+msgstr ""
+
+#. Label of the regulatory_reference (Data) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:426
+msgid "Authority reference"
+msgstr ""
+
+#. Option for the 'Source' (Select) field in DocType 'Wolf Entity Alias'
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:45
+msgid "Auto"
+msgstr ""
+
+#. Label of the auto_resolve (Check) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:392
+msgid "Auto Resolve"
+msgstr ""
+
+#. Label of the dora_aware_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:375
+msgid "Aware since (DORA)"
+msgstr ""
+
+#. Label of the gdpr_aware_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:414
+msgid "Aware since (GDPR)"
+msgstr ""
+
+#. Label of the nis2_aware_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:320
+msgid "Aware since (NIS2)"
+msgstr ""
+
+#. Description of the 'Public Url' (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:773
+msgid "Base URL used in alert links. Defaults to this site's URL."
+msgstr ""
+
+#: dodock_wolf/api/ingest.py:41
+msgid "Batch too large, split it"
+msgstr ""
+
+#. Label of the behind_proxy (Data) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:99
+msgid "Behind Proxy"
+msgstr ""
+
+#. Description of the 'Export Floor (MB per hour)' (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:387
+msgid "Below this volume in an hour (MB of responses), nothing is compared."
+msgstr ""
+
+#. Label of the bench (Data) field in DocType 'Wolf Event'
+#. Label of the bench (Data) field in DocType 'Wolf Incident'
+#. Label of the bench (Data) field in DocType 'Wolf Metric Rollup'
+#. Label of the bench (Data) field in DocType 'Wolf Metric Sample'
+#. Label of the bench (Data) field in DocType 'Wolf Postmortem'
+#. Label of the bench (Data) field in DocType 'Wolf Response Action'
+#. Label of the bench (Data) field in DocType 'Wolf Silence'
+#. Label of the bench (Data) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:146
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:181
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:65
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:56
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:113
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:99
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:94
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:63
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:26
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:35
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:62
+msgid "Bench"
+msgstr ""
+
+#. Label of the benches (Code) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:144
+msgid "Benches"
+msgstr ""
+
+#. Label of the block_with (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:498
+msgid "Block With"
+msgstr ""
+
+#. Label of the blocking_section (Section Break) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:491
+msgid "Blocking"
+msgstr ""
+
+#. Label of the sms_content_type (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:182
+msgid "Body Format"
+msgstr ""
+
+#. Label of the sms_body (Small Text) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:190
+msgid "Body Template"
+msgstr ""
+
+#. Label of the crowdsec_bouncer_key (Password) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:566
+msgid "Bouncer API key"
+msgstr ""
+
+#. Label of the bucket_start (Datetime) field in DocType 'Wolf Metric Rollup'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:47
+msgid "Bucket Start"
+msgstr ""
+
+#. Description of the 'Rolled Up Until' (Datetime) field in DocType 'Wolf
+#. Rollup State'
+#: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:31
+msgid "Buckets before this time are rolled up. Late samples move it back."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:24
+#, python-brace-format
+msgid "Cannot group by {0}"
+msgstr ""
+
+#: dodock_wolf/api/rules_io.py:125
+#, python-brace-format
+msgid "Cannot import: {0}"
+msgstr ""
+
+#. Label of the capture_error_logs (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:339
+msgid "Capture Error Logs"
+msgstr ""
+
+#. Label of the capture_scheduler_failures (Check) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:333
+msgid "Capture failed Scheduled Job Logs"
+msgstr ""
+
+#. Label of the capture_login_failures (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:349
+msgid "Capture failed logins"
+msgstr ""
+
+#. Description of the 'Then Event Categories' (Small Text) field in DocType
+#. 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:219
+msgid "Categories of the event that must follow, one per line."
+msgstr ""
+
+#. Description of the 'First Event Categories' (Small Text) field in DocType
+#. 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:201
+msgid "Categories of the first event, one per line, e.g. web_attack_probe."
+msgstr ""
+
+#. Label of the category (Data) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:53
+msgid "Category"
+msgstr ""
+
+#. Label of the central_url (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:58
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:128
+msgid "Central URL"
+msgstr ""
+
+#. Label of the chain_section (Section Break) field in DocType 'Wolf Journal
+#. Entry'
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:81
+msgid "Chain"
+msgstr ""
+
+#. Description of the 'Events API URL' (Data) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgid "Change it for the EU service region or an Events v2 compatible receiver (Grafana OnCall, Opsgenie …)."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:78
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:140
+msgid "Channel"
+msgstr ""
+
+#. Label of the channel_row (Data) field in DocType 'Wolf Digest Item'
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:68
+msgid "Channel Row"
+msgstr ""
+
+#. Label of the channel_type (Select) field in DocType 'Wolf Alert Channel'
+#. Label of the channel_type (Data) field in DocType 'Wolf Delivery'
+#. Label of the channel_type (Data) field in DocType 'Wolf Digest Item'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:39
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:72
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:58
+msgid "Channel Type"
+msgstr ""
+
+#. Label of the channels (Table) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:402
+msgid "Channels"
+msgstr ""
+
+#. Label of the check_security_advisories (Check) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:464
+msgid "Check versions against GitHub Security Advisories"
+msgstr ""
+
+#: dodock_wolf/api/metrics.py:79
+msgid "Choose a metric"
+msgstr ""
+
+#. Label of the dora_classified_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:382
+msgid "Classified as major at"
+msgstr ""
+
+#. Description of the 'Homeserver URL' (Data) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:98
+msgid "Client-server API base, e.g. https://matrix.example.org"
+msgstr ""
+
+#. Label of the clock_skew_seconds (Int) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:107
+msgid "Clock Skew (seconds)"
+msgstr ""
+
+#. Label of the siem_ca_file (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:664
+msgid "Collector CA file"
+msgstr ""
+
+#. Label of the siem_host (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:634
+msgid "Collector host"
+msgstr ""
+
+#. Description of the 'Event types' (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:707
+msgid "Comma-separated: security, error, cron_failure, worker_failure, host_metric_alert, deployment."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:172
+msgid "Comment"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:171
+#, python-brace-format
+msgid "Comment on {0}"
+msgstr ""
+
+#: dodock_wolf/api/actions.py:124
+#, python-brace-format
+msgid "Confirm: {0}"
+msgstr ""
+
+#. Description of the 'Fire After Evaluations' (Int) field in DocType 'Wolf
+#. Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:288
+msgid "Consecutive breached evaluations (one per minute) before an incident opens."
+msgstr ""
+
+#. Description of the 'Resolve After Evaluations' (Int) field in DocType 'Wolf
+#. Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:295
+msgid "Consecutive clear evaluations before an open incident auto-resolves."
+msgstr ""
+
+#. Label of the content (Long Text) field in DocType 'Wolf Journal Entry'
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:86
+msgid "Content"
+msgstr ""
+
+#. Label of the cooldown_minutes (Int) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:385
+msgid "Cooldown Minutes"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:109
+msgid "Copy"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.js:21
+msgid "Copy it now: Wolf keeps only a hash and cannot show it again."
+msgstr ""
+
+#. Label of the correlation_section (Section Break) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:260
+msgid "Correlation"
+msgstr ""
+
+#: dodock_wolf/satellite.py:192
+#, python-brace-format
+msgid "Could not reach {0}: {1}"
+msgstr ""
+
+#. Label of the count (Int) field in DocType 'Wolf Event'
+#. Label of the value_count (Int) field in DocType 'Wolf Metric Rollup'
+#. Label of the count (Int) field in DocType 'Wolf Outbox'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:93
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:87
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:65
+msgid "Count"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:252
+#, python-brace-format
+msgid "Created {0}"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:101
+msgid "Critical events"
+msgstr ""
+
+#: dodock_wolf/public/js/wolf.js:6
+msgid "Cron failure"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:102
+msgid "Cron failures"
+msgstr ""
+
+#. Label of the crowdsec_section (Section Break) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:545
+msgid "CrowdSec"
+msgstr ""
+
+#: dodock_wolf/www/wolf_status.html:35
+msgid "Current incidents"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:53
+msgid "Current values"
+msgstr ""
+
+#. Label of the regulatory_html (HTML) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:432
+msgid "Deadlines"
+msgstr ""
+
+#. Description of the 'Aware since (NIS2)' (Datetime) field in DocType 'Wolf
+#. Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:317
+msgid "Deadlines count from here: early warning 24 h, incident notification 72 h, final report one month after the notification. Set to now when the flag is ticked."
+msgstr ""
+
+#. Label of the honeytoken_api_keys (Small Text) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:480
+msgid "Decoy API keys"
+msgstr ""
+
+#. Description of the 'Decoy API keys' (Small Text) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:477
+msgid "Decoy API keys (one per line), e.g. left in an old backup or a repository: any request using one is critical. Do not create them on a real user."
+msgstr ""
+
+#. Description of the 'Decoy users' (Small Text) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:471
+msgid "Decoy accounts nobody uses (one email per line): any login attempt on them is critical."
+msgstr ""
+
+#. Label of the honeytoken_paths (Small Text) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:486
+msgid "Decoy paths"
+msgstr ""
+
+#. Label of the honeytoken_users (Small Text) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:474
+msgid "Decoy users"
+msgstr ""
+
+#. Label of the deliveries_section (Section Break) field in DocType 'Wolf
+#. Incident'
+#. Label of the deliveries_html (HTML) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:275
+msgid "Deliveries"
+msgstr ""
+
+#. Label of the deployment_section (Section Break) field in DocType 'Wolf
+#. Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:198
+#: dodock_wolf/public/js/wolf.js:10
+msgid "Deployment"
+msgstr ""
+
+#. Label of the deployment_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:214
+msgid "Deployment At"
+msgstr ""
+
+#. Label of the deployment_event (Link) field in DocType 'Wolf Incident'
+#. Label of the deployment_event (Link) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:203
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:70
+msgid "Deployment Event"
+msgstr ""
+
+#. Label of the deployment_window_minutes (Int) field in DocType 'Wolf Alert
+#. Rule'
+#. Label of the deployment_window_minutes (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:374
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:267
+msgid "Deployment Window Minutes"
+msgstr ""
+
+#. Description of the 'Deployment Window Minutes' (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:264
+msgid "Deployments this recent are linked to new incidents."
+msgstr ""
+
+#. Label of the description (Small Text) field in DocType 'Wolf Alert Rule'
+#. Label of the description (Small Text) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:129
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:74
+msgid "Description"
+msgstr ""
+
+#. Label of the destination (Small Text) field in DocType 'Wolf Digest Item'
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:63
+msgid "Destination"
+msgstr ""
+
+#. Label of the payload_section (Section Break) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:169
+msgid "Details"
+msgstr ""
+
+#. Label of the detector_match_minutes (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:322
+msgid "Detector Match Minutes"
+msgstr ""
+
+#. Label of the digest (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:56
+msgid "Digest"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:48
+msgid "Disabled"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.js:12
+msgid "Disabled: the public page answers 404 until you enable it."
+msgstr ""
+
+#. Label of the benches_section (Section Break) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:139
+msgid "Discovered benches"
+msgstr ""
+
+#. Name of a Workspace
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:13
+msgid "Dodock Wolf"
+msgstr ""
+
+#. Label of the is_preset (Check) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:123
+msgid "Dokos preset"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Postmortem Action
+#. Item'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:40
+msgid "Done"
+msgstr ""
+
+#: dodock_wolf/api/actions.py:60
+#, python-brace-format
+msgid "Done: the incident is now {0}."
+msgstr ""
+
+#. Description of the 'Check versions against GitHub Security Advisories'
+#. (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:461
+msgid "Download the Frappe and ERPNext security advisories from GitHub once a day and compare them with the versions the agents report (Security posture). An unauthenticated read of public data: nothing about this installation is sent."
+msgstr ""
+
+#. Description of the 'Use IP reputation lists' (Check) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:446
+msgid "Download the lists below once a day and tag security events whose IP is on one (one severity step more). Only the lists are downloaded; nothing is sent."
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:58
+msgid "Draft"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:90
+msgid "Due"
+msgstr ""
+
+#. Label of the due_date (Date) field in DocType 'Wolf Postmortem Action Item'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:32
+msgid "Due Date"
+msgstr ""
+
+#. Label of the duration_hours (Int) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:109
+msgid "Duration (hours)"
+msgstr ""
+
+#. Label of the duration_minutes (Float) field in DocType 'Wolf Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:88
+msgid "Duration (minutes)"
+msgstr ""
+
+#. Label of the nis2_early_warning_at (Datetime) field in DocType 'Wolf
+#. Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:326
+msgid "Early warning sent at"
+msgstr ""
+
+#. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
+msgid "Email"
+msgstr ""
+
+#. Label of the email_queue_stale_minutes (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:418
+msgid "Email Queue Stale Minutes"
+msgstr ""
+
+#. Description of the 'Recipients' (Small Text) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:62
+msgid "Email addresses, one per line or comma-separated."
+msgstr ""
+
+#. Label of the signals_section (Section Break) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:403
+msgid "Email queue and login geography (this site)"
+msgstr ""
+
+#. Label of the enabled (Check) field in DocType 'Wolf Alert Channel'
+#. Label of the enabled (Check) field in DocType 'Wolf Alert Rule'
+#. Label of the enabled (Check) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:48
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:96
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:45
+msgid "Enabled"
+msgstr ""
+
+#. Label of the ends_at (Datetime) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:43
+msgid "Ends At"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.py:15
+msgid "Ends At must be after Starts At"
+msgstr ""
+
+#. Label of the entity_correlation_minutes (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:289
+msgid "Entity Correlation Minutes"
+msgstr ""
+
+#. Label of the error (Small Text) field in DocType 'Wolf Delivery'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:78
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:95
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:141
+#: dodock_wolf/public/js/wolf.js:5
+msgid "Error"
+msgstr ""
+
+#. Label of the escalate_after_minutes (Int) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:423
+msgid "Escalate After Minutes"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:38
+msgid "Escalate After Minutes cannot be negative"
+msgstr ""
+
+#. Label of the escalated_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:253
+msgid "Escalated At"
+msgstr ""
+
+#. Label of the escalation_section (Section Break) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:416
+msgid "Escalation"
+msgstr ""
+
+#. Label of the escalation_channels (Table) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:429
+msgid "Escalation Channels"
+msgstr ""
+
+#. Label of the evaluation_state (Long Text) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:465
+msgid "Evaluation State"
+msgstr ""
+
+#. Label of the event (Link) field in DocType 'Wolf Event Entity'
+#. Label of the event (Code) field in DocType 'Wolf Outbox'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:19
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:83
+msgid "Event"
+msgstr ""
+
+#. Label of the event_category (Data) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:180
+msgid "Event Category"
+msgstr ""
+
+#. Label of the event_count (Int) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:159
+msgid "Event Count"
+msgstr ""
+
+#. Label of the event_retention_days (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:757
+msgid "Event Retention Days"
+msgstr ""
+
+#. Label of the event_type (Select) field in DocType 'Wolf Alert Rule'
+#. Label of the event_type (Select) field in DocType 'Wolf Event'
+#. Label of the event_type (Data) field in DocType 'Wolf Outbox'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:172
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:44
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:34
+msgid "Event Type"
+msgstr ""
+
+#. Label of the event_section (Section Break) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:167
+msgid "Event condition"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:25
+msgid "Event rules need an event type"
+msgstr ""
+
+#. Label of the siem_event_types (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:710
+msgid "Event types"
+msgstr ""
+
+#. Label of the pagerduty_url (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:229
+msgid "Events API URL"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:200
+msgid "Events and comments move to the target. This incident is resolved and points to it."
+msgstr ""
+
+#. Description of the 'Own Events Given Way' (Int) field in DocType 'Wolf
+#. Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:112
+msgid "Events of Wolf's own detectors this agent sent that were dropped because Suricata or Wazuh covers them (Wolf Settings: overlapping detectors in external mode)."
+msgstr ""
+
+#. Description of the 'Timeline Padding Minutes' (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:271
+msgid "Events this long before an incident started are shown in its timeline."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:232
+msgid "Events to move"
+msgstr ""
+
+#. Description of the 'Watch the Email Queue' (Check) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:407
+msgid "Every 5 minutes: an event while emails wait in the Email Queue longer than the limit below, and while sending errors keep appearing."
+msgstr ""
+
+#. Description of the 'Scope' (Section Break) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:75
+msgid "Every field set here must match the incident. Leave all empty to silence everything."
+msgstr ""
+
+#. Description of the 'Value' (Data) field in DocType 'Wolf User Scope'
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:35
+msgid "Exact site name (a.example.com), bench name or hostname, as shown on Wolf events."
+msgstr ""
+
+#. Label of the executor (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:80
+msgid "Executor"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:128
+msgid "Expected the rule's fields"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:53
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence_list.js:8
+msgid "Expired"
+msgstr ""
+
+#. Label of the expires_at (Datetime) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:143
+msgid "Expires At"
+msgstr ""
+
+#. Label of the exfiltration_factor (Float) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:398
+msgid "Export Factor"
+msgstr ""
+
+#. Label of the exfiltration_floor_mb (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:390
+msgid "Export Floor (MB per hour)"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:5
+msgid "Export to YAML"
+msgstr ""
+
+#. Label of the siem_enabled (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:628
+msgid "Export to a SIEM"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:53
+msgid "Failed"
+msgstr ""
+
+#. Label of the filter_bench (Data) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:335
+msgid "Filter Bench"
+msgstr ""
+
+#. Label of the filter_host (Data) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:326
+msgid "Filter Host"
+msgstr ""
+
+#. Label of the filter_site (Data) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:344
+msgid "Filter Site"
+msgstr ""
+
+#. Label of the nis2_final_report_at (Datetime) field in DocType 'Wolf
+#. Incident'
+#. Label of the dora_final_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:338
+msgid "Final report sent at"
+msgstr ""
+
+#. Description of the 'Major ICT-related incident (DORA Art. 19)' (Check) field
+#. in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:368
+msgid "Financial entities under DORA. Deadlines from Delegated Regulation (EU) 2025/301 Art. 5, without the weekend and bank holiday extension."
+msgstr ""
+
+#. Label of the fingerprint (Data) field in DocType 'Wolf Event'
+#. Label of the fingerprint (Data) field in DocType 'Wolf Outbox'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:98
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:71
+msgid "Fingerprint"
+msgstr ""
+
+#. Label of the fire_after_evaluations (Int) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:291
+msgid "Fire After Evaluations"
+msgstr ""
+
+#. Description of the 'Sequence condition' (Section Break) field in DocType
+#. 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:198
+msgid "Fires when an event of the second list follows one of the first list on the same IP, user or host. Threshold counts those second events in the window."
+msgstr ""
+
+#. Label of the first_categories (Small Text) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:204
+msgid "First Event Categories"
+msgstr ""
+
+#. Label of the first_min_severity (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:211
+msgid "First Event Min Severity"
+msgstr ""
+
+#. Label of the first_seen (Datetime) field in DocType 'Wolf API Key IP'
+#: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:48
+msgid "First Seen"
+msgstr ""
+
+#. Label of the capture_admin_logins (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:355
+msgid "Flag privileged logins from new IPs"
+msgstr ""
+
+#. Label of the capture_admin_countries (Check) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:429
+msgid "Flag privileged logins from new countries"
+msgstr ""
+
+#. Label of the capture_app_security (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:375
+msgid "Flag risky application changes"
+msgstr ""
+
+#. Label of the capture_exfiltration (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:382
+msgid "Flag unusual data exports"
+msgstr ""
+
+#. Label of the capture_privileged_users (Check) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:361
+msgid "Flag users granted privileged roles"
+msgstr ""
+
+#. Label of the flapping_section (Section Break) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:284
+msgid "Flapping control"
+msgstr ""
+
+#. Label of the siem_format (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:693
+msgid "Format"
+msgstr ""
+
+#. Label of the forward_failures (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:190
+msgid "Forward Failures"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:15
+msgid "Forward now"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:22
+#, python-brace-format
+msgid "Forwarded {0} events"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:21
+#, python-brace-format
+msgid "Forwarding: {0}"
+msgstr ""
+
+#. Label of the siem_framing (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:672
+msgid "Framing"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:8
+msgid "From Date"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:64
+msgid "From Wolf Settings on the central site."
+msgstr ""
+
+#. Description of the 'Bouncer API key' (Password) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:563
+msgid "From `cscli bouncers add dodock-wolf`: lets Wolf read the decisions. Security events whose IP is under one are tagged and raised one severity step."
+msgstr ""
+
+#. Description of the 'Machine ID' (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:570
+msgid "From `cscli machines add dodock-wolf --password ...`: lets Wolf send alerts and decisions."
+msgstr ""
+
+#. Description of the 'Timeline Snapshot' (Text Editor) field in DocType 'Wolf
+#. Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:170
+msgid "Frozen copy of the incident timeline when this postmortem was started."
+msgstr ""
+
+#. Option for the 'HTTP Method' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:175
+msgid "GET"
+msgstr ""
+
+#. Label of the sms_url (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:166
+msgid "Gateway URL"
+msgstr ""
+
+#. Label of the geoip_database (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:436
+msgid "GeoIP Database"
+msgstr ""
+
+#. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
+msgid "Gotify"
+msgstr ""
+
+#. Label of the gotify_server (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:143
+msgid "Gotify Server URL"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:57
+msgid "Group"
+msgstr ""
+
+#. Label of the group_by (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:276
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:22
+msgid "Group By"
+msgstr ""
+
+#. Label of the correlate_by_entity (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:281
+msgid "Group Incidents by IP or User"
+msgstr ""
+
+#. Label of the group_key (Data) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:111
+msgid "Group Key"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:78
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:140
+msgid "HTTP"
+msgstr ""
+
+#. Label of the sms_method (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:174
+msgid "HTTP Method"
+msgstr ""
+
+#. Label of the http_status (Int) field in DocType 'Wolf Delivery'
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:90
+msgid "HTTP Status"
+msgstr ""
+
+#. Label of the matrix_homeserver (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:95
+msgid "Homeserver URL"
+msgstr ""
+
+#. Label of the host (Data) field in DocType 'Wolf Event'
+#. Label of the host (Data) field in DocType 'Wolf Incident'
+#. Label of the host (Data) field in DocType 'Wolf Metric Rollup'
+#. Label of the host (Data) field in DocType 'Wolf Metric Sample'
+#. Label of the host (Data) field in DocType 'Wolf Postmortem'
+#. Label of the host (Data) field in DocType 'Wolf Response Action'
+#. Label of the host (Data) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:135
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:171
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:58
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:50
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:124
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:94
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:84
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:27
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:62
+msgid "Host"
+msgstr ""
+
+#. Label of the host_detection_mode (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:314
+msgid "Host Logins and Accounts"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:133
+msgid "Host metrics"
+msgstr ""
+
+#. Label of the hostname (Data) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:37
+msgid "Hostname"
+msgstr ""
+
+#. Description of the 'Framing' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:669
+msgid "How messages are separated on TCP and TLS (RFC 6587): octet counting (rsyslog, syslog-ng, Graylog), or one message per line (Wazuh, most line-based collectors)."
+msgstr ""
+
+#. Description of the 'Entity Correlation Minutes' (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:286
+msgid "How recent that event must be."
+msgstr ""
+
+#. Label of the ip (Data) field in DocType 'Wolf API Key IP'
+#: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:36
+msgid "IP Address"
+msgstr ""
+
+#. Description of the 'Target' (Data) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:44
+msgid "IP address (block_ip) or user (the other actions)."
+msgstr ""
+
+#. Label of the ip_reputation_sources (Small Text) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:457
+msgid "IP reputation lists"
+msgstr ""
+
+#. Description of the 'Min Samples' (Int) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:158
+msgid "Ignore groups with fewer samples in the window."
+msgstr ""
+
+#. Label of the impact (Text Editor) field in DocType 'Wolf Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:140
+msgid "Impact"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:26
+msgid "Import alert rules from YAML"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:20
+msgid "Import from YAML"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Postmortem Action
+#. Item'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:40
+msgid "In Progress"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:58
+msgid "In Review"
+msgstr ""
+
+#. Description of the 'Detector Match Minutes' (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:319
+msgid "In both mode, how close in time two events must be to be one finding."
+msgstr ""
+
+#. Label of the rule_sentence (HTML) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:77
+msgid "In words"
+msgstr ""
+
+#. Label of the incident (Link) field in DocType 'Wolf Delivery'
+#. Label of the incident (Link) field in DocType 'Wolf Digest Item'
+#. Label of the incident (Link) field in DocType 'Wolf Event'
+#. Label of the incident (Link) field in DocType 'Wolf Postmortem'
+#. Label of the incident (Link) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:28
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:24
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.js:8
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:104
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.js:7
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:46
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:60
+msgid "Incident"
+msgstr ""
+
+#. Label of the nis2_notification_at (Datetime) field in DocType 'Wolf
+#. Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:332
+msgid "Incident notification sent at"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.py:16
+#, python-brace-format
+msgid "Incident {0} already has postmortem {1}."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:71
+msgid "Incidents"
+msgstr ""
+
+#. Description of the 'Minimum Severity' (Select) field in DocType 'Wolf Status
+#. Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:89
+msgid "Incidents below this severity are not shown."
+msgstr ""
+
+#. Description of the 'Site' (Data) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:52
+msgid "Incidents of this site are shown."
+msgstr ""
+
+#. Label of the chat_webhook_url (Password) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:86
+msgid "Incoming Webhook URL"
+msgstr ""
+
+#. Label of the ingest_mode (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:254
+msgid "Ingest Mode"
+msgstr ""
+
+#. Label of the dora_initial_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:388
+msgid "Initial notification sent at"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:32
+msgid "Install the Wolf agent"
+msgstr ""
+
+#. Description of the 'Routing Key' (Password) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:223
+msgid "Integration key of an Events API v2 integration."
+msgstr ""
+
+#. Label of the nis2_intermediate_due_at (Datetime) field in DocType 'Wolf
+#. Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:352
+msgid "Intermediate report due by"
+msgstr ""
+
+#. Label of the nis2_intermediate_requested_at (Datetime) field in DocType
+#. 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:345
+msgid "Intermediate report requested at"
+msgstr ""
+
+#. Label of the nis2_intermediate_at (Datetime) field in DocType 'Wolf
+#. Incident'
+#. Label of the dora_intermediate_at (Datetime) field in DocType 'Wolf
+#. Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:358
+msgid "Intermediate report sent at"
+msgstr ""
+
+#. Description of the 'Room ID' (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgid "Internal room ID such as !abcdef:example.org (Room settings → Advanced). The bot account must have joined the room."
+msgstr ""
+
+#: dodock_wolf/api/agent.py:90
+msgid "Invalid agent credentials"
+msgstr ""
+
+#: dodock_wolf/api/actions.py:32 dodock_wolf/api/actions.py:96
+msgid "Invalid link"
+msgstr ""
+
+#: dodock_wolf/api/agent.py:31
+msgid "Invalid registration token"
+msgstr ""
+
+#. Label of the canonical (Data) field in DocType 'Wolf Entity Alias'
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:36
+msgid "Is"
+msgstr ""
+
+#. Label of the incident_by_entity (Check) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:114
+msgid "Joined by IP or User"
+msgstr ""
+
+#. Label of the journal_retention_days (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:764
+msgid "Journal Retention Days"
+msgstr ""
+
+#. Description of the 'Separate Resolve Threshold' (Check) field in DocType
+#. 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:305
+msgid "Keep the incident open until the value crosses a looser threshold (e.g. fire above 90, resolve below 80)."
+msgstr ""
+
+#. Label of the kind (Select) field in DocType 'Wolf Agent'
+#. Label of the kind (Data) field in DocType 'Wolf Delivery'
+#. Label of the kind (Data) field in DocType 'Wolf Digest Item'
+#. Label of the kind (Select) field in DocType 'Wolf Entity Alias'
+#. Label of the kind (Select) field in DocType 'Wolf Event Entity'
+#. Label of the kind (Data) field in DocType 'Wolf Journal Entry'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:57
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:49
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:31
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:20
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:26
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:139
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:44
+msgid "Kind"
+msgstr ""
+
+#. Label of the label_key (Data) field in DocType 'Wolf Metric Rollup'
+#. Label of the label_key (Data) field in DocType 'Wolf Metric Sample'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:77
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:68
+msgid "Label Key"
+msgstr ""
+
+#. Label of the labels (Code) field in DocType 'Wolf Metric Sample'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:73
+msgid "Labels"
+msgstr ""
+
+#. Label of the value_last (Float) field in DocType 'Wolf Metric Rollup'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:111
+msgid "Last"
+msgstr ""
+
+#. Label of the last_error (Small Text) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:457
+msgid "Last Error"
+msgstr ""
+
+#. Label of the last_evaluated (Datetime) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:441
+msgid "Last Evaluated"
+msgstr ""
+
+#. Label of the last_event_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:129
+msgid "Last Event At"
+msgstr ""
+
+#. Label of the last_fired (Datetime) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:451
+msgid "Last Fired"
+msgstr ""
+
+#. Label of the last_forward_at (Datetime) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:162
+msgid "Last Forward At"
+msgstr ""
+
+#. Label of the last_forward_error (Small Text) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:176
+msgid "Last Forward Error"
+msgstr ""
+
+#. Label of the last_forward_status (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:169
+msgid "Last Forward Status"
+msgstr ""
+
+#. Label of the own_events_dropped_at (Datetime) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:121
+msgid "Last Given Way"
+msgstr ""
+
+#. Label of the last_ip (Data) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:93
+msgid "Last IP"
+msgstr ""
+
+#. Label of the last_run_at (Datetime) field in DocType 'Wolf Rollup State'
+#: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:40
+msgid "Last Run At"
+msgstr ""
+
+#. Label of the last_run_seconds (Float) field in DocType 'Wolf Rollup State'
+#: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:51
+msgid "Last Run Duration (s)"
+msgstr ""
+
+#. Label of the last_ts (Datetime) field in DocType 'Wolf Metric Rollup'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:116
+msgid "Last Sample At"
+msgstr ""
+
+#. Label of the last_seen (Datetime) field in DocType 'Wolf Agent'
+#. Label of the last_seen (Datetime) field in DocType 'Wolf API Key IP'
+#. Label of the last_seen (Datetime) field in DocType 'Wolf Event'
+#. Label of the last_seen (Datetime) field in DocType 'Wolf Outbox'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:87
+#: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:54
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:86
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:57
+msgid "Last Seen"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:154
+msgid "Last error"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:147
+msgid "Last forward"
+msgstr ""
+
+#. Description of the 'Last Forward At' (Datetime) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:159
+msgid "Last successful push to the central site."
+msgstr ""
+
+#. Label of the seen_from (Data) field in DocType 'Wolf Entity Alias'
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:53
+msgid "Learnt from"
+msgstr ""
+
+#. Label of the lessons_learned (Text Editor) field in DocType 'Wolf
+#. Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:150
+msgid "Lessons Learned"
+msgstr ""
+
+#. Label of the crowdsec_detection_remediation (Check) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:607
+msgid "Let CrowdSec decide on detections"
+msgstr ""
+
+#: dodock_wolf/api/actions.py:31 dodock_wolf/api/actions.py:95
+msgid "Link expired"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:148
+msgid "Loading timeline…"
+msgstr ""
+
+#. Label of the crowdsec_url (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:559
+msgid "Local API URL"
+msgstr ""
+
+#. Label of the local_section (Section Break) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:327
+msgid "Local signals (this site)"
+msgstr ""
+
+#: dodock_wolf/api/actions.py:119
+msgid "Log in to confirm"
+msgstr ""
+
+#. Description of the 'Window Minutes' (Int) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:265
+msgid "Look-back window. Event rules compare the number of matching occurrences in this window."
+msgstr ""
+
+#. Label of the mac (Data) field in DocType 'Wolf Journal Entry'
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:104
+msgid "MAC"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:75
+msgid "MTTA (min)"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:76
+msgid "MTTA p50"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:37
+msgid "MTTA p50 (min)"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:77
+msgid "MTTA p90"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:78
+msgid "MTTR (min)"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:79
+msgid "MTTR p50"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:38
+msgid "MTTR p50 (min)"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:80
+msgid "MTTR p90"
+msgstr ""
+
+#. Label of the crowdsec_machine_id (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:573
+msgid "Machine ID"
+msgstr ""
+
+#. Label of the crowdsec_password (Password) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:579
+msgid "Machine password"
+msgstr ""
+
+#. Label of the dora_major (Check) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:367
+msgid "Major ICT-related incident (DORA Art. 19)"
+msgstr ""
+
+#. Option for the 'Source' (Select) field in DocType 'Wolf Entity Alias'
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:45
+msgid "Manual"
+msgstr ""
+
+#. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
+msgid "Matrix"
+msgstr ""
+
+#. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
+msgid "Mattermost"
+msgstr ""
+
+#. Label of the value_max (Float) field in DocType 'Wolf Metric Rollup'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:106
+msgid "Max"
+msgstr ""
+
+#. Label of the max_clock_skew_seconds (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:223
+msgid "Max Clock Skew (seconds)"
+msgstr ""
+
+#. Label of the max_events_per_push (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:233
+msgid "Max Events Per Push"
+msgstr ""
+
+#. Label of the sms_max_length (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:211
+msgid "Max Length"
+msgstr ""
+
+#. Label of the max_metrics_per_push (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:239
+msgid "Max Metrics Per Push"
+msgstr ""
+
+#. Label of the max_pushes_per_minute (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:246
+msgid "Max Pushes Per Minute"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:205
+msgid "Merge"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:30
+msgid "Merge into…"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:188
+#, python-brace-format
+msgid "Merge {0} into another incident"
+msgstr ""
+
+#. Label of the merged_into (Link) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:444
+msgid "Merged Into"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:211
+#, python-brace-format
+msgid "Merged into {0}"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:14
+#, python-brace-format
+msgid "Merged into {0}."
+msgstr ""
+
+#. Label of the siem_header (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:681
+msgid "Message header"
+msgstr ""
+
+#. Label of the metric_name (Data) field in DocType 'Wolf Alert Rule'
+#. Label of the metric_name (Data) field in DocType 'Wolf Metric Rollup'
+#. Label of the metric_name (Data) field in DocType 'Wolf Metric Sample'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:141
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:30
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:24
+msgid "Metric Name"
+msgstr ""
+
+#: dodock_wolf/public/js/wolf.js:9
+msgid "Metric alert"
+msgstr ""
+
+#. Label of the metric_section (Section Break) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:135
+msgid "Metric condition"
+msgstr ""
+
+#. Label of the value_min (Float) field in DocType 'Wolf Metric Rollup'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:97
+msgid "Min"
+msgstr ""
+
+#. Label of the min_samples (Int) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:161
+msgid "Min Samples"
+msgstr ""
+
+#. Label of the min_severity (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:190
+msgid "Min Severity"
+msgstr ""
+
+#. Label of the min_severity (Select) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:92
+msgid "Minimum Severity"
+msgstr ""
+
+#. Label of the siem_min_severity (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:701
+msgid "Minimum severity"
+msgstr ""
+
+#. Label of the crowdsec_min_severity (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:598
+msgid "Minimum severity sent"
+msgstr ""
+
+#. Label of the mode_section (Section Break) field in DocType 'Wolf Settings'
+#. Label of the mode (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:113
+msgid "Mode"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.js:19
+msgid "New agent secret"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:228
+msgid "New incident title"
+msgstr ""
+
+#. Label of the forward_retry_at (Datetime) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:183
+msgid "Next Retry At"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:153
+msgid "Next retry"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:188
+msgid "No agent registered yet. Get the install command from Wolf Settings."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:58
+msgid "No data in the window."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:80
+msgid "No enabled channel to test."
+msgstr ""
+
+#: dodock_wolf/api/explore.py:242
+#, python-brace-format
+msgid "No error group {0} that you can see."
+msgstr ""
+
+#: dodock_wolf/public/js/wolf.js:61
+msgid "No events in this range."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:217
+msgid "No host metrics yet."
+msgstr ""
+
+#: dodock_wolf/www/wolf_status.html:69
+msgid "No incidents reported."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:125
+msgid "No notification sent for this incident."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:232
+#, python-brace-format
+msgid "No samples for {0} in this range."
+msgstr ""
+
+#. Description of the 'Email Queue Stale Minutes' (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:415
+msgid "Not Sent / Sending emails older than this (and due) count as a backlog."
+msgstr ""
+
+#: dodock_wolf/api/actions.py:36 dodock_wolf/api/actions.py:99
+msgid "Not found"
+msgstr ""
+
+#: dodock_wolf/api/compliance.py:93 dodock_wolf/api/compliance.py:101
+#: dodock_wolf/api/response.py:33
+msgid "Not permitted"
+msgstr ""
+
+#. Label of the notes_section (Section Break) field in DocType 'Wolf Incident'
+#. Label of the notes (Text Editor) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:285
+msgid "Notes"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:91
+#, python-brace-format
+msgid "Nothing can be applied until the invalid rules are fixed: {0}."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:171
+msgid "Nothing open. The pack is quiet."
+msgstr ""
+
+#: dodock_wolf/api/actions.py:42
+#, python-brace-format
+msgid "Nothing to do: the incident is already {0}."
+msgstr ""
+
+#: dodock_wolf/api/actions.py:114
+#, python-brace-format
+msgid "Nothing to do: {0} is already {1} (approved by {2})."
+msgstr ""
+
+#. Label of the notification_section (Section Break) field in DocType 'Wolf
+#. Incident'
+#. Label of the links_section (Section Break) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:222
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:770
+msgid "Notifications"
+msgstr ""
+
+#. Description of the 'Silenced' (Check) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:226
+msgid "Notifications are held back by an active maintenance window."
+msgstr ""
+
+#. Label of the notified_at (Datetime) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:247
+msgid "Notified At"
+msgstr ""
+
+#. Label of the channels_section (Section Break) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:397
+msgid "Notify"
+msgstr ""
+
+#. Label of the notify_on_resolve (Check) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:410
+msgid "Notify On Resolve"
+msgstr ""
+
+#. Description of the 'Escalate After Minutes' (Int) field in DocType 'Wolf
+#. Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:420
+msgid "Notify the escalation channels once if the incident is still Open (not acknowledged) this long after the first alert. 0 = off."
+msgstr ""
+
+#. Description of the 'Aware since (GDPR)' (Datetime) field in DocType 'Wolf
+#. Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:411
+msgid "Notify the supervisory authority (CNIL in France) within 72 h. Set to now when the flag is ticked."
+msgstr ""
+
+#. Label of the ok (Check) field in DocType 'Wolf Delivery'
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:85
+msgid "OK"
+msgstr ""
+
+#. Label of the os (Data) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:133
+msgid "OS"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:71
+msgid "OVERDUE"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:90
+msgid "Obligation"
+msgstr ""
+
+#. Description of the 'Enabled' (Check) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:41
+msgid "Off by default: nothing is public until you tick this."
+msgstr ""
+
+#. Description of the 'Verify Wazuh TLS Certificate' (Check) field in DocType
+#. 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:536
+msgid "Off only for a self-signed certificate on a trusted network."
+msgstr ""
+
+#. Description of the 'Let CrowdSec decide on detections' (Check) field in
+#. DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:604
+msgid "Off: CrowdSec records Wolf's alerts and decides nothing. On: its profiles decide, and the default profile bans the IP for 4 h, without a human approving it."
+msgstr ""
+
+#. Description of the 'Topic' (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:130
+msgid "On a public server anyone who knows the topic can read it: pick an unguessable name or protect it with an access token."
+msgstr ""
+
+#. Description of the 'Group By' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:273
+msgid "One incident per group. host_label = per host and per label (e.g. disk mount)."
+msgstr ""
+
+#. Description of the 'IP reputation lists' (Small Text) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:454
+msgid "One list per line: a name, then a URL or a file path (relative to the site). One address or CIDR per line in each list."
+msgstr ""
+
+#. Description of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:5
+msgid "One notification attempt to one channel: what was sent, whether it worked. Never holds a secret."
+msgstr ""
+
+#. Description of the 'Phone Numbers' (Small Text) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:161
+msgid "One per line or comma-separated, in the format your gateway expects (usually +33612345678)."
+msgstr ""
+
+#. Description of the 'Privileged Roles' (Small Text) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:365
+msgid "One role per line."
+msgstr ""
+
+#: dodock_wolf/api/response.py:204
+msgid "Only a Wolf Manager can approve a response action."
+msgstr ""
+
+#: dodock_wolf/api/actions.py:118
+msgid "Only a Wolf Manager can confirm a response action."
+msgstr ""
+
+#: dodock_wolf/api/actions.py:121
+msgid "Only a Wolf Manager or System Manager can confirm a response action."
+msgstr ""
+
+#. Description of the 'Min Severity' (Select) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:187
+msgid "Only count events at or above this severity."
+msgstr ""
+
+#. Description of the 'Active From' (Time) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:353
+msgid "Only evaluate between these times (system timezone). Wraps over midnight."
+msgstr ""
+
+#. Description of the 'Require Recent Deployment' (Check) field in DocType
+#. 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:364
+msgid "Only fire when a deployment happened on the same bench/site/host recently."
+msgstr ""
+
+#. Description of the 'First Event Min Severity' (Select) field in DocType
+#. 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:208
+msgid "Only first events at or above this severity."
+msgstr ""
+
+#. Description of the 'Alert Rule' (Link) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:52
+msgid "Only silence this rule. Leave empty for every rule."
+msgstr ""
+
+#. Description of the 'Intermediate report requested at' (Datetime) field in
+#. DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:342
+msgid "Only when the CSIRT or the authority asks for one (Art. 23(4)(c))."
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Incident'
+#. Option for the 'Status' (Select) field in DocType 'Wolf Postmortem Action
+#. Item'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:89
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:40
+msgid "Open"
+msgstr ""
+
+#. Label of a shortcut in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:172
+msgid "Open Incidents"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:28
+msgid "Open Wolf UI (preview)"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.js:12
+msgid "Open incident from this event"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:100
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:120
+msgid "Open incidents"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.js:8
+msgid "Open public page"
+msgstr ""
+
+#: dodock_wolf/wolf/workflow.py:167
+#, python-brace-format
+msgid "Opened by hand from event {0}."
+msgstr ""
+
+#. Label of the operator (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:249
+msgid "Operator"
+msgstr ""
+
+#. Description of the 'ntfy Access Token' (Password) field in DocType 'Wolf
+#. Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgid "Optional access token (tk_…) for protected topics."
+msgstr ""
+
+#. Description of the 'Auth Header' (Data) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:199
+#, python-brace-format
+msgid "Optional header line, e.g. Authorization: Bearer {secret} or X-API-Key: {secret}."
+msgstr ""
+
+#. Description of the 'Event Category' (Data) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:177
+msgid "Optional, e.g. ssh_failed_login, http_502, scheduled_job."
+msgstr ""
+
+#. Description of the 'Body Template' (Small Text) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+#, python-brace-format
+msgid "Optional, with {to}, {text} and {secret}, e.g. {\"to\": \"{to}\", \"message\": \"{text}\"}. Empty: to=…&text=… (form) or {\"to\": …, \"text\": …} (json)."
+msgstr ""
+
+#. Description of the 'Bench' (Data) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:60
+msgid "Optional: also show bench-wide incidents (no site) of this bench."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:165
+msgid "Outbox"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:55
+msgid "Outside the active window right now."
+msgstr ""
+
+#. Label of the detectors_section (Section Break) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:294
+msgid "Overlapping detectors"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:42
+msgid "Overview"
+msgstr ""
+
+#. Label of the own_events_dropped (Int) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:115
+msgid "Own Events Given Way"
+msgstr ""
+
+#. Label of the assigned_to (Link) field in DocType 'Wolf Postmortem Action
+#. Item'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:25
+msgid "Owner"
+msgstr ""
+
+#. Description of the 'Collector CA file' (Data) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:661
+msgid "PEM file of the CA that signed the collector's certificate, when it is not a public one (an absolute path, or relative to the site, e.g. private/files/collector-ca.pem). Empty: the system's CAs."
+msgstr ""
+
+#. Option for the 'HTTP Method' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:175
+msgid "POST"
+msgstr ""
+
+#. Label of the settings_section (Section Break) field in DocType 'Wolf Status
+#. Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:68
+msgid "Page"
+msgstr ""
+
+#. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
+msgid "PagerDuty"
+msgstr ""
+
+#. Label of the digest (Check) field in DocType 'Wolf Delivery'
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:61
+msgid "Part of a Digest"
+msgstr ""
+
+#: dodock_wolf/www/wolf_status.html:51
+#, python-brace-format
+msgid "Past {0} days"
+msgstr ""
+
+#. Description of the 'GeoIP Database' (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:433
+msgid "Path to an offline database on this server: a MaxMind-format .mmdb (GeoLite2-Country, DB-IP Lite, IPinfo Lite) or a CSV of start_ip,end_ip,country ranges. Relative paths are read from the site directory. No online lookup is ever made."
+msgstr ""
+
+#. Description of the 'Decoy paths' (Small Text) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:483
+msgid "Paths linked from nowhere (one per line, e.g. /app/backup-admin): any request for one is critical."
+msgstr ""
+
+#. Label of the payload (Code) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:174
+msgid "Payload"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:146
+msgid "Pending events"
+msgstr ""
+
+#. Description of the 'Max Pushes Per Minute' (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:243
+msgid "Per agent (and satellite). Pushes over the limit get HTTP 429 and the agent retries with backoff. 0 turns the limit off."
+msgstr ""
+
+#. Description of the 'Evaluation State' (Long Text) field in DocType 'Wolf
+#. Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:461
+msgid "Per-group hysteresis counters, maintained by the evaluator."
+msgstr ""
+
+#. Label of the gdpr_breach (Check) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:407
+msgid "Personal data breach (GDPR Art. 33)"
+msgstr ""
+
+#. Label of the sms_numbers (Small Text) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:158
+msgid "Phone Numbers"
+msgstr ""
+
+#. Label of the siem_port (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:641
+msgid "Port"
+msgstr ""
+
+#. Description of the 'Seq' (Int) field in DocType 'Wolf Journal Entry'
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:30
+msgid "Position in the chain; 0 until the chaining job signs the entry (within a minute)."
+msgstr ""
+
+#. Label of the postmortem (Link) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:34
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:463
+msgid "Postmortem"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:42
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:38
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:64
+msgid "Preview"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:90
+#, python-brace-format
+msgid "Preview: {0}. Nothing is written until you apply."
+msgstr ""
+
+#. Label of the prev_mac (Data) field in DocType 'Wolf Journal Entry'
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:98
+msgid "Previous MAC"
+msgstr ""
+
+#. Label of the privileged_roles (Small Text) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:368
+msgid "Privileged Roles"
+msgstr ""
+
+#. Description of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:5
+msgid "Progress of the metric rollup job, one row per resolution."
+msgstr ""
+
+#: dodock_wolf/api/actions.py:104
+msgid "Proposed response"
+msgstr ""
+
+#. Label of the event_section (Section Break) field in DocType 'Wolf Outbox'
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:78
+msgid "Protocol event"
+msgstr ""
+
+#. Label of the public_title (Data) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:471
+msgid "Public Title"
+msgstr ""
+
+#. Label of the public_url (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:776
+msgid "Public Url"
+msgstr ""
+
+#. Description of the 'Slug' (Data) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:30
+msgid "Public address: /wolf-status/&lt;slug&gt;. Lowercase letters, digits and dashes. Rename the document to change it."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.js:11
+#, python-brace-format
+msgid "Public at {0}"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:58
+msgid "Published"
+msgstr ""
+
+#. Label of the push_interval (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:209
+msgid "Push Interval"
+msgstr ""
+
+#. Label of the queued_at (Datetime) field in DocType 'Wolf Digest Item'
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:74
+msgid "Queued At"
+msgstr ""
+
+#. Description of the 'Agent Silence Minutes' (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:213
+msgid "Raise a warning event when an agent has not pushed for this long."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:39
+msgid "Range"
+msgstr ""
+
+#. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
+msgid "Raven"
+msgstr ""
+
+#. Label of the raven_channel (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:81
+msgid "Raven Channel"
+msgstr ""
+
+#. Description of the 'Raven Channel' (Data) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:78
+msgid "Raven Channel ID (name of the Raven Channel document)."
+msgstr ""
+
+#. Label of the raw_retention_hours (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:730
+msgid "Raw Metric Retention (hours)"
+msgstr ""
+
+#. Description of the 'Raw Metric Retention (hours)' (Int) field in DocType
+#. 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:727
+msgid "Raw metric samples are kept this long, then only their 1-minute and 1-hour rollups. Samples not rolled up yet are never purged."
+msgstr ""
+
+#. Description of the 'CrowdSec' (Section Break) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:546
+msgid "Read the decisions of a CrowdSec Local API, send it Wolf's detections and the blocks a Wolf Manager approved. See docs/cyber.md (step 4)."
+msgstr ""
+
+#. Label of the reason (Small Text) field in DocType 'Wolf Response Action'
+#. Label of the reason (Data) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:149
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:27
+msgid "Reason"
+msgstr ""
+
+#. Description of the 'Webhook URL' (Data) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:70
+#, python-brace-format
+msgid "Receives a generic JSON body ({text, incident}). Use the Slack or Mattermost types for their native formats."
+msgstr ""
+
+#. Label of the recipients (Small Text) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:66
+msgid "Recipients"
+msgstr ""
+
+#. Label of the ref_name (Data) field in DocType 'Wolf Journal Entry'
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:68
+msgid "Record"
+msgstr ""
+
+#. Label of the ref_doctype (Data) field in DocType 'Wolf Journal Entry'
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:62
+msgid "Record Type"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:22
+msgid "Refresh"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:38
+msgid "Regenerate token"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:68
+msgid "Register"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.js:16
+msgid "Register the satellite site again (Wolf Settings → Register with central site); it cannot take a pasted secret."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:44
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:50
+msgid "Register with central site"
+msgstr ""
+
+#: dodock_wolf/satellite.py:234
+msgid "Register with the central site first"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:74
+#, python-brace-format
+msgid "Registered as {0}"
+msgstr ""
+
+#. Label of the registration_token (Password) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:62
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:202
+msgid "Registration Token"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:47
+msgid "Regulatory report"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:100
+msgid "Regulatory report draft"
+msgstr ""
+
+#. Label of the regulatory_section (Section Break) field in DocType 'Wolf
+#. Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:306
+msgid "Regulatory reporting (NIS2 / DORA / GDPR)"
+msgstr ""
+
+#. Label of the related_section (Section Break) field in DocType 'Wolf
+#. Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:439
+msgid "Related"
+msgstr ""
+
+#. Description of the 'Flag unusual data exports' (Check) field in DocType
+#. 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:379
+msgid "Report exports, Data Export, bulk PDFs and list reads, counted per user and hour. An event when a user's hour is far above their largest hour of the last 14 days (critical at 20x, or without any history), once past the floor below."
+msgstr ""
+
+#. Description of the 'Action' (Data) field in DocType 'Wolf Delivery'
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:52
+msgid "Request sent, e.g. trigger / acknowledge / resolve for PagerDuty."
+msgstr ""
+
+#. Label of the require_recent_deployment (Check) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:367
+msgid "Require Recent Deployment"
+msgstr ""
+
+#. Label of the resolution (Data) field in DocType 'Wolf Rollup State'
+#: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:20
+msgid "Resolution"
+msgstr ""
+
+#. Label of the resolution (Int) field in DocType 'Wolf Metric Rollup'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:38
+msgid "Resolution (seconds)"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:24
+msgid "Resolve"
+msgstr ""
+
+#. Label of the resolve_after_evaluations (Int) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:298
+msgid "Resolve After Evaluations"
+msgstr ""
+
+#. Label of the resolve_threshold (Float) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:315
+msgid "Resolve Threshold"
+msgstr ""
+
+#: dodock_wolf/wolf/workflow.py:316
+msgid "Resolve the incident before writing its postmortem."
+msgstr ""
+
+#. Description of the 'Auto Resolve' (Check) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:389
+msgid "Resolve the incident when the condition clears."
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:89
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:74
+msgid "Resolved"
+msgstr ""
+
+#. Label of the resolved_at (Datetime) field in DocType 'Wolf Incident'
+#. Label of the resolved_at (Datetime) field in DocType 'Wolf Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:147
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:82
+msgid "Resolved At"
+msgstr ""
+
+#. Label of the resolved_by (Data) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:153
+msgid "Resolved By"
+msgstr ""
+
+#. Description of the 'Show History Days' (Int) field in DocType 'Wolf Status
+#. Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:82
+msgid "Resolved incidents of the last N days (0 to 90)."
+msgstr ""
+
+#. Description of the 'Resolve Threshold' (Float) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:312
+msgid "Resolves once the condition no longer holds against this value."
+msgstr ""
+
+#. Description of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:5
+msgid "Restricts a Wolf User to some sites, benches or hosts. A user with no row sees everything; with rows, only records whose site, bench or host matches one of them. Wolf Managers and System Managers are never restricted."
+msgstr ""
+
+#. Label of the result (Small Text) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:154
+msgid "Result"
+msgstr ""
+
+#. Label of the retention_section (Section Break) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:723
+msgid "Retention"
+msgstr ""
+
+#. Label of the done_until (Datetime) field in DocType 'Wolf Rollup State'
+#: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:29
+msgid "Rolled Up Until"
+msgstr ""
+
+#. Label of the matrix_room_id (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:103
+msgid "Room ID"
+msgstr ""
+
+#. Label of the root_cause (Text Editor) field in DocType 'Wolf Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:145
+msgid "Root Cause"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.js:7
+msgid "Rotate secret"
+msgstr ""
+
+#. Label of the pagerduty_routing_key (Password) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:220
+msgid "Routing Key"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:67
+#, python-brace-format
+msgid "Row {0} ({1}): set {2}"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:72
+#, python-brace-format
+msgid "Row {0} ({1}): {2} must start with http:// or https://"
+msgstr ""
+
+#. Label of the last_run_rows (Int) field in DocType 'Wolf Rollup State'
+#: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:46
+msgid "Rows Written In Last Run"
+msgstr ""
+
+#. Label of the rule_name (Data) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:86
+msgid "Rule Name"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:31
+msgid "Rules are matched by name; a field the file leaves out goes back to its default. Rules not in the file are left alone. Channel secrets are never in a file: a channel keeps its stored one."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:54
+msgid "Rules imported"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:33
+msgid "Run on each host, as root:"
+msgstr ""
+
+#. Label of the digest (Data) field in DocType 'Wolf Journal Entry'
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:92
+msgid "SHA-256 of content"
+msgstr ""
+
+#. Label of the siem_section (Section Break) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:621
+msgid "SIEM export (syslog)"
+msgstr ""
+
+#. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
+msgid "SMS"
+msgstr ""
+
+#. Description of the 'Secret Hash' (Data) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:62
+msgid "Salted hash of the agent secret. The secret itself is shown once, when the agent registers or the secret is rotated, and is not stored."
+msgstr ""
+
+#. Label of the sequence_entity (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:230
+msgid "Same"
+msgstr ""
+
+#. Label of the duplicate_of (Link) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:121
+msgid "Same Finding As"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:49
+#, python-brace-format
+msgid "Same must be one of {0}"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:57
+msgid "Samples"
+msgstr ""
+
+#. Label of the satellite_id (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:143
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:145
+msgid "Satellite ID"
+msgstr ""
+
+#. Label of the satellite_secret (Password) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:150
+msgid "Satellite Secret"
+msgstr ""
+
+#. Description of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:5
+msgid "Satellite mode: local signals waiting to be pushed to the central Wolf site. Rows are deleted once accepted."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:12
+msgid "Satellite mode: register with the central site to start forwarding."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:76
+msgid "Save to start the clocks."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence_list.js:9
+msgid "Scheduled"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:158
+msgid "Scheduler failures, errors, logins, privileged role grants and migrations on this site are forwarded to the central Wolf site. Incidents, rules and the timeline live there."
+msgstr ""
+
+#. Label of the scope_section (Section Break) field in DocType 'Wolf Event'
+#. Label of the scope_section (Section Break) field in DocType 'Wolf Incident'
+#. Label of the scope_section (Section Break) field in DocType 'Wolf
+#. Postmortem'
+#. Label of the scope_section (Section Break) field in DocType 'Wolf Silence'
+#. Label of the scope_type (Select) field in DocType 'Wolf User Scope'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:129
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:165
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:95
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:78
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:30
+msgid "Scope"
+msgstr ""
+
+#. Label of the scope_section (Section Break) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:321
+msgid "Scope filters"
+msgstr ""
+
+#. Description of the 'Push Interval' (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:206
+msgid "Seconds between agent pushes (sent back to agents)."
+msgstr ""
+
+#. Label of the sms_secret (Password) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:204
+msgid "Secret"
+msgstr ""
+
+#. Label of the secret_hash (Data) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:66
+msgid "Secret Hash"
+msgstr ""
+
+#. Label of the secret_issued_at (Datetime) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:75
+msgid "Secret Issued At"
+msgstr ""
+
+#: dodock_wolf/public/js/wolf.js:8
+msgid "Security"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:103
+msgid "Security events"
+msgstr ""
+
+#. Description of the 'Send detections' (Check) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:588
+msgid "Security events with an IP, as CrowdSec alerts (scenario dodock-wolf/<category>). Past events are not replayed."
+msgstr ""
+
+#. Label of the crowdsec_send_detections (Check) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:591
+msgid "Send detections"
+msgstr ""
+
+#. Description of the 'SIEM export (syslog)' (Section Break) field in DocType
+#. 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:622
+msgid "Send security events, and the journal, to UniSOC, Wazuh, Graylog or any syslog collector: RFC 5424 carrying CEF or OCSF JSON."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:64
+msgid "Send test notification"
+msgstr ""
+
+#. Label of the siem_journal (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:718
+msgid "Send the journal"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:90
+msgid "Sent"
+msgstr ""
+
+#. Label of the use_resolve_threshold (Check) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:308
+msgid "Separate Resolve Threshold"
+msgstr ""
+
+#. Label of the seq (Int) field in DocType 'Wolf Journal Entry'
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:27
+msgid "Seq"
+msgstr ""
+
+#. Label of the sequence_section (Section Break) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:197
+msgid "Sequence condition"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:47
+msgid "Sequence rules need first and then event categories"
+msgstr ""
+
+#. Description of the 'Flag risky application changes' (Check) field in DocType
+#. 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:372
+msgid "Server and Client Scripts that can run new code, System Console runs, permission rule and Role Profile changes, weakened System Settings (2FA, password policy, lockout, sessions), API keys generated and Webhooks to a new host."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:27
+msgid "Set both Active From and Active To, or neither"
+msgstr ""
+
+#. Description of the 'Central URL' (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:125
+msgid "Set by Register with central site."
+msgstr ""
+
+#. Description of the 'Secret Issued At' (Datetime) field in DocType 'Wolf
+#. Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:72
+msgid "Set each time the agent registers or the secret is rotated."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.js:17
+msgid "Set it as <code>agent_secret</code> in <code>/etc/wolf-agent/config.json</code> on the host and restart <code>wolf-agent</code>, or run <code>wolf-agent register</code> again."
+msgstr ""
+
+#: dodock_wolf/api/siem.py:172
+msgid "Set the SIEM host first."
+msgstr ""
+
+#. Description of the 'Aware since (DORA)' (Datetime) field in DocType 'Wolf
+#. Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:372
+msgid "Set to now when the flag is ticked. The initial notification is due 24 h after this at the latest."
+msgstr ""
+
+#. Description of the 'Classified as major at' (Datetime) field in DocType
+#. 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:379
+msgid "Set to now when the flag is ticked. The initial notification is due 4 h after the classification (and within 24 h of awareness)."
+msgstr ""
+
+#. Label of a Card Break in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:104
+msgid "Setup"
+msgstr ""
+
+#. Label of the setup_checked_at (Datetime) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:163
+msgid "Setup Checked At"
+msgstr ""
+
+#. Label of the setup_checks (Code) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:181
+msgid "Setup Checks"
+msgstr ""
+
+#. Label of the setup_failed (Int) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:169
+msgid "Setup Checks Failed"
+msgstr ""
+
+#. Label of the setup_warnings (Int) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:175
+msgid "Setup Warnings"
+msgstr ""
+
+#. Label of the setup_section (Section Break) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:158
+msgid "Setup checks"
+msgstr ""
+
+#. Label of the severity (Select) field in DocType 'Wolf Alert Rule'
+#. Label of the severity (Data) field in DocType 'Wolf Digest Item'
+#. Label of the severity (Select) field in DocType 'Wolf Event'
+#. Label of the severity (Select) field in DocType 'Wolf Incident'
+#. Label of the severity (Data) field in DocType 'Wolf Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:117
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:36
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:62
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:98
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:68
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:29
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:37
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:62
+msgid "Severity"
+msgstr ""
+
+#. Description of the 'Registration Token' (Password) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:199
+msgid "Shared secret that `wolf-agent register --token` must present. Leave empty to disable new registrations."
+msgstr ""
+
+#. Description of the 'Description' (Small Text) field in DocType 'Wolf Status
+#. Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:71
+msgid "Short public text under the title."
+msgstr ""
+
+#. Label of the show_history_days (Int) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:85
+msgid "Show History Days"
+msgstr ""
+
+#. Description of the 'Public Title' (Data) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:468
+msgid "Shown on public status pages instead of a generic \"Degraded performance\" / \"Service disruption\". Never put host names or internal details here."
+msgstr ""
+
+#. Label of the signal_type (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:104
+msgid "Signal Type"
+msgstr ""
+
+#. Label of a Card Break in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:18
+msgid "Signals"
+msgstr ""
+
+#. Label of the nis2_significant (Check) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:313
+msgid "Significant incident (NIS2 Art. 23)"
+msgstr ""
+
+#. Label of the silence (Link) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:236
+msgid "Silence"
+msgstr ""
+
+#. Label of the silence_reported (Check) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:152
+msgid "Silence Reported"
+msgstr ""
+
+#. Label of the silenced (Check) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:230
+msgid "Silenced"
+msgstr ""
+
+#: dodock_wolf/www/wolf_status.html:42
+msgid "Since"
+msgstr ""
+
+#. Label of the site (Data) field in DocType 'Wolf Event'
+#. Label of the site (Data) field in DocType 'Wolf Incident'
+#. Label of the site (Data) field in DocType 'Wolf Metric Rollup'
+#. Label of the site (Data) field in DocType 'Wolf Metric Sample'
+#. Label of the site (Data) field in DocType 'Wolf Outbox'
+#. Label of the site (Data) field in DocType 'Wolf Postmortem'
+#. Label of the site (Data) field in DocType 'Wolf Response Action'
+#. Label of the site (Data) field in DocType 'Wolf Silence'
+#. Label of the site (Data) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:157
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:191
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:71
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:62
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:40
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:102
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:104
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:104
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:56
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:25
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:34
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:62
+msgid "Site"
+msgstr ""
+
+#. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
+msgid "Slack"
+msgstr ""
+
+#. Description of the 'Incoming Webhook URL' (Password) field in DocType 'Wolf
+#. Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgid "Slack: app → Incoming Webhooks. Mattermost: Integrations → Incoming Webhooks. Stored encrypted: the URL is the credential."
+msgstr ""
+
+#. Label of the slug (Data) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:34
+msgid "Slug"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.py:20
+msgid "Slug must contain letters or digits."
+msgstr ""
+
+#. Label of the source (Select) field in DocType 'Wolf Entity Alias'
+#. Label of the source (Data) field in DocType 'Wolf Event'
+#. Label of the source (Select) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:47
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:69
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:64
+msgid "Source"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:242
+msgid "Split"
+msgstr ""
+
+#. Label of the split_from (Link) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:452
+msgid "Split From"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:226
+msgid "Split events into a new incident"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:31
+msgid "Split…"
+msgstr ""
+
+#. Description of the 'Label Key' (Data) field in DocType 'Wolf Metric Sample'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:65
+msgid "Stable string form of labels, e.g. mount=/"
+msgstr ""
+
+#. Label of the started_at (Datetime) field in DocType 'Wolf Incident'
+#. Label of the started_at (Datetime) field in DocType 'Wolf Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:123
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:75
+msgid "Started At"
+msgstr ""
+
+#. Label of the starts_at (Datetime) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:35
+msgid "Starts At"
+msgstr ""
+
+#. Label of the status (Select) field in DocType 'Wolf Agent'
+#. Label of the status_section (Section Break) field in DocType 'Wolf Alert
+#. Rule'
+#. Label of the status (Select) field in DocType 'Wolf Incident'
+#. Label of the status (Select) field in DocType 'Wolf Postmortem'
+#. Label of the status (Select) field in DocType 'Wolf Postmortem Action Item'
+#. Label of the status (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:47
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:436
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:90
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:88
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:57
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:39
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:52
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:149
+msgid "Status"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:72
+msgid "Still Open"
+msgstr ""
+
+#. Label of the value_sum (Float) field in DocType 'Wolf Metric Rollup'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:92
+msgid "Sum"
+msgstr ""
+
+#. Label of the summary (Small Text) field in DocType 'Wolf Incident'
+#. Label of the summary (Data) field in DocType 'Wolf Journal Entry'
+#. Label of the summary (Text Editor) field in DocType 'Wolf Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:264
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:51
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:135
+msgid "Summary"
+msgstr ""
+
+#. Name of a role
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:203
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:486
+#: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:71
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:112
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:92
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:72
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:195
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:56
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:496
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:122
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:133
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:94
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:102
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:192
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:174
+#: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:66
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:804
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:123
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:111
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:58
+msgid "System Manager"
+msgstr ""
+
+#. Description of the 'Journal Retention Days' (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:761
+msgid "Tamper-evident journal entries older than this are removed every night, after a signed purge record that verification checks. 0 keeps them forever. Entries the SIEM export has not sent yet are kept."
+msgstr ""
+
+#. Label of the target (Data) field in DocType 'Wolf Delivery'
+#. Label of the target (Data) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:78
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:77
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:140
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:43
+msgid "Target"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:194
+msgid "Target incident"
+msgstr ""
+
+#. Description of the 'Gateway URL' (Data) field in DocType 'Wolf Alert
+#. Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:169
+#, python-brace-format
+msgid "Template with {to}, {text} and {secret}, e.g. https://sms.example.com/send?to={to}&msg={text}. Values are URL-encoded."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:76
+msgid "Test notification"
+msgstr ""
+
+#. Description of the 'Local API URL' (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:556
+msgid "The Local API, e.g. http://127.0.0.1:8080."
+msgstr ""
+
+#. Description of the 'Wazuh API URL' (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:515
+msgid "The Wazuh manager's API, for example https://wazuh-manager:55000."
+msgstr ""
+
+#. Description of the 'Setup Checks' (Code) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:184
+msgid "The agent's own `wolf-agent doctor` run, every hour: what this host gives it and what to fix."
+msgstr ""
+
+#: dodock_wolf/satellite.py:195
+#, python-brace-format
+msgid "The central site refused the registration (HTTP {0}): {1}"
+msgstr ""
+
+#: dodock_wolf/satellite.py:183
+msgid "The central site's registration token is required"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.js:9
+msgid "The current secret stops working now. The new one is shown once and is not stored. Continue?"
+msgstr ""
+
+#. Description of the 'Intermediate report due by' (Datetime) field in DocType
+#. 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:349
+msgid "The deadline the CSIRT or the authority gave, if any."
+msgstr ""
+
+#. Description of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:5
+msgid "The entities of each security event (IP, host, site, user), normalised whatever the source: what makes Wolf, Suricata and Wazuh events searchable by the same IP or host (wolf/entities.py). Written at ingest."
+msgstr ""
+
+#. Description of the 'Joined by IP or User' (Check) field in DocType 'Wolf
+#. Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:111
+msgid "The event joined its incident by sharing a public IP or an e-mail user with it, not as a rule's evidence. A rule that matches it takes it back."
+msgstr ""
+
+#. Description of the 'Is' (Data) field in DocType 'Wolf Entity Alias'
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:40
+msgid "The host or site name Wolf uses."
+msgstr ""
+
+#. Description of the 'Intermediate report sent at' (Datetime) field in DocType
+#. 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:392
+msgid "The latest one: an updated intermediate report moves the final report's deadline."
+msgstr ""
+
+#. Description of the 'Alias' (Data) field in DocType 'Wolf Entity Alias'
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:31
+msgid "The other name: an IP address, a Wazuh agent name, a domain."
+msgstr ""
+
+#. Description of the 'Behind Proxy' (Data) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:101
+msgid "The proxy this host's web traffic comes through (a Press app server's proxy_ip), as its agent reports it. Web attackers are blocked on the proxy, not here."
+msgstr ""
+
+#. Description of the 'Within Minutes' (Int) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:235
+msgid "The second event at most this long after the first."
+msgstr ""
+
+#. Label of the then_categories (Small Text) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:222
+msgid "Then Event Categories"
+msgstr ""
+
+#: dodock_wolf/api/agent.py:27
+msgid "This Wolf site is a satellite: register with its central site instead"
+msgstr ""
+
+#: dodock_wolf/wolf/workflow.py:154
+#, python-brace-format
+msgid "This event already belongs to incident {0}."
+msgstr ""
+
+#: dodock_wolf/api/incident_view.py:296
+#, python-brace-format
+msgid "This incident is {0} now: refresh to see what changed."
+msgstr ""
+
+#: dodock_wolf/api/actions.py:36 dodock_wolf/api/actions.py:99
+msgid "This incident no longer exists."
+msgstr ""
+
+#: dodock_wolf/api/incident_view.py:293 dodock_wolf/wolf/workflow.py:240
+#, python-brace-format
+msgid "This incident was merged into {0}."
+msgstr ""
+
+#: dodock_wolf/wolf/workflow.py:314
+#, python-brace-format
+msgid "This incident was merged into {0}: write the postmortem there."
+msgstr ""
+
+#: dodock_wolf/api/actions.py:31 dodock_wolf/api/actions.py:95
+msgid "This link has expired. Open the incident in Wolf instead."
+msgstr ""
+
+#: dodock_wolf/api/actions.py:32 dodock_wolf/api/actions.py:96
+msgid "This link is not valid."
+msgstr ""
+
+#: dodock_wolf/www/wolf_status.html:73
+msgid "This page refreshes every minute."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:54
+msgid "This site becomes a satellite: it keeps capturing its scheduler failures, errors, logins and migrations, and forwards them to the central Wolf site instead of storing them."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:157
+#, python-brace-format
+msgid "This site is a satellite of {0}"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:9
+#, python-brace-format
+msgid "This site is a satellite of {0}: its signals are forwarded there."
+msgstr ""
+
+#: dodock_wolf/satellite.py:231
+msgid "This site is not in satellite mode"
+msgstr ""
+
+#. Label of the threat_section (Section Break) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:442
+msgid "Threat intelligence and deception"
+msgstr ""
+
+#. Label of the condition_section (Section Break) field in DocType 'Wolf Alert
+#. Rule'
+#. Label of the threshold (Float) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:243
+msgid "Threshold"
+msgstr ""
+
+#. Label of the timeline_section (Section Break) field in DocType 'Wolf
+#. Incident'
+#. Label of the timeline_html (HTML) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:259
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:129
+msgid "Timeline"
+msgstr ""
+
+#. Label of the timeline_padding_minutes (Int) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:274
+msgid "Timeline Padding Minutes"
+msgstr ""
+
+#. Label of the timeline_section (Section Break) field in DocType 'Wolf
+#. Postmortem'
+#. Label of the timeline_snapshot (Text Editor) field in DocType 'Wolf
+#. Postmortem'
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:167
+msgid "Timeline Snapshot"
+msgstr ""
+
+#: dodock_wolf/www/wolf_status.html:73
+#, python-brace-format
+msgid "Times in {0}."
+msgstr ""
+
+#. Label of the timestamp (Datetime) field in DocType 'Wolf Event'
+#. Label of the timestamp (Datetime) field in DocType 'Wolf Metric Sample'
+#. Label of the timestamp (Datetime) field in DocType 'Wolf Outbox'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:79
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:37
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:51
+msgid "Timestamp"
+msgstr ""
+
+#. Description of the 'Max Clock Skew (seconds)' (Int) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:220
+msgid "Timestamps further in the future than this are clamped to the server time on ingest. 0 disables."
+msgstr ""
+
+#. Label of the timing_section (Section Break) field in DocType 'Wolf Alert
+#. Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:350
+msgid "Timing"
+msgstr ""
+
+#. Label of the title (Data) field in DocType 'Wolf Digest Item'
+#. Label of the title (Data) field in DocType 'Wolf Event'
+#. Label of the title (Data) field in DocType 'Wolf Incident'
+#. Label of the title (Data) field in DocType 'Wolf Outbox'
+#. Label of the title (Data) field in DocType 'Wolf Postmortem'
+#. Label of the title (Data) field in DocType 'Wolf Status Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:41
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:36
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:78
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:25
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:37
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:25
+msgid "Title"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:15
+msgid "To Date"
+msgstr ""
+
+#. Description of the 'Application Token' (Password) field in DocType 'Wolf
+#. Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json
+msgid "Token of a Gotify application (Apps → Create application)."
+msgstr ""
+
+#: dodock_wolf/wolf/rate.py:41
+#, python-brace-format
+msgid "Too many pushes from agent {0}: limit is {1} per minute, retry later"
+msgstr ""
+
+#. Label of the ntfy_topic (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:127
+msgid "Topic"
+msgstr ""
+
+#. Label of the siem_transport (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:649
+msgid "Transport"
+msgstr ""
+
+#. Description of the 'Transport' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:646
+msgid "UDP may drop or cut messages, and Wolf cannot tell: prefer TCP or TLS."
+msgstr ""
+
+#: dodock_wolf/satellite.py:204
+#, python-brace-format
+msgid "Unexpected answer from {0}: is Dodock Wolf installed there?"
+msgstr ""
+
+#: dodock_wolf/api/incident_view.py:288
+#, python-brace-format
+msgid "Unknown action {0}"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:21
+#, python-brace-format
+msgid "Unknown aggregation {0}"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:17
+#, python-brace-format
+msgid "Unknown operator {0}"
+msgstr ""
+
+#: dodock_wolf/api/incident_view.py:320
+#, python-brace-format
+msgid "Unknown status filter {0}"
+msgstr ""
+
+#: dodock_wolf/api/explore.py:35
+#, python-brace-format
+msgid "Unknown {0} {1}"
+msgstr ""
+
+#. Description of the 'Last Seen' (Datetime) field in DocType 'Wolf API Key IP'
+#: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:55
+msgid "Updated at most once a day per key and address."
+msgstr ""
+
+#. Description of the 'Aggregation' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json
+msgid "Use <b>min</b> for “value stayed above the threshold for the whole window”, <b>sum</b> for counters like http_5xx."
+msgstr ""
+
+#. Label of the crowdsec_enabled (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:552
+msgid "Use CrowdSec"
+msgstr ""
+
+#. Label of the ip_reputation_enabled (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:449
+msgid "Use IP reputation lists"
+msgstr ""
+
+#. Label of the user (Link) field in DocType 'Wolf API Key IP'
+#. Label of the user (Data) field in DocType 'Wolf Journal Entry'
+#. Label of the user (Link) field in DocType 'Wolf User Scope'
+#: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:29
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:75
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:19
+msgid "User"
+msgstr ""
+
+#: dodock_wolf/api/response.py:222
+#, python-brace-format
+msgid "User {0} does not exist on this site."
+msgstr ""
+
+#. Description of the 'Acknowledged By' (Data) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:132
+msgid "User, email address the alert link was sent to, or \"link\"."
+msgstr ""
+
+#. Label of the value (Data) field in DocType 'Wolf Event Entity'
+#. Label of the value (Float) field in DocType 'Wolf Metric Sample'
+#. Label of the value (Data) field in DocType 'Wolf User Scope'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:57
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:33
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:31
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:40
+msgid "Value"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.py:15
+msgid "Value is required"
+msgstr ""
+
+#. Label of the values_section (Section Break) field in DocType 'Wolf Metric
+#. Rollup'
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:82
+msgid "Values"
+msgstr ""
+
+#. Label of the verify_tls (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:66
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:136
+msgid "Verify TLS"
+msgstr ""
+
+#. Label of the wazuh_verify_tls (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:539
+msgid "Verify Wazuh TLS Certificate"
+msgstr ""
+
+#. Label of the siem_verify_tls (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:657
+msgid "Verify the collector's certificate"
+msgstr ""
+
+#. Description of the 'Export Factor' (Float) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:395
+msgid "Warning when a user's hour is this many times their largest hour of the last 14 days."
+msgstr ""
+
+#. Label of the capture_email_queue (Check) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:410
+msgid "Watch the Email Queue"
+msgstr ""
+
+#. Label of the wazuh_api_password (Password) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:531
+msgid "Wazuh API Password"
+msgstr ""
+
+#. Label of the wazuh_api_url (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:518
+msgid "Wazuh API URL"
+msgstr ""
+
+#. Label of the wazuh_api_user (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:525
+msgid "Wazuh API User"
+msgstr ""
+
+#. Label of the wazuh_ar_command (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:507
+msgid "Wazuh Active Response Command"
+msgstr ""
+
+#. Label of the wazuh_agent_id (Data) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:88
+msgid "Wazuh Agent ID"
+msgstr ""
+
+#. Label of the web_detection_mode (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:302
+msgid "Web Attacks"
+msgstr ""
+
+#. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
+msgid "Webhook"
+msgstr ""
+
+#. Label of the webhook_url (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:73
+msgid "Webhook URL"
+msgstr ""
+
+#. Description of the 'Overlapping detectors' (Section Break) field in DocType
+#. 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:295
+msgid "Where Wolf's own detection and Suricata or Wazuh see the same thing. own: Wolf's detector, as when it works alone. both: keep both; an event and the other source's alert about the same IP and technique are one finding (the later one is marked as such and not sent again to CrowdSec or the SIEM). external: drop Wolf's own events of that detector while the other source reports from the host; if it is quiet for an hour, Wolf's come back."
+msgstr ""
+
+#. Description of the 'Blocking' (Section Break) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:492
+msgid "Who applies a block_ip a Wolf Manager approved. wolf_agent: the Wolf Agent on the attacked host (nftables or fail2ban). wazuh: Wazuh active response on that host's Wazuh agent, through the manager's API. both: each of them. Approval, signed links and the journal are the same whichever applies it."
+msgstr ""
+
+#. Description of the 'Executor' (Select) field in DocType 'Wolf Response
+#. Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:77
+msgid "Who applies the block: the Wolf Agent on the host, or Wazuh active response."
+msgstr ""
+
+#. Description of the 'Assigned To' (Link) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:293
+msgid "Who is working on it. Assigning creates a ToDo and notifies them."
+msgstr ""
+
+#. Label of the window_minutes (Int) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:268
+msgid "Window Minutes"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:15
+msgid "Window must be at least one minute"
+msgstr ""
+
+#. Description of the 'Flag privileged logins from new countries' (Check) field
+#. in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:426
+msgid "With a GeoIP database below: flag privileged logins from a country none of the user's earlier logins came from."
+msgstr ""
+
+#. Label of the sequence_minutes (Int) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:238
+msgid "Within Minutes"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:51
+msgid "Within Minutes must be at least one minute"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:64
+msgid "Wolf API Key IP"
+msgstr ""
+
+#. Name of a DocType
+#. Label of a Link in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:192
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:112
+msgid "Wolf Agent"
+msgstr ""
+
+#. Description of the 'Satellite ID' (Data) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:140
+msgid "Wolf Agent name of this site on the central site."
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:241
+msgid "Wolf Alert Channel"
+msgstr ""
+
+#. Description of the 'Channel Row' (Data) field in DocType 'Wolf Digest Item'
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:69
+msgid "Wolf Alert Channel row a native channel's digest is sent with (its secrets stay there)."
+msgstr ""
+
+#. Name of a DocType
+#. Label of a Link in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:475
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:64
+msgid "Wolf Alert Rule"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:104
+msgid "Wolf Delivery"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:84
+msgid "Wolf Digest Item"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:63
+msgid "Wolf Entity Alias"
+msgstr ""
+
+#. Name of a DocType
+#. Label of a Link in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:184
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:26
+msgid "Wolf Event"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:50
+msgid "Wolf Event Entity"
+msgstr ""
+
+#. Name of a DocType
+#. Label of a Link in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:485
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:46
+msgid "Wolf Incident"
+msgstr ""
+
+#. Name of a report
+#. Label of a Link in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.json:19
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:94
+msgid "Wolf Incident Metrics"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:114
+msgid "Wolf Journal Entry"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.py:17
+msgid "Wolf Journal entries cannot be deleted."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.py:14
+msgid "Wolf Journal entries cannot be edited."
+msgstr ""
+
+#. Name of a role
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:215
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:498
+#: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:77
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:119
+#: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:99
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:80
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:207
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:61
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:508
+#: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:129
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:140
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:106
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:109
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:204
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:186
+#: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:71
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:816
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:135
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:120
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:67
+msgid "Wolf Manager"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:125
+msgid "Wolf Metric Rollup"
+msgstr ""
+
+#. Name of a DocType
+#. Label of a Link in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:83
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:36
+msgid "Wolf Metric Sample"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_outbox/wolf_outbox.json:94
+msgid "Wolf Outbox"
+msgstr ""
+
+#. Label of a shortcut in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:4
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:165
+msgid "Wolf Overview"
+msgstr ""
+
+#. Name of a DocType
+#. Label of a Link in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:181
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:84
+msgid "Wolf Postmortem"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:49
+msgid "Wolf Postmortem Action Item"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:163
+msgid "Wolf Response Action"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:60
+msgid "Wolf Rollup State"
+msgstr ""
+
+#. Name of a DocType
+#. Label of a Link in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:793
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:164
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:122
+msgid "Wolf Settings"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:112
+msgid "Wolf Silence"
+msgstr ""
+
+#. Name of a DocType
+#. Label of a Link in the Dodock Wolf Workspace
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:101
+#: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:132
+msgid "Wolf Status Page"
+msgstr ""
+
+#. Name of a role
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:224
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:507
+#: dodock_wolf/dodock_wolf/doctype/wolf_delivery/wolf_delivery.json:124
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:85
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:216
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:66
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:517
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_rollup/wolf_metric_rollup.json:146
+#: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:115
+#: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:213
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:195
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:144
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:125
+msgid "Wolf User"
+msgstr ""
+
+#. Name of a DocType
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:49
+msgid "Wolf User Scope"
+msgstr ""
+
+#: dodock_wolf/api/response.py:216
+msgid "Wolf did not propose this action for this incident (or it was already approved)."
+msgstr ""
+
+#. Description of the 'Regulatory reporting (NIS2 / DORA / GDPR)' (Section
+#. Break) field in DocType 'Wolf Incident'
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:307
+msgid "Wolf tracks the deadlines; it does not decide whether the incident is reportable and sends nothing to an authority."
+msgstr ""
+
+#: dodock_wolf/public/js/wolf.js:7
+msgid "Worker failure"
+msgstr ""
+
+#: dodock_wolf/wolf/workflow.py:38
+msgid "Write a comment first."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:36
+msgid "Write postmortem"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:35
+msgid "YAML"
+msgstr ""
+
+#: dodock_wolf/api/security.py:178
+msgid "You may not see this site."
+msgstr ""
+
+#: dodock_wolf/www/wolf.py:26
+msgid "You need the Wolf User or Wolf Manager role to open Dodock Wolf."
+msgstr ""
+
+#. Option for the 'Kind' (Select) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:58
+msgid "agent"
+msgstr ""
+
+#. Description of the 'Kind' (Select) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:52
+msgid "agent: a host daemon. satellite: another Frappe site forwarding its local signals (Hostname is its site name). integration: a source that pushes only when it has something to report (the Wazuh integration), never reported silent."
+msgstr ""
+
+#. Option for the 'Source' (Select) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:65
+msgid "api"
+msgstr ""
+
+#: dodock_wolf/api/actions.py:136
+#, python-brace-format
+msgid "applied: {0}"
+msgstr ""
+
+#: dodock_wolf/api/actions.py:136
+msgid "approved: the agent applies it at its next push"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:83
+msgid "as asked"
+msgstr ""
+
+#. Option for the 'Ingest Mode' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:255
+msgid "async"
+msgstr ""
+
+#. Description of the 'Ingest Mode' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:251
+msgid "async: a push is validated, queued on the short queue and stored by a worker (inline when the queue is unreachable). sync: stored during the request."
+msgstr ""
+
+#. Description of the 'Host Logins and Accounts' (Select) field in DocType
+#. 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:311
+msgid "auth.log signals (SSH, sudo, accounts) vs Wazuh alerts (hids_alert)."
+msgstr ""
+
+#. Option for the 'Aggregation' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:150
+msgid "avg"
+msgstr ""
+
+#. Option for the 'Group By' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Scope' (Select) field in DocType 'Wolf User Scope'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:277
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:31
+msgid "bench"
+msgstr ""
+
+#. Option for the 'Action' (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:36
+msgid "block_ip"
+msgstr ""
+
+#. Description of the 'Duration (hours)' (Int) field in DocType 'Wolf Response
+#. Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:110
+msgid "block_ip only: the agent's nftables entry expires by itself."
+msgstr ""
+
+#. Description of the 'Agent' (Link) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:73
+msgid "block_ip: the agent that applies it on its host."
+msgstr ""
+
+#. Option for the 'Web Attacks' (Select) field in DocType 'Wolf Settings'
+#. Option for the 'Host Logins and Accounts' (Select) field in DocType 'Wolf
+#. Settings'
+#. Option for the 'Block With' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:303
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:499
+msgid "both"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:49
+msgid "breached"
+msgstr ""
+
+#: dodock_wolf/public/js/wolf.js:45
+#, python-brace-format
+msgid "by {0}"
+msgstr ""
+
+#. Option for the 'Format' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:694
+msgid "cef"
+msgstr ""
+
+#. Option for the 'Mode' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:121
+msgid "central"
+msgstr ""
+
+#. Description of the 'Mode' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:117
+msgid "central: this site stores events, evaluates rules and opens incidents. satellite: this site only captures its local signals and forwards them to a central Wolf site."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:76
+#, python-brace-format
+msgid "changes: {0}"
+msgstr ""
+
+#: dodock_wolf/public/js/wolf.js:21
+msgid "commented"
+msgstr ""
+
+#. Option for the 'Aggregation' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:150
+msgid "count"
+msgstr ""
+
+#. Description of the 'Metric Name' (Data) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:138
+msgid "cpu_usage, memory_used_percent, disk_used_percent, load_per_core, http_5xx, http_502, queue_length ..."
+msgstr ""
+
+#. Option for the 'Severity' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Min Severity' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'First Event Min Severity' (Select) field in DocType 'Wolf
+#. Alert Rule'
+#. Option for the 'Severity' (Select) field in DocType 'Wolf Event'
+#. Option for the 'Severity' (Select) field in DocType 'Wolf Incident'
+#. Option for the 'Minimum severity sent' (Select) field in DocType 'Wolf
+#. Settings'
+#. Option for the 'Minimum severity' (Select) field in DocType 'Wolf Settings'
+#. Option for the 'Minimum Severity' (Select) field in DocType 'Wolf Status
+#. Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:118
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:191
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:63
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:99
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:599
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:93
+msgid "critical"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:174
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:45
+msgid "cron_failure"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Event'
+#. Option for the 'Source' (Select) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:174
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:45
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:65
+msgid "deployment"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:132
+msgid "digest"
+msgstr ""
+
+#. Option for the 'Action' (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:36
+msgid "disable_user"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:71
+msgid "due within 6 h"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:174
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:45
+msgid "error"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:77
+#, python-brace-format
+msgid "error: {0}"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:82
+msgid "estimated"
+msgstr ""
+
+#. Option for the 'Signal Type' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:105
+msgid "event"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:180
+msgid "events"
+msgstr ""
+
+#. Option for the 'Web Attacks' (Select) field in DocType 'Wolf Settings'
+#. Option for the 'Host Logins and Accounts' (Select) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:303
+msgid "external"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:71
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:134
+msgid "failed"
+msgstr ""
+
+#: dodock_wolf/api/actions.py:137
+#, python-brace-format
+msgid "failed: {0}"
+msgstr ""
+
+#. Option for the 'Body Format' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:183
+msgid "form"
+msgstr ""
+
+#. Option for the 'Same' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Group By' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Kind' (Select) field in DocType 'Wolf Entity Alias'
+#. Option for the 'Kind' (Select) field in DocType 'Wolf Event Entity'
+#. Option for the 'Scope' (Select) field in DocType 'Wolf User Scope'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:231
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:277
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:19
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:25
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:31
+msgid "host"
+msgstr ""
+
+#. Option for the 'Group By' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:277
+msgid "host_label"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:174
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:45
+msgid "host_metric_alert"
+msgstr ""
+
+#: dodock_wolf/api/agent.py:35
+msgid "hostname is required"
+msgstr ""
+
+#. Option for the 'Digest' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:57
+msgid "hourly"
+msgstr ""
+
+#. Description of the 'Digest' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:52
+msgid "hourly: batch info/warning alerts into one message per hour. Critical alerts and escalations are always sent immediately. PagerDuty channels are never digested."
+msgstr ""
+
+#. Option for the 'Severity' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Min Severity' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'First Event Min Severity' (Select) field in DocType 'Wolf
+#. Alert Rule'
+#. Option for the 'Severity' (Select) field in DocType 'Wolf Event'
+#. Option for the 'Severity' (Select) field in DocType 'Wolf Incident'
+#. Option for the 'Minimum severity sent' (Select) field in DocType 'Wolf
+#. Settings'
+#. Option for the 'Minimum severity' (Select) field in DocType 'Wolf Settings'
+#. Option for the 'Minimum Severity' (Select) field in DocType 'Wolf Status
+#. Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:118
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:191
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:63
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:99
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:599
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:93
+msgid "info"
+msgstr ""
+
+#. Option for the 'Kind' (Select) field in DocType 'Wolf Agent'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:58
+msgid "integration"
+msgstr ""
+
+#. Option for the 'Same' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Kind' (Select) field in DocType 'Wolf Event Entity'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:231
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:25
+msgid "ip"
+msgstr ""
+
+#. Description of the 'Same' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:227
+msgid "ip: the remote address, public only. user: the same user on the same site. host: the same host under any of its names."
+msgstr ""
+
+#. Option for the 'Body Format' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:183
+msgid "json"
+msgstr ""
+
+#: dodock_wolf/api/agent.py:38
+msgid "kind must be agent, satellite or integration"
+msgstr ""
+
+#. Option for the 'Aggregation' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:150
+msgid "last"
+msgstr ""
+
+#. Option for the 'Action' (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:36
+msgid "logout_sessions"
+msgstr ""
+
+#. Option for the 'Source' (Select) field in DocType 'Wolf Silence'
+#: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:65
+msgid "manual"
+msgstr ""
+
+#. Option for the 'Aggregation' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:150
+msgid "max"
+msgstr ""
+
+#. Option for the 'Signal Type' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:105
+msgid "metric"
+msgstr ""
+
+#: dodock_wolf/api/ingest.py:36
+msgid "metrics and events must be lists"
+msgstr ""
+
+#. Option for the 'Aggregation' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:150
+msgid "min"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:150
+msgid "never forwarded"
+msgstr ""
+
+#. Option for the 'Framing' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:673
+msgid "newline"
+msgstr ""
+
+#. Description of the 'Web Attacks' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:299
+msgid "nginx web probes (web_attack_probe) vs Suricata alerts (network_ids_alert)."
+msgstr ""
+
+#. Description of the 'Source' (Data) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:66
+msgid "nginx, frappe.web, scheduler, worker, sshd, frappe, wolf ..."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:142
+msgid "no central site yet"
+msgstr ""
+
+#. Option for the 'Digest' (Select) field in DocType 'Wolf Alert Channel'
+#. Option for the 'Group By' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Message header' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:57
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:277
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:682
+msgid "none"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule_list.js:78
+#, python-brace-format
+msgid "note: {0}"
+msgstr ""
+
+#. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
+msgid "ntfy"
+msgstr ""
+
+#. Label of the ntfy_token (Password) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:135
+msgid "ntfy Access Token"
+msgstr ""
+
+#. Label of the ntfy_server (Data) field in DocType 'Wolf Alert Channel'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:120
+msgid "ntfy Server URL"
+msgstr ""
+
+#. Option for the 'Format' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:694
+msgid "ocsf"
+msgstr ""
+
+#. Option for the 'Framing' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:673
+msgid "octet-counting"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:134
+msgid "ok"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:196
+msgid "online"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:71
+msgid "open"
+msgstr ""
+
+#. Option for the 'Web Attacks' (Select) field in DocType 'Wolf Settings'
+#. Option for the 'Host Logins and Accounts' (Select) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:303
+msgid "own"
+msgstr ""
+
+#. Option for the 'Action' (Select) field in DocType 'Wolf Response Action'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:36
+msgid "revoke_api_keys"
+msgstr ""
+
+#. Option for the 'Message header' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:682
+msgid "rfc5424"
+msgstr ""
+
+#. Description of the 'Message header' (Select) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:678
+msgid "rfc5424: a syslog header before each message (rsyslog, syslog-ng, Graylog). none: the bare JSON or CEF, which Wazuh decodes (OCSF, newline framing over TCP; see docs/siem.md)."
+msgstr ""
+
+#: dodock_wolf/public/js/wolf.js:46
+msgid "same finding as"
+msgstr ""
+
+#. Option for the 'Kind' (Select) field in DocType 'Wolf Agent'
+#. Option for the 'Mode' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:58
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:121
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:199
+msgid "satellite"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:174
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:45
+msgid "security"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:71
+msgid "sent"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:72
+msgid "sent late"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:72
+msgid "sent on time"
+msgstr ""
+
+#. Option for the 'Signal Type' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:105
+msgid "sequence"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:196
+msgid "silent"
+msgstr ""
+
+#. Option for the 'Group By' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Kind' (Select) field in DocType 'Wolf Entity Alias'
+#. Option for the 'Kind' (Select) field in DocType 'Wolf Event Entity'
+#. Option for the 'Scope' (Select) field in DocType 'Wolf User Scope'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:277
+#: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.json:19
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:25
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:31
+msgid "site"
+msgstr ""
+
+#. Option for the 'Aggregation' (Select) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:150
+msgid "sum"
+msgstr ""
+
+#. Option for the 'Ingest Mode' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:255
+msgid "sync"
+msgstr ""
+
+#. Option for the 'Transport' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:650
+msgid "tcp"
+msgstr ""
+
+#. Option for the 'Transport' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:650
+msgid "tls"
+msgstr ""
+
+#. Option for the 'Transport' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:650
+msgid "udp"
+msgstr ""
+
+#. Option for the 'Same' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Kind' (Select) field in DocType 'Wolf Event Entity'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:231
+#: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:25
+msgid "user"
+msgstr ""
+
+#. Option for the 'Severity' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Min Severity' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'First Event Min Severity' (Select) field in DocType 'Wolf
+#. Alert Rule'
+#. Option for the 'Severity' (Select) field in DocType 'Wolf Event'
+#. Option for the 'Severity' (Select) field in DocType 'Wolf Incident'
+#. Option for the 'Minimum severity sent' (Select) field in DocType 'Wolf
+#. Settings'
+#. Option for the 'Minimum severity' (Select) field in DocType 'Wolf Settings'
+#. Option for the 'Minimum Severity' (Select) field in DocType 'Wolf Status
+#. Page'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:118
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:191
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:63
+#: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:99
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:599
+#: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:93
+msgid "warning"
+msgstr ""
+
+#. Option for the 'Executor' (Select) field in DocType 'Wolf Response Action'
+#. Option for the 'Block With' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:81
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:499
+msgid "wazuh"
+msgstr ""
+
+#. Option for the 'Executor' (Select) field in DocType 'Wolf Response Action'
+#. Option for the 'Block With' (Select) field in DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:81
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:499
+msgid "wolf_agent"
+msgstr ""
+
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Alert Rule'
+#. Option for the 'Event Type' (Select) field in DocType 'Wolf Event'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:174
+#: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:45
+msgid "worker_failure"
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.py:21
+#, python-brace-format
+msgid "{0} already has {1} {2}"
+msgstr ""
+
+#: dodock_wolf/api/response.py:219
+#, python-brace-format
+msgid "{0} is a System Manager: only a System Manager can approve this."
+msgstr ""
+
+#: dodock_wolf/api/agent.py:43
+#, python-brace-format
+msgid "{0} is already registered as another kind of Wolf Agent"
+msgstr ""
+
