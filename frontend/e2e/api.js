@@ -67,7 +67,17 @@ export function fixtures() {
         bench: 'frappe-bench', host: 'bench-01', started_at: INCIDENT.started_at, resolved_at: null, merged_into: null, assigned_name: null }],
       paging: { has_more: false, next_cursor: null },
     }),
-    'dodock_wolf.api.scope.get_inventory': () => ({ hosts: [], note: '' }),
+    // one registered host and one known from telemetry alone: both states of the estate panel
+    'dodock_wolf.api.scope.get_inventory': () => ({
+      hosts: [
+        { host: 'bench-01', sources: ['agent', 'events', 'metrics'], last_seen: ago(1), benches: [
+          { bench: 'frappe-bench', sites: [{ site: 'a.example.com' }, { site: 'b.example.com' }] },
+          { bench: 'portal-bench', sites: [] }] },
+        { host: 'bench-02', sources: ['metrics'], last_seen: ago(200), benches: [], sites: [{ site: 'c.example.com' }] },
+      ],
+      unplaced_sites: [{ site: 'd.example.com' }],
+      note: 'Hosts and benches come from agent registrations and from telemetry in the window.',
+    }),
     'dodock_wolf.api.dashboard.get_monitoring': () => ({ health: null, rollups: {}, agents: [], silence_minutes: 5, mode: { mode: 'central' }, note: '' }),
     'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
     'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false, next_cursor: null }, totals: {}, truncated: {}, window: null }),

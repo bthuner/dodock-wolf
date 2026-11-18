@@ -977,3 +977,302 @@ div.wolf-table-sub {
 .wolf-note[data-tone='brand']::before {
   content: '→';
 }
+
+/* the estate: hosts, the rail to their benches, each bench's sites. One row height and one
+   midline (--estate-mid) for a host's name and its benches, so the rail meets both */
+.wolf-estate {
+  --estate-host: 15rem;
+  --estate-bench: 17rem;
+  --estate-mid: 15px;
+  --estate-rail: color-mix(in srgb, var(--wolf-muted) 40%, var(--wolf-line));
+  padding: 0;
+  overflow: hidden;
+}
+.wolf-estate-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 16px 20px 14px;
+}
+.wolf-estate-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 22px;
+  margin-top: 6px;
+}
+.wolf-estate-totals div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.wolf-estate-totals dd {
+  order: -1;
+  font-size: 1.375rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--wolf-ink);
+}
+.wolf-estate-totals dt {
+  font-size: 0.875rem;
+  color: var(--wolf-muted);
+}
+.wolf-estate-cols {
+  display: none;
+  border-top: 1px solid var(--wolf-line);
+  background: var(--wolf-well);
+  padding: 7px 20px 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--wolf-muted);
+}
+.wolf-estate-list {
+  border-top: 1px solid var(--wolf-line);
+}
+.wolf-estate-host {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  border-top: 1px solid var(--wolf-line);
+  padding: 10px 20px 12px;
+  transition: background-color 160ms ease;
+}
+.wolf-estate-host:first-child {
+  border-top: 0;
+}
+/* the host under the pointer or the keyboard lights its own rail */
+.wolf-estate-host:hover,
+.wolf-estate-host:focus-within {
+  --estate-rail: var(--wolf-brand-text);
+  background: color-mix(in srgb, var(--wolf-well) 55%, var(--wolf-surface));
+}
+.wolf-estate-name {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 4px;
+  line-height: 22px;
+}
+.wolf-estate-name a {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--wolf-ink);
+  overflow-wrap: anywhere;
+}
+.wolf-estate-name a:hover,
+.wolf-estate-benchname a:hover {
+  color: var(--wolf-brand-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* filled: an agent or a satellite registered this host. Dashed and hollow: telemetry only.
+   The line under the name says it in words */
+.wolf-estate-dot {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  margin-top: 6.5px;
+  border: 1.5px solid var(--wolf-brand-text);
+  border-radius: 999px;
+  background: var(--wolf-brand-text);
+}
+.wolf-estate-host[data-registered='no'] .wolf-estate-dot {
+  border: 1.5px dashed var(--wolf-muted);
+  background: transparent;
+}
+.wolf-estate-lead {
+  display: none;
+  flex: 1;
+  min-width: 12px;
+  margin-top: 11px;
+  border-top: 1px solid var(--estate-rail);
+  transform-origin: left;
+  animation: wolf-estate-draw 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  transition: border-color 160ms ease;
+}
+@keyframes wolf-estate-draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+.wolf-estate-meta {
+  margin: 1px 16px 0 17px;
+  font-size: 0.8rem;
+  color: var(--wolf-muted);
+}
+.wolf-estate-srcs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 16px 0 17px;
+}
+.wolf-estate-srcs li {
+  border: 1px solid var(--wolf-line);
+  border-radius: 4px;
+  padding: 0 5px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--wolf-muted);
+}
+.wolf-estate-bench {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  padding: 4px 0 8px 32px;
+}
+.wolf-estate-bench:last-child {
+  padding-bottom: 2px;
+}
+/* the branch to a bench: down the rail, then a rounded turn to its name */
+.wolf-estate-bench::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 0;
+  width: 14px;
+  height: var(--estate-mid);
+  border-left: 1px solid var(--estate-rail);
+  border-bottom: 1px solid var(--estate-rail);
+  border-bottom-left-radius: 8px;
+  transition: border-color 160ms ease;
+}
+.wolf-estate-bench:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--estate-rail);
+  transition: border-color 160ms ease;
+}
+.wolf-estate-bench[data-unknown]::before {
+  border-style: dashed;
+}
+.wolf-estate-benchname {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding-right: 16px;
+  line-height: 22px;
+}
+.wolf-estate-benchname a {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--wolf-ink);
+  overflow-wrap: anywhere;
+}
+.wolf-estate-nobench,
+.wolf-estate-none {
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 22px;
+  color: var(--wolf-muted);
+}
+.wolf-estate-bare {
+  padding-top: 4px;
+}
+.wolf-estate-count {
+  font-size: 0.75rem;
+  color: var(--wolf-muted);
+}
+.wolf-estate-sites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.wolf-estate-sites li {
+  display: flex;
+}
+.wolf-estate-site {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  border: 1px solid var(--wolf-line);
+  border-radius: 6px;
+  background: var(--wolf-surface);
+  padding: 0 8px;
+  font-size: 0.8rem;
+  color: var(--wolf-ink);
+  overflow-wrap: anywhere;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+.wolf-estate-site span {
+  color: var(--wolf-muted);
+  transition: color 140ms ease;
+}
+.wolf-estate-site:hover {
+  border-color: var(--wolf-brand-text);
+  background: color-mix(in srgb, var(--wolf-brand-text) 8%, var(--wolf-surface));
+  color: var(--wolf-brand-text);
+}
+.wolf-estate-site:hover span {
+  color: inherit;
+}
+.wolf-estate-unplaced {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--wolf-line);
+  padding: 12px 20px 14px;
+}
+.wolf-estate-empty {
+  padding: 16px 20px;
+  font-size: 0.875rem;
+  color: var(--wolf-muted);
+}
+.wolf-estate-foot {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  border-top: 1px solid var(--wolf-line);
+  padding: 10px 20px 14px;
+  font-size: 0.8rem;
+  color: var(--wolf-muted);
+}
+.wolf-estate-foot:empty {
+  display: none;
+}
+@media (min-width: 860px) {
+  .wolf-estate-cols {
+    display: grid;
+    grid-template-columns: var(--estate-host) var(--estate-bench) minmax(0, 1fr);
+  }
+  .wolf-estate-cols > :nth-child(2) {
+    padding-left: 32px;
+  }
+  .wolf-estate-host {
+    grid-template-columns: var(--estate-host) minmax(0, 1fr);
+    gap: 0;
+  }
+  .wolf-estate-lead {
+    display: block;
+  }
+  .wolf-estate-bench {
+    grid-template-columns: calc(var(--estate-bench) - 32px) minmax(0, 1fr);
+    gap: 0;
+  }
+  /* the first bench sits on the host's line: the rail arrives straight, then drops to the others */
+  .wolf-estate-bench:first-child::before {
+    left: 0;
+    top: var(--estate-mid);
+    width: 26px;
+    height: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+  .wolf-estate-bench:first-child:not(:last-child)::after {
+    top: var(--estate-mid);
+  }
+  .wolf-estate-bare {
+    padding-left: 32px;
+  }
+}

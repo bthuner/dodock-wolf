@@ -154,6 +154,58 @@ describe('DashboardPage', () => {
     expect(drawn()).toHaveLength(23)
   })
 
+  it('draws a host with its benches and sites, says where it is known from, and filters', async () => {
+    const site = (s) => ({ site: s, sources: ['agent'] })
+    const hosts = [
+      { host: 'h1', sources: ['agent', 'events', 'metrics'], last_seen: OLD, benches: [{ bench: 'erp-bench', sites: [site('a.example.com'), site('b.example.com')] }] },
+      { host: 'h2', sources: ['metrics'], benches: [{ bench: 'frappe-bench', sites: [] }], sites: [site('lost.example.com')] },
+      { host: 'h3', sources: ['agent'], benches: [] },
+      { host: 'h4', sources: ['satellite'], benches: [{ bench: 'frappe-bench', sites: [site('c.example.com')] }] },
+    ]
+    server({ 'dodock_wolf.api.scope.get_inventory': () => ({ hosts, unplaced_sites: [site('nohost.example.com')], note: 'Note.' }) })
+    const { page } = await open()
+    const panel = page.find('[aria-label="Hosts, benches and sites"]')
+    const drawn = () => panel.findAll('.wolf-estate-host')
+    expect(panel.find('.wolf-estate-totals').text()).toBe('hosts4benches3sites5')
+    expect(drawn()[0].text()).toContain('Agent registered · seen 40 min ago')
+    expect(drawn()[0].find('[aria-label="Telemetry received"]').text()).toBe('eventsmetrics')
+    // a host known from telemetry alone says so; its site with no bench is not given one
+    expect(drawn()[1].attributes('data-registered')).toBe('no')
+    expect(drawn()[1].text()).toContain('No agent registered')
+    expect(drawn()[1].text()).toContain('no site seen')
+    expect(drawn()[1].text()).toContain('bench not known')
+    expect(drawn()[2].text()).toContain('no bench seen')
+    expect(drawn()[3].text()).toContain('Known through a satellite')
+    expect(panel.text()).toContain('Sites with no known host')
+    expect(panel.find('a[href="/wolf/sites/nohost.example.com"]').exists()).toBe(true)
+    expect(panel.find('a[href="/wolf/hosts/h1/benches/erp-bench"]').exists()).toBe(true)
+
+    const input = panel.find('input[aria-label="Find a host, bench or site"]')
+    await input.setValue('B.exam')
+    expect(drawn()).toHaveLength(1)
+    expect(drawn()[0].findAll('.wolf-estate-site').map((a) => a.text())).toEqual(['b.example.com'])
+    expect(panel.text()).toContain('1 of 4 hosts match.')
+    expect(panel.text()).not.toContain('Sites with no known host')
+    await input.setValue('frappe-bench') // a bench that matches keeps all its sites
+    expect(drawn().map((h) => h.find('a').text())).toEqual(['h2', 'h4'])
+    expect(drawn()[1].text()).toContain('c.example.com')
+    await input.setValue('zzz')
+    expect(panel.text()).toContain('No host, bench or site contains “zzz”.')
+    await panel.findAll('button').find((b) => b.text() === 'Clear the filter').trigger('click')
+    expect(drawn()).toHaveLength(4)
+  })
+
+  it('draws one host on its page, without the sites that have no host', async () => {
+    const hosts = [{ host: 'h1', sources: ['agent'], benches: [{ bench: 'b1', sites: [{ site: 'a.example.com' }] }] }, { host: 'h2', sources: ['agent'], benches: [] }]
+    server({ 'dodock_wolf.api.scope.get_inventory': () => ({ hosts, unplaced_sites: [{ site: 'nohost.example.com' }], note: '' }) })
+    const { page } = await open('/hosts/h1')
+    const panel = page.find('[aria-label="Hosts, benches and sites"]')
+    expect(panel.find('h2').text()).toBe('Benches and sites on this host')
+    expect(panel.findAll('.wolf-estate-host')).toHaveLength(1)
+    expect(panel.find('.wolf-estate-totals').text()).toBe('bench1site1')
+    expect(panel.text()).not.toContain('nohost.example.com')
+  })
+
   it('scopes a bench by its host and keeps the range in the URL', async () => {
     const fetchFn = server()
     const { router } = await open('/hosts/h2/benches/frappe-bench?range=7d')
