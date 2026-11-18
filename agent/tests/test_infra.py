@@ -363,14 +363,16 @@ nginx.service                   loaded failed   failed       nginx
 
 
 class TestProcesses(unittest.TestCase):
-	def watcher(self, outputs, manager="auto"):
+	def watcher(self, outputs, manager="auto", exports=None):
+		exports = exports or {}
 		def run(args, **kw):
 			out = outputs.get(os.path.basename(args[0]))
 			if isinstance(out, Exception):
 				raise out
 			return SimpleNamespace(returncode=3, stdout=out or "", stderr="")
 
-		return processes.ProcessWatcher("h1", manager, which=lambda n: f"/usr/bin/{n}" if n in outputs else None, run=run)
+		return processes.ProcessWatcher("h1", manager, which=lambda n: f"/usr/bin/{n}" if n in outputs else None, run=run,
+		                                read_export=lambda name: exports.get(name))  # fmt: skip
 
 	def test_supervisor(self):
 		w = self.watcher({"supervisorctl": SUPERVISOR_OUT})
@@ -399,6 +401,27 @@ class TestProcesses(unittest.TestCase):
 		self.assertEqual(
 			sorted(e["payload"]["state"] for e in events), ["failed"]
 		)
+
+	def test_pilot_units_from_the_export(self):
+		# Pilot runs a bench as the bench user's systemd user units, which wolf-pilot-export (root)
+		# copies for the wolf-agent user; a socket-activated Admin waiting for its first request is not down
+		units = [{"unit": "wolf-web.service", "active": "active", "sub": "running"},
+		         {"unit": "wolf-admin.service", "active": "inactive", "sub": "dead"},
+		         {"unit": "wolf-redis_queue.service", "active": "failed", "sub": "failed"}]  # fmt: skip
+		w = self.watcher({"supervisorctl": SUPERVISOR_OUT}, exports={"wolf": {"units": units}})
+		metrics, events = w.collect([{"name": "wolf", "platform": "pilot"}, {"name": "frappe-bench"}], NOW)
+		self.assertEqual(sorted((m["bench"], m["value"], m["labels"]["manager"]) for m in metrics),
+		                 [("frappe-bench", 3, "supervisor"), ("wolf", 1, "systemd")])  # fmt: skip
+		self.assertIn(("wolf", "wolf-redis_queue.service"), [(e["bench"], e["payload"]["process"]) for e in events])
+		# no export (the helper stopped, or not a Pilot host): the bench is looked up as before
+		w = self.watcher({"systemctl": SYSTEMD_OUT})
+		metrics, _ = w.collect([{"name": "pilot-erp", "platform": "pilot"}], NOW)
+		self.assertEqual([(m["bench"], m["value"]) for m in metrics], [("pilot-erp", 2)])
+
+	def test_the_agent_is_not_a_bench_process(self):
+		out = "wolf-agent.service loaded active running Dodock Wolf observability agent\nwolf-web.service loaded failed failed web\n"
+		metrics, events = self.watcher({"systemctl": out}).collect([{"name": "wolf"}], NOW)
+		self.assertEqual([e["payload"]["process"] for e in events], ["wolf-web.service"])
 
 	def test_nothing_found(self):
 		w = self.watcher({"systemctl": SYSTEMD_OUT})

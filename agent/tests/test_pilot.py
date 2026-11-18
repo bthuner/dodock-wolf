@@ -15,6 +15,7 @@ import sys
 import tempfile
 import threading
 import unittest
+import unittest.mock
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -131,6 +132,9 @@ class TestPilotDiscovery(unittest.TestCase):
 		self.assertIn("web.error.log", b["log_files"])  # supervisor stderr_logfile=<name>.error.log
 		self.assertEqual(b["log_files"]["worker_default_short_long_0.log"], ["worker"])
 		self.assertNotIn("jwt_secret", json.dumps(b))  # secrets never land in the agent config
+		# a sandboxed bench writes Frappe's own logs to logs/workload/ (Pilot 1.0 docs/sandbox.md)
+		self.assertEqual(b["log_files"]["workload/scheduler.log"], ["scheduler"])
+		self.assertEqual(b["log_files"]["workload/frappe.web.log"], ["traceback"])
 
 	def test_glob_finds_pilot_benches(self):
 		make_pilot_bench(self.tmp.name)
@@ -165,6 +169,7 @@ class TestPilotTasks(unittest.TestCase):
 		self.tmp.cleanup()
 
 	def watcher(self, **kw):
+		kw.setdefault("export_dir", os.path.join(self.tmp.name, "export"))
 		return pilot.PilotTaskWatcher("h", self.bench, state_path=self.state, **kw)
 
 	def test_files_history_then_running_then_failed(self):
@@ -223,6 +228,32 @@ class TestPilotTasks(unittest.TestCase):
 			server.shutdown()
 			server.server_close()
 
+	def test_task_files_before_the_admin_api(self):
+		"""As the bench user the files are readable: no token is minted, so Wolf never shows as an
+		Admin session (Pilot 1.0 records every token it verifies)."""
+		add_task(self.path, "20261029-020800-bbbbbb", "migrate", "running", {"site": "a.example.test"}, NOW - timedelta(minutes=1))
+		w = self.watcher(api_url="http://127.0.0.1:9", jwt_secret=SECRET)
+		with unittest.mock.patch.object(w, "_from_api", side_effect=AssertionError("Admin API called")):
+			events = w.poll(NOW)
+		self.assertEqual([e["payload"]["pilot_command"] for e in events], ["migrate"])
+		self.assertIsNone(w._minted)
+
+	def test_tasks_from_the_export(self):
+		"""The wolf-agent user cannot read tasks/ (0700): it reads wolf-pilot-export's copy."""
+		export = os.path.join(self.tmp.name, "export")
+		bench = dict(self.bench, path=os.path.join(self.tmp.name, "unreadable"))
+		task = {"task_id": "20261118-130233-f22023", "command": "migrate", "status": "running",
+		        "started_at": iso(NOW - timedelta(minutes=1)), "args": {"site": "a.example.test"}}  # fmt: skip
+		write(os.path.join(export, "systemd-prod.json"), json.dumps({"generated_at": iso(NOW), "tasks": [task]}))
+		w = pilot.PilotTaskWatcher("h", bench, state_path=self.state, export_dir=export, api_url="http://127.0.0.1:9", jwt_secret=SECRET)
+		with unittest.mock.patch.object(w, "_from_api", side_effect=AssertionError("Admin API called")), \
+				unittest.mock.patch.object(pilot, "datetime", wraps=datetime) as clock:  # fmt: skip
+			clock.now.return_value = NOW
+			events = w.poll(NOW)
+		self.assertEqual([(e["payload"]["pilot_command"], e["site"]) for e in events], [("migrate", "a.example.test")])
+		# the helper stopped: an old copy is no source (the API, when it answers, is the last one)
+		self.assertIsNone(pilot.read_export("systemd-prod", export, now=NOW + timedelta(minutes=6)))
+
 	def test_static_token_preferred(self):
 		w = self.watcher(api_url="http://127.0.0.1:9", token="tok", jwt_secret=SECRET)
 		self.assertEqual(w._bearer(), "tok")
@@ -249,3 +280,59 @@ class TestPilotCollector(unittest.TestCase):
 
 if __name__ == "__main__":
 	unittest.main()
+
+
+class TestPilotExportHelper(unittest.TestCase):
+	"""agent/wolf-pilot-export: the tasks and unit states, nothing secret."""
+
+	@staticmethod
+	def own(tmp):
+		"""As root (CI containers) the helper reads a bench as its owner: hand the fixture to one."""
+		if os.geteuid() != 0:
+			return
+		for folder, dirs, files in os.walk(tmp):
+			for name in [folder, *(os.path.join(folder, n) for n in dirs + files)]:
+				os.chown(name, 4242, 4242)
+
+	def test_export(self):
+		import subprocess
+
+		with tempfile.TemporaryDirectory() as tmp:
+			path = make_pilot_bench(tmp)
+			add_task(path, "20261118-130233-f22023", "migrate", "failed",
+			         {"operation_id": "op", "site": "a.example.test", "admin_password": "s3cret"}, NOW, NOW,
+			         failure={"code": "migration_failed", "message": "patch x failed", "trace": "..."})  # fmt: skip
+			self.own(tmp)
+			out = os.path.join(tmp, "out")
+			helper = os.path.join(os.path.dirname(__file__), "..", "wolf-pilot-export")
+			subprocess.run([sys.executable, helper, "--root", os.path.join(tmp, "home", "*", "pilot", "benches", "*"), "--out", out],
+			               check=True, capture_output=True)  # fmt: skip
+			with open(os.path.join(out, "systemd-prod.json")) as f:
+				text = f.read()
+			data = json.loads(text)
+		(task,) = data["tasks"]
+		self.assertEqual((task["command"], task["status"], task["args"]), ("migrate", "failed", {"site": "a.example.test"}))
+		self.assertEqual(task["failure"], {"code": "migration_failed", "message": "patch x failed"})
+		for secret in ("s3cret", SECRET, "operation_id", "jwt_secret", "db_name"):
+			self.assertNotIn(secret, text)
+		self.assertEqual(data["bench"], "systemd-prod")
+
+	def test_a_bench_name_cannot_leave_the_export_folder(self):
+		import subprocess
+
+		with tempfile.TemporaryDirectory() as tmp:
+			make_pilot_bench(tmp, toml=BENCH_TOML.replace('name = "systemd-prod"', 'name = "../../escaped"'))
+			self.own(tmp)
+			out = os.path.join(tmp, "a", "b", "out")
+			helper = os.path.join(os.path.dirname(__file__), "..", "wolf-pilot-export")
+			subprocess.run([sys.executable, helper, "--root", os.path.join(tmp, "home", "*", "pilot", "benches", "*"), "--out", out],
+			               check=True, capture_output=True)  # fmt: skip
+			self.assertFalse(os.path.exists(os.path.join(tmp, "a", "escaped.json")))
+			self.assertFalse(os.path.exists(os.path.join(tmp, "escaped.json")))
+			try:
+				import tomllib  # noqa: F401  (3.11+: the helper reads the name, sees it is not the folder's)
+			except ImportError:  # older: the helper only knows the folder's name
+				self.assertIn(os.listdir(out), ([], ["systemd-prod.json"]))
+			else:
+				self.assertEqual(os.listdir(out), [], "a bench whose name is not its folder's is skipped")
+

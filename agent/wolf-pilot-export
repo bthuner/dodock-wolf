@@ -1,0 +1,227 @@
+#!/usr/bin/python3
+"""Root helper for Frappe Pilot hosts: what the Wolf agent needs from Pilot, without its secrets.
+
+Pilot keeps a bench's tasks (`tasks/`, mode 0700) and runs its processes as systemd user units
+of the bench user. The Wolf agent runs as its own `wolf-agent` user, out of the bench's reach,
+so it can read neither. This helper, run as root by wolf-pilot-export.timer, writes one file per
+bench to /var/lib/wolf-pilot-export/<bench>.json (root:wolf-agent, 0640):
+
+- `tasks`: the latest 100 tasks, with `command`, `status`, the times, `exit_code`, `failure`,
+  and of the arguments only `site` / `sites`;
+- `units`: the bench's `<bench>-*.service` user units and their state.
+
+Nothing else is copied: not bench.toml (its Admin secret), not the site configs (their database
+passwords). The bench's files are read by a child process running as the bench user: a link
+the bench user plants there (to /etc/shadow, say) reads nothing that user could not read anyway.
+A bench name that is not a plain name is skipped. Stdlib only; installed by agent/install.sh on
+a Pilot host.
+
+    wolf-pilot-export [--out DIR] [--root GLOB]
+"""
+
+import argparse
+import glob
+import grp
+import json
+import os
+import pwd
+import re
+import stat
+import subprocess
+import sys
+import tempfile
+from datetime import datetime, timezone
+
+OUT = "/var/lib/wolf-pilot-export"  # root-owned: the agent reads it, cannot swap it
+BENCHES = "/home/*/pilot/benches/*"
+MAX_TASKS = 100
+MAX_FILE = 256 * 1024  # bytes read from one meta.json or status file
+SAFE_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
+TASK_FIELDS = ("task_id", "command", "queued_at", "started_at", "finished_at", "exit_code")
+
+
+def _read(path, binary=False):
+	"""A regular file, at most MAX_FILE bytes (a FIFO or a huge file is no task)."""
+	fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+	try:
+		if not os.path.isfile(f"/proc/self/fd/{fd}"):
+			raise OSError("not a regular file")
+		data = os.read(fd, MAX_FILE + 1)
+	finally:
+		os.close(fd)
+	if len(data) > MAX_FILE:
+		raise OSError("too large")
+	return data if binary else data.decode("utf-8", "replace")
+
+
+def bench_name(path):
+	"""`[bench] name` from bench.toml (Pilot names its units after it), else the folder's name."""
+	try:
+		import tomllib  # Python 3.11+
+
+		name = (tomllib.loads(_read(os.path.join(path, "bench.toml"))).get("bench") or {}).get("name")
+		if isinstance(name, str) and name:
+			return name
+	except (ImportError, OSError, ValueError):
+		pass
+	return os.path.basename(path.rstrip("/"))
+
+
+def tasks(path):
+	root = os.path.join(path, "tasks")
+	try:
+		names = sorted((n for n in os.listdir(root) if os.path.isdir(os.path.join(root, n))), reverse=True)
+	except OSError:
+		return []
+	out = []
+	for name in names[:MAX_TASKS]:
+		try:
+			meta = json.loads(_read(os.path.join(root, name, "meta.json")))
+		except (OSError, ValueError):
+			continue
+		if not isinstance(meta, dict) or not isinstance(meta.get("command"), str):
+			continue
+		try:
+			status = _read(os.path.join(root, name, "status")).strip()[:20]
+		except OSError:
+			status = "running"  # Pilot: no status file yet means running
+		args = meta.get("args") if isinstance(meta.get("args"), dict) else {}
+		failure = meta.get("failure") if isinstance(meta.get("failure"), dict) else None
+		task = {k: meta.get(k) for k in TASK_FIELDS}
+		task.update(
+			task_id=meta.get("task_id") or name,
+			status=status,
+			args={k: args[k] for k in ("site", "sites") if k in args},
+			failure={"code": failure.get("code"), "message": failure.get("message")} if failure else None,
+		)
+		out.append(task)
+	return out
+
+
+def units(user, bench):
+	"""The bench's user units, as root asks the user's manager (`systemctl --user -M user@`)."""
+	try:
+		proc = subprocess.run(
+			["systemctl", "--user", "-M", f"{user}@", "list-units", "--type=service", "--all", "--plain",
+			 "--no-legend", "--no-pager", "--", f"{bench}-*.service"],
+			capture_output=True, text=True, timeout=15,
+		)  # fmt: skip
+	except (OSError, subprocess.SubprocessError):
+		return None
+	if proc.returncode != 0:
+		return None
+	rows = []
+	for line in proc.stdout.splitlines():
+		parts = line.lstrip("●* ").split(None, 4)
+		if len(parts) >= 4 and parts[0].endswith(".service"):
+			rows.append({"unit": parts[0], "active": parts[2], "sub": parts[3], "description": parts[4] if len(parts) > 4 else ""})
+	return rows
+
+
+def as_bench_user(uid, gid, read):
+	"""read() in a child process that runs as the bench user, its JSON result back through a pipe.
+	Not root (a test, a manual run as that user): already no more than an ordinary user, read here."""
+	if os.geteuid() != 0:
+		try:
+			return json.loads(json.dumps(read()))
+		except (OSError, ValueError):
+			return None
+	rfd, wfd = os.pipe()
+	pid = os.fork()
+	if pid == 0:  # the child: drop to the bench user for good, then read
+		os.close(rfd)
+		code = 0
+		try:
+			os.setgroups([])
+			os.setresgid(gid, gid, gid)
+			os.setresuid(uid, uid, uid)
+			with os.fdopen(wfd, "w") as out:
+				json.dump(read(), out)
+		except BaseException:
+			code = 1
+		os._exit(code)
+	os.close(wfd)
+	with os.fdopen(rfd) as pipe:
+		text = pipe.read(MAX_TASKS * 2 * MAX_FILE)
+	_, status = os.waitpid(pid, 0)
+	if status != 0:
+		return None
+	try:
+		return json.loads(text)
+	except ValueError:
+		return None
+
+
+def write(path, data, gid):
+	folder = os.path.dirname(path)
+	fd, tmp = tempfile.mkstemp(dir=folder, prefix=".export-")
+	try:
+		with os.fdopen(fd, "w") as f:
+			json.dump(data, f)
+		if os.geteuid() == 0:
+			os.chown(tmp, 0, gid)
+		os.chmod(tmp, 0o640)
+		os.replace(tmp, path)
+	except BaseException:
+		os.unlink(tmp)
+		raise
+
+
+def export_bench(path, now, out, gid):
+	"""Write one bench's export; the name of the file written, or None."""
+	if not os.path.isfile(os.path.join(path, "bench.toml")):
+		return None
+	st = os.stat(path)
+	if st.st_uid == 0:
+		return None  # a bench is a non-root user's
+	read = as_bench_user(st.st_uid, st.st_gid, lambda: {"name": bench_name(path), "tasks": tasks(path)})
+	folder = os.path.basename(path.rstrip("/"))
+	# the name Pilot gives its units, which must be the folder's (Pilot creates benches/<name>):
+	# another bench user cannot take a neighbour's name, nor a path out of the export folder
+	if not read or read.get("name") != folder or not SAFE_NAME.match(folder) or not isinstance(read.get("tasks"), list):
+		return None
+	try:
+		user = pwd.getpwuid(st.st_uid).pw_name
+	except KeyError:
+		user = None
+	data = {"generated_at": now, "bench": folder, "path": path, "user": user, "tasks": read["tasks"],
+	        "units": units(user, folder) if user else None}  # fmt: skip
+	write(os.path.join(out, f"{folder}.json"), data, gid)
+	return f"{folder}.json"
+
+
+def main():
+	parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+	parser.add_argument("--out", default=OUT)
+	parser.add_argument("--root", default=BENCHES, help="glob of the Pilot bench folders")
+	opts = parser.parse_args()
+	try:
+		gid = grp.getgrnam("wolf-agent").gr_gid
+	except KeyError:
+		gid = 0
+	os.makedirs(opts.out, mode=0o750, exist_ok=True)
+	st = os.lstat(opts.out)
+	if not stat.S_ISDIR(st.st_mode) or (os.geteuid() == 0 and st.st_uid != 0):
+		raise SystemExit(f"{opts.out} is not a folder root owns: refusing to write there")
+	if os.geteuid() == 0:
+		os.chown(opts.out, 0, gid)
+	os.chmod(opts.out, 0o750)
+	now = datetime.now(timezone.utc).isoformat()
+	seen, failed = set(), 0
+	for path in sorted(glob.glob(opts.root)):
+		try:
+			name = export_bench(path, now, opts.out, gid)
+		except Exception as e:  # one odd bench must not stop the others
+			failed += 1
+			print(f"wolf-pilot-export: {path}: {type(e).__name__}: {e}", file=sys.stderr)
+			continue
+		if name:
+			seen.add(name)
+	for old in os.listdir(opts.out):  # a bench that was dropped
+		if old.endswith(".json") and old not in seen:
+			os.unlink(os.path.join(opts.out, old))
+	return 1 if failed else 0
+
+
+if __name__ == "__main__":
+	sys.exit(main())

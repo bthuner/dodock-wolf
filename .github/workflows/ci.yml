@@ -26,7 +26,7 @@ jobs:
       - name: ruff
         run: |
           pip install ruff==0.17.3
-          ruff check --output-format=github .
+          ruff check --output-format=github . agent/wolf-pilot-export  # a script without .py
       - name: shellcheck
         run: shellcheck agent/install.sh agent/wolf-block.sh agent/wolf-block-fail2ban.sh agent/wolf-outbound-log.sh agent/wazuh/custom-dodock-wolf ci/integration.sh
 

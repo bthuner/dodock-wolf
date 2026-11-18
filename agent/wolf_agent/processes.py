@@ -12,6 +12,7 @@ import logging
 import shutil
 import subprocess
 
+from . import pilot
 from .util import event, fingerprint, metric, utc_iso
 
 log = logging.getLogger(__name__)
@@ -70,8 +71,9 @@ def owner(name, bench_names, manager):
 
 
 class ProcessWatcher:
-	def __init__(self, host, manager="auto", which=shutil.which, run=subprocess.run, timeout=10):
+	def __init__(self, host, manager="auto", which=shutil.which, run=subprocess.run, timeout=10, read_export=None):
 		self.host = host
+		self.read_export = read_export or pilot.read_export
 		self.manager = manager or "auto"
 		self.which = which
 		self.run = run
@@ -112,6 +114,8 @@ class ProcessWatcher:
 				continue
 			matched = []
 			for name, state, detail in rows:
+				if name == "wolf-agent.service":
+					continue  # this agent: not a process of a bench that happens to be called wolf
 				bench = owner(name, bench_names, manager)
 				if bench:
 					matched.append((bench, name, state, detail))
@@ -122,33 +126,53 @@ class ProcessWatcher:
 			log.info("no supervisor or systemd process found for benches %s; process states are not collected", bench_names)
 		return None, []
 
+	def exported(self, benches):
+		"""[(bench, unit, state, detail)] of Pilot benches whose units wolf-pilot-export copied:
+		Pilot runs them as the bench user's systemd user units, which the wolf-agent user cannot list."""
+		rows = []
+		for bench in benches:
+			if bench.get("platform") != "pilot":
+				continue
+			data = self.read_export(bench["name"]) or {}
+			for unit in data.get("units") or []:
+				if isinstance(unit, dict) and unit.get("unit"):
+					state = "auto-restart" if unit.get("active") == "activating" and unit.get("sub") == "auto-restart" else unit.get("active")
+					rows.append((bench["name"], unit["unit"], state, unit.get("description") or unit.get("sub") or ""))
+		return rows
+
 	def collect(self, benches, now=None):
 		ts = utc_iso(now)
 		names = [b["name"] for b in benches if b.get("platform") != "press"]
 		if not names:
 			return [], []
-		manager, rows = self.states(names)
-		if not manager:
-			return [], []
+		exported = self.exported(benches)
+		covered = {bench for bench, *_ in exported}
+		groups = [("systemd", exported)] if exported else []  # Pilot's user units, as wolf-pilot-export saw them
+		rest = [n for n in names if n not in covered]
+		if rest:
+			manager, rows = self.states(rest)
+			if manager:
+				groups.append((manager, rows))
 		metrics, events = [], []
-		down = dict.fromkeys(names, 0)
 		current = {}
-		for bench, name, state, detail in rows:
-			current[name] = state
-			if not is_down(manager, state):
-				continue
-			down[bench] += 1
-			if state in ALERT_STATES and self.prev.get(name) != state:
-				events.append(
-					event(
-						"worker_failure", "process_down", "critical", ts, self.host,
-						f"{name} is {state} ({manager})",
-						fingerprint(self.host, "process_down", bench, name, state),
-						{"process": name, "state": state, "detail": detail[:500], "manager": manager},
-						source=manager, bench=bench,
+		for manager, rows in groups:
+			down = dict.fromkeys({b for b, *_ in rows}, 0)
+			for bench, name, state, detail in rows:
+				current[name] = state
+				if not is_down(manager, state):
+					continue
+				down[bench] += 1
+				if state in ALERT_STATES and self.prev.get(name) != state:
+					events.append(
+						event(
+							"worker_failure", "process_down", "critical", ts, self.host,
+							f"{name} is {state} ({manager})",
+							fingerprint(self.host, "process_down", bench, name, state),
+							{"process": name, "state": state, "detail": detail[:500], "manager": manager},
+							source=manager, bench=bench,
+						)
 					)
-				)
+			for bench in sorted(down):
+				metrics.append(metric("bench_processes_down", down[bench], ts, self.host, bench=bench, labels={"manager": manager}))
 		self.prev = current
-		for bench in sorted({b for b, *_ in rows}):
-			metrics.append(metric("bench_processes_down", down[bench], ts, self.host, bench=bench, labels={"manager": manager}))
 		return metrics, events

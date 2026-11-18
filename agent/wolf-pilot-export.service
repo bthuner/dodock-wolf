@@ -1,0 +1,25 @@
+[Unit]
+Description=Copy what the Wolf agent needs from Frappe Pilot (tasks, unit states), without secrets
+# agent/wolf-pilot-export; installed by agent/install.sh on a Pilot host
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/wolf-pilot-export
+# its folder, root-owned so the agent can read it and cannot swap it
+StateDirectory=wolf-pilot-export
+StateDirectoryMode=0750
+TimeoutStartSec=60
+MemoryMax=256M
+UMask=0077
+# reads bench folders as their owner (a forked child), lists their user units through D-Bus
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=CAP_SETUID CAP_SETGID CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE CAP_DAC_READ_SEARCH

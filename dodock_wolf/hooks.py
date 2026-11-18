@@ -5,7 +5,9 @@ app_description = "Observability for Frappe benches, ERPNext/Dokos sites and Lin
 app_email = "theohunerblaes@me.com"
 app_license = "MIT"
 
-required_apps = ["frappe"]
+# Frappe is implicit: Pilot refuses an app that lists it in required_apps without counting it as a
+# declared dependency. The version range is in pyproject.toml [tool.bench.frappe-dependencies].
+required_apps = []
 
 app_include_js = "/assets/dodock_wolf/js/wolf.js"
 app_include_css = "/assets/dodock_wolf/css/wolf.css"
