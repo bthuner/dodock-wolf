@@ -64,11 +64,7 @@ const live = useLive(hub, {
   <div class="wolf-page space-y-3">
     <ExploreFilters types />
     <p v-if="list.meta.value" class="text-sm text-ink-gray-6">
-      {{
-        __("Event records active in the window, newest first; times in {0}. A record's count is every repeat it absorbed, inside the window or not.", [
-          tz,
-        ])
-      }}
+      {{ __("Event records active in the window, newest first; times in {0}. A record's count is every repeat it absorbed, inside the window or not.", [tz]) }}
     </p>
     <p v-if="list.error.value" role="alert" class="wolf-alert">{{ list.error.value }}</p>
     <ul v-if="list.items.value.length" class="wolf-card wolf-list">

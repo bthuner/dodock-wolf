@@ -56,6 +56,12 @@ def fill(template, *args):
 	return parts
 
 
+def _text(template, *args):
+	"""A translated template filled as plain text, like `fill`: a placeholder it has no value for
+	stays as it is, so a translation that adds one never breaks the sentence."""
+	return _PLACEHOLDER.sub(lambda m: str(args[int(m.group(1))]) if int(m.group(1)) < len(args) else m.group(0), template)
+
+
 def _int(value, default=0):
 	try:
 		return int(float(value))
@@ -79,10 +85,10 @@ def _number(value):
 def _minutes(value, _):
 	n = max(_int(value), 0)
 	if n and n % 1440 == 0:
-		return (_("{0} day") if n == 1440 else _("{0} days")).format(n // 1440)
+		return _text(_("{0} day") if n == 1440 else _("{0} days"), n // 1440)
 	if n and n % 60 == 0:
-		return _("{0} h").format(n // 60)
-	return _("{0} min").format(n)
+		return _text(_("{0} h"), n // 60)
+	return _text(_("{0} min"), n)
 
 
 def _lines(value):
@@ -139,7 +145,9 @@ def _condition(rule, _):
 		)  # fmt: skip
 	if kind == "metric":
 		metric = str(rule.get("metric_name") or _("(no metric set)"))
-		measured = fill(_word(_aggregation_templates(_), rule.get("aggregation"), "avg"), metric)
+		templates, aggregation = _aggregation_templates(_), str(rule.get("aggregation") or "avg")
+		# a value the table does not know (a form being edited): the value itself, then the metric
+		measured = fill(templates[aggregation], metric) if aggregation in templates else [(aggregation, True), (" ", False), (metric, True)]
 	else:
 		measured = fill(_("the number of {0} events"), str(rule.get("event_type") or _("(no event type set)")))
 		if rule.get("event_category"):
@@ -173,7 +181,7 @@ def _channels(rows, severity, _):
 	names = []
 	for (kind, hourly), n in counts.items():
 		name = f"{n} {kind}" if n > 1 else kind
-		names.append(_("{0} (in the hourly digest)").format(name) if hourly else name)
+		names.append(_text(_("{0} (in the hourly digest)"), name) if hourly else name)
 	stateful = sorted({kind for kind, _hourly in counts if kind in STATEFUL})
 	return names, sum(counts.values()), stateful
 
@@ -219,7 +227,7 @@ def describe(rule, _=None):
 		sentences.append(fill(_("It fires only within {0} of a deployment."), _minutes(minutes, _)))
 	fire_after = max(_int(rule.get("fire_after_evaluations"), 1), 1)
 	if fire_after > 1:
-		sentences.append(fill(_("It waits until the condition holds {0} in a row."), _("{0} evaluations").format(fire_after)))
+		sentences.append(fill(_("It waits until the condition holds {0} in a row."), _text(_("{0} evaluations"), fire_after)))
 
 	if _int(rule.get("auto_resolve"), 1):
 		back = {">": "<=", ">=": "<", "<": ">=", "<=": ">"}.get(str(rule.get("operator") or ">"))
@@ -232,7 +240,7 @@ def describe(rule, _=None):
 			resolve = fill(_("It resolves by itself"))
 		resolve_after = max(_int(rule.get("resolve_after_evaluations"), 1), 1)
 		if resolve_after > 1:
-			resolve = fill(_("{0} for {1} in a row"), resolve, _("{0} evaluations").format(resolve_after))
+			resolve = fill(_("{0} for {1} in a row"), resolve, _text(_("{0} evaluations"), resolve_after))
 	else:
 		resolve = fill(_("It stays open until someone resolves it"))
 	cooldown = _int(rule.get("cooldown_minutes"))

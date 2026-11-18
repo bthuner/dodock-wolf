@@ -23,7 +23,7 @@ const subject = computed(() =>
 
 <template>
   <PageHeader>
-    <PageTitle :title="subject ? __('{0}: {1}', [title, subject]) : title" />
+    <PageTitle :title="subject ? `${title}: ${subject}` : title" />
   </PageHeader>
   <section v-if="unavailable" class="max-w-2xl space-y-3 p-5 text-base text-ink-gray-8">
     <p>

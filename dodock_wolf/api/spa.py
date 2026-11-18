@@ -36,10 +36,8 @@ def _catalog_keys():
 	from babel.messages.pofile import read_po
 
 	path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "locale", "main.pot")
-	if not os.path.exists(path):
-		return frozenset()
 	with open(path, "rb") as f:
-		return frozenset(m.id if not m.context else f"{m.id}:{m.context}" for m in read_po(f) if m.id)
+		return tuple(m.id if not m.context else f"{m.id}:{m.context}" for m in read_po(f) if m.id)
 
 
 def ui_messages(lang):
@@ -49,8 +47,13 @@ def ui_messages(lang):
 		return {}
 	from frappe.translate import get_all_translations
 
-	keys = _catalog_keys()
-	return {key: text for key, text in get_all_translations(lang).items() if key in keys and text}
+	try:
+		keys = _catalog_keys()
+	except Exception:  # no template or no babel: the Wolf UI shows its English, it still opens
+		frappe.log_error(title="Dodock Wolf: the Wolf UI's translations could not be read")
+		return {}
+	translations = get_all_translations(lang)
+	return {key: translations[key] for key in keys if translations.get(key)}
 
 
 def ui_built():

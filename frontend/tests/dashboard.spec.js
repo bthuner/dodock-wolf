@@ -136,7 +136,7 @@ describe('DashboardPage', () => {
     const { page } = await open()
     const rows = () => page.findAll('[aria-label="Signals"] li')
     expect(rows()).toHaveLength(10)
-    expect(page.text()).toContain('· 9 rule firing · 3 no new data') // the group's counts stay exact
+    expect(page.text()).toContain('· 9 rules firing · 3 no new data') // the group's counts stay exact
     const more = page.findAll('button').find((b) => b.text().startsWith('Show the other'))
     expect(more.text()).toBe('Show the other 15 of 25, 2 with a problem')
     await more.trigger('click')

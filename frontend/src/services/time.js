@@ -2,17 +2,7 @@
 // browser's: an operator abroad reads the same 02:00 as the team. Day and month names follow
 // the reader's language (boot.lang); English keeps the en-GB day-month order.
 
-import { __, currentLang } from '@/services/i18n'
-
-function locale() {
-  const lang = currentLang()
-  if (!lang || lang === 'en') return 'en-GB'
-  try {
-    return Intl.DateTimeFormat.supportedLocalesOf([lang]).length ? lang : 'en-GB'
-  } catch {
-    return 'en-GB' // not a language tag Intl accepts
-  }
-}
+import { __, locale } from '@/services/i18n'
 
 function parts(iso, timeZone, options) {
   return new Intl.DateTimeFormat(locale(), { timeZone, ...options }).format(new Date(iso))

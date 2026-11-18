@@ -93,13 +93,7 @@ function setupLabel(s) {
       <dd class="wolf-data">1m {{ monitoring.rollups['1m'] ? full(monitoring.rollups['1m'], timeZone) : __('not yet') }}</dd>
       <dt>{{ __('Agents') }}</dt>
       <dd>
-        {{
-          __('{0} of {1} reporting (silent after {2} min)', [
-            agents.filter((a) => a.state === 'fresh').length,
-            agents.length,
-            monitoring.silence_minutes,
-          ])
-        }}
+        {{ __('{0} of {1} reporting (silent after {2} min)', [agents.filter((a) => a.state === 'fresh').length, agents.length, monitoring.silence_minutes]) }}
       </dd>
       <dt>{{ __('Host setup') }}</dt>
       <dd>

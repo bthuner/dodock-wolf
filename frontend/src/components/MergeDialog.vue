@@ -14,6 +14,8 @@ const props = defineProps({
   incident: { type: String, required: true },
   timeZone: { type: String, required: true },
 })
+// an incident's status, as Desk translates it (its DocType as context)
+const incidentStatus = (status) => __(status, null, 'Wolf Incident')
 const open = defineModel('open', { type: Boolean, default: false })
 const emit = defineEmits(['merged'])
 
@@ -112,7 +114,7 @@ async function merge() {
             {{ __('{0} and {1} from {2} to {3}.', [events(preview.events), comments(preview.comments), incident, preview.target.name]) }}
           </p>
           <p class="flex flex-wrap items-baseline gap-x-2">
-            <b>{{ preview.target.name }}</b> {{ __('stays {0},', [__(preview.target_after.status, null, 'Wolf Incident')]) }}
+            <b>{{ preview.target.name }}</b> {{ __('stays {0},', [incidentStatus(preview.target_after.status)]) }}
             <SeverityGlyph :severity="preview.target_after.severity" />
             <span>{{ __('since') }} <time :datetime="preview.target_after.started_at">{{ full(preview.target_after.started_at, timeZone) }}</time></span>
           </p>

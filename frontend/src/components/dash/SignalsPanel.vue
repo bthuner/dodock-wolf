@@ -3,7 +3,7 @@ import { Button } from 'frappe-ui'
 import { computed, reactive } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import { __ } from '@/services/i18n'
+import { __, locale } from '@/services/i18n'
 import { timeAgo, full } from '@/services/time'
 
 // The newest value of each signal series and its state, as the server judged it
@@ -15,7 +15,7 @@ const props = defineProps({
 
 // label: a row's state; count(n): a group's tally of rows in that state
 const STATE = {
-  firing: { label: () => __('Rule firing'), count: (n) => __('{0} rule firing', [n]), glyph: '●', color: 'var(--wolf-critical)' },
+  firing: { label: () => __('Rule firing'), count: (n) => (n === 1 ? __('1 rule firing') : __('{0} rules firing', [n])), glyph: '●', color: 'var(--wolf-critical)' },
   stale: { label: () => __('No new data'), count: (n) => __('{0} no new data', [n]), glyph: '◌', color: 'var(--wolf-warning)' },
   watched: { label: () => __('Within its rules'), count: (n) => __('{0} within its rules', [n]), glyph: '✓', color: 'var(--wolf-ok)' },
   unwatched: { label: () => __('No rule watches this'), count: (n) => __('{0} no rule watches this', [n]), glyph: '–', color: 'var(--wolf-muted)' },
@@ -36,6 +36,7 @@ const GROUPS = {
 // rows drawn are a group's firing and stale ones before the others. Drawing all 300 series took
 // 0.1 to 0.3 s of every overview (docs/load-test.md).
 const FIRST_ROWS = 10
+const missingLabels = computed(() => (props.signals.missing || []).map((m) => m.label).join(', '))
 const shown = reactive({}) // groups opened in full; kept while the page refreshes the same scope
 
 const groups = computed(() => {
@@ -54,7 +55,7 @@ const groups = computed(() => {
 })
 const where = (s) => [s.site, s.bench, s.host].filter(Boolean).join(' · ')
 const label = (s) => (s.label_key ? `${s.label} (${s.label_key})` : s.label)
-const value = (s) => (s.value == null ? '' : `${Number(s.value).toLocaleString('en', { maximumFractionDigits: 2 })} ${s.unit}`)
+const value = (s) => (s.value == null ? '' : `${Number(s.value).toLocaleString(locale(), { maximumFractionDigits: 2 })} ${s.unit}`)
 const rule = (r) => __('{0}: {1} {2} {3} over {4} min', [r.rule_name, r.aggregation, r.operator, r.threshold, r.window_minutes])
 function moreLabel(g) {
   return g.hiddenProblems
@@ -124,11 +125,7 @@ const email = computed(() => Object.entries(props.signals.email || {}))
     <details v-if="signals.missing.length" class="text-sm text-ink-gray-6">
       <summary>{{ __('{0} signals without data in the last {1} days', [signals.missing.length, signals.lookback_days]) }}</summary>
       <p class="mt-1">
-        {{
-          __('Not collected for this scope, not set up on the agent, or not available here. They are not zero: {0}.', [
-            signals.missing.map((m) => m.label).join(', '),
-          ])
-        }}
+        {{ __('Not collected for this scope, not set up on the agent, or not available here. They are not zero: {0}.', [missingLabels]) }}
       </p>
     </details>
   </section>

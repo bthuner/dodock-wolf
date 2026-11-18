@@ -48,11 +48,23 @@ const expanded = ref(new Set())
 const timeline = useTimeline(() => name.value)
 const commentBox = ref(null)
 
+// the regulations an incident falls under, translated, kept out of the template: Frappe's extractor
+// reads one call per line
+function regulations(r) {
+  return [
+    r.nis2 && __('NIS2 significant incident'),
+    r.dora && __('DORA major ICT-related incident'),
+    r.gdpr && __('GDPR personal data breach'),
+  ]
+    .filter(Boolean)
+    .join(', ')
+}
+
 // "1 record", "2 records": one sentence per form, Frappe has no plurals
 function linkedEvents(records, occurrences) {
   const r = records === 1 ? __('1 record') : __('{0} records', [records])
   const o = occurrences === 1 ? __('1 reported occurrence') : __('{0} reported occurrences', [occurrences])
-  return __('{0}, {1}', [r, o])
+  return `${r}, ${o}`
 }
 
 function anchor(row) {
@@ -154,7 +166,7 @@ async function showFresh() {
 function regStatus(status) {
   switch (status) {
     case 'open':
-      return __('Open')
+      return __('Open', null, 'Regulatory deadline')
     case 'due_soon':
       return __('Due within 6 h')
     case 'overdue':
@@ -332,17 +344,7 @@ watch(name, () => {
       </dl>
       <section v-if="incident.regulatory" class="wolf-incident-part space-y-2" :aria-label="__('Regulatory reporting')">
         <h2 class="text-sm font-semibold text-ink-gray-9">
-          {{
-            __('Regulatory reporting: {0}', [
-              [
-                incident.regulatory.nis2 && __('NIS2 significant incident'),
-                incident.regulatory.dora && __('DORA major ICT-related incident'),
-                incident.regulatory.gdpr && __('GDPR personal data breach'),
-              ]
-                .filter(Boolean)
-                .join(', '),
-            ])
-          }}
+          {{ __('Regulatory reporting: {0}', [regulations(incident.regulatory)]) }}
           <span v-if="incident.regulatory.reference" class="font-normal text-ink-gray-6">· {{ __('reference {0}', [incident.regulatory.reference]) }}</span>
         </h2>
         <table class="w-full text-left text-sm">

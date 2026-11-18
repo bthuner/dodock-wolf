@@ -22,6 +22,16 @@ export function currentLang() {
   return lang
 }
 
+// A locale Intl accepts for numbers and dates in the user's language: en-GB when it has none.
+export function locale() {
+  try {
+    if (lang !== 'en' && Intl.NumberFormat.supportedLocalesOf([lang]).length) return lang
+  } catch {
+    // an invalid tag
+  }
+  return 'en-GB'
+}
+
 export function __(text, replace, context) {
   if (typeof text !== 'string' || !text) return text
   let out = (context && messages[`${text}:${context}`]) || messages[text] || text

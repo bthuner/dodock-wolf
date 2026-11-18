@@ -11,7 +11,7 @@ import { useChartRange } from '@/composables/useChartRange'
 import { useQueryParam } from '@/composables/useQueryParam'
 import { useWindow } from '@/composables/useWindow'
 import { call, failure } from '@/services/api'
-import { __ } from '@/services/i18n'
+import { __, locale } from '@/services/i18n'
 import { RANGES } from '@/services/filters'
 import { timeAgo, axisLabel, full } from '@/services/time'
 
@@ -157,7 +157,7 @@ function chooseRange(value) {
   win.choose(value)
 }
 const bucket = (seconds) => (seconds >= 3600 ? __('{0} h', [seconds / 3600]) : __('{0} min', [seconds / 60]))
-const value = (v) => (v == null ? '' : `${Number(v).toLocaleString('en', { maximumFractionDigits: 2 })} ${unit.value}`)
+const value = (v) => (v == null ? '' : `${Number(v).toLocaleString(locale(), { maximumFractionDigits: 2 })} ${unit.value}`)
 
 onMounted(async () => {
   await loadCatalog()
@@ -200,7 +200,7 @@ watch([metric, site, host, bench], loadLabels)
       {{ __('{0} is not in the catalog and had no data you can see in the last 7 days. It is read as a custom metric.', [metric]) }}
     </p>
     <p v-if="spec" class="text-sm text-ink-gray-6">
-      {{ spec.unit ? __('{0}: {1}, in {2}.', [spec.label, kindText(spec.kind), spec.unit]) : __('{0}: {1}.', [spec.label, kindText(spec.kind)]) }}
+      {{ spec.unit ? __('{0}: {1}, in {2}.', [spec.label, kindText(spec.kind), spec.unit]) : `${spec.label}: ${kindText(spec.kind)}.` }}
       <template v-if="spec.caveat"> {{ spec.caveat }}</template>
     </p>
     <p v-if="catalogError" role="alert" class="wolf-alert">{{ __('Catalog: {0}', [catalogError]) }}</p>
@@ -211,23 +211,10 @@ watch([metric, site, host, bench], loadLabels)
     <section v-if="result" class="wolf-card space-y-3" :aria-label="__('Chart')">
       <h2 class="wolf-h2">{{ spec?.label || metric }}</h2>
       <p class="text-sm text-ink-gray-6">
-        {{
-          __('{0} per {1}, read from {2} data, {3} to {4}.', [
-            result.aggregation,
-            bucket(result.bucket_seconds),
-            result.resolution,
-            full(result.window.since, tz),
-            full(result.window.until, tz, { zone: false }),
-          ])
-        }}
+        {{ __('{0} per {1}, read from {2} data, {3} to {4}.', [result.aggregation, bucket(result.bucket_seconds), result.resolution, full(result.window.since, tz), full(result.window.until, tz, { zone: false })]) }}
         {{ __('Whole buckets only: the one still filling shows when it closes.') }}
         <template v-if="result.retention.clipped">
-          {{
-            ' ' +
-            __('Data before {0} is no longer kept at this resolution: those buckets are empty, not zero.', [
-              full(result.retention.kept_from, tz, { zone: false }),
-            ])
-          }}
+          {{ ' ' + __('Data before {0} is no longer kept at this resolution: those buckets are empty, not zero.', [full(result.retention.kept_from, tz, { zone: false })]) }}
         </template>
         <template v-if="result.groups.total > result.groups.shown">
           {{ ' ' + __('Showing {0} of {1} groups, {2}.', [result.groups.shown, result.groups.total, result.groups.ranked_by]) }}

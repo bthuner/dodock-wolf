@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Dodock Wolf VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/bthuner/dodock-wolf/issues\n"
-"POT-Creation-Date: 2026-11-18 23:10+0000\n"
+"POT-Creation-Date: 2026-11-18 23:25+0000\n"
 "PO-Revision-Date: 2026-11-18 22:37+0000\n"
 "Last-Translator: Dodock Wolf contributors\n"
 "Language: fr\n"
@@ -24,27 +24,27 @@ msgstr ""
 msgid "!="
 msgstr ""
 
-#: frontend/src/pages/IncidentPage.vue:361
+#: frontend/src/pages/IncidentPage.vue:363
 msgid "(estimated)"
 msgstr "(estimé)"
 
-#: dodock_wolf/wolf/rule_sentence.py:144
+#: dodock_wolf/wolf/rule_sentence.py:152
 msgid "(no event type set)"
 msgstr "(aucun type d'événement défini)"
 
-#: dodock_wolf/wolf/rule_sentence.py:129
+#: dodock_wolf/wolf/rule_sentence.py:135
 msgid "(no first category set)"
 msgstr "(aucune première catégorie définie)"
 
-#: dodock_wolf/wolf/rule_sentence.py:141
+#: dodock_wolf/wolf/rule_sentence.py:147
 msgid "(no metric set)"
 msgstr "(aucune métrique définie)"
 
-#: dodock_wolf/wolf/rule_sentence.py:134
+#: dodock_wolf/wolf/rule_sentence.py:140
 msgid "(no then category set)"
 msgstr "(aucune catégorie suivante définie)"
 
-#: dodock_wolf/wolf/rule_sentence.py:125
+#: dodock_wolf/wolf/rule_sentence.py:131
 msgid "(no window set)"
 msgstr "(aucune fenêtre définie)"
 
@@ -66,29 +66,41 @@ msgstr "+ {0} à l'échelle d'un hôte ou d'un bench"
 msgid "+N is what the score gains if that check alone passes."
 msgstr "+N est ce que le score gagne si ce contrôle seul réussit."
 
-#: frontend/src/components/MergeDialog.vue:63
+#: frontend/src/components/MergeDialog.vue:65
 msgid "1 comment"
 msgstr "1 commentaire"
 
-#: frontend/src/components/MergeDialog.vue:62 frontend/src/components/SplitDialog.vue:72
+#: frontend/src/components/dash/CountTiles.vue:25
+msgid "1 critical"
+msgstr "1 critique"
+
+#: frontend/src/components/MergeDialog.vue:64 frontend/src/components/SplitDialog.vue:72
 msgid "1 event"
 msgstr "1 événement"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:107
+#: frontend/src/components/dash/MonitoringPanel.vue:101
 msgid "1 host to fix"
 msgstr "1 hôte à corriger"
 
-#: frontend/src/pages/IncidentPage.vue:454
+#: frontend/src/pages/IncidentPage.vue:456
 msgid "1 new row: show"
 msgstr "1 nouvelle ligne : afficher"
 
-#: frontend/src/pages/IncidentPage.vue:53
+#: frontend/src/pages/IncidentPage.vue:65
 msgid "1 record"
 msgstr "1 enregistrement"
 
-#: frontend/src/pages/IncidentPage.vue:54
+#: frontend/src/pages/IncidentPage.vue:66
 msgid "1 reported occurrence"
 msgstr "1 occurrence signalée"
+
+#: frontend/src/components/dash/WindowTiles.vue:59
+msgid "1 resolved"
+msgstr "1 résolu"
+
+#: frontend/src/components/dash/SignalsPanel.vue:18
+msgid "1 rule firing"
+msgstr "1 règle déclenchée"
 
 #. Label of the hour_retention_days (Int) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:750
@@ -259,7 +271,7 @@ msgid "Access token of the bot account that posts the alerts."
 msgstr "Jeton d'accès du compte bot qui publie les alertes."
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:21
-#: frontend/src/pages/IncidentPage.vue:383
+#: frontend/src/pages/IncidentPage.vue:385
 msgid "Acknowledge"
 msgstr "Acquitter"
 
@@ -274,9 +286,9 @@ msgstr ""
 #. Option for the 'Status' (Select) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:89
 #: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:73
-#: frontend/src/pages/IncidentPage.vue:302
+#: frontend/src/pages/IncidentPage.vue:314
 msgid "Acknowledged"
-msgstr ""
+msgstr "Acquitté"
 
 #. Label of the acknowledged_at (Datetime) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:141
@@ -343,14 +355,14 @@ msgstr "Fin de la plage active"
 msgid "Activity"
 msgstr "Activité"
 
-#: frontend/src/pages/IncidentPage.vue:424
+#: frontend/src/pages/IncidentPage.vue:426
 #, python-brace-format
 msgid "Activity shows the newest {0} of {1} comments; older ones are in Desk."
 msgstr ""
 "L'activité affiche les {0} commentaires les plus récents sur {1} ; les plus anciens sont dans "
 "Desk."
 
-#: frontend/src/pages/IncidentPage.vue:423
+#: frontend/src/pages/IncidentPage.vue:425
 #, python-brace-format
 msgid "Activity shows the newest {0} of {1} recorded changes; older ones are in Desk."
 msgstr ""
@@ -361,7 +373,7 @@ msgstr ""
 msgid "Add"
 msgstr "Ajouter"
 
-#: frontend/src/pages/IncidentPage.vue:461
+#: frontend/src/pages/IncidentPage.vue:463
 msgid "Add a comment for the team"
 msgstr "Ajouter un commentaire pour l'équipe"
 
@@ -614,7 +626,7 @@ msgstr "Appliquer les blocages approuvés"
 #: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:53
 #: frontend/src/components/ResponsePanel.vue:110
 msgid "Approved"
-msgstr ""
+msgstr "Approuvée"
 
 #. Label of the approved_at (Datetime) field in DocType 'Wolf Response Action'
 #: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:127
@@ -644,7 +656,7 @@ msgid "Approve…"
 msgstr "Approuver…"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:27
-#: frontend/src/pages/IncidentPage.vue:384
+#: frontend/src/pages/IncidentPage.vue:386
 msgid "Assign to me"
 msgstr ""
 
@@ -726,11 +738,11 @@ msgstr "Revenir à une fenêtre relative"
 msgid "Back to errors"
 msgstr "Retour aux erreurs"
 
-#: frontend/src/pages/IncidentPage.vue:284
+#: frontend/src/pages/IncidentPage.vue:296
 msgid "Back to incidents"
 msgstr "Retour aux incidents"
 
-#: frontend/src/components/dash/SignalsPanel.vue:66
+#: frontend/src/components/dash/SignalsPanel.vue:67
 #, python-brace-format
 msgid "Backlog reported: {0} event records, last"
 msgstr "Arriéré signalé : {0} enregistrements d'événements, le dernier"
@@ -828,7 +840,7 @@ msgstr "Modèle du corps"
 msgid "Bouncer API key"
 msgstr "Clé d'API du bouncer"
 
-#: frontend/src/pages/MetricsPage.vue:247
+#: frontend/src/pages/MetricsPage.vue:234
 msgid "Breaks in a line are buckets without samples."
 msgstr "Les coupures dans une courbe sont des intervalles sans échantillons."
 
@@ -847,7 +859,7 @@ msgstr "Rompue : {0}"
 msgid "Bucket Start"
 msgstr "Début de l'intervalle"
 
-#: frontend/src/pages/MetricsPage.vue:267
+#: frontend/src/pages/MetricsPage.vue:254
 #, python-brace-format
 msgid "Bucket start ({0})"
 msgstr "Début de l'intervalle ({0})"
@@ -858,7 +870,7 @@ msgstr "Début de l'intervalle ({0})"
 msgid "Buckets before this time are rolled up. Late samples move it back."
 msgstr "Les intervalles antérieurs à cette heure sont agrégés. Des échantillons tardifs la font reculer."
 
-#: frontend/src/components/MergeDialog.vue:126 frontend/src/components/ResponsePanel.vue:87
+#: frontend/src/components/MergeDialog.vue:128 frontend/src/components/ResponsePanel.vue:87
 #: frontend/src/components/SplitDialog.vue:143 frontend/src/components/dash/HttpChart.vue:75
 msgid "Cancel"
 msgstr "Annuler"
@@ -1004,7 +1016,7 @@ msgstr "Base de l'API client-serveur, par exemple https://matrix.example.org"
 msgid "Clock Skew (seconds)"
 msgstr "Décalage d'horloge (secondes)"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:130
+#: frontend/src/components/dash/MonitoringPanel.vue:124
 msgid "Clock skew"
 msgstr "Décalage d'horloge"
 
@@ -1026,8 +1038,8 @@ msgstr ""
 "deployment."
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:172
-#: frontend/src/pages/IncidentPage.vue:460 frontend/src/pages/IncidentPage.vue:461
-#: frontend/src/pages/IncidentPage.vue:462
+#: frontend/src/pages/IncidentPage.vue:462 frontend/src/pages/IncidentPage.vue:463
+#: frontend/src/pages/IncidentPage.vue:464
 msgid "Comment"
 msgstr ""
 
@@ -1162,7 +1174,7 @@ msgstr "Incidents en cours"
 msgid "Current values"
 msgstr "Valeurs actuelles"
 
-#: frontend/src/pages/IncidentPage.vue:339
+#: frontend/src/pages/IncidentPage.vue:56
 msgid "DORA major ICT-related incident"
 msgstr "Incident majeur lié aux TIC (DORA)"
 
@@ -1177,6 +1189,11 @@ msgstr "Les lignes en pointillés sont les déploiements, listés ci-dessous."
 #: frontend/src/components/dash/HttpChart.vue:92
 msgid "Dashed lines are deployments."
 msgstr "Les lignes en pointillés sont les déploiements."
+
+#: frontend/src/pages/MetricsPage.vue:217
+#, python-brace-format
+msgid "Data before {0} is no longer kept at this resolution: those buckets are empty, not zero."
+msgstr "Les données antérieures au {0} ne sont plus conservées à cette résolution : ces intervalles sont vides, pas à zéro."
 
 #: frontend/src/components/dash/SignalsPanel.vue:28
 msgid "Database"
@@ -1266,7 +1283,7 @@ msgstr "Événement de déploiement"
 msgid "Deployment Window Minutes"
 msgstr "Fenêtre de déploiement (minutes)"
 
-#: frontend/src/pages/IncidentPage.vue:314
+#: frontend/src/pages/IncidentPage.vue:326
 msgid "Deployment before it"
 msgstr "Déploiement précédent"
 
@@ -1293,13 +1310,13 @@ msgstr "Desk le propose déjà :"
 
 #. Label of the destination (Small Text) field in DocType 'Wolf Digest Item'
 #: dodock_wolf/dodock_wolf/doctype/wolf_digest_item/wolf_digest_item.json:63
-#: frontend/src/components/MergeDialog.vue:92
+#: frontend/src/components/MergeDialog.vue:94
 msgid "Destination"
 msgstr "Destination"
 
 #. Label of the payload_section (Section Break) field in DocType 'Wolf Event'
 #: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:169
-#: frontend/src/components/TimelineRow.vue:68 frontend/src/pages/EventsPage.vue:90
+#: frontend/src/components/TimelineRow.vue:68 frontend/src/pages/EventsPage.vue:86
 msgid "Details"
 msgstr "Détails"
 
@@ -1322,7 +1339,7 @@ msgstr ""
 msgid "Disabled: the public page answers 404 until you enable it."
 msgstr "Désactivée : la page publique répond 404 tant que vous ne l'activez pas."
 
-#: dodock_wolf/wolf/rule_sentence.py:193
+#: dodock_wolf/wolf/rule_sentence.py:201
 #, python-brace-format
 msgid "Disabled: would open a {0} incident when {1}"
 msgstr "Désactivée : cette règle ouvrirait un incident {0} quand {1}"
@@ -1381,7 +1398,7 @@ msgstr ""
 msgid "Draft"
 msgstr ""
 
-#: frontend/src/pages/MetricsPage.vue:246
+#: frontend/src/pages/MetricsPage.vue:233
 msgid ""
 "Drag across the chart, or click two points (or move along the chart with the arrow keys and press"
 " Enter twice), to look at the range between them."
@@ -1398,7 +1415,7 @@ msgstr ""
 " Entrée), pour afficher cette page sur l'intervalle entre eux."
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:90
-#: frontend/src/pages/IncidentPage.vue:352
+#: frontend/src/pages/IncidentPage.vue:354
 msgid "Due"
 msgstr "Échéance"
 
@@ -1407,7 +1424,7 @@ msgstr "Échéance"
 msgid "Due Date"
 msgstr "Date d'échéance"
 
-#: frontend/src/pages/IncidentPage.vue:159
+#: frontend/src/pages/IncidentPage.vue:171
 msgid "Due within 6 h"
 msgstr "Échéance dans les 6 h"
 
@@ -1444,7 +1461,7 @@ msgstr "Ancienneté max. de la file d'e-mails (minutes)"
 msgid "Email addresses, one per line or comma-separated."
 msgstr "Adresses e-mail, une par ligne ou séparées par des virgules."
 
-#: frontend/src/components/dash/SignalsPanel.vue:118
+#: frontend/src/components/dash/SignalsPanel.vue:119
 msgid "Email queue (last 24 h)"
 msgstr "File d'e-mails (dernières 24 h)"
 
@@ -1582,6 +1599,13 @@ msgstr "Condition sur les événements"
 msgid "Event records"
 msgstr "Enregistrements d'événements"
 
+#: frontend/src/pages/EventsPage.vue:67
+#, python-brace-format
+msgid ""
+"Event records active in the window, newest first; times in {0}. A record's count is every repeat "
+"it absorbed, inside the window or not."
+msgstr "Enregistrements d'événements actifs dans la fenêtre, du plus récent au plus ancien ; heures en {0}. Le nombre d'un enregistrement compte chaque répétition qu'il a absorbée, dans la fenêtre ou non."
+
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:25
 msgid "Event rules need an event type"
 msgstr "Les règles sur événements nécessitent un type d'événement"
@@ -1617,7 +1641,7 @@ msgstr ""
 msgid "Events linked to {0}"
 msgstr "Événements liés à {0}"
 
-#: frontend/src/pages/IncidentPage.vue:396
+#: frontend/src/pages/IncidentPage.vue:398
 msgid "Events moved to"
 msgstr "Événements déplacés vers"
 
@@ -1718,7 +1742,7 @@ msgstr "Exporter en YAML"
 msgid "Export to a SIEM"
 msgstr "Exporter vers un SIEM"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:162
+#: frontend/src/components/dash/MonitoringPanel.vue:156
 msgid "Fail"
 msgstr ""
 
@@ -1818,7 +1842,7 @@ msgstr "Première occurrence"
 msgid "Fix"
 msgstr "Correctif"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:163
+#: frontend/src/components/dash/MonitoringPanel.vue:157
 #, python-brace-format
 msgid "Fix: {0}"
 msgstr "Correctif : {0}"
@@ -1916,7 +1940,7 @@ msgstr ""
 msgid "Frozen copy of the incident timeline when this postmortem was started."
 msgstr "Copie figée de la chronologie de l'incident au début de ce post-mortem."
 
-#: frontend/src/pages/IncidentPage.vue:340
+#: frontend/src/pages/IncidentPage.vue:57
 msgid "GDPR personal data breach"
 msgstr "Violation de données personnelles (RGPD)"
 
@@ -1937,7 +1961,7 @@ msgstr "Base GeoIP"
 
 #: frontend/src/pages/NotFoundPage.vue:18
 msgid "Go to the overview"
-msgstr "Aller à la vue d'ensemble"
+msgstr "Aller à l'aperçu"
 
 #. Option for the 'Channel Type' (Select) field in DocType 'Wolf Alert Channel'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:40
@@ -2011,11 +2035,11 @@ msgstr "Réponses HTTP"
 msgid "HTTP: {0}"
 msgstr "HTTP : {0}"
 
-#: frontend/src/components/TimelineRow.vue:68 frontend/src/pages/EventsPage.vue:90
+#: frontend/src/components/TimelineRow.vue:68 frontend/src/pages/EventsPage.vue:86
 msgid "Hide details"
 msgstr ""
 
-#: frontend/src/pages/MetricsPage.vue:262
+#: frontend/src/pages/MetricsPage.vue:249
 msgid "Hide the data table"
 msgstr "Masquer le tableau de données"
 
@@ -2054,7 +2078,7 @@ msgstr "Connexions et comptes de l'hôte"
 msgid "Host metrics"
 msgstr "Métriques de l'hôte"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:126
+#: frontend/src/components/dash/MonitoringPanel.vue:120
 msgid "Host or site"
 msgstr "Hôte ou site"
 
@@ -2062,7 +2086,7 @@ msgstr "Hôte ou site"
 msgid "Host resources"
 msgstr "Ressources de l'hôte"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:104
+#: frontend/src/components/dash/MonitoringPanel.vue:98
 msgid "Host setup"
 msgstr "Configuration de l'hôte"
 
@@ -2190,7 +2214,7 @@ msgstr ""
 msgid "Incident notification sent at"
 msgstr "Notification d'incident envoyée le"
 
-#: frontend/src/pages/IncidentPage.vue:275
+#: frontend/src/pages/IncidentPage.vue:287
 #, python-brace-format
 msgid "Incident {0}"
 msgstr ""
@@ -2318,82 +2342,82 @@ msgstr "Est"
 msgid "Is Wolf working"
 msgstr "Wolf fonctionne-t-il"
 
-#: dodock_wolf/wolf/rule_sentence.py:219
+#: dodock_wolf/wolf/rule_sentence.py:227
 #, python-brace-format
 msgid "It fires only within {0} of a deployment."
 msgstr "Elle ne se déclenche que dans les {0} suivant un déploiement."
 
-#: dodock_wolf/wolf/rule_sentence.py:214
+#: dodock_wolf/wolf/rule_sentence.py:222
 #, python-brace-format
 msgid "It is checked only between {0} and {1} (over midnight), server time."
 msgstr "Elle n'est évaluée qu'entre {0} et {1} (en passant minuit), heure du serveur."
 
-#: dodock_wolf/wolf/rule_sentence.py:215
+#: dodock_wolf/wolf/rule_sentence.py:223
 #, python-brace-format
 msgid "It is checked only between {0} and {1}, server time."
 msgstr "Elle n'est évaluée qu'entre {0} et {1}, heure du serveur."
 
-#: dodock_wolf/wolf/rule_sentence.py:212
+#: dodock_wolf/wolf/rule_sentence.py:220
 #, python-brace-format
 msgid "It is never checked: Active From and Active To are both {0}."
 msgstr "Elle n'est jamais évaluée : le début et la fin de la plage active sont tous deux à {0}."
 
-#: dodock_wolf/wolf/rule_sentence.py:206
+#: dodock_wolf/wolf/rule_sentence.py:214
 #, python-brace-format
 msgid "It needs at least {0} distinct events in the window."
 msgstr "Elle exige au moins {0} événements distincts dans la fenêtre."
 
-#: dodock_wolf/wolf/rule_sentence.py:207
+#: dodock_wolf/wolf/rule_sentence.py:215
 #, python-brace-format
 msgid "It needs at least {0} occurrences in the window."
 msgstr "Elle exige au moins {0} occurrences dans la fenêtre."
 
-#: dodock_wolf/wolf/rule_sentence.py:205
+#: dodock_wolf/wolf/rule_sentence.py:213
 #, python-brace-format
 msgid "It needs at least {0} samples in the window."
 msgstr "Elle exige au moins {0} échantillons dans la fenêtre."
 
-#: dodock_wolf/wolf/rule_sentence.py:256
+#: dodock_wolf/wolf/rule_sentence.py:264
 msgid "It notifies nobody: the incident shows in Wolf only."
 msgstr "Elle ne notifie personne : l'incident n'apparaît que dans Wolf."
 
-#: dodock_wolf/wolf/rule_sentence.py:247
+#: dodock_wolf/wolf/rule_sentence.py:255
 #, python-brace-format
 msgid "It notifies {0}"
 msgstr "Elle notifie {0}"
 
-#: dodock_wolf/wolf/rule_sentence.py:232
+#: dodock_wolf/wolf/rule_sentence.py:240
 msgid "It resolves by itself"
 msgstr "L'incident se résout de lui-même"
 
-#: dodock_wolf/wolf/rule_sentence.py:227
+#: dodock_wolf/wolf/rule_sentence.py:235
 msgid "It resolves by itself once the condition no longer holds"
 msgstr "L'incident se résout de lui-même dès que la condition n'est plus remplie"
 
-#: dodock_wolf/wolf/rule_sentence.py:229
+#: dodock_wolf/wolf/rule_sentence.py:237
 #, python-brace-format
 msgid "It resolves by itself once the value is {0} {1}"
 msgstr "L'incident se résout de lui-même dès que la valeur est {0} {1}"
 
-#: dodock_wolf/wolf/rule_sentence.py:237
+#: dodock_wolf/wolf/rule_sentence.py:245
 msgid "It stays open until someone resolves it"
 msgstr "L'incident reste ouvert jusqu'à ce que quelqu'un le résolve"
 
-#: dodock_wolf/wolf/rule_sentence.py:222
+#: dodock_wolf/wolf/rule_sentence.py:230
 #, python-brace-format
 msgid "It waits until the condition holds {0} in a row."
 msgstr "Elle attend que la condition soit remplie lors de {0} consécutives."
 
-#: dodock_wolf/wolf/rule_sentence.py:263
+#: dodock_wolf/wolf/rule_sentence.py:271
 #, python-brace-format
 msgid "It would escalate after {0}, but has no enabled escalation channel."
 msgstr "Elle escaladerait après {0}, mais n'a aucun canal d'escalade activé."
 
-#: dodock_wolf/wolf/rule_sentence.py:254
+#: dodock_wolf/wolf/rule_sentence.py:262
 msgid "Its channels are all disabled: it notifies nobody."
 msgstr "Ses canaux sont tous désactivés : elle ne notifie personne."
 
-#: frontend/src/components/MergeDialog.vue:85
+#: frontend/src/components/MergeDialog.vue:87
 #, python-brace-format
 msgid ""
 "Its events and comments move to the incident you pick, which then covers both. {0} is closed as "
@@ -2444,7 +2468,7 @@ msgstr "Conservé indéfiniment (Wolf Settings → Conservation du journal (jour
 #: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:26
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:139
 #: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:44
-#: frontend/src/components/dash/MonitoringPanel.vue:127
+#: frontend/src/components/dash/MonitoringPanel.vue:121
 msgid "Kind"
 msgstr "Type"
 
@@ -2549,7 +2573,7 @@ msgstr "Dernière erreur"
 msgid "Last forward"
 msgstr "Dernière transmission"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:129 frontend/src/pages/ErrorGroupPage.vue:57
+#: frontend/src/components/dash/MonitoringPanel.vue:123 frontend/src/pages/ErrorGroupPage.vue:57
 #: frontend/src/pages/ErrorGroupPage.vue:72 frontend/src/pages/ErrorsPage.vue:60
 msgid "Last seen"
 msgstr "Vu pour la dernière fois"
@@ -2590,7 +2614,7 @@ msgstr "Lien expiré"
 msgid "Link to this row ({0})"
 msgstr "Lien vers cette ligne ({0})"
 
-#: frontend/src/pages/IncidentPage.vue:329
+#: frontend/src/pages/IncidentPage.vue:341
 msgid "Linked events"
 msgstr "Événements liés"
 
@@ -2598,8 +2622,8 @@ msgstr "Événements liés"
 msgid "Live"
 msgstr "En direct"
 
-#: frontend/src/pages/ErrorsPage.vue:86 frontend/src/pages/EventsPage.vue:102
-#: frontend/src/pages/IncidentPage.vue:457 frontend/src/pages/IncidentsPage.vue:117
+#: frontend/src/pages/ErrorsPage.vue:86 frontend/src/pages/EventsPage.vue:98
+#: frontend/src/pages/IncidentPage.vue:459 frontend/src/pages/IncidentsPage.vue:117
 msgid "Load more"
 msgstr "Charger plus"
 
@@ -2611,7 +2635,7 @@ msgstr "Chargement de l'activité HTTP…"
 msgid "Loading error groups…"
 msgstr "Chargement des groupes d'erreurs…"
 
-#: frontend/src/pages/EventsPage.vue:100
+#: frontend/src/pages/EventsPage.vue:96
 msgid "Loading events…"
 msgstr "Chargement des événements…"
 
@@ -2627,7 +2651,7 @@ msgstr "Chargement des décomptes…"
 msgid "Loading the error group…"
 msgstr "Chargement du groupe d'erreurs…"
 
-#: frontend/src/pages/IncidentPage.vue:287
+#: frontend/src/pages/IncidentPage.vue:299
 msgid "Loading the incident…"
 msgstr "Chargement de l'incident…"
 
@@ -2647,7 +2671,7 @@ msgstr "Chargement du score de sécurité…"
 msgid "Loading the signals…"
 msgstr "Chargement des signaux…"
 
-#: frontend/src/components/LoadingNote.vue:5 frontend/src/pages/IncidentPage.vue:447
+#: frontend/src/components/LoadingNote.vue:5 frontend/src/pages/IncidentPage.vue:449
 msgid "Loading the timeline…"
 msgstr "Chargement de la chronologie…"
 
@@ -2655,7 +2679,7 @@ msgstr "Chargement de la chronologie…"
 msgid "Loading timeline…"
 msgstr "Chargement de la chronologie…"
 
-#: frontend/src/components/LoadingNote.vue:13 frontend/src/components/MergeDialog.vue:99
+#: frontend/src/components/LoadingNote.vue:13 frontend/src/components/MergeDialog.vue:101
 #: frontend/src/components/SplitDialog.vue:105
 msgid "Loading…"
 msgstr "Chargement…"
@@ -2796,11 +2820,11 @@ msgid "Max Pushes Per Minute"
 msgstr "Envois max. par minute"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:205
-#: frontend/src/components/MergeDialog.vue:130
+#: frontend/src/components/MergeDialog.vue:132
 msgid "Merge"
 msgstr "Fusionner"
 
-#: frontend/src/components/MergeDialog.vue:130
+#: frontend/src/components/MergeDialog.vue:132
 #, python-brace-format
 msgid "Merge into {0}"
 msgstr "Fusionner dans {0}"
@@ -2810,7 +2834,7 @@ msgid "Merge into…"
 msgstr "Fusionner dans…"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:188
-#: frontend/src/components/MergeDialog.vue:81
+#: frontend/src/components/MergeDialog.vue:83
 #, python-brace-format
 msgid "Merge {0} into another incident"
 msgstr "Fusionner {0} dans un autre incident"
@@ -2820,7 +2844,7 @@ msgstr "Fusionner {0} dans un autre incident"
 msgid "Merged Into"
 msgstr "Fusionné dans"
 
-#: frontend/src/pages/IncidentPage.vue:379
+#: frontend/src/pages/IncidentPage.vue:381
 msgid "Merged into"
 msgstr "Fusionné dans"
 
@@ -2834,7 +2858,7 @@ msgstr "Fusionné dans {0}"
 msgid "Merged into {0}."
 msgstr "Fusionné dans {0}."
 
-#: frontend/src/pages/IncidentPage.vue:386
+#: frontend/src/pages/IncidentPage.vue:388
 msgid "Merge…"
 msgstr "Fusionner…"
 
@@ -2917,11 +2941,11 @@ msgstr "Supervision"
 msgid "Monitoring: {0}"
 msgstr "Supervision : {0}"
 
-#: frontend/src/components/MergeDialog.vue:111 frontend/src/components/SplitDialog.vue:125
+#: frontend/src/components/MergeDialog.vue:113 frontend/src/components/SplitDialog.vue:125
 msgid "Moves"
 msgstr "Déplace"
 
-#: frontend/src/pages/IncidentPage.vue:338
+#: frontend/src/pages/IncidentPage.vue:55
 msgid "NIS2 significant incident"
 msgstr "Incident significatif NIS2"
 
@@ -2992,7 +3016,7 @@ msgstr "Aucun groupe d'erreurs {0} visible pour vous."
 msgid "No error groups match."
 msgstr "Aucun groupe d'erreurs ne correspond."
 
-#: frontend/src/pages/EventsPage.vue:101
+#: frontend/src/pages/EventsPage.vue:97
 msgid "No event records match."
 msgstr "Aucun enregistrement d'événement ne correspond."
 
@@ -3033,7 +3057,7 @@ msgstr "Aucune notification envoyée pour cet incident."
 msgid "No resolved incidents you can see."
 msgstr "Aucun incident résolu visible pour vous."
 
-#: frontend/src/pages/IncidentPage.vue:449
+#: frontend/src/pages/IncidentPage.vue:451
 msgid "No rows match this filter."
 msgstr "Aucune ligne ne correspond à ce filtre."
 
@@ -3046,13 +3070,13 @@ msgstr "Aucune règle ne surveille ceci"
 msgid "No samples for {0} in this range."
 msgstr "Aucun échantillon pour {0} sur cette période."
 
-#: frontend/src/pages/MetricsPage.vue:244
+#: frontend/src/pages/MetricsPage.vue:231
 msgid "No samples of this metric for this scope and window. That is no data, not zero."
 msgstr ""
 "Aucun échantillon de cette métrique pour ce périmètre et cette fenêtre. C'est une absence de "
 "données, pas zéro."
 
-#: frontend/src/components/MergeDialog.vue:99
+#: frontend/src/components/MergeDialog.vue:101
 msgid "No unresolved incident to merge into"
 msgstr "Aucun incident non résolu dans lequel fusionner"
 
@@ -3060,7 +3084,7 @@ msgstr "Aucun incident non résolu dans lequel fusionner"
 msgid "No unresolved incidents you can see."
 msgstr "Aucun incident non résolu visible pour vous."
 
-#: frontend/src/pages/IncidentPage.vue:311
+#: frontend/src/pages/IncidentPage.vue:323
 msgid "Nobody yet"
 msgstr "Personne pour l'instant"
 
@@ -3080,10 +3104,17 @@ msgstr ""
 msgid "Not acknowledged"
 msgstr "Non acquittés"
 
-#: dodock_wolf/wolf/rule_sentence.py:260
+#: dodock_wolf/wolf/rule_sentence.py:268
 #, python-brace-format
 msgid "Not acknowledged after {0}, it also notifies {1}."
 msgstr "Si l'incident n'est pas acquitté après {0}, elle notifie aussi {1}."
+
+#: frontend/src/components/dash/SignalsPanel.vue:128
+#, python-brace-format
+msgid ""
+"Not collected for this scope, not set up on the agent, or not available here. They are not zero: "
+"{0}."
+msgstr "Non collectés pour ce périmètre, non configurés sur l'agent ou indisponibles ici. Ce ne sont pas des zéros : {0}."
 
 #: dodock_wolf/api/actions.py:36 dodock_wolf/api/actions.py:99 frontend/src/pages/NotFoundPage.vue:13
 #: frontend/src/router.js:30
@@ -3135,7 +3166,7 @@ msgstr "Rien ne peut être appliqué tant que les règles invalides ne sont pas 
 msgid "Nothing open. The pack is quiet."
 msgstr "Rien d'ouvert. La meute est calme."
 
-#: frontend/src/pages/IncidentPage.vue:449
+#: frontend/src/pages/IncidentPage.vue:451
 msgid "Nothing recorded in this window."
 msgstr "Rien d'enregistré dans cette fenêtre."
 
@@ -3216,7 +3247,7 @@ msgid "OVERDUE"
 msgstr "EN RETARD"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:90
-#: frontend/src/pages/IncidentPage.vue:351
+#: frontend/src/pages/IncidentPage.vue:353
 msgid "Obligation"
 msgstr "Obligation"
 
@@ -3347,9 +3378,13 @@ msgstr "Uniquement si le CSIRT ou l'autorité en demande un (art. 23(4)(c))."
 #. Item'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:89
 #: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:40
-#: frontend/src/pages/IncidentPage.vue:157
 msgid "Open"
 msgstr ""
+
+#: frontend/src/pages/IncidentPage.vue:169
+msgctxt "Regulatory deadline"
+msgid "Open"
+msgstr "En cours"
 
 #: frontend/src/components/WolfSidebar.vue:24
 msgid "Open Desk"
@@ -3382,7 +3417,7 @@ msgstr "Ouvrir la page publique"
 msgid "Opened by hand from event {0}."
 msgstr "Ouvert à la main depuis l'événement {0}."
 
-#: dodock_wolf/wolf/rule_sentence.py:193
+#: dodock_wolf/wolf/rule_sentence.py:201
 #, python-brace-format
 msgid "Opens a {0} incident when {1}"
 msgstr "Cette règle ouvre un incident {0} quand {1}"
@@ -3435,7 +3470,7 @@ msgstr "Boîte d'envoi"
 msgid "Outside the active window right now."
 msgstr "En dehors de la plage active en ce moment."
 
-#: frontend/src/pages/IncidentPage.vue:161
+#: frontend/src/pages/IncidentPage.vue:173
 msgid "Overdue"
 msgstr "En retard"
 
@@ -3459,7 +3494,7 @@ msgstr "Événements propres écartés"
 #. Label of the assigned_to (Link) field in DocType 'Wolf Postmortem Action
 #. Item'
 #: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:25
-#: frontend/src/pages/IncidentPage.vue:310
+#: frontend/src/pages/IncidentPage.vue:322
 msgid "Owner"
 msgstr "Responsable"
 
@@ -3584,7 +3619,7 @@ msgstr "Violation de données personnelles (RGPD, art. 33)"
 msgid "Phone Numbers"
 msgstr "Numéros de téléphone"
 
-#: frontend/src/components/MergeDialog.vue:99
+#: frontend/src/components/MergeDialog.vue:101
 msgid "Pick an unresolved incident"
 msgstr "Choisissez un incident non résolu"
 
@@ -3604,7 +3639,7 @@ msgstr "Position dans la chaîne ; 0 jusqu'à ce que la tâche de chaînage sig
 msgid "Postmortem"
 msgstr "Post-mortem"
 
-#: frontend/src/pages/IncidentPage.vue:389
+#: frontend/src/pages/IncidentPage.vue:391
 #, python-brace-format
 msgid "Postmortem {0} (Desk)"
 msgstr "Post-mortem {0} (Desk)"
@@ -3697,7 +3732,7 @@ msgstr "Crée un événement warning quand un agent n'a rien envoyé depuis ce d
 msgid "Range"
 msgstr ""
 
-#: frontend/src/components/dash/HttpChart.vue:74 frontend/src/pages/MetricsPage.vue:237
+#: frontend/src/components/dash/HttpChart.vue:74 frontend/src/pages/MetricsPage.vue:224
 #, python-brace-format
 msgid "Range starts at {0}: select the point where it ends."
 msgstr "La période commence à {0} : sélectionnez le point où elle se termine."
@@ -3799,7 +3834,7 @@ msgstr ""
 
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:22
 #: frontend/src/pages/DashboardPage.vue:124 frontend/src/pages/ErrorsPage.vue:38
-#: frontend/src/pages/EventsPage.vue:61 frontend/src/pages/IncidentPage.vue:278
+#: frontend/src/pages/EventsPage.vue:61 frontend/src/pages/IncidentPage.vue:290
 #: frontend/src/pages/IncidentsPage.vue:84 frontend/src/pages/MetricsPage.vue:179
 #: frontend/src/pages/MonitoringPage.vue:33 frontend/src/pages/SecurityPage.vue:146
 msgid "Refresh"
@@ -3853,7 +3888,7 @@ msgstr "Déclaration réglementaire"
 msgid "Regulatory report draft"
 msgstr "Brouillon de déclaration réglementaire"
 
-#: frontend/src/pages/IncidentPage.vue:333
+#: frontend/src/pages/IncidentPage.vue:345
 msgid "Regulatory reporting"
 msgstr "Déclarations réglementaires"
 
@@ -3863,13 +3898,18 @@ msgstr "Déclarations réglementaires"
 msgid "Regulatory reporting (NIS2 / DORA / GDPR)"
 msgstr "Déclarations réglementaires (NIS2 / DORA / RGPD)"
 
+#: frontend/src/pages/IncidentPage.vue:347
+#, python-brace-format
+msgid "Regulatory reporting: {0}"
+msgstr "Déclarations réglementaires : {0}"
+
 #. Label of the related_section (Section Break) field in DocType 'Wolf
 #. Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:439
 msgid "Related"
 msgstr "Éléments liés"
 
-#: frontend/src/pages/IncidentPage.vue:373
+#: frontend/src/pages/IncidentPage.vue:375
 msgid "Report draft"
 msgstr "Brouillon de déclaration"
 
@@ -3920,7 +3960,7 @@ msgid "Resolution (seconds)"
 msgstr "Résolution (secondes)"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:24
-#: frontend/src/pages/IncidentPage.vue:385
+#: frontend/src/pages/IncidentPage.vue:387
 msgid "Resolve"
 msgstr "Résoudre"
 
@@ -3947,10 +3987,10 @@ msgstr "Résout l'incident quand la condition n'est plus remplie."
 #. Option for the 'Status' (Select) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:89
 #: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:74
-#: frontend/src/components/SeverityGlyph.vue:12 frontend/src/pages/IncidentPage.vue:306
+#: frontend/src/components/SeverityGlyph.vue:12 frontend/src/pages/IncidentPage.vue:318
 #: frontend/src/pages/IncidentsPage.vue:22
 msgid "Resolved"
-msgstr ""
+msgstr "Résolu"
 
 #. Label of the resolved_at (Datetime) field in DocType 'Wolf Incident'
 #. Label of the resolved_at (Datetime) field in DocType 'Wolf Postmortem'
@@ -4051,7 +4091,7 @@ msgstr "Ligne {0} ({1}) : {2} doit commencer par http:// ou https://"
 msgid "Rows Written In Last Run"
 msgstr "Lignes écrites lors de la dernière exécution"
 
-#: frontend/src/pages/IncidentPage.vue:321
+#: frontend/src/pages/IncidentPage.vue:333
 msgid "Rule"
 msgstr "Règle"
 
@@ -4148,7 +4188,7 @@ msgstr ""
 msgid "Satellite mode: register with the central site to start forwarding."
 msgstr "Mode satellite : enregistrez-vous auprès du site central pour commencer la transmission."
 
-#: frontend/src/components/dash/MonitoringPanel.vue:114
+#: frontend/src/components/dash/MonitoringPanel.vue:108
 msgid "Satellites"
 msgstr ""
 
@@ -4197,7 +4237,7 @@ msgstr "Filtres de périmètre"
 msgid "Score"
 msgstr ""
 
-#: frontend/src/pages/IncidentPage.vue:410
+#: frontend/src/pages/IncidentPage.vue:412
 msgid "Search loaded rows"
 msgstr "Rechercher dans les lignes chargées"
 
@@ -4282,21 +4322,21 @@ msgstr "Envoyer une notification de test"
 msgid "Send the journal"
 msgstr "Envoyer le journal"
 
-#: frontend/src/components/dash/SignalsPanel.vue:67
+#: frontend/src/components/dash/SignalsPanel.vue:68
 #, python-brace-format
 msgid "Sending errors reported: {0} event records, last"
 msgstr "Erreurs d'envoi signalées : {0} enregistrements d'événements, dernier"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:90
-#: frontend/src/pages/IncidentPage.vue:353
+#: frontend/src/pages/IncidentPage.vue:355
 msgid "Sent"
 msgstr "Envoyé"
 
-#: frontend/src/pages/IncidentPage.vue:165
+#: frontend/src/pages/IncidentPage.vue:177
 msgid "Sent late"
 msgstr "Envoyée en retard"
 
-#: frontend/src/pages/IncidentPage.vue:163
+#: frontend/src/pages/IncidentPage.vue:175
 msgid "Sent on time"
 msgstr "Envoyée dans les délais"
 
@@ -4386,7 +4426,7 @@ msgstr "Réglez {0} sur 60 dans {1} pour des évaluations à la minute."
 
 #. Label of a Card Break in the Dodock Wolf Workspace
 #: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:104
-#: frontend/src/components/dash/MonitoringPanel.vue:132
+#: frontend/src/components/dash/MonitoringPanel.vue:126
 msgid "Setup"
 msgstr "Configuration"
 
@@ -4453,7 +4493,7 @@ msgstr "Court texte public sous le titre."
 msgid "Show History Days"
 msgstr "Jours d'historique affichés"
 
-#: frontend/src/pages/MetricsPage.vue:262
+#: frontend/src/pages/MetricsPage.vue:249
 msgid "Show the data as a table"
 msgstr "Afficher les données sous forme de tableau"
 
@@ -4462,12 +4502,12 @@ msgstr "Afficher les données sous forme de tableau"
 msgid "Show the first {0} hosts only"
 msgstr "Afficher seulement les {0} premiers hôtes"
 
-#: frontend/src/components/dash/SignalsPanel.vue:114
+#: frontend/src/components/dash/SignalsPanel.vue:115
 #, python-brace-format
 msgid "Show the first {0} only"
 msgstr "Afficher seulement les {0} premières"
 
-#: frontend/src/components/dash/SignalsPanel.vue:62
+#: frontend/src/components/dash/SignalsPanel.vue:63
 #, python-brace-format
 msgid "Show the other {0} of {1}"
 msgstr "Afficher les {0} autres sur {1}"
@@ -4477,17 +4517,17 @@ msgstr "Afficher les {0} autres sur {1}"
 msgid "Show the other {0} of {1} hosts"
 msgstr "Afficher les {0} autres hôtes sur {1}"
 
-#: frontend/src/components/dash/SignalsPanel.vue:61
+#: frontend/src/components/dash/SignalsPanel.vue:62
 #, python-brace-format
 msgid "Show the other {0} of {1}, {2} with a problem"
 msgstr "Afficher les {0} autres sur {1}, dont {2} avec un problème"
 
-#: frontend/src/pages/MetricsPage.vue:233
+#: frontend/src/pages/MetricsPage.vue:220
 #, python-brace-format
 msgid "Showing {0} of {1} groups, {2}."
 msgstr "{0} groupes affichés sur {1}, {2}."
 
-#: frontend/src/components/dash/SignalsPanel.vue:79
+#: frontend/src/components/dash/SignalsPanel.vue:80
 #, python-brace-format
 msgid "Showing {0} of {1} series, problems first. The counts per group are exact."
 msgstr "{0} séries affichées sur {1}, les problèmes d'abord. Les comptes par groupe sont exacts."
@@ -4508,7 +4548,7 @@ msgstr "Type de signal"
 
 #. Label of a Card Break in the Dodock Wolf Workspace
 #: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:18
-#: frontend/src/components/dash/SignalsPanel.vue:73 frontend/src/components/dash/SignalsPanel.vue:75
+#: frontend/src/components/dash/SignalsPanel.vue:74 frontend/src/components/dash/SignalsPanel.vue:76
 msgid "Signals"
 msgstr "Signaux"
 
@@ -4534,7 +4574,7 @@ msgstr "Silence signalé"
 
 #. Label of the silenced (Check) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:230
-#: frontend/src/pages/IncidentPage.vue:325
+#: frontend/src/pages/IncidentPage.vue:337
 msgid "Silenced"
 msgstr "Mis en silence"
 
@@ -4656,7 +4696,7 @@ msgid "Split {0} events"
 msgstr "Scinder {0} événements"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:31
-#: frontend/src/pages/IncidentPage.vue:387
+#: frontend/src/pages/IncidentPage.vue:389
 msgid "Split…"
 msgstr "Scinder…"
 
@@ -4665,7 +4705,7 @@ msgstr "Scinder…"
 msgid "Stable string form of labels, e.g. mount=/"
 msgstr "Forme texte stable des libellés, par exemple mount=/"
 
-#: frontend/src/pages/IncidentPage.vue:298
+#: frontend/src/pages/IncidentPage.vue:310
 msgid "Started"
 msgstr ""
 
@@ -4681,7 +4721,7 @@ msgstr ""
 msgid "Starts At"
 msgstr "Début"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:128
+#: frontend/src/components/dash/MonitoringPanel.vue:122
 msgid "State"
 msgstr "État"
 
@@ -4700,7 +4740,7 @@ msgstr "État"
 #: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:39
 #: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:52
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:149
-#: frontend/src/components/ResponsePanel.vue:109 frontend/src/pages/IncidentPage.vue:354
+#: frontend/src/components/ResponsePanel.vue:109 frontend/src/pages/IncidentPage.vue:356
 msgid "Status"
 msgstr "Statut"
 
@@ -4909,7 +4949,7 @@ msgstr "Le nom d'hôte ou de site qu'utilise Wolf."
 msgid "The latest one: an updated intermediate report moves the final report's deadline."
 msgstr "Le plus récent : un rapport intermédiaire mis à jour déplace l'échéance du rapport final."
 
-#: frontend/src/components/MergeDialog.vue:104
+#: frontend/src/components/MergeDialog.vue:106
 #, python-brace-format
 msgid "The newest {0} unresolved incidents are listed."
 msgstr "Les {0} incidents non résolus les plus récents sont listés."
@@ -4919,7 +4959,7 @@ msgstr "Les {0} incidents non résolus les plus récents sont listés."
 msgid "The other name: an IP address, a Wazuh agent name, a domain."
 msgstr "L'autre nom : une adresse IP, un nom d'agent Wazuh, un domaine."
 
-#: frontend/src/pages/IncidentPage.vue:392
+#: frontend/src/pages/IncidentPage.vue:394
 msgid "The postmortem comes once it is resolved."
 msgstr "Le post-mortem viendra une fois l'incident résolu."
 
@@ -5005,7 +5045,7 @@ msgstr "Cette page s'actualise chaque minute."
 msgid "This record carries no details."
 msgstr "Cet enregistrement ne contient aucun détail."
 
-#: frontend/src/components/dash/MonitoringPanel.vue:118
+#: frontend/src/components/dash/MonitoringPanel.vue:112
 msgid "This site"
 msgstr "Ce site"
 
@@ -5061,7 +5101,7 @@ msgstr "Seuil"
 #. Label of the timeline_html (HTML) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:259
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:129
-#: frontend/src/pages/IncidentPage.vue:406 frontend/src/pages/IncidentPage.vue:408
+#: frontend/src/pages/IncidentPage.vue:408 frontend/src/pages/IncidentPage.vue:410
 msgid "Timeline"
 msgstr "Chronologie"
 
@@ -5077,7 +5117,7 @@ msgstr "Marge de la chronologie (minutes)"
 msgid "Timeline Snapshot"
 msgstr "Instantané de la chronologie"
 
-#: frontend/src/pages/IncidentPage.vue:411
+#: frontend/src/pages/IncidentPage.vue:413
 #, python-brace-format
 msgid "Times in {0}"
 msgstr "Fuseau horaire : {0}"
@@ -5315,11 +5355,11 @@ msgstr "Vérifier le certificat TLS de Wazuh"
 msgid "Verify the collector's certificate"
 msgstr "Vérifier le certificat du collecteur"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:131
+#: frontend/src/components/dash/MonitoringPanel.vue:125
 msgid "Version"
 msgstr ""
 
-#: frontend/src/components/SeverityGlyph.vue:10 frontend/src/components/dash/MonitoringPanel.vue:162
+#: frontend/src/components/SeverityGlyph.vue:10 frontend/src/components/dash/MonitoringPanel.vue:156
 msgid "Warning"
 msgstr "Avertissement"
 
@@ -5378,7 +5418,7 @@ msgstr ""
 #: frontend/src/pages/SecurityPage.vue:168
 #, python-brace-format
 msgid "Weight of the checks: {0} failed, {1} unknown, {2} passed, of {3}"
-msgstr "Poids des contrôles : {0} en échec, {1} inconnus, {2} réussis, sur {3}"
+msgstr "Poids des contrôles sur {3} : en échec {0}, inconnus {1}, réussis {2}"
 
 #: frontend/src/pages/SecurityPage.vue:164
 #, python-brace-format
@@ -5389,7 +5429,7 @@ msgstr "Poids des {0} contrôles"
 msgid "What to fix first: the heaviest on top."
 msgstr "À corriger en premier : les plus lourds en haut."
 
-#: frontend/src/components/dash/MonitoringPanel.vue:156
+#: frontend/src/components/dash/MonitoringPanel.vue:150
 #, python-brace-format
 msgid "What {0} needs ({1} on the host shows the same)"
 msgstr "Ce dont {0} a besoin ({1} sur l'hôte affiche la même chose)"
@@ -5444,7 +5484,7 @@ msgstr "Qui applique le blocage : le Wolf Agent sur l'hôte, ou la réponse act
 msgid "Who is working on it. Assigning creates a ToDo and notifies them."
 msgstr "Qui s'en occupe. L'attribution crée une tâche (ToDo) et prévient la personne."
 
-#: frontend/src/pages/MetricsPage.vue:223
+#: frontend/src/pages/MetricsPage.vue:215
 msgid "Whole buckets only: the one still filling shows when it closes."
 msgstr "Intervalles complets uniquement : celui en cours de remplissage apparaît à sa clôture."
 
@@ -5694,7 +5734,7 @@ msgstr "Wolf a pu lire {0} % du poids"
 msgid "Wolf did not propose this action for this incident (or it was already approved)."
 msgstr "Wolf n'a pas proposé cette action pour cet incident (ou elle a déjà été approuvée)."
 
-#: frontend/src/pages/IncidentPage.vue:372
+#: frontend/src/pages/IncidentPage.vue:374
 msgid ""
 "Wolf tracks the dates; it does not decide whether the incident is reportable and sends nothing. "
 "Record the sending times in Desk."
@@ -5732,7 +5772,7 @@ msgstr "Rédigez d'abord un commentaire."
 msgid "Write postmortem"
 msgstr "Rédiger le post-mortem"
 
-#: frontend/src/pages/IncidentPage.vue:390
+#: frontend/src/pages/IncidentPage.vue:392
 msgid "Write the postmortem"
 msgstr "Rédiger le post-mortem"
 
@@ -5740,7 +5780,7 @@ msgstr "Rédiger le post-mortem"
 msgid "YAML"
 msgstr ""
 
-#: frontend/src/pages/IncidentPage.vue:326
+#: frontend/src/pages/IncidentPage.vue:338
 msgid "Yes: no notifications are sent for it"
 msgstr "Oui : aucune notification n'est envoyée pour cet incident"
 
@@ -5751,7 +5791,7 @@ msgstr "Vous n'avez pas accès à ce site."
 #: frontend/src/services/api.js:29
 #, python-brace-format
 msgid "You may not see {0}."
-msgstr "Vous n'avez pas accès à {0}."
+msgstr "Vous ne pouvez pas voir {0}."
 
 #: dodock_wolf/www/wolf.py:26
 msgid "You need the Wolf User or Wolf Manager role to open Dodock Wolf."
@@ -5802,7 +5842,7 @@ msgstr ""
 "(son nom d'hôte est son nom de site). integration : une source qui n'envoie que lorsqu'elle a "
 "quelque chose à signaler (l'intégration Wazuh), jamais signalée comme silencieuse."
 
-#: frontend/src/components/dash/SignalsPanel.vue:99
+#: frontend/src/components/dash/SignalsPanel.vue:100
 msgid "and no new data: last sample"
 msgstr "et aucune donnée récente : dernier échantillon"
 
@@ -5830,7 +5870,7 @@ msgid "approved: the agent applies it at its next push"
 msgstr "approuvée : l'agent l'applique à son prochain envoi"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:83
-#: frontend/src/pages/IncidentPage.vue:362
+#: frontend/src/pages/IncidentPage.vue:364
 msgid "as asked"
 msgstr "comme demandé"
 
@@ -5862,7 +5902,7 @@ msgstr "au plus"
 msgid "auth.log signals (SSH, sudo, accounts) vs Wazuh alerts (hids_alert)."
 msgstr "Signaux de auth.log (SSH, sudo, comptes) ou alertes Wazuh (hids_alert)."
 
-#: frontend/src/pages/IncidentPage.vue:307
+#: frontend/src/pages/IncidentPage.vue:319
 msgid "automatically"
 msgstr "automatiquement"
 
@@ -5871,7 +5911,7 @@ msgstr "automatiquement"
 msgid "avg"
 msgstr ""
 
-#: frontend/src/components/MergeDialog.vue:119
+#: frontend/src/components/MergeDialog.vue:121
 #, python-brace-format
 msgid "becomes Resolved, merged into {0}."
 msgstr "devient Résolu, fusionné dans {0}."
@@ -5892,7 +5932,7 @@ msgstr ""
 msgid "bench not known"
 msgstr "bench inconnu"
 
-#: dodock_wolf/wolf/rule_sentence.py:152
+#: dodock_wolf/wolf/rule_sentence.py:160
 #, python-brace-format
 msgid "bench {0}"
 msgstr ""
@@ -5959,7 +5999,7 @@ msgstr ""
 msgid "changes: {0}"
 msgstr "modifications : {0}"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:149
+#: frontend/src/components/dash/MonitoringPanel.vue:143
 msgid "checked"
 msgstr "vérifié"
 
@@ -6024,7 +6064,7 @@ msgstr "déploiement {0}"
 msgid "deployment"
 msgstr ""
 
-#: frontend/src/pages/IncidentPage.vue:317
+#: frontend/src/pages/IncidentPage.vue:329
 msgid "details deleted by retention"
 msgstr "détails supprimés par la politique de conservation"
 
@@ -6075,7 +6115,7 @@ msgstr "activé, tâches toutes les {0}"
 msgid "error"
 msgstr ""
 
-#: frontend/src/pages/EventsPage.vue:89
+#: frontend/src/pages/EventsPage.vue:85
 msgid "error group"
 msgstr "groupe d'erreurs"
 
@@ -6102,7 +6142,7 @@ msgstr ""
 msgid "events"
 msgstr "événements"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:110
+#: frontend/src/components/dash/MonitoringPanel.vue:104
 msgid "every reporting agent has what it needs"
 msgstr "chaque agent actif a ce qu'il lui faut"
 
@@ -6153,9 +6193,9 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:31
 #: dodock_wolf/wolf/rule_sentence.py:40 frontend/src/components/dash/InventoryPanel.vue:73
 msgid "host"
-msgstr ""
+msgstr "hôte"
 
-#: dodock_wolf/wolf/rule_sentence.py:152
+#: dodock_wolf/wolf/rule_sentence.py:160
 #, python-brace-format
 msgid "host {0}"
 msgstr "hôte {0}"
@@ -6254,11 +6294,11 @@ msgstr "kind doit valoir agent, satellite ou integration"
 msgid "last"
 msgstr ""
 
-#: frontend/src/components/dash/SignalsPanel.vue:99 frontend/src/pages/MetricsPage.vue:256
+#: frontend/src/components/dash/SignalsPanel.vue:100 frontend/src/pages/MetricsPage.vue:243
 msgid "last sample"
 msgstr "dernier échantillon"
 
-#: frontend/src/pages/MetricsPage.vue:258
+#: frontend/src/pages/MetricsPage.vue:245
 msgid "last sample in this window at"
 msgstr "dernier échantillon de cette fenêtre à"
 
@@ -6272,7 +6312,7 @@ msgstr "dernière occurrence : {0}"
 msgid "last {0}"
 msgstr "sur {0}"
 
-#: frontend/src/pages/IncidentPage.vue:100 frontend/src/pages/IncidentsPage.vue:106
+#: frontend/src/pages/IncidentPage.vue:112 frontend/src/pages/IncidentsPage.vue:106
 #, python-brace-format
 msgid "lasted {0}"
 msgstr "a duré {0}"
@@ -6323,7 +6363,7 @@ msgstr "jamais transmis"
 msgid "never reported"
 msgstr "n'a jamais rien envoyé"
 
-#: frontend/src/components/dash/SignalsPanel.vue:76
+#: frontend/src/components/dash/SignalsPanel.vue:77
 msgid "newest value of each series; thresholds come from the alert rules"
 msgstr "valeur la plus récente de chaque série ; les seuils viennent des règles d'alerte"
 
@@ -6350,11 +6390,11 @@ msgstr "aucun bench vu"
 msgid "no central site yet"
 msgstr "pas encore de site central"
 
-#: frontend/src/pages/MetricsPage.vue:272
+#: frontend/src/pages/MetricsPage.vue:259
 msgid "no data"
 msgstr "aucune donnée"
 
-#: frontend/src/pages/MetricsPage.vue:256
+#: frontend/src/pages/MetricsPage.vue:243
 msgid "no new data, last sample"
 msgstr "aucune donnée récente, dernier échantillon"
 
@@ -6379,7 +6419,7 @@ msgstr ""
 msgid "not reported"
 msgstr "non remonté"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:111
+#: frontend/src/components/dash/MonitoringPanel.vue:105
 msgid "not reported yet (agents check their host every hour)"
 msgstr "pas encore remonté (les agents vérifient leur hôte toutes les heures)"
 
@@ -6441,7 +6481,7 @@ msgstr "sur {0}"
 msgid "online"
 msgstr "en ligne"
 
-#: dodock_wolf/wolf/rule_sentence.py:199
+#: dodock_wolf/wolf/rule_sentence.py:207
 #, python-brace-format
 msgid "only for {0}"
 msgstr "uniquement pour {0}"
@@ -6450,7 +6490,7 @@ msgstr "uniquement pour {0}"
 msgid "open"
 msgstr "en cours"
 
-#: frontend/src/pages/IncidentPage.vue:101
+#: frontend/src/pages/IncidentPage.vue:113
 #, python-brace-format
 msgid "open for {0}"
 msgstr "ouvert depuis {0}"
@@ -6500,7 +6540,7 @@ msgstr "proposées à partir des événements de sécurité de l'incident ; cha
 msgid "records"
 msgstr "enregistrements"
 
-#: frontend/src/pages/IncidentPage.vue:346
+#: frontend/src/pages/IncidentPage.vue:348
 #, python-brace-format
 msgid "reference {0}"
 msgstr "référence {0}"
@@ -6542,7 +6582,7 @@ msgstr "même constat que"
 msgid "satellite"
 msgstr ""
 
-#: frontend/src/components/dash/MonitoringPanel.vue:119
+#: frontend/src/components/dash/MonitoringPanel.vue:113
 #, python-brace-format
 msgid "satellite of {0}; {1} items waiting to forward"
 msgstr "satellite de {0} ; {1} éléments en attente de transmission"
@@ -6581,7 +6621,7 @@ msgstr ""
 msgid "silent"
 msgstr "silencieux"
 
-#: frontend/src/components/MergeDialog.vue:117 frontend/src/components/SplitDialog.vue:134
+#: frontend/src/components/MergeDialog.vue:119 frontend/src/components/SplitDialog.vue:134
 msgid "since"
 msgstr "depuis"
 
@@ -6602,7 +6642,7 @@ msgstr "depuis {0}"
 msgid "site"
 msgstr ""
 
-#: dodock_wolf/wolf/rule_sentence.py:152
+#: dodock_wolf/wolf/rule_sentence.py:160
 #, python-brace-format
 msgid "site {0}"
 msgstr ""
@@ -6611,9 +6651,8 @@ msgstr ""
 msgid "sites"
 msgstr "sites"
 
-#: frontend/src/components/MergeDialog.vue:115
+#: frontend/src/components/MergeDialog.vue:117
 #, python-brace-format
-msgctxt "Wolf Incident"
 msgid "stays {0},"
 msgstr "reste {0},"
 
@@ -6665,12 +6704,12 @@ msgstr "le catalogue des métriques"
 msgid "the number of samples of {0}"
 msgstr "le nombre d'échantillons de {0}"
 
-#: dodock_wolf/wolf/rule_sentence.py:144
+#: dodock_wolf/wolf/rule_sentence.py:152
 #, python-brace-format
 msgid "the number of {0} events"
 msgstr "le nombre d'événements {0}"
 
-#: dodock_wolf/wolf/rule_sentence.py:136
+#: dodock_wolf/wolf/rule_sentence.py:142
 #, python-brace-format
 msgid ""
 "the same {0} sets off {1} and then {2} within {3} of it, and the number of times it happens over "
@@ -6708,7 +6747,7 @@ msgstr "ces signaux"
 msgid "this error group"
 msgstr "ce groupe d'erreurs"
 
-#: frontend/src/pages/IncidentPage.vue:110
+#: frontend/src/pages/IncidentPage.vue:122
 msgid "this incident"
 msgstr "cet incident"
 
@@ -6734,7 +6773,7 @@ msgstr ""
 msgid "udp"
 msgstr ""
 
-#: frontend/src/components/dash/MonitoringPanel.vue:142
+#: frontend/src/components/dash/MonitoringPanel.vue:136
 msgid "unknown"
 msgstr "inconnu"
 
@@ -6754,7 +6793,7 @@ msgstr "jusqu'au {0}"
 #: dodock_wolf/dodock_wolf/doctype/wolf_event_entity/wolf_event_entity.json:25
 #: dodock_wolf/wolf/rule_sentence.py:40
 msgid "user"
-msgstr ""
+msgstr "utilisateur"
 
 #. Option for the 'Severity' (Select) field in DocType 'Wolf Alert Rule'
 #. Option for the 'Min Severity' (Select) field in DocType 'Wolf Alert Rule'
@@ -6805,52 +6844,52 @@ msgstr ""
 msgid "worker_failure"
 msgstr ""
 
-#: dodock_wolf/wolf/rule_sentence.py:176
+#: dodock_wolf/wolf/rule_sentence.py:184
 #, python-brace-format
 msgid "{0} (in the hourly digest)"
 msgstr "{0} (dans le récapitulatif horaire)"
 
-#: dodock_wolf/wolf/rule_sentence.py:132
+#: dodock_wolf/wolf/rule_sentence.py:138
 #, python-brace-format
 msgid "{0} ({1} or worse)"
 msgstr "{0} (gravité {1} ou plus)"
 
-#: dodock_wolf/wolf/rule_sentence.py:251
+#: dodock_wolf/wolf/rule_sentence.py:259
 #, python-brace-format
 msgid "{0} ({1} still hears when it is acknowledged or resolved)"
 msgstr "{0} (et prévient encore {1} lors de l'acquittement ou de la résolution)"
 
-#: dodock_wolf/wolf/rule_sentence.py:132
+#: dodock_wolf/wolf/rule_sentence.py:138
 #, python-brace-format
 msgid "{0} ({1})"
-msgstr ""
+msgstr "{0} (gravité {1})"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.py:21
 #, python-brace-format
 msgid "{0} already has {1} {2}"
 msgstr "{0} a déjà {1} {2}"
 
-#: dodock_wolf/wolf/rule_sentence.py:101
+#: dodock_wolf/wolf/rule_sentence.py:107
 #, python-brace-format
 msgid "{0} and {1}"
 msgstr "{0} et {1}"
 
-#: frontend/src/components/MergeDialog.vue:112
+#: frontend/src/components/MergeDialog.vue:114
 #, python-brace-format
 msgid "{0} and {1} from {2} to {3}."
 msgstr "{0} et {1} de {2} vers {3}."
 
-#: dodock_wolf/wolf/rule_sentence.py:116
+#: dodock_wolf/wolf/rule_sentence.py:122
 #, python-brace-format
 msgid "{0} at {1} severity"
 msgstr "{0} de gravité {1}"
 
-#: dodock_wolf/wolf/rule_sentence.py:117
+#: dodock_wolf/wolf/rule_sentence.py:123
 #, python-brace-format
 msgid "{0} at {1} severity or worse"
 msgstr "{0} de gravité {1} ou plus"
 
-#: frontend/src/components/MergeDialog.vue:63
+#: frontend/src/components/MergeDialog.vue:65
 #, python-brace-format
 msgid "{0} comments"
 msgstr "{0} commentaires"
@@ -6865,32 +6904,32 @@ msgstr "{0} critiques"
 msgid "{0} cron"
 msgstr "{0} cron"
 
-#: frontend/src/services/time.js:50
+#: frontend/src/services/time.js:40
 #, python-brace-format
 msgid "{0} d {1} h"
 msgstr "{0} j {1} h"
 
-#: frontend/src/services/time.js:67
+#: frontend/src/services/time.js:57
 #, python-brace-format
 msgid "{0} d {1} h ago"
 msgstr "il y a {0} j {1} h"
 
-#: dodock_wolf/wolf/rule_sentence.py:82
+#: dodock_wolf/wolf/rule_sentence.py:88
 #, python-brace-format
 msgid "{0} day"
 msgstr "{0} jour"
 
-#: dodock_wolf/wolf/rule_sentence.py:82
+#: dodock_wolf/wolf/rule_sentence.py:88
 #, python-brace-format
 msgid "{0} days"
 msgstr "{0} jours"
 
-#: dodock_wolf/wolf/rule_sentence.py:222 dodock_wolf/wolf/rule_sentence.py:235
+#: dodock_wolf/wolf/rule_sentence.py:230 dodock_wolf/wolf/rule_sentence.py:243
 #, python-brace-format
 msgid "{0} evaluations"
 msgstr "{0} évaluations"
 
-#: frontend/src/components/MergeDialog.vue:62 frontend/src/components/SplitDialog.vue:72
+#: frontend/src/components/MergeDialog.vue:64 frontend/src/components/SplitDialog.vue:72
 #, python-brace-format
 msgid "{0} events"
 msgstr "{0} événements"
@@ -6905,27 +6944,27 @@ msgstr "{0} en échec"
 msgid "{0} failed, {1}"
 msgstr "{0} en échec, {1}"
 
-#: dodock_wolf/wolf/rule_sentence.py:235
+#: dodock_wolf/wolf/rule_sentence.py:243
 #, python-brace-format
 msgid "{0} for {1} in a row"
 msgstr "{0} pendant {1} consécutives"
 
-#: dodock_wolf/wolf/rule_sentence.py:84 frontend/src/pages/MetricsPage.vue:159
+#: dodock_wolf/wolf/rule_sentence.py:90 frontend/src/pages/MetricsPage.vue:159
 #, python-brace-format
 msgid "{0} h"
 msgstr "{0} h"
 
-#: frontend/src/services/time.js:51
+#: frontend/src/services/time.js:41
 #, python-brace-format
 msgid "{0} h {1} min"
 msgstr "{0} h {1} min"
 
-#: frontend/src/services/time.js:68
+#: frontend/src/services/time.js:58
 #, python-brace-format
 msgid "{0} h {1} min ago"
 msgstr "il y a {0} h {1} min"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:107
+#: frontend/src/components/dash/MonitoringPanel.vue:101
 #, python-brace-format
 msgid "{0} hosts to fix"
 msgstr "{0} hôtes à corriger"
@@ -6949,18 +6988,18 @@ msgstr ""
 "{0} n'est pas dans le catalogue et n'a eu aucune donnée visible pour vous ces 7 derniers jours. "
 "Elle est traitée comme une métrique personnalisée."
 
-#: dodock_wolf/wolf/rule_sentence.py:85 frontend/src/components/dash/MonitoringPanel.vue:37
-#: frontend/src/pages/MetricsPage.vue:159 frontend/src/services/time.js:52
+#: dodock_wolf/wolf/rule_sentence.py:91 frontend/src/components/dash/MonitoringPanel.vue:37
+#: frontend/src/pages/MetricsPage.vue:159 frontend/src/services/time.js:42
 #, python-brace-format
 msgid "{0} min"
 msgstr "{0} min"
 
-#: frontend/src/services/time.js:69
+#: frontend/src/services/time.js:59
 #, python-brace-format
 msgid "{0} min ago"
 msgstr "il y a {0} min"
 
-#: frontend/src/pages/IncidentPage.vue:454
+#: frontend/src/pages/IncidentPage.vue:456
 #, python-brace-format
 msgid "{0} new rows: show"
 msgstr "{0} nouvelles lignes : afficher"
@@ -6980,12 +7019,12 @@ msgstr "{0} surveillé par aucune règle"
 msgid "{0} occurrences"
 msgstr "{0} occurrences"
 
-#: dodock_wolf/wolf/rule_sentence.py:146
+#: dodock_wolf/wolf/rule_sentence.py:154
 #, python-brace-format
 msgid "{0} of category {1}"
 msgstr "{0} de catégorie {1}"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:115
+#: frontend/src/components/dash/MonitoringPanel.vue:109
 #, python-brace-format
 msgid "{0} of {1} forwarding"
 msgstr "{0} sur {1} transmettent"
@@ -7000,22 +7039,27 @@ msgstr "{0} hôte sur {1} correspond."
 msgid "{0} of {1} hosts match."
 msgstr "{0} hôtes sur {1} correspondent."
 
-#: frontend/src/pages/IncidentPage.vue:417
+#: frontend/src/pages/IncidentPage.vue:419
 #, python-brace-format
 msgid "{0} of {1} loaded rows match."
 msgstr "{0} lignes chargées sur {1} correspondent."
 
-#: frontend/src/pages/IncidentPage.vue:416
+#: frontend/src/pages/IncidentPage.vue:418
 #, python-brace-format
 msgid "{0} of {1} loaded rows match; more rows are not loaded yet."
 msgstr "{0} lignes chargées sur {1} correspondent ; d'autres lignes ne sont pas encore chargées."
 
-#: dodock_wolf/wolf/rule_sentence.py:101
+#: frontend/src/components/dash/MonitoringPanel.vue:96
+#, python-brace-format
+msgid "{0} of {1} reporting (silent after {2} min)"
+msgstr "{0} sur {1} remontent des données (silencieux après {2} min)"
+
+#: dodock_wolf/wolf/rule_sentence.py:107
 #, python-brace-format
 msgid "{0} or {1}"
 msgstr "{0} ou {1}"
 
-#: dodock_wolf/wolf/rule_sentence.py:148
+#: dodock_wolf/wolf/rule_sentence.py:156
 #, python-brace-format
 msgid "{0} over the last {1} is {2} {3}"
 msgstr "{0} sur une fenêtre de {1} est {2} {3}"
@@ -7023,9 +7067,14 @@ msgstr "{0} sur une fenêtre de {1} est {2} {3}"
 #: frontend/src/pages/SecurityPage.vue:196
 #, python-brace-format
 msgid "{0} passed, {1} failed, {2} unknown"
-msgstr "{0} réussis, {1} en échec, {2} inconnus"
+msgstr "réussis : {0}, en échec : {1}, inconnus : {2}"
 
-#: frontend/src/pages/IncidentPage.vue:53
+#: frontend/src/pages/MetricsPage.vue:214
+#, python-brace-format
+msgid "{0} per {1}, read from {2} data, {3} to {4}."
+msgstr "{0} par {1}, lu depuis les données {2}, du {3} au {4}."
+
+#: frontend/src/pages/IncidentPage.vue:65
 #, python-brace-format
 msgid "{0} records"
 msgstr "{0} enregistrements"
@@ -7035,7 +7084,7 @@ msgstr "{0} enregistrements"
 msgid "{0} reported"
 msgstr "{0} signalements"
 
-#: frontend/src/pages/IncidentPage.vue:54
+#: frontend/src/pages/IncidentPage.vue:66
 #, python-brace-format
 msgid "{0} reported occurrences"
 msgstr "{0} occurrences signalées"
@@ -7045,7 +7094,7 @@ msgstr "{0} occurrences signalées"
 msgid "{0} reported, last"
 msgstr "{0} signalements, dernier à"
 
-#: frontend/src/pages/EventsPage.vue:86
+#: frontend/src/pages/EventsPage.vue:82
 #, python-brace-format
 msgid "{0} reported, last {1}"
 msgstr "{0} signalements, dernier à {1}"
@@ -7057,21 +7106,21 @@ msgstr "{0} résolus"
 
 #: frontend/src/components/dash/SignalsPanel.vue:18
 #, python-brace-format
-msgid "{0} rule firing"
-msgstr "{0} règle déclenchée"
+msgid "{0} rules firing"
+msgstr "{0} règles déclenchées"
 
 #: frontend/src/components/dash/MonitoringPanel.vue:37
-#: frontend/src/components/dash/MonitoringPanel.vue:142
+#: frontend/src/components/dash/MonitoringPanel.vue:136
 #, python-brace-format
 msgid "{0} s"
 msgstr "{0} s"
 
-#: frontend/src/pages/MetricsPage.vue:254
+#: frontend/src/pages/MetricsPage.vue:241
 #, python-brace-format
 msgid "{0} samples"
 msgstr "{0} échantillons"
 
-#: frontend/src/components/dash/SignalsPanel.vue:125
+#: frontend/src/components/dash/SignalsPanel.vue:126
 #, python-brace-format
 msgid "{0} signals without data in the last {1} days"
 msgstr "{0} signaux sans données ces {1} derniers jours"
@@ -7126,12 +7175,12 @@ msgstr "{0} avertissement"
 msgid "{0} warnings"
 msgstr "{0} avertissements"
 
-#: frontend/src/pages/IncidentPage.vue:433
+#: frontend/src/pages/IncidentPage.vue:435
 #, python-brace-format
 msgid "{0} with no matching rows"
 msgstr "{0} sans ligne correspondante"
 
-#: frontend/src/pages/IncidentPage.vue:433
+#: frontend/src/pages/IncidentPage.vue:435
 #, python-brace-format
 msgid "{0} with no recorded activity"
 msgstr "{0} sans activité enregistrée"
@@ -7171,17 +7220,17 @@ msgstr "{0} · vu pour la dernière fois {1}"
 msgid "{0} · no data"
 msgstr "{0} · aucune donnée"
 
-#: dodock_wolf/wolf/rule_sentence.py:249
+#: dodock_wolf/wolf/rule_sentence.py:257
 #, python-brace-format
 msgid "{0}, and again when it resolves"
 msgstr "{0}, puis de nouveau à sa résolution"
 
-#: frontend/src/pages/MetricsPage.vue:265
+#: frontend/src/pages/MetricsPage.vue:252
 #, python-brace-format
 msgid "{0}, {1} per bucket"
 msgstr "{0}, {1} par intervalle"
 
-#: frontend/src/components/dash/SignalsPanel.vue:58
+#: frontend/src/components/dash/SignalsPanel.vue:59
 #, python-brace-format
 msgid "{0}: {1} {2} {3} over {4} min"
 msgstr "{0} : {1} {2} {3} sur {4} min"
@@ -7196,7 +7245,7 @@ msgstr "{0} : {1}, en {2}."
 msgid "{0}: {1}, weight {2}"
 msgstr "{0} : {1}, poids {2}"
 
-#: dodock_wolf/wolf/rule_sentence.py:240
+#: dodock_wolf/wolf/rule_sentence.py:248
 #, python-brace-format
 msgid "{0}; if it matches again within {1} of being resolved, the same incident reopens"
 msgstr "{0} ; si la condition revient moins de {1} après sa résolution, le même incident est rouvert"
@@ -7963,6 +8012,3 @@ msgctxt "Wolf Outbox"
 msgid "Count"
 msgstr "Nombre"
 
-#: frontend/src/components/dash/CountTiles.vue:25
-msgid "1 critical"
-msgstr "1 critique"
