@@ -342,6 +342,10 @@ list of arguments, never through a shell. `response.command` replaces the comman
 `{seconds}` are filled in). Without `response.enabled` each action comes back *Failed* with the
 reason, so the manager knows it was not applied.
 
+An agent installed before the fix for this had `NoNewPrivileges=yes` in its unit, which stops
+`sudo`, so no block ran: re-run `install.sh`, or delete that line from
+`/etc/systemd/system/wolf-agent.service`, then `systemctl daemon-reload && systemctl restart wolf-agent`.
+
 ### With fail2ban instead of nftables
 
 Where fail2ban already manages the firewall, `wolf-block-fail2ban` bans in a jail of its own
@@ -350,6 +354,7 @@ Where fail2ban already manages the firewall, `wolf-block-fail2ban` bans in a jai
 ```bash
 cp agent/fail2ban/wolf.local /etc/fail2ban/jail.d/wolf.local && fail2ban-client reload
 install -m 0755 -o root -g root agent/wolf-block-fail2ban.sh /usr/local/sbin/wolf-block-fail2ban
+install -d -m 0700 /var/lib/wolf-block   # the expiries; writable from the agent's unit
 echo 'wolf-agent ALL=(root) NOPASSWD: /usr/local/sbin/wolf-block-fail2ban' > /etc/sudoers.d/wolf-block
 chmod 0440 /etc/sudoers.d/wolf-block
 # reboots lose the scheduled unbans: sweep the expired ones every 5 minutes

@@ -70,12 +70,13 @@ if ! "$CLIENT" status "$JAIL" >/dev/null 2>&1; then
 fi
 
 sweep >/dev/null
-"$CLIENT" set "$JAIL" banip "$ip" >/dev/null
+# the expiry first: a ban whose expiry cannot be recorded would outlive it (the jail's own bantime)
 until=$(($(date +%s) + seconds))
 mkdir -p "$(dirname "$STATE")"
 grep -v "^$ip " "$STATE" 2>/dev/null >"$STATE.tmp" || true
 echo "$ip $until" >>"$STATE.tmp"
 mv "$STATE.tmp" "$STATE"
+"$CLIENT" set "$JAIL" banip "$ip" >/dev/null
 
 unban="no timer: --sweep unbans it"
 if command -v systemd-run >/dev/null 2>&1; then
