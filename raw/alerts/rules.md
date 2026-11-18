@@ -860,3 +860,39 @@ digested.
 
 **Send test notification** on the rule form sends a TEST to every enabled channel row and shows
 what each one answered.
+
+## Rules as YAML
+
+Alert rules can live in a file: in git, reviewed in a pull request, copied from one Wolf site to another.
+
+```bash
+bench --site wolf.example.com wolf-rules export -o rules.yaml           # every rule; --rule NAME for some
+bench --site wolf.example.com wolf-rules import rules.yaml              # what it would change
+bench --site wolf.example.com wolf-rules import rules.yaml --apply      # write it
+```
+
+In Desk, the **Wolf Alert Rule** list's menu has **Export to YAML** (the selected rules, or all) and **Import from YAML**, which previews first and applies only after a second click. Both need the Wolf Manager or System Manager role.
+
+```yaml [rules.yaml]
+version: 1
+rules:
+- rule_name: Disk almost full
+  enabled: 1
+  severity: critical
+  metric_name: disk_used_percent
+  aggregation: min
+  threshold: 90
+  group_by: host_label
+  channels:
+  - channel_type: ntfy
+    ntfy_server: https://ntfy.example.com
+    ntfy_topic: ops
+```
+
+- **Field names** are the rule form's own. A rule lists only what differs from the defaults, and on import **a field the file leaves out goes back to its default**: the file says all of a rule.
+- **Matched by rule_name**: a new name creates a rule, an existing one is updated. Rules not in the file are left alone.
+- **Secrets are never written**: chat webhook URLs, tokens, the PagerDuty routing key, the SMS secret, every password field. A file that holds one is refused, to keep them out of git. A generic Webhook's URL and an SMS auth header template are not secret fields: they are exported.
+- **Channels keep their stored secrets.** On import a channel matches the existing row of its type with the same settings (Email recipients, ntfy server and topic, Matrix room, SMS URL and numbers…). Slack, Mattermost and PagerDuty rows have nothing but their secret to tell them apart: they match by position, and only when the file keeps as many of them. A channel that matches nothing is new: when it needs a secret it comes in disabled, to set it in the form and then enable it.
+- **Nothing half-applied**: an unknown field (a typo), a value the field cannot take (a Select option it does not have, a number that is not one), a rule the form would refuse or a name used twice makes the import apply nothing, and says which rule and why.
+- **Quote times**: `active_from: '22:00'`. YAML reads an unquoted `22:00` as a number, and the import refuses it.
+- The evaluator's own state (last evaluation, last fired, hysteresis counters) is never exported nor imported.
