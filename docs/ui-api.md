@@ -51,13 +51,15 @@ with the rest of observability ([#136](https://github.com/bthuner/dodock-wolf/is
 
 No argument. One answer with a key per panel, each within the caller's access. A panel the caller
 may not have is `null`; one that could not be read is `{"error": "…"}` (the reason goes to the
-Error Log) or `{"forbidden": true}`, and the others are still answered.
+Error Log) or `{"forbidden": true}`, and the others are still answered. `satellite` is true on a
+satellite, which records no score and keeps no incidents: `scores`, `incidents` and `responses` are
+then `null`, and the page says that the scores are kept on the central site.
 
 | Panel | What it reads |
 |---|---|
-| `scores` | The stored `security_score` of each site the caller may see: the newest sample of the last 7 days (`site`, `score`, `at`), never recomputed. `change` is the difference with the newest score of 23 to 25 h earlier, `null` when there is none; `late` when the newest is over 3 h old (the job is hourly). Worst first; a site `security.list_sites` knows but that has no score yet comes last with `score: null`, never 0. |
+| `scores` | The stored `security_score` of each site the caller may see by a site grant, as `security.list_sites` (a score is stored with its site's host, but a host grant does not show it): the newest sample of the last 7 days (`site`, `score`, `at`), never recomputed. `change` is the difference with the newest score of 23 to 25 h earlier, `null` when there is none or when the newest is not newer than 23 h; `late` when the newest is over 3 h old (the job is hourly). Worst first; a site `security.list_sites` knows but that has no score yet comes last with `score: null`, never 0. |
 | `incidents` | Open or Acknowledged incidents holding at least one `security` event, merged ones excluded, under the incident access rules: `by_severity` (with `total`), `by_status`, and the 5 `newest`. `null` on a satellite. |
-| `responses` | Wolf Response Actions `waiting` (Approved: for the agent or satellite that applies them) and `failed` in the last `failed_days` (7), with the 5 `newest` (`label`, `status`, `incident`, `result`, `at`). Wolf Managers and System Managers only, else `null`. |
+| `responses` | Wolf Response Actions `waiting` (Approved and not expired: for the agent or satellite that applies them) and `failed` in the last `failed_days` (7), with the 5 `newest` (`label`, `status`, `incident`, `result`, `at`); a user action waiting for a satellite names its site in `label`. Wolf Managers and System Managers only, else `null`. |
 | `journal` | `last_seq` and `last_at` of the newest signed entry, `pending`, `oldest_pending_at`, and `behind` when an entry has waited over 5 minutes (signing runs every minute); `key`. Wolf Managers and System Managers only, else `null`. |
 | `agents` | `agents` and `satellites` per state (`fresh`, `stale`, `never_seen`, `disabled`, `total`) and `to_fix`, the reporting hosts whose last `wolf-agent doctor` run found a failure or a warning (as `get_monitoring` reports it), with `silence_minutes`. |
 
