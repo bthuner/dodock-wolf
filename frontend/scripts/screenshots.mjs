@@ -129,9 +129,6 @@ const POSTURE = {
   ],
 }  // prettier-ignore
 
-const METRIC = { metric: 'http_502', label: 'HTTP 502 responses', unit: '', kind: 'interval_count', seen: true, label_key: null,
-  aggregations: ['sum', 'avg', 'max'], default_aggregation: 'sum', group_bys: ['none', 'site', 'host'] }  // prettier-ignore
-
 const base = fixtures()
 const overrides = (view) => ({
   'dodock_wolf.api.spa.get_boot': () => ({ ...BOOT, user: { name: 'ops@example.com', full_name: 'Ops' } }),
@@ -152,13 +149,6 @@ const overrides = (view) => ({
     hosts: [{ host: 'demo-host', sources: ['agent', 'events', 'metrics'], benches: [{ bench: 'frappe-bench', sites: [{ site: SITE }] }] }],
     note: 'Known from agents, events and metrics of the last 7 days.',
   }),
-  'dodock_wolf.api.metrics.get_metric_catalog': () => ({ metrics: [METRIC] }),
-  'dodock_wolf.api.metrics.get_labels': () => ({ labels: [] }),
-  'dodock_wolf.api.metrics.query_metric': () => ({
-    metric: METRIC, aggregation: 'sum', resolution: 'raw', bucket_seconds: 60, window: { since: at(60), until: at(0) },
-    retention: { clipped: false }, groups: { shown: 1, total: 1, ranked_by: 'max over the window, highest first' }, live: true,
-    series: [{ name: SITE, value: 180, samples: 58, last_sample: at(1), stale: false, points: HTTP.series.http_502 }],
-  }),
   'dodock_wolf.api.security.list_sites': () => [SITE],
   'dodock_wolf.api.security.get_posture': () => POSTURE,
   'dodock_wolf.api.journal.get_status': () => ({ entries: 7, pending: 0, key: true, anchor: `7:${'3fa94c0be17d58a2'.repeat(4)}` }),
@@ -169,7 +159,6 @@ const VIEWS = [
   ['overview', '/wolf/?range=1h'],
   ['incident', '/wolf/incidents/WINC-00001'],
   ['incident-resolved', '/wolf/incidents/WINC-00003'],
-  ['metrics', '/wolf/metrics?metric=http_502&range=1h'],
   ['monitoring', '/wolf/monitoring'],
   ['security', '/wolf/security'],
 ]

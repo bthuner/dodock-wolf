@@ -26,16 +26,13 @@ const VIEWS = [
     empty: () => ({ events: [], paging: { has_more: false } }), says: 'No event records match.', denied: 'You may not see these records.' },
   { name: 'errors', path: '/wolf/errors', read: 'dodock_wolf.api.explore.list_error_groups',
     empty: () => ({ groups: [], paging: { has_more: false } }), says: 'No error groups match.', denied: 'You may not see these records.' },
-  { name: 'metrics', path: '/wolf/metrics?metric=disk_used_percent', read: 'dodock_wolf.api.metrics.query_metric',
-    empty: (a) => ({ ...F['dodock_wolf.api.metrics.query_metric'](a), series: [] }),
-    says: 'No samples of this metric for this scope and window. That is no data, not zero.', denied: 'You may not see this metric.' },
   { name: 'monitoring', path: '/wolf/monitoring', read: 'dodock_wolf.api.dashboard.get_monitoring',
     denied: "You may not see Wolf's own monitoring." },
   { name: 'security', path: '/wolf/security', read: 'dodock_wolf.api.security.get_posture', denied: 'You may not see this site.' },
 ] // prettier-ignore
 
-const NOTHING = /No unresolved incidents|Nothing recorded|No event records|No error groups|No samples of this metric/
-const CLAIMS = ['No unresolved incidents', 'Nothing recorded', 'No event records', 'No error groups', 'No samples of this metric']
+const NOTHING = /No unresolved incidents|Nothing recorded|No event records|No error groups/
+const CLAIMS = ['No unresolved incidents', 'Nothing recorded', 'No event records', 'No error groups']
 
 // Records every "nothing" claim the page ever shows, even for a single frame.
 async function watchClaims(page) {
@@ -93,15 +90,10 @@ test('an ended session asks to log in again, not "you may not see"', async ({ pa
   await expect(page.getByRole('alert')).toHaveText('Your session has ended: reload the page to log in again.')
 })
 
-test('the overview says when its monitoring panel fails, and the metric catalog while it loads', async ({ page }) => {
-  await mockApi(page, {
-    'dodock_wolf.api.dashboard.get_monitoring': () => fail(500, 'redis unreachable'),
-    'dodock_wolf.api.metrics.get_metric_catalog': slow('dodock_wolf.api.metrics.get_metric_catalog'),
-  })
+test('the overview says when its monitoring panel fails', async ({ page }) => {
+  await mockApi(page, { 'dodock_wolf.api.dashboard.get_monitoring': () => fail(500, 'redis unreachable') })
   await page.goto('/wolf/')
   await expect(page.getByRole('alert').filter({ hasText: 'Monitoring: redis unreachable' })).toBeVisible()
-  await page.goto('/wolf/metrics')
-  await expect(page.getByRole('status').filter({ hasText: 'Loading the metric catalog' })).toBeVisible()
 })
 
 test('a slow timeline never says "Nothing recorded" before it has read', async ({ page }) => {
@@ -126,28 +118,14 @@ test('partial results say they are partial', async ({ page }) => {
   const list = F['dodock_wolf.api.incident_view.list_incidents']()
   await mockApi(page, {
     'dodock_wolf.api.incident_view.list_incidents': () => ({ ...list, paging: { has_more: true, next_cursor: 'c1' } }),
-    'dodock_wolf.api.metrics.query_metric': (a) => ({
-      ...F['dodock_wolf.api.metrics.query_metric'](a), groups: { shown: 1, total: 3, ranked_by: 'max over the window, highest first' },
-    }),
     'dodock_wolf.api.incident_view.get_timeline': (a) => ({
       ...F['dodock_wolf.api.incident_view.get_timeline'](a), truncated: { activity_comment: { shown: 100, total: 140 } },
     }),
   })
   await page.goto('/wolf/incidents')
   await expect(page.getByRole('button', { name: 'Load more' })).toBeVisible()
-  await page.goto('/wolf/metrics?metric=disk_used_percent')
-  await expect(page.getByText('Showing 1 of 3 groups')).toBeVisible()
   await page.goto('/wolf/incidents/WINC-00001')
   await expect(page.getByText('Activity shows the newest 100 of 140 comments')).toBeVisible()
-})
-
-test('stale data says no new data, never a value as if fresh', async ({ page }) => {
-  const q = F['dodock_wolf.api.metrics.query_metric']
-  await mockApi(page, {
-    'dodock_wolf.api.metrics.query_metric': (a) => ({ ...q(a), series: q(a).series.map((s) => ({ ...s, stale: true })) }),
-  })
-  await page.goto('/wolf/metrics?metric=disk_used_percent')
-  await expect(page.getByText(/no new data, last sample/)).toBeVisible()
 })
 
 test('disconnected: a refused socket falls back to polling, and says so', async ({ page }) => {

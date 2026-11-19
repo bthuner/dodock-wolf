@@ -19,7 +19,6 @@ node scripts/screenshots.mjs          # or one view: node scripts/screenshots.mj
 | Overview, last hour: exact counts, the 502 window after the deployment | [light](overview-light.jpg) | [dark](overview-dark.jpg) |
 | Incident "502 spike after deployment", open: the preceding change, evidence and context apart | [light](incident-light.jpg) | [dark](incident-dark.jpg) |
 | Incident "Nightly cron failure", owner set, acknowledged, commented and resolved | [light](incident-resolved-light.jpg) | [dark](incident-resolved-dark.jpg) |
-| Metrics: `http_502` summed per minute | [light](metrics-light.jpg) | [dark](metrics-dark.jpg) |
 | Monitoring: rules, scheduler pace, queue, rollups, agent | [light](monitoring-light.jpg) | [dark](monitoring-dark.jpg) |
 | Security: the score and the weight of every check, unknown checks shown as unknown, the journal verified | [light](security-light.jpg) | [dark](security-dark.jpg) |
 

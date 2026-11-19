@@ -13,7 +13,7 @@ value no rule watches, a value its rules accept, and a value a rule has opened a
 
 from datetime import timedelta
 
-from dodock_wolf.wolf.i18n import N_, _, fmt, translate
+from dodock_wolf.wolf.i18n import N_, translate
 
 
 # Default agent cadences. An agent configured with a longer `tls.interval` or
@@ -147,64 +147,3 @@ def state(series, now, rules=(), incidents=()):
 	if is_stale(series, now):
 		return "stale"
 	return "watched" if applicable else "unwatched"
-
-
-# --- exploring a metric ---------------------------------------------------------------------
-
-# the label each metric carries (one per series), for filtering and grouping
-LABELS = {
-	"disk_used_percent": "mount", "queue_length": "queue", "rq_failed_jobs": "queue",
-	"rq_failed_jobs_added": "queue", "rq_long_running_jobs": "queue", "tls_days_left": "domain", "hsts_max_age_days": "domain",
-	"bench_processes_down": "manager", "redis_used_memory_percent": "of",
-	"db_connections_used_percent": "db", "db_threads_connected": "db", "db_slow_queries": "db", "db_replication_running": "db",
-	"db_replication_lag_seconds": "db", "app_version": "app", "site_setting": "setting",
-}  # fmt: skip
-
-# what a bucket may say about each kind. A gauge is a level: its average, extremes or last value
-# over the bucket. An interval count is a number of things per push: summed over the bucket it
-# is the total, its average or maximum is per push interval.
-AGGREGATIONS = {
-	"gauge": ("avg", "min", "max", "last"),
-	"interval_count": ("sum", "avg", "max"),
-	"unknown": ("avg", "min", "max", "last"),  # a custom metric: read it as a level
-}
-DEFAULT_AGGREGATION = {"gauge": "avg", "interval_count": "sum", "unknown": "avg"}
-
-# grouping a metric only by what its series carry: a host-level metric has no bench or site
-GROUP_BYS = {
-	"host": ("none", "host"),
-	"bench": ("none", "host", "bench"),
-	"site": ("none", "host", "bench", "site"),
-	# a custom metric may carry labels the catalog cannot name: it may be split by them
-	"unknown": ("none", "host", "bench", "site", "host_label"),
-}
-
-
-def describe(metric):
-	"""What the explorer may do with a metric: catalog fields, aggregations, groupings, label."""
-	spec = CATALOG.get(metric) or {
-		"metric": metric, "group": "custom", "label": metric, "kind": "unknown", "unit": "",
-		"level": "unknown", "cadence_seconds": PUSH_SECONDS,
-	}  # fmt: skip
-	label = LABELS.get(metric) or ("label" if spec["kind"] == "unknown" else None)
-	group_bys = GROUP_BYS[spec["level"]] + (("host_label",) if label and "host_label" not in GROUP_BYS[spec["level"]] else ())
-	return {
-		**shown(spec),
-		"label_key": label,
-		"aggregations": AGGREGATIONS[spec["kind"]],
-		"default_aggregation": DEFAULT_AGGREGATION[spec["kind"]],
-		"group_bys": group_bys,
-		"caveat": translate(CAVEATS[metric]) if metric in CAVEATS else None,
-	}
-
-
-def validate(metric, aggregation, group_by):
-	"""(aggregation, group_by) checked against the metric's kind and level; ValueError if not allowed."""
-	d = describe(metric)
-	aggregation = aggregation or d["default_aggregation"]
-	group_by = group_by or "none"
-	if aggregation not in d["aggregations"]:
-		raise ValueError(fmt(_("{0} is not meaningful for {1} ({2}): use {3}"), aggregation, metric, d["kind"], ", ".join(d["aggregations"])))
-	if group_by not in d["group_bys"]:
-		raise ValueError(fmt(_("{0} cannot be grouped by {1}: use {2}"), metric, group_by, ", ".join(d["group_bys"])))
-	return aggregation, group_by
