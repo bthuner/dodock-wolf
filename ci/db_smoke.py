@@ -3299,23 +3299,32 @@ def main():
 		if not frappe.db.exists("User", user):
 			frappe.get_doc({"doctype": "User", "email": user, "first_name": "Overview", "send_welcome_email": 0,
 			                "roles": [{"role": "Wolf User"}]}).insert(ignore_permissions=True)  # fmt: skip
-		frappe.db.delete("Wolf User Scope", {"user": user})
-		frappe.get_doc({"doctype": "Wolf User Scope", "user": user, "scope_type": "site", "value": mine}).insert()
-		access.clear_cache()
-		frappe.set_user(user)
-		try:
-			seen = security_overview.get_overview()
-		finally:
-			frappe.set_user("Administrator")
+
+		def scoped(scope_type, value):
 			frappe.db.delete("Wolf User Scope", {"user": user})
+			frappe.get_doc({"doctype": "Wolf User Scope", "user": user, "scope_type": scope_type, "value": value}).insert()
 			access.clear_cache()
+			frappe.set_user(user)
+			try:
+				return security_overview.get_overview()
+			finally:
+				frappe.set_user("Administrator")
+				frappe.db.delete("Wolf User Scope", {"user": user})
+				access.clear_cache()
+
+		seen = scoped("site", mine)
 		assert seen["restricted"], seen
 		assert [r["site"] for r in seen["scores"]["sites"]] == [mine], seen["scores"]
 		assert seen["incidents"]["by_severity"]["total"] == 1, seen["incidents"]
 		assert [i["name"] for i in seen["incidents"]["newest"]] == [ours], seen["incidents"]
 		assert seen["responses"] is None and seen["journal"] is None, seen  # managers only
 		assert not ({"error", "forbidden"} & set(seen["agents"])), seen["agents"]
-		return "scores worst first with their change, unscored not 0, security incidents only, signing behind, scoped user"
+		# a host grant reaches the scores' rows (stored with the site's host), not the sites: the
+		# Security page would refuse them, so the home page shows none of them
+		by_host = scoped("host", "so-host")
+		assert by_host["restricted"] and not ({"error", "forbidden"} & set(by_host["scores"])), by_host["scores"]
+		assert not {mine, other, unscored} & {r["site"] for r in by_host["scores"]["sites"]}, by_host["scores"]
+		return "scores worst first with their change, unscored not 0, security incidents only, signing behind, site and host grants"
 
 	def rules_yaml():
 		# alert rules as YAML (api/rules_io.py): a round trip, an applied change, a typo applying nothing

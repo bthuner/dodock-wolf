@@ -65,7 +65,9 @@ def _scores(now, tz):
 
 	def newest(since, until):
 		rows = rollups.aggregate(where, params, ["site"], [], "last", storage.HOUR, since, until, [SCORE_METRIC])
-		return {r.site: r for r in rows}
+		# a score is stored with its site's host too, so a host grant reaches it: keep the sites
+		# the reader may open by site, as the Security page does (api/security.list_sites)
+		return {r.site: r for r in rows if access.visible("Wolf Metric Sample", {"site": r.site})}
 
 	current = newest(now - SCORE_LOOKBACK, now)
 	before = newest(now - BEFORE_SINCE, now - BEFORE_UNTIL)
