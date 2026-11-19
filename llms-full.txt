@@ -475,6 +475,9 @@ In Desk: **Wolf Settings → Register with central site**.
 - It shows the forwarding status on **Wolf Overview** and **Wolf Settings**. **Forward now** pushes
   at once.
 - It evaluates no rules, opens no incidents and stores no Wolf Events.
+- With **Wolf Settings → Apply Response Actions From the Central Site**, it applies the user actions
+  a Wolf Manager approved on the central site for its own users (disable, log out, revoke API keys)
+  and reports back: see [Users of a satellite](https://bthuner.github.io/dodock-wolf/agent/response-actions#users-of-a-satellite).
 
 ## On the central site
 
@@ -1534,10 +1537,10 @@ Wolf proposes, a Wolf Manager approves each action with a second click, and noth
 own. Every approval is a **Wolf Response Action** row (who, when, what, result; read-only for
 everyone) and a comment on the incident.
 
-| Action                                                          | Proposed for                                                                                                           | Applied by                                                                                                                                                                                                                                             |
-| --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Block IP for N hours** (1 to 168, default 24)                 | the public addresses of the incident's security events, from any source (Wolf, Suricata, Wazuh), for the attacked host | the Wolf Agent on that host, with its next push, when allowed there (below), and/or [Wazuh active response](https://bthuner.github.io/dodock-wolf/#wazuh-active-response); and [CrowdSec](https://bthuner.github.io/dodock-wolf/#crowdsec) when set up |
-| **Disable user**, **log out all sessions**, **revoke API keys** | the users named by the site's own security events (failed logins, new IP or country, role granted, API key generated)  | the Wolf site, at once                                                                                                                                                                                                                                 |
+| Action                                                          | Proposed for                                                                                                                                                                                                 | Applied by                                                                                                                                                                                                                                             |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Block IP for N hours** (1 to 168, default 24)                 | the public addresses of the incident's security events, from any source (Wolf, Suricata, Wazuh), for the attacked host                                                                                       | the Wolf Agent on that host, with its next push, when allowed there (below), and/or [Wazuh active response](https://bthuner.github.io/dodock-wolf/#wazuh-active-response); and [CrowdSec](https://bthuner.github.io/dodock-wolf/#crowdsec) when set up |
+| **Disable user**, **log out all sessions**, **revoke API keys** | the users named by the security events of the Wolf site or of a [satellite](https://bthuner.github.io/dodock-wolf/#users-of-a-satellite) (failed logins, new IP or country, role granted, API key generated) | the Wolf site, at once; for a satellite's users, that site, at its next push, when allowed there                                                                                                                                                       |
 
 - Approve from the incident's **Response** panel in the Wolf UI, or from the signed link in the
   alert (up to 5 per alert). The link only shows the proposal: a guest is sent to the login page,
@@ -1546,8 +1549,24 @@ everyone) and a comment on the incident.
 - Only what Wolf proposed from the incident's own events can be approved: the API refuses any
   other action, target or host.
 - Administrator, Guest and the approver's own account are refused. Only a System Manager can act
-  on a System Manager. User actions apply to the Wolf site only.
+  on a System Manager. A satellite's users are acted on by the satellite itself (below).
 - Blocks are marked *Expired* once their time is over (hourly).
+
+## Users of a satellite
+
+A user named by a [satellite's](https://bthuner.github.io/dodock-wolf/install/every-site) events (a failed login, an API key used from a
+new network…) gets the same three proposals, named with the site: *Disable user
+<intruder@example.com> on erp.example.com*. Approved on the central site, the action waits there;
+the satellite takes it with the answer to its next push (every minute), applies it to its own user
+and reports back, and the Response panel shows *Applied* or *Failed* with what the site said.
+
+- The satellite does nothing unless you allow it there: **Wolf Settings → Apply Response Actions
+  From the Central Site**, on the satellite (off by default). Until then each action comes back
+  *Failed* with the reason.
+- The satellite never acts on Administrator, Guest or a System Manager: those are handled on that
+  site itself. It checks that the user exists there.
+- An action the satellite has not taken after 24 hours (it stopped pushing) is marked *Expired*.
+- Each action is safe to run twice: if the report is lost, the satellite is handed it again.
 
 ## Blocking on the host
 

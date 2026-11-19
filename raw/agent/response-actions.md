@@ -66,11 +66,15 @@ everyone) and a comment on the incident.
     </td>
     
     <td>
-      the users named by the site's own security events (failed logins, new IP or country, role granted, API key generated)
+      the users named by the security events of the Wolf site or of a <a href="#users-of-a-satellite">
+        satellite
+      </a>
+      
+       (failed logins, new IP or country, role granted, API key generated)
     </td>
     
     <td>
-      the Wolf site, at once
+      the Wolf site, at once; for a satellite's users, that site, at its next push, when allowed there
     </td>
   </tr>
 </tbody>
@@ -83,8 +87,24 @@ forwarded email alone cannot act, and a link opened again says the action was do
 - Only what Wolf proposed from the incident's own events can be approved: the API refuses any
 other action, target or host.
 - Administrator, Guest and the approver's own account are refused. Only a System Manager can act
-on a System Manager. User actions apply to the Wolf site only.
+on a System Manager. A satellite's users are acted on by the satellite itself (below).
 - Blocks are marked *Expired* once their time is over (hourly).
+
+## Users of a satellite
+
+A user named by a [satellite's](/install/every-site) events (a failed login, an API key used from a
+new network…) gets the same three proposals, named with the site: *Disable user
+intruder@example.com on erp.example.com*. Approved on the central site, the action waits there;
+the satellite takes it with the answer to its next push (every minute), applies it to its own user
+and reports back, and the Response panel shows *Applied* or *Failed* with what the site said.
+
+- The satellite does nothing unless you allow it there: **Wolf Settings → Apply Response Actions
+From the Central Site**, on the satellite (off by default). Until then each action comes back
+*Failed* with the reason.
+- The satellite never acts on Administrator, Guest or a System Manager: those are handled on that
+site itself. It checks that the user exists there.
+- An action the satellite has not taken after 24 hours (it stopped pushing) is marked *Expired*.
+- Each action is safe to run twice: if the report is lost, the satellite is handed it again.
 
 ## Blocking on the host
 

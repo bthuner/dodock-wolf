@@ -34,6 +34,9 @@ minutes) and keeps at most 10,000 pending events, dropping the oldest.
 - It shows the forwarding status on **Wolf Overview** and **Wolf Settings**. **Forward now** pushes
 at once.
 - It evaluates no rules, opens no incidents and stores no Wolf Events.
+- With **Wolf Settings → Apply Response Actions From the Central Site**, it applies the user actions
+a Wolf Manager approved on the central site for its own users (disable, log out, revoke API keys)
+and reports back: see [Users of a satellite](/agent/response-actions#users-of-a-satellite).
 
 ## On the central site
 
