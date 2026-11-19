@@ -334,7 +334,9 @@ Product direction (since 19 November 2026, issue #136)
       - the agent that collects them.
 
       The rule and incident engine and the channels are extended only where security needs it.
-    - Frozen, kept as it is for operators outside Frappe Cloud: status pages, dashboards, the metrics explorer, host and service metric collectors and their presets, escalation and digests. Fix bugs and security issues, keep the translations and Frappe/Dokos compatibility, but add no features.
+    - Release v0.1.0 (a GitHub tag, GitHub only) keeps the whole tool as it was for legacy Press customers and self-hosted operators; it gets security fixes only. Dokos moves its hosted customers to its own Frappe Cloud v2 tenant (dokopilot guests, which keep Pilot's layout: Wolf's Pilot support stays).
+    - Removed from main in 0.2 (kept in v0.1.0): the Press v1 integration, the observability demos, public status pages, the metrics explorer, digests.
+    - Frozen, kept as it is until a later step recentres it on what security reads: dashboards, host and service metric collectors and their presets, escalation. Fix bugs and security issues, keep the translations and Frappe/Dokos compatibility, but add no features.
     - Not pursued (overlaps Frappe): SLOs and error budgets, status-page uptime bars, subscriptions, unlisted incidents and maintenance announcements, on-call rotations and phone paging, traces, log search.
     - Interoperability over rebuilding: connect to Wazuh, Suricata, CrowdSec, SIEMs, PagerDuty, and Frappe's tools as they open up (a Beacon channel, a Datum sink, Frappe Cloud v2 hosts as Pilot hosts: #133, #134, #135).
 

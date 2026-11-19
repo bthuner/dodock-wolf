@@ -149,5 +149,14 @@ class TestReviewCases(unittest.TestCase):
 		self.assertEqual(notes, ["Slack: 2 rows kept their stored secrets by position: check their order in the form"])
 
 
+class TestLegacyFiles(unittest.TestCase):
+	def test_a_v0_1_export_with_digests_still_imports(self):
+		doc = {"version": 1, "rules": [{"rule_name": "A", "channels": [{"channel_type": "Email", "recipients": "a@example.com",
+		                                                                "digest": "hourly"}]}]}  # fmt: skip
+		rule, errors = rules_io.parse(doc, FIELDS, CHANNEL)[0]
+		self.assertEqual(errors, [])
+		self.assertNotIn("digest", rule["channels"][0])
+
+
 if __name__ == "__main__":
 	unittest.main()

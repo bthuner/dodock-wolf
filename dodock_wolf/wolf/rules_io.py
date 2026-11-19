@@ -22,6 +22,9 @@ import re
 VERSION = 1
 # the evaluator's own state and markers: never in a document, never imported
 RUNTIME_FIELDS = {"last_evaluated", "last_fired", "last_error", "evaluation_state", "is_preset"}
+# channel fields a v0.1.0 export may hold that 0.2 removed (digests): read and left out, so the file
+# still imports
+LEGACY_CHANNEL_FIELDS = {"digest"}
 CHANNEL_LISTS = ("channels", "escalation_channels")
 # the non-secret settings that tell two channels of a type apart (Slack, Mattermost and PagerDuty
 # have none: their webhook or routing key is the secret)
@@ -180,6 +183,8 @@ def parse(document, fields, channel_fields):
 				if not isinstance(row, dict) or not row.get("channel_type"):
 					errors.append(f"{listname} #{j}: a channel needs a channel_type")
 					continue
+				for legacy in LEGACY_CHANNEL_FIELDS - set(channel_fields):
+					row.pop(legacy, None)
 				bad = sorted(set(row) - set(channel_fields))
 				if bad:
 					errors.append(f"{listname} #{j}: unknown field(s): " + ", ".join(bad))
