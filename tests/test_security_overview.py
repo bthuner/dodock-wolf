@@ -27,6 +27,15 @@ class ScoreRows(unittest.TestCase):
 		self.assertEqual(rows["a"]["change"], -3)
 		self.assertIsNone(rows["b"]["change"])  # not "unchanged": nothing to compare with
 
+	def test_no_change_when_the_current_score_is_not_newer_than_the_day_before(self):
+		# the job stopped a day ago: the newest score is also the one of the "before" window
+		rows = {r["site"]: r for r in so.score_rows([], {"a": (70.0, NOW - timedelta(hours=24)), "b": (70.0, NOW - timedelta(hours=23)),
+		                                                 "c": (72.0, NOW - timedelta(hours=22))}, {"a": 70.0, "b": 70.0, "c": 70.0}, NOW)}  # fmt: skip
+		self.assertIsNone(rows["a"]["change"])  # not "unchanged in 24 h"
+		self.assertIsNone(rows["b"]["change"])  # the window's end itself
+		self.assertEqual(rows["c"]["change"], 2)
+		self.assertTrue(rows["a"]["late"])
+
 	def test_a_zero_score_is_a_score(self):
 		rows = so.score_rows(["a", "b"], {"a": (0.0, NOW)}, {"a": 0.0}, NOW)
 		self.assertEqual([(r["site"], r["score"], r["change"]) for r in rows], [("a", 0, 0), ("b", None, None)])

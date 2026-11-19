@@ -11,6 +11,8 @@ from datetime import timedelta
 SCORE_LATE = timedelta(hours=3)
 # chain_journal signs every minute: an entry still unsigned after this means signing is behind
 SIGNING_LATE = timedelta(minutes=5)
+# "about 24 h earlier": the newest score between 25 h and 23 h ago
+BEFORE_SINCE, BEFORE_UNTIL = timedelta(hours=25), timedelta(hours=23)
 SEVERITIES = ("critical", "warning", "info")
 AGENT_STATES = ("fresh", "stale", "never_seen", "disabled")
 
@@ -19,7 +21,9 @@ def score_rows(sites, current, previous, now):
 	"""One row per site, worst score first, then the sites not scored yet (never shown as 0).
 
 	`sites`: the sites known to the security page; `current`: {site: (score, at)}, the newest
-	score; `previous`: {site: score} about 24 h earlier, when one was recorded then.
+	score; `previous`: {site: score} about 24 h earlier, when one was recorded then. A current
+	score no newer than that window (the job stopped) would be compared with itself: no change
+	is claimed then.
 	"""
 	rows = []
 	for site in sorted(set(sites) | set(current)):
@@ -29,9 +33,10 @@ def score_rows(sites, current, previous, now):
 		value, at = current[site]
 		score = int(round(value))
 		before = previous.get(site)
+		comparable = before is not None and at is not None and at > now - BEFORE_UNTIL
 		rows.append({
 			"site": site, "score": score, "at": at, "late": at is not None and now - at > SCORE_LATE,
-			"change": score - int(round(before)) if before is not None else None,
+			"change": score - int(round(before)) if comparable else None,
 		})  # fmt: skip
 	rows.sort(key=lambda r: (r["score"] is None, r["score"] or 0, r["site"]))
 	return rows

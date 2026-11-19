@@ -30,8 +30,6 @@ from dodock_wolf.wolf.spa import MANAGER_ROLES
 
 SCORE_METRIC = "security_score"
 SCORE_LOOKBACK = timedelta(days=7)  # an older score is not the site's current one
-# "about 24 h earlier": the newest score of this window
-BEFORE_SINCE, BEFORE_UNTIL = timedelta(hours=25), timedelta(hours=23)
 NEWEST = 5
 FAILED_DAYS = 7
 SAVEPOINT = "wolf_security_overview"
@@ -71,7 +69,7 @@ def _scores(now, tz):
 		return {r.site: r for r in rows if access.visible("Wolf Metric Sample", {"site": r.site})}
 
 	current = newest(now - SCORE_LOOKBACK, now)
-	before = newest(now - BEFORE_SINCE, now - BEFORE_UNTIL)
+	before = newest(now - security_overview.BEFORE_SINCE, now - security_overview.BEFORE_UNTIL)
 	rows = security_overview.score_rows(
 		security.list_sites(),
 		{site: (r.value, get_datetime(r.last_at)) for site, r in current.items()},
