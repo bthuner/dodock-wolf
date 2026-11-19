@@ -71,6 +71,22 @@ CATALOG = {
 }
 GROUPS = ("workers", "processes", "redis", "database", "backups", "tls", "security", "host")
 
+# The metrics security reads: the score (api/security.py), the setup checklist (api/onboarding.py
+# reads Wolf Agent fields, and agent_setup_* feed its preset), and the security presets and
+# signals. They stay whatever happens to the others, the operations metrics, which are frozen
+# (#136, step 2). tests/test_catalog.py keeps this list and those readers in step.
+SECURITY_METRICS = frozenset({
+	"site_config_risks", "exposed_services", "site_setting", "app_version", "security_score",
+	"backup_age_hours", "tls_days_left", "hsts_max_age_days",
+	"integrity_files", "integrity_unreadable", "bench_outbound_destinations", "bench_new_outbound_usual",
+	"agent_setup_failed", "agent_setup_warnings",
+})  # fmt: skip
+
+
+def role(metric):
+	"""`security` for a metric security reads, else `operations` (frozen: #136)."""
+	return "security" if metric in SECURITY_METRICS else "operations"
+
 # what a gauge means for the reader, said once: backup age is not proof a restore works
 CAVEATS = {
 	"backup_age_hours": N_("Age of the newest backup file; it does not prove the backup restores."),
