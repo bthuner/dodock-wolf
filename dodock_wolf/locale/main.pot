@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Dodock Wolf VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/bthuner/dodock-wolf/issues\n"
-"POT-Creation-Date: 2026-11-19 15:06+0000\n"
-"PO-Revision-Date: 2026-11-19 15:06+0000\n"
+"POT-Creation-Date: 2026-11-19 15:21+0000\n"
+"PO-Revision-Date: 2026-11-19 15:21+0000\n"
 "Last-Translator: Dodock Wolf contributors\n"
 "Language-Team: Dodock Wolf contributors\n"
 "MIME-Version: 1.0\n"
@@ -110,7 +110,7 @@ msgid "1 high"
 msgstr ""
 
 #: frontend/src/components/dash/MonitoringPanel.vue:101
-#: frontend/src/pages/SecurityOverviewPage.vue:225
+#: frontend/src/pages/SecurityOverviewPage.vue:228
 msgid "1 host to fix"
 msgstr ""
 
@@ -526,9 +526,9 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:124
 #: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:177
 #: frontend/src/components/dash/MonitoringPanel.vue:94
-#: frontend/src/pages/SecurityOverviewPage.vue:203
-#: frontend/src/pages/SecurityOverviewPage.vue:205
-#: frontend/src/pages/SecurityOverviewPage.vue:212
+#: frontend/src/pages/SecurityOverviewPage.vue:206
+#: frontend/src/pages/SecurityOverviewPage.vue:208
+#: frontend/src/pages/SecurityOverviewPage.vue:215
 msgid "Agents"
 msgstr ""
 
@@ -604,7 +604,7 @@ msgid "All"
 msgstr ""
 
 #: frontend/src/pages/DashboardPage.vue:143
-#: frontend/src/pages/SecurityOverviewPage.vue:125
+#: frontend/src/pages/SecurityOverviewPage.vue:128
 msgid "All incidents"
 msgstr ""
 
@@ -724,7 +724,7 @@ msgstr ""
 msgid "Approved, waiting for the site"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:158
+#: frontend/src/pages/SecurityOverviewPage.vue:161
 msgid "Approved, waiting for their agent or satellite"
 msgstr ""
 
@@ -1837,7 +1837,7 @@ msgstr ""
 msgid "Failed"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:160
+#: frontend/src/pages/SecurityOverviewPage.vue:163
 #, python-brace-format
 msgid "Failed in the last {0} days"
 msgstr ""
@@ -2198,7 +2198,7 @@ msgid "Host resources"
 msgstr ""
 
 #: frontend/src/components/dash/MonitoringPanel.vue:98
-#: frontend/src/pages/SecurityOverviewPage.vue:222
+#: frontend/src/pages/SecurityOverviewPage.vue:225
 msgid "Host setup"
 msgstr ""
 
@@ -2573,7 +2573,7 @@ msgstr ""
 msgid "Joined by IP or User"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:178
+#: frontend/src/pages/SecurityOverviewPage.vue:181
 #: frontend/src/pages/SecurityPage.vue:267
 msgid "Journal"
 msgstr ""
@@ -2822,7 +2822,7 @@ msgstr ""
 msgid "Loading the incident…"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:90
+#: frontend/src/pages/SecurityOverviewPage.vue:91
 msgid "Loading the security overview…"
 msgstr ""
 
@@ -3111,7 +3111,7 @@ msgstr ""
 #: frontend/src/components/WolfSidebar.vue:52
 #: frontend/src/components/dash/MonitoringPanel.vue:62
 #: frontend/src/pages/MonitoringPage.vue:38
-#: frontend/src/pages/SecurityOverviewPage.vue:206 frontend/src/router.js:27
+#: frontend/src/pages/SecurityOverviewPage.vue:209 frontend/src/router.js:27
 msgid "Monitoring"
 msgstr ""
 
@@ -3143,7 +3143,7 @@ msgstr ""
 msgid "NIS2 significant incident, aware since {0}"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:219
+#: frontend/src/pages/SecurityOverviewPage.vue:222
 msgid "Never reported"
 msgstr ""
 
@@ -3176,7 +3176,7 @@ msgstr ""
 msgid "Newest record"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:186
+#: frontend/src/pages/SecurityOverviewPage.vue:189
 msgid "Newest signed entry"
 msgstr ""
 
@@ -3193,7 +3193,7 @@ msgstr ""
 msgid "No HTTP counts in this window. The agent counts responses from nginx access logs; none arrived for this scope, which is not the same as no traffic."
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:174
+#: frontend/src/pages/SecurityOverviewPage.vue:177
 #, python-brace-format
 msgid "No action waiting, and none failed in the last {0} days."
 msgstr ""
@@ -3202,7 +3202,7 @@ msgstr ""
 msgid "No agent registered"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:237
+#: frontend/src/pages/SecurityOverviewPage.vue:240
 msgid "No agent registered that you can see."
 msgstr ""
 
@@ -3268,7 +3268,7 @@ msgstr ""
 msgid "No incidents you can see."
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:199
+#: frontend/src/pages/SecurityOverviewPage.vue:202
 #: frontend/src/pages/SecurityPage.vue:292
 msgid "No key yet: it is created with the first signature."
 msgstr ""
@@ -3306,11 +3306,11 @@ msgstr ""
 msgid "No samples for {0} in this range."
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:146
+#: frontend/src/pages/SecurityOverviewPage.vue:149
 msgid "No security incident open that you can see."
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:117
+#: frontend/src/pages/SecurityOverviewPage.vue:120
 msgid "No site known yet: a site is scored once Wolf reads it, hourly."
 msgstr ""
 
@@ -3613,8 +3613,8 @@ msgstr ""
 msgid "Open incidents"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:122
-#: frontend/src/pages/SecurityOverviewPage.vue:124
+#: frontend/src/pages/SecurityOverviewPage.vue:125
+#: frontend/src/pages/SecurityOverviewPage.vue:127
 msgid "Open security incidents"
 msgstr ""
 
@@ -3683,7 +3683,7 @@ msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:42
 #: frontend/src/components/WolfSidebar.vue:38
-#: frontend/src/pages/SecurityOverviewPage.vue:80 frontend/src/router.js:12
+#: frontend/src/pages/SecurityOverviewPage.vue:81 frontend/src/router.js:12
 msgid "Overview"
 msgstr ""
 
@@ -4003,7 +4003,7 @@ msgstr ""
 #: frontend/src/pages/IncidentPage.vue:290
 #: frontend/src/pages/IncidentsPage.vue:84
 #: frontend/src/pages/MonitoringPage.vue:39
-#: frontend/src/pages/SecurityOverviewPage.vue:83
+#: frontend/src/pages/SecurityOverviewPage.vue:84
 #: frontend/src/pages/SecurityPage.vue:146
 msgid "Refresh"
 msgstr ""
@@ -4195,8 +4195,8 @@ msgstr ""
 msgid "Response"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:153
-#: frontend/src/pages/SecurityOverviewPage.vue:154
+#: frontend/src/pages/SecurityOverviewPage.vue:156
+#: frontend/src/pages/SecurityOverviewPage.vue:157
 msgid "Response actions"
 msgstr ""
 
@@ -4376,7 +4376,7 @@ msgid "Satellite mode: register with the central site to start forwarding."
 msgstr ""
 
 #: frontend/src/components/dash/MonitoringPanel.vue:108
-#: frontend/src/pages/SecurityOverviewPage.vue:233
+#: frontend/src/pages/SecurityOverviewPage.vue:236
 msgid "Satellites"
 msgstr ""
 
@@ -4458,7 +4458,7 @@ msgid "Secret Issued At"
 msgstr ""
 
 #: dodock_wolf/public/js/wolf.js:29 frontend/src/components/WolfSidebar.vue:47
-#: frontend/src/pages/SecurityOverviewPage.vue:97
+#: frontend/src/pages/SecurityOverviewPage.vue:100
 #: frontend/src/pages/SecurityPage.vue:136 frontend/src/router.js:26
 msgid "Security"
 msgstr ""
@@ -4482,9 +4482,13 @@ msgstr ""
 msgid "Security score"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:94
-#: frontend/src/pages/SecurityOverviewPage.vue:96
+#: frontend/src/pages/SecurityOverviewPage.vue:97
+#: frontend/src/pages/SecurityOverviewPage.vue:99
 msgid "Security score by site"
+msgstr ""
+
+#: frontend/src/pages/SecurityOverviewPage.vue:96
+msgid "Security scores are kept on the central site."
 msgstr ""
 
 #: dodock_wolf/wolf/incident_ops.py:128
@@ -4724,12 +4728,12 @@ msgstr ""
 msgid "Significant incident (NIS2 Art. 23)"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:196
+#: frontend/src/pages/SecurityOverviewPage.vue:199
 #, python-brace-format
 msgid "Signing is behind: the oldest unsigned entry was written {0}. Entries are signed every minute; check that the scheduler runs."
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:198
+#: frontend/src/pages/SecurityOverviewPage.vue:201
 msgid "Signing runs: entries are signed within a minute."
 msgstr ""
 
@@ -4749,7 +4753,7 @@ msgstr ""
 msgid "Silenced"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:215
+#: frontend/src/pages/SecurityOverviewPage.vue:218
 msgid "Silent"
 msgstr ""
 
@@ -5000,7 +5004,7 @@ msgstr ""
 msgid "TLS certificates valid for {0} days or more"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:180
+#: frontend/src/pages/SecurityOverviewPage.vue:183
 #: frontend/src/pages/SecurityPage.vue:269
 msgid "Tamper-evident journal"
 msgstr ""
@@ -5127,7 +5131,7 @@ msgstr ""
 msgid "The latest one: an updated intermediate report moves the final report's deadline."
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:148
+#: frontend/src/pages/SecurityOverviewPage.vue:151
 #, python-brace-format
 msgid "The newest of {0}."
 msgstr ""
@@ -5178,7 +5182,7 @@ msgstr ""
 msgid "The second event at most this long after the first."
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:148
+#: frontend/src/pages/SecurityOverviewPage.vue:151
 #, python-brace-format
 msgid "The {0} newest of {1}."
 msgstr ""
@@ -5540,7 +5544,7 @@ msgstr ""
 msgid "Verify the collector's certificate"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:181
+#: frontend/src/pages/SecurityOverviewPage.vue:184
 msgid "Verify the journal"
 msgstr ""
 
@@ -5556,7 +5560,7 @@ msgstr ""
 msgid "Waiting for a first agent."
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:192
+#: frontend/src/pages/SecurityOverviewPage.vue:195
 msgid "Waiting to be signed"
 msgstr ""
 
@@ -5939,7 +5943,7 @@ msgstr ""
 msgid "Workers and queues"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:118
+#: frontend/src/pages/SecurityOverviewPage.vue:121
 msgid "Worst first. The score is recorded every hour; open a site for its checks and their fixes."
 msgstr ""
 
@@ -5983,7 +5987,7 @@ msgid "You need the Wolf User or Wolf Manager role to open Dodock Wolf."
 msgstr ""
 
 #: frontend/src/pages/DashboardPage.vue:132
-#: frontend/src/pages/SecurityOverviewPage.vue:89
+#: frontend/src/pages/SecurityOverviewPage.vue:90
 msgid "You see the sites, benches and hosts you were granted."
 msgstr ""
 
@@ -6390,7 +6394,7 @@ msgstr ""
 msgid "entries 1 to {0} were removed without a purge record"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:188
+#: frontend/src/pages/SecurityOverviewPage.vue:191
 #, python-brace-format
 msgid "entry {0}"
 msgstr ""
@@ -6435,7 +6439,7 @@ msgid "events"
 msgstr ""
 
 #: frontend/src/components/dash/MonitoringPanel.vue:104
-#: frontend/src/pages/SecurityOverviewPage.vue:228
+#: frontend/src/pages/SecurityOverviewPage.vue:231
 msgid "every reporting agent has what it needs"
 msgstr ""
 
@@ -6764,7 +6768,7 @@ msgstr ""
 msgid "no lockout"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:111
+#: frontend/src/pages/SecurityOverviewPage.vue:114
 #, python-brace-format
 msgid "no new score for over {0} h: the hourly job may not run"
 msgstr ""
@@ -6825,7 +6829,7 @@ msgstr ""
 msgid "none of developer_mode, allow_tests, plain-HTTP host_name, allow_cors *"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:191
+#: frontend/src/pages/SecurityOverviewPage.vue:194
 msgid "none yet"
 msgstr ""
 
@@ -6834,11 +6838,11 @@ msgid "not reported"
 msgstr ""
 
 #: frontend/src/components/dash/MonitoringPanel.vue:105
-#: frontend/src/pages/SecurityOverviewPage.vue:229
+#: frontend/src/pages/SecurityOverviewPage.vue:232
 msgid "not reported yet (agents check their host every hour)"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:114
+#: frontend/src/pages/SecurityOverviewPage.vue:117
 msgid "not scored yet"
 msgstr ""
 
@@ -6929,7 +6933,7 @@ msgstr ""
 msgid "open, nobody on it yet"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:141
+#: frontend/src/pages/SecurityOverviewPage.vue:144
 #, python-brace-format
 msgid "opened {0}"
 msgstr ""
@@ -7062,7 +7066,7 @@ msgstr ""
 msgid "scheduler disabled ({0})"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:110
+#: frontend/src/pages/SecurityOverviewPage.vue:113
 #, python-brace-format
 msgid "scored {0}"
 msgstr ""
@@ -7308,7 +7312,7 @@ msgstr ""
 msgid "udp"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:108
+#: frontend/src/pages/SecurityOverviewPage.vue:111
 msgid "unchanged in 24 h"
 msgstr ""
 
@@ -7609,12 +7613,12 @@ msgstr ""
 
 #: dodock_wolf/wolf/onboarding.py:47
 #: frontend/src/components/dash/MonitoringPanel.vue:101
-#: frontend/src/pages/SecurityOverviewPage.vue:225
+#: frontend/src/pages/SecurityOverviewPage.vue:228
 #, python-brace-format
 msgid "{0} hosts to fix"
 msgstr ""
 
-#: frontend/src/pages/SecurityOverviewPage.vue:109
+#: frontend/src/pages/SecurityOverviewPage.vue:112
 #, python-brace-format
 msgid "{0} in 24 h"
 msgstr ""
@@ -7732,7 +7736,7 @@ msgid "{0} of {1} done"
 msgstr ""
 
 #: frontend/src/components/dash/MonitoringPanel.vue:109
-#: frontend/src/pages/SecurityOverviewPage.vue:234
+#: frontend/src/pages/SecurityOverviewPage.vue:237
 #, python-brace-format
 msgid "{0} of {1} forwarding"
 msgstr ""
@@ -7768,7 +7772,7 @@ msgid "{0} of {1} reporting"
 msgstr ""
 
 #: frontend/src/components/dash/MonitoringPanel.vue:96
-#: frontend/src/pages/SecurityOverviewPage.vue:213
+#: frontend/src/pages/SecurityOverviewPage.vue:216
 #, python-brace-format
 msgid "{0} of {1} reporting (silent after {2} min)"
 msgstr ""
