@@ -56,8 +56,8 @@ X-Wolf-Agent-Secret: <secret>
   "agent_version": "0.1.0",
   "hostname": "bench-01",
   "metrics": [
-    {"metric_name": "cpu_usage", "value": 12.5, "timestamp": "...", "host": "bench-01",
-     "bench": null, "site": null, "labels": {}}
+    {"metric_name": "queue_length", "value": 12, "timestamp": "...", "host": "bench-01",
+     "bench": "main", "site": null, "labels": {"queue": "default"}}
   ],
   "events": [
     {"type": "error", "category": "http_502", "severity": "critical", "timestamp": "...",
@@ -103,7 +103,7 @@ it receives as is.
 **`setup`.** Optional, about once an hour: the agent's own `wolf-agent doctor` run,
 `{"checked_at", "checks": [{"area", "status": "ok" | "warn" | "fail" | "info", "title", "fix"}]}`.
 The Wolf site counts the failures and warnings, keeps the checks that are not ok on the Wolf Agent
-(100 at most) and shows them on the Monitoring page. The same run sends the host metrics
+(100 at most) and shows them on the Monitoring page. The same run sends the host-level metrics
 `agent_setup_failed` and `agent_setup_warnings`.
 
 **`behind_proxy`.** Optional. The proxy this host's web traffic comes through, or `null`; when
@@ -184,13 +184,7 @@ the Wolf Entity Alias rows (#72 step 3). Agents do not send it: the site compute
 
 | metric_name          | unit     | scope / labels                    |
 |----------------------|----------|-----------------------------------|
-| `cpu_usage`          | %        | host                              |
-| `memory_used_percent`| %        | host                              |
-| `swap_used_percent`  | %        | host                              |
-| `disk_used_percent`  | %        | host, `labels.mount`              |
 | `agent_setup_failed`, `agent_setup_warnings` | checks | host: the agent's hourly `wolf-agent doctor` run |
-| `load_1m` / `load_5m` / `load_15m` | — | host                        |
-| `load_per_core`      | —        | host (load_1m / cpu count)        |
 | `http_requests`      | count per minute of log time | host, bench, site  |
 | `http_5xx`           | count per minute of log time | host, bench, site  |
 | `http_502`           | count per minute of log time | host, bench, site  |
@@ -223,6 +217,11 @@ the Wolf Entity Alias rows (#72 step 3). Agents do not send it: the site compute
 
 Agents older than these signals simply do not send them. The app accepts any metric name, so no
 server change is needed to receive them; the presets only need the samples to exist.
+
+The host resource metrics were removed in 0.2: `cpu_usage`, `memory_used_percent`,
+`swap_used_percent`, `disk_used_percent`, `load_1m`, `load_5m`, `load_15m` and `load_per_core`.
+A v0.1 agent still sends them; the app drops them from the push without storing them and without
+listing them in `rejected`.
 
 ## 3. Deployment marker
 

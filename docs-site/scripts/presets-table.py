@@ -12,7 +12,7 @@ GROUPS = [
 		"Nightly cron failure (01:00-04:00)", "Scheduler failure", "Scheduler stalled", "Worker crash",
 		"Worker queue backlog", "Background jobs failing", "Long-running background job",
 		"No background workers", "Queue Redis memory high", "Queue Redis evicting keys", "Bench process down"]),
-	("Hosts and agents", ["Disk almost full", "High CPU", "High memory", "High load", "Agent silent", "Host setup problem"]),
+	("Hosts and agents", ["Agent silent", "Host setup problem"]),
 	("Backups, TLS, database and email", [
 		"No backup for 26 h", "Backup failed", "TLS certificate expiring within 14 days",
 		"TLS certificate expiring within 3 days", "Database connections high", "Slow queries",

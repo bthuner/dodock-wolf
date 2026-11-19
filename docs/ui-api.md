@@ -251,7 +251,9 @@ scope, not set up, or not available here. They are never shown as zero. `counts`
 states per group whatever the 300-series limit. `email` reports the email queue problems the
 site recorded about itself in the last 24 hours. A restricted user sees what each rule checks,
 but not the host, bench or site filters it names. The metric meanings (unit, kind, cadence)
-are in `wolf/catalog.py`. `as_of` is when the series were read (see "Short cache" below); the
+are in `wolf/catalog.py`; the `host` group holds the agent's setup checks
+(`agent_setup_failed`, `agent_setup_warnings`), the host resource metrics having been removed in
+0.2. `as_of` is when the series were read (see "Short cache" below); the
 rules, incidents and states are read with each request.
 
 ### Short cache: `get_inventory` and `get_signals`

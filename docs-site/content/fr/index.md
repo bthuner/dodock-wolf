@@ -145,7 +145,7 @@ Ce qu'il repère
   Workers et hôtes
 
   #description
-  Plantages de workers, processus tués par l'OOM killer, processus arrêtés, CPU, mémoire, disque, charge, expiration TLS et réplication de la base de données.
+  Plantages de workers, processus tués par l'OOM killer, processus arrêtés, expiration TLS et réplication de la base de données.
   :::
 
   :::u-page-feature

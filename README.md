@@ -18,7 +18,8 @@ before customers notice, and keeps all data on your own Frappe site.
 - **Direction** ([#136](https://github.com/bthuner/dodock-wolf/issues/136)): new work goes to the
   security and compliance of the bench. Dashboards and metrics stay as they are for
   operators who run their own benches. Since 0.2, `main` no longer has the Press v1 integration,
-  the live demos, status pages, the metrics explorer or digests: release v0.1.0 keeps them. Wolf
+  the live demos, status pages, the metrics explorer, digests or the host resource metrics (CPU,
+  memory, swap, disk, load; Frappe Cloud v2 and Pilot report them): release v0.1.0 keeps them. Wolf
   connects to existing tools (Wazuh, Suricata, CrowdSec, a SIEM, PagerDuty, Frappe Cloud's Datum
   and Beacon) instead of rebuilding them.
 - **Documentation**: [bthuner.github.io/dodock-wolf](https://bthuner.github.io/dodock-wolf/), in English
@@ -59,7 +60,8 @@ configuration, `wolf-agent check` and `wolf-agent mark-deployment`.
 ### Staying on v0.1.0
 
 Release v0.1.0 keeps what 0.2 removed: the Press v1 integration, the live demos, status pages,
-the metrics explorer and digests. To stay on it, install the app and the agent from that tag:
+the metrics explorer, digests and the host resource metrics. To stay on it, install the app and
+the agent from that tag:
 
 ```bash
 bench get-app https://github.com/bthuner/dodock-wolf --branch v0.1.0
@@ -70,6 +72,13 @@ curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/v0.1.0/agent/in
 A 0.2 agent on a host a v0.1 agent registered as a Press v1 server logs a warning at start and
 `wolf-agent doctor` fails with the same fix: Press v1 is supported by Dodock Wolf v0.1.0 only,
 reinstall the agent with `WOLF_AGENT_REF=v0.1.0`.
+
+Upgrading a site to 0.2 disables the alert rules on the host resource metrics (`cpu_usage`,
+`memory_used_percent`, `swap_used_percent`, `disk_used_percent`, `load_1m/5m/15m`,
+`load_per_core`) and the presets *Disk almost full*, *High CPU*, *High memory* and *High load*,
+with a comment on each, and deletes their stored samples and rollups. A v0.1 agent's samples of
+these metrics are dropped on ingest, and a 0.2 agent ignores `collect_host_metrics` with a
+warning. Read host resources in Frappe Cloud v2 or Pilot.
 
 ## Alert rules
 
@@ -85,7 +94,7 @@ Wolf Alert Rule list's menu.
 | Signal | `metric` (aggregate metric samples, or their rollups for windows over 3 h, see [Metric storage](#metric-storage)), `event` (count Wolf Events) or `sequence` (see below) |
 | Aggregation | `avg`, `min`, `max`, `sum`, `count`, `last`. Use `min` for "stayed above for Z minutes" and `sum` for counters such as `http_5xx` |
 | Window | look-back in minutes |
-| Group by | `host`, `bench`, `site`, `host_label` (for example per disk mount) or `none`: one incident per group |
+| Group by | `host`, `bench`, `site`, `host_label` (for example per RQ queue or TLS domain) or `none`: one incident per group |
 | Active from/to | only evaluate in this window. It may wrap midnight (`04:00 → 01:00`) |
 | Require recent deployment | only fire if a deployment hit the same bench/site/host recently |
 | Cooldown | re-fire into the just-resolved incident instead of opening a new one. An event rule reopens it only for an event newer than the resolution; a metric rule, while its window still breaches |
@@ -125,8 +134,7 @@ still open when the window ends are notified then. Create one in Desk, through
 Presets installed on install/migrate (edit or disable freely, they are never overwritten):
 502 spike after deployment · 5xx spike · Nightly cron failure (01:00–04:00) · Scheduler failure ·
 Worker crash · Worker queue backlog · SSH brute force · Repeated failed Frappe logins ·
-Admin login from new IP · Privileged role granted · Disk almost full · High CPU · High memory ·
-High load · Agent silent · Scheduler stalled · Background jobs failing · Long-running background
+Admin login from new IP · Privileged role granted · Agent silent · Scheduler stalled · Background jobs failing · Long-running background
 job · No background workers · Queue Redis memory high · Queue Redis evicting keys · No backup for
 26 h · Backup failed · TLS certificate expiring within 14 days · TLS certificate expiring within 3
 days · Database connections high · Slow queries · Replication lag · Replication stopped · Bench
@@ -453,7 +461,7 @@ rows (`/app/wolf-user-scope`, Wolf Managers only): one row per grant, `scope` = 
 A restricted user then sees only the Wolf Events, Metric Samples and Rollups, Incidents, Silences and Agents
 whose site, bench or host matches one of their rows, in list views, reports, forms, link
 searches, the Wolf Overview page, charts and incident timelines. Rows are OR-ed. Host-wide
-records (CPU, disk, SSH logins: no site) need a `host` row. A Wolf User without any row is not
+records (SSH logins, listening services: no site) need a `host` row. A Wolf User without any row is not
 restricted. Frappe's own User Permissions cannot do this, because site/bench/host are plain
 Data fields, so Wolf uses `permission_query_conditions` and `has_permission` hooks
 (`dodock_wolf/wolf/access.py`). Alert rule definitions stay readable by every Wolf User.

@@ -52,8 +52,7 @@ Expected:
   Frappe logs "Scheduled Job Failed" at INFO, below the default logger level.
 - One webhook per new incident.
 
-Presets like **Disk almost full** may fire too, because the agent measures the machine
-running Docker. **Security score low** (a fresh site without two-factor authentication) and
+Other presets may fire too. **Security score low** (a fresh site without two-factor authentication) and
 **Server Script can run new code** (step 6 adds one) are real findings on the demo site. **Agent silent** fires once as an artefact of step 1: `last_seen` was stored
 in the old time zone, so the agent looks hours stale for one check.
 
