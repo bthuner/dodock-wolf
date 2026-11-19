@@ -1,12 +1,11 @@
 # The same checks as .github/workflows/ci.yml, for gitlab.com/dokos/dodock-wolf. Keep the two
 # in step: a job added or changed on one side is added or changed on the other.
 
+# For now GitHub's CI is the one a merge waits for, and GitLab's runs only when asked for: the
+# "Run pipeline" button, or `glab ci run -b <branch>`. A push or a merge request starts nothing.
 workflow:
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
-      when: never # the merge request's pipeline covers it
-    - if: $CI_COMMIT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api" || $CI_PIPELINE_SOURCE == "trigger"
 
 default:
   interruptible: true

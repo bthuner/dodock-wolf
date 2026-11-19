@@ -354,7 +354,8 @@ Repositories: GitHub and GitLab
 
     - Push every branch to both. `origin` fetches from GitHub and pushes to both (`git remote set-url --add --push origin …` for each); a clone without that setup pushes with `git push origin <branch> && git push gitlab <branch>`.
     - After a pull request is merged on GitHub, bring GitLab's main up to it: `git fetch origin && git push gitlab origin/main:refs/heads/main`. Check that both mains name the same commit (`git ls-remote origin main; git ls-remote gitlab main`).
-    - Both sides run the same CI: .github/workflows/ci.yml and .gitlab-ci.yml. A job added or changed on one side is added or changed on the other in the same pull request.
+    - Both sides have the same CI: .github/workflows/ci.yml and .gitlab-ci.yml. A job added or changed on one side is added or changed on the other in the same pull request.
+    - GitHub's CI is the one a merge waits for. GitLab's runs only when the user asks for it (`glab ci run -b <branch> -R dokos/dodock-wolf`, or "Run pipeline"): a push starts nothing there, so never wait on GitLab before merging.
     - Issues and pull requests stay on GitHub; GitLab holds the imported history.
 
 Commit and PR attribution
