@@ -383,6 +383,6 @@ timeline reads "502s started 4 minutes after the 01:47 deploy".
 
 ## Where to look
 
-- **Wolf UI** at `/wolf`: overview, incidents, explorers, security, monitoring. For Wolf
-Users and Wolf Managers.
+- **Wolf UI** at `/wolf`: the security overview (its home page), incidents, explorers,
+security, operations, monitoring. For Wolf Users and Wolf Managers.
 - **Desk**: every DocType, configuration, reports such as **Wolf Incident Metrics**.

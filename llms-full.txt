@@ -4,7 +4,7 @@ Dodock Wolf is self-hosted observability for Frappe benches, ERPNext and Dokos s
 Linux hosts. It catches 502 windows, failed nightly crons, worker crashes and suspicious logins
 before customers notice, and it keeps all data on a Frappe site you run.
 
-:screenshot{alt="The Wolf UI overview on the demo bench" caption="The Wolf UI overview after the demo bench's 2AM scenario." name="overview"}
+:screenshot{alt="The Operations page of the Wolf UI on the demo bench" caption="Operations, the Wolf UI's general overview, after the demo bench's 2AM scenario." name="operations"}
 
 ## Two parts
 
@@ -181,16 +181,32 @@ See [Channels](https://bthuner.github.io/dodock-wolf/alerts/channels) for Slack,
 
 ### Open the Wolf UI
 
-Go to `https://wolf.example.com/wolf`. The overview lists hosts, benches and sites with their
-latest metrics and open incidents. Within a minute of the first push, the host shows up.
+Go to `https://wolf.example.com/wolf`. The **Overview** shows the security of the bench, each
+panel within what you may see:
+
+- **Security score by site**, worst first, with its age and its change over 24 hours. A site
+  not scored yet says so; the score is recorded every hour. Each site opens its checks on
+  **Security**. On a satellite, which records no score, the panel says they are kept on the
+  central site.
+- **Open security incidents**: exact counts by severity and the newest ones.
+- **Response actions** waiting for their agent or satellite, and those that failed in the last 7
+  days (Wolf Managers).
+- The **Tamper-evident journal**: the newest signed entry, the entries waiting, and whether
+  signing is behind (Wolf Managers).
+- **Agents**: how many report, and the hosts whose setup needs a fix. Within a minute of the
+  first push, the host shows up.
+
+:screenshot{alt="The Wolf UI overview on the demo bench" caption="The Overview: the security of the bench at a glance." name="overview"}
 
 For a Wolf Manager, **Set up Wolf** at the top says what is left before Wolf can wake someone up,
 each step read from the site itself: an agent registered and reporting, its host setup without a
 failure, the scheduler at one minute, rules on, a rule with a channel, and a test notification a
-channel accepted. The list leaves the overview once every step is done; the **Monitoring** page
-keeps it.
+channel accepted. The list leaves the Overview and **Operations** once every step is done; the
+**Monitoring** page keeps it.
 
-To look at one moment, select a range on the **HTTP responses** chart: drag across it, or click
+**Operations** (`/wolf/operations`) is the general overview: hosts, benches and sites with their
+latest metrics, HTTP responses and unresolved incidents. To look at one moment, select a range on
+its **HTTP responses** chart: drag across it, or click
 its first and last point (with the keyboard: arrow keys, then Enter twice). The chart, the
 figures under **In this window** and the Events and Errors pages opened from them then cover
 that range. The figures under **Now**, the signals and the list of hosts always show the present.
@@ -284,8 +300,8 @@ timeline reads "502s started 4 minutes after the 01:47 deploy".
 
 ## Where to look
 
-- **Wolf UI** at `/wolf`: overview, incidents, explorers, security, monitoring. For Wolf
-  Users and Wolf Managers.
+- **Wolf UI** at `/wolf`: the security overview (its home page), incidents, explorers,
+  security, operations, monitoring. For Wolf Users and Wolf Managers.
 - **Desk**: every DocType, configuration, reports such as **Wolf Incident Metrics**.
 
 
@@ -1982,6 +1998,8 @@ The tags travel with the event to the [SIEM export](https://bthuner.github.io/do
 | `data_exfiltration`                         | site                         | T1567, T1030 Data Transfer Size Limits                                           |
 | `honeytoken_triggered`                      | site                         | decoy user T1078, T1110; decoy API key T1552; decoy path T1083                   |
 
+The Wolf UI's home page shows each site's security score and its change over 24 hours: see [Open the Wolf UI](https://bthuner.github.io/dodock-wolf/getting-started/quickstart#open-the-wolf-ui).
+
 ## Alerting and response
 
 Each signal has a preset alert rule. Presets are installed with no channels: they open
@@ -2546,6 +2564,8 @@ reports, forms, link searches, the Wolf Overview page, charts and incident timel
 
 - Rows are OR-ed.
 - Host-wide records (CPU, disk, SSH logins: no site) need a `host` row.
+- A site's security score, on the Security page and the home page, needs a `site` row: a `host`
+  row does not show it.
 - A Wolf User without any row is not restricted.
 - Alert rule definitions stay readable by every Wolf User.
 
@@ -3927,7 +3947,8 @@ two reads share a short cache filtered per caller (see [Short cache](https://bth
 
 | Area                                                                                | Methods                                                                                                 |
 | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| [Overview](https://bthuner.github.io/dodock-wolf/#overview)                         | `scope.get_counts`, `scope.get_inventory`                                                               |
+| [Home page](https://bthuner.github.io/dodock-wolf/#home-page)                       | `security_overview.get_overview`                                                                        |
+| [Operations](https://bthuner.github.io/dodock-wolf/#operations)                     | `scope.get_counts`, `scope.get_inventory`                                                               |
 | [Incident page](https://bthuner.github.io/dodock-wolf/#incident-page)               | `incident_view.list_incidents`, `get_incident`, `get_timeline`, `act`, `merge_preview`, `split_preview` |
 | [Dashboards](https://bthuner.github.io/dodock-wolf/#dashboards)                     | `dashboard.get_signals`, `get_http`, `get_monitoring`                                                   |
 | [Explorers](https://bthuner.github.io/dodock-wolf/#explorers)                       | `explore.list_events`, `list_error_groups`, `get_error_group`                                           |
@@ -3984,11 +4005,55 @@ A Wolf User **without any** Wolf User Scope row is not restricted: they see ever
 Desk. That is the current rule, kept as is.
 ::
 
-## Overview
+## Home page
+
+The Wolf UI opens on the security of the bench (`/wolf`, **Overview**). The general overview it
+used to show is **Operations** (`/wolf/operations`), below.
+
+### `dodock_wolf.api.security_overview.get_overview`
+
+No argument. One answer with a key per panel, each within the caller's access. A panel the caller
+may not have is `null`; a panel that could not be read is `{"error": "…"}` (the reason goes to
+the Error Log) or `{"forbidden": true}`, and the others are still answered. `satellite` is true on
+a satellite, which records no score and keeps no incidents: `scores`, `incidents` and `responses`
+are then `null`, and the page says that the scores are kept on the central site.
+
+```json [get_overview]
+{
+  "restricted": false,
+  "satellite": false,
+  "scores": {"late_hours": 3, "lookback_days": 7, "sites": [
+    {"site": "erp.example.com", "score": 41, "at": "2026-11-19T10:05:00Z", "late": false, "change": -6},
+    {"site": "new.example.com", "score": null, "at": null, "late": false, "change": null}]},
+  "incidents": {"by_severity": {"critical": 1, "warning": 1, "info": 0, "total": 2},
+    "by_status": {"Open": 1, "Acknowledged": 1}, "newest": [{"name": "WINC-00042", "title": "…", "status": "Open",
+    "severity": "critical", "site": null, "bench": null, "host": "bench-01", "started_at": "…"}]},
+  "responses": {"waiting": 1, "failed": 0, "failed_days": 7, "newest": [{"name": "…", "label": "Block 45.33.32.156 for 24 h on bench-01",
+    "status": "Approved", "incident": "WINC-00042", "host": "bench-01", "site": null, "result": null, "at": "…"}]},
+  "journal": {"last_seq": 812, "last_at": "…", "pending": 0, "oldest_pending_at": null, "behind": false, "key": true, "late_minutes": 5},
+  "agents": {"agents": {"fresh": 2, "stale": 1, "never_seen": 0, "disabled": 0, "total": 3},
+    "satellites": {"fresh": 0, "stale": 0, "never_seen": 0, "disabled": 0, "total": 0},
+    "setup_reported": 2, "to_fix": [{"hostname": "bench-02", "failed": 1, "warnings": 0}], "silence_minutes": 5},
+  "checked_at": "…", "time_zone": "Europe/Paris"
+}
+```
+
+| Panel       | What it reads                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scores`    | The stored `security_score` of each site the caller may see by a site grant, as on the [Security](https://bthuner.github.io/dodock-wolf/#security) page (a score is stored with its site's host, but a host grant does not show it): the newest sample of the last 7 days, never recomputed. `change` is the difference with the newest score of 23 to 25 hours earlier, `null` when there is none or when the newest score is not newer than 23 hours (it would be compared with itself). `late` when the newest is over 3 hours old (the job is hourly). Worst first; a site the [Security](https://bthuner.github.io/dodock-wolf/#security) page knows but that has no score yet comes last with `score: null`, never 0. |
+| `incidents` | Open or Acknowledged incidents holding at least one event of type `security`, merged ones excluded, under the incident access rules. Exact counts, and the 5 newest. `null` on a satellite, which keeps no incidents.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `responses` | Wolf Response Actions **Approved** and not expired (waiting for the agent or satellite that applies them) and **Failed** in the last 7 days, with the 5 newest. The label of a user action waiting for a satellite names its site. Wolf Managers and System Managers only.                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `journal`   | The newest signed entry, the entries waiting to be signed and the oldest of them. `behind` when one has waited over 5 minutes (signing runs every minute). Wolf Managers and System Managers only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `agents`    | Agents and satellites per state, as on Monitoring, and the reporting hosts whose last setup check found a failure or a warning.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+
+## Operations
+
+The general overview, at `/wolf/operations`. Observability is frozen
+([#136](https://github.com/bthuner/dodock-wolf/issues/136){rel="&#x22;nofollow&#x22;"}): it is kept as it is.
 
 ### `dodock_wolf.api.scope.get_counts`
 
-Exact counts for the overview and entity dashboards. Arguments: window and scope.
+Exact counts for Operations and the entity dashboards. Arguments: window and scope.
 
 ```json [get_counts]
 {
@@ -4352,12 +4417,12 @@ the page fetches again through the APIs above, which check permissions as usual.
 
 What each page does with a message:
 
-| Page                    | On a message                                                                                                                                                                                                                                        | Without a socket                        |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| Incident                | Header refreshed. New timeline rows are added without scrolling, and a "N new rows: show" button takes the reader to the first one. Loaded rows and expanded rows stay. Past 500 loaded rows only the header follows and the rows wait for Refresh. | Polls every 60 s                        |
-| Incidents               | Refreshed, unless "Load more" was used: then "Incidents changed · Refresh".                                                                                                                                                                         | Polls, same rule                        |
-| Overview and dashboards | Refreshed at most every 10 s (messages carry no scope; relative windows move). Also polled every 60 s while live, because metrics are not announced.                                                                                                | Polls                                   |
-| Events, Errors          | Never reshuffled under the reader: "New events recorded · Refresh" (the new events may not match the filters).                                                                                                                                      | Not polled: "Not live: refresh by hand" |
+| Page                                 | On a message                                                                                                                                                                                                                                        | Without a socket                        |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Incident                             | Header refreshed. New timeline rows are added without scrolling, and a "N new rows: show" button takes the reader to the first one. Loaded rows and expanded rows stay. Past 500 loaded rows only the header follows and the rows wait for Refresh. | Polls every 60 s                        |
+| Incidents                            | Refreshed, unless "Load more" was used: then "Incidents changed · Refresh".                                                                                                                                                                         | Polls, same rule                        |
+| Home page, Operations and dashboards | Refreshed at most every 10 s (messages carry no scope; relative windows move). Also polled every 60 s while live, because metrics are not announced.                                                                                                | Polls                                   |
+| Events, Errors                       | Never reshuffled under the reader: "New events recorded · Refresh" (the new events may not match the filters).                                                                                                                                      | Not polled: "Not live: refresh by hand" |
 
 - Every page reconciles once when the socket first joins its rooms (what changed after its first
   fetch is unknown) and after each reconnect (messages sent while offline are lost).
@@ -4768,7 +4833,9 @@ four charted metrics' rows only.
 
 ### Wolf UI overview
 
-`/wolf` sends six reads at once, so a page waits at least for the slowest one:
+The overview measured here is the **Operations** page since 0.2 (`/wolf/operations`; `/wolf` now
+opens on the security overview). It sends six reads at once, so a page waits at least for the
+slowest one:
 
 - the reads were timed one after another;
 - run in parallel, they share the CPU, the disk and the buffer pool, so the page itself is

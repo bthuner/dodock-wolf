@@ -6,7 +6,7 @@ Dodock Wolf is self-hosted observability for Frappe benches, ERPNext and Dokos s
 Linux hosts. It catches 502 windows, failed nightly crons, worker crashes and suspicious logins
 before customers notice, and it keeps all data on a Frappe site you run.
 
-<screenshot alt="The Wolf UI overview on the demo bench" caption="The Wolf UI overview after the demo bench's 2AM scenario." name="overview">
+<screenshot alt="The Operations page of the Wolf UI on the demo bench" caption="Operations, the Wolf UI's general overview, after the demo bench's 2AM scenario." name="operations">
 
 
 

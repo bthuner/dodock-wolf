@@ -24,8 +24,22 @@ two reads share a short cache filtered per caller (see [Short cache](#short-cach
 <tbody>
   <tr>
     <td>
-      <a href="#overview">
-        Overview
+      <a href="#home-page">
+        Home page
+      </a>
+    </td>
+    
+    <td>
+      <code>
+        security_overview.get_overview
+      </code>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <a href="#operations">
+        Operations
       </a>
     </td>
     
@@ -306,11 +320,171 @@ Desk. That is the current rule, kept as is.
 
 </note>
 
-## Overview
+## Home page
+
+The Wolf UI opens on the security of the bench (`/wolf`, **Overview**). The general overview it
+used to show is **Operations** (`/wolf/operations`), below.
+
+### `dodock_wolf.api.security_overview.get_overview`
+
+No argument. One answer with a key per panel, each within the caller's access. A panel the caller
+may not have is `null`; a panel that could not be read is `{"error": "…"}` (the reason goes to
+the Error Log) or `{"forbidden": true}`, and the others are still answered. `satellite` is true on
+a satellite, which records no score and keeps no incidents: `scores`, `incidents` and `responses`
+are then `null`, and the page says that the scores are kept on the central site.
+
+```json [get_overview]
+{
+  "restricted": false,
+  "satellite": false,
+  "scores": {"late_hours": 3, "lookback_days": 7, "sites": [
+    {"site": "erp.example.com", "score": 41, "at": "2026-11-19T10:05:00Z", "late": false, "change": -6},
+    {"site": "new.example.com", "score": null, "at": null, "late": false, "change": null}]},
+  "incidents": {"by_severity": {"critical": 1, "warning": 1, "info": 0, "total": 2},
+    "by_status": {"Open": 1, "Acknowledged": 1}, "newest": [{"name": "WINC-00042", "title": "…", "status": "Open",
+    "severity": "critical", "site": null, "bench": null, "host": "bench-01", "started_at": "…"}]},
+  "responses": {"waiting": 1, "failed": 0, "failed_days": 7, "newest": [{"name": "…", "label": "Block 45.33.32.156 for 24 h on bench-01",
+    "status": "Approved", "incident": "WINC-00042", "host": "bench-01", "site": null, "result": null, "at": "…"}]},
+  "journal": {"last_seq": 812, "last_at": "…", "pending": 0, "oldest_pending_at": null, "behind": false, "key": true, "late_minutes": 5},
+  "agents": {"agents": {"fresh": 2, "stale": 1, "never_seen": 0, "disabled": 0, "total": 3},
+    "satellites": {"fresh": 0, "stale": 0, "never_seen": 0, "disabled": 0, "total": 0},
+    "setup_reported": 2, "to_fix": [{"hostname": "bench-02", "failed": 1, "warnings": 0}], "silence_minutes": 5},
+  "checked_at": "…", "time_zone": "Europe/Paris"
+}
+```
+
+<table>
+<thead>
+  <tr>
+    <th>
+      Panel
+    </th>
+    
+    <th>
+      What it reads
+    </th>
+  </tr>
+</thead>
+
+<tbody>
+  <tr>
+    <td>
+      <code>
+        scores
+      </code>
+    </td>
+    
+    <td>
+      The stored <code>
+        security_score
+      </code>
+      
+       of each site the caller may see by a site grant, as on the <a href="#security">
+        Security
+      </a>
+      
+       page (a score is stored with its site's host, but a host grant does not show it): the newest sample of the last 7 days, never recomputed. <code>
+        change
+      </code>
+      
+       is the difference with the newest score of 23 to 25 hours earlier, <code>
+        null
+      </code>
+      
+       when there is none or when the newest score is not newer than 23 hours (it would be compared with itself). <code>
+        late
+      </code>
+      
+       when the newest is over 3 hours old (the job is hourly). Worst first; a site the <a href="#security">
+        Security
+      </a>
+      
+       page knows but that has no score yet comes last with <code>
+        score: null
+      </code>
+      
+      , never 0.
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        incidents
+      </code>
+    </td>
+    
+    <td>
+      Open or Acknowledged incidents holding at least one event of type <code>
+        security
+      </code>
+      
+      , merged ones excluded, under the incident access rules. Exact counts, and the 5 newest. <code>
+        null
+      </code>
+      
+       on a satellite, which keeps no incidents.
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        responses
+      </code>
+    </td>
+    
+    <td>
+      Wolf Response Actions <strong>
+        Approved
+      </strong>
+      
+       and not expired (waiting for the agent or satellite that applies them) and <strong>
+        Failed
+      </strong>
+      
+       in the last 7 days, with the 5 newest. The label of a user action waiting for a satellite names its site. Wolf Managers and System Managers only.
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        journal
+      </code>
+    </td>
+    
+    <td>
+      The newest signed entry, the entries waiting to be signed and the oldest of them. <code>
+        behind
+      </code>
+      
+       when one has waited over 5 minutes (signing runs every minute). Wolf Managers and System Managers only.
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        agents
+      </code>
+    </td>
+    
+    <td>
+      Agents and satellites per state, as on Monitoring, and the reporting hosts whose last setup check found a failure or a warning.
+    </td>
+  </tr>
+</tbody>
+</table>
+
+## Operations
+
+The general overview, at `/wolf/operations`. Observability is frozen
+([#136](https://github.com/bthuner/dodock-wolf/issues/136)): it is kept as it is.
 
 ### `dodock_wolf.api.scope.get_counts`
 
-Exact counts for the overview and entity dashboards. Arguments: window and scope.
+Exact counts for Operations and the entity dashboards. Arguments: window and scope.
 
 ```json [get_counts]
 {
@@ -1676,7 +1850,7 @@ What each page does with a message:
   
   <tr>
     <td>
-      Overview and dashboards
+      Home page, Operations and dashboards
     </td>
     
     <td>

@@ -614,6 +614,8 @@ The tags travel with the event to the [SIEM export](/security/siem-export): OCSF
 </tbody>
 </table>
 
+The Wolf UI's home page shows each site's security score and its change over 24 hours: see [Open the Wolf UI](/getting-started/quickstart#open-the-wolf-ui).
+
 ## Alerting and response
 
 Each signal has a preset alert rule. Presets are installed with no channels: they open
