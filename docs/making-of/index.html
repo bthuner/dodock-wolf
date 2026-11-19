@@ -1141,16 +1141,15 @@ X-Wolf-Agent-Secret: ••••••••
           <li><div><b>Desk, not a separate SPA (superseded).</b><p>We first gave up some art direction for zero new logins, native permissions and familiar list views. #19 moved the daily views to a frappe-ui app at <code>/wolf</code> that keeps the Frappe session and permissions; Desk keeps configuration.</p></div></li>
           <li><div><b>Honest numbers over pretty ones.</b><p>A gap stays a gap, and a missing signal is not a zero. A repeat count is not a count for the window, and a past window is not "stale". A chart that looks calm because it hides what it doesn't know would wake no one at 2AM.</p></div></li>
           <li><div><b>The inside of the bench, not the whole estate.</b><p>Wolf covers what a network probe or an EDR cannot know about Frappe, and forwards everything to the organisation's SOC in a standard form.</p></div></li>
+          <li><div><b>The bench's security, not general observability.</b><p>Frappe Cloud v2 brought its own telemetry, incident manager and status page (Datum, Beacon), and Dokos does not build what Frappe builds (#136). New work goes to the security and compliance of the bench; status pages, dashboards and metrics stay as they are for operators who run their own benches; Wolf connects to existing tools instead of rebuilding them.</p></div></li>
           <li><div><b>Approval, not automation.</b><p>Wolf proposes a response and a manager approves it. When CrowdSec is asked to decide on detections, that is CrowdSec's choice, and the setting says so.</p></div></li>
         </ol>
         <div data-reveal>
           <h3 class="sub">Next</h3>
           <ol class="decisions" style="margin-top:24px">
-            <li><div><b>French in the app.</b><p>The documentation is in English and French; Desk and the Wolf UI are in English only.</p></div></li>
-            <li><div><b>An onboarding checklist.</b><p>In the Wolf UI, from the first agent to the first test alert.</p></div></li>
             <li><div><b>Packages.</b><p><code>.deb</code>, <code>.rpm</code> and PyPI for the agent, with auto-update, then the Frappe Marketplace.</p></div></li>
-            <li><div><b>Log search.</b><p>Once raw-line storage exists, which Wolf deliberately doesn't have yet.</p></div></li>
-            <li><div><b>The overview's first visit at 100 hosts.</b><p>A visit the background reads do not cover, the first in 10 quiet minutes, still takes 0.9 to 1.2 s (<a href="https://github.com/bthuner/dodock-wolf/blob/main/docs/load-test.md">load test</a>).</p></div></li>
+            <li><div><b>Next to Frappe Cloud v2.</b><p>v2 servers as Pilot hosts, a Beacon channel, a Datum sink once it opens up (#133–#135).</p></div></li>
+            <li><div><b>Deeper in the bench's security.</b><p>The work #136 points to.</p></div></li>
           </ol>
         </div>
       </div>
