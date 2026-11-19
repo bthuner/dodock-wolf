@@ -129,6 +129,20 @@ const POSTURE = {
   ],
 }  // prettier-ignore
 
+// the home page on the demo bench: its one site scored, no security incident (the demo's are a
+// deployment and a cron job), the journal signing, the agent reporting
+const SECURITY_OVERVIEW = {
+  restricted: false, time_zone: 'Europe/Paris', checked_at: at(0),
+  scores: { late_hours: 3, lookback_days: 7, sites: [{ site: SITE, score: POSTURE.score, at: at(34), late: false, change: null }] },
+  incidents: { by_severity: { critical: 0, warning: 0, info: 0, total: 0 }, by_status: { Open: 0, Acknowledged: 0 }, newest: [] },
+  responses: { waiting: 0, failed: 0, failed_days: 7, newest: [] },
+  journal: { last_seq: 7, last_at: at(1), pending: 0, oldest_pending_at: null, behind: false, key: true, late_minutes: 5 },
+  agents: {
+    agents: { fresh: 1, stale: 0, never_seen: 0, disabled: 0, total: 1 }, satellites: { fresh: 0, stale: 0, never_seen: 0, disabled: 0, total: 0 },
+    setup_reported: 0, to_fix: [], silence_minutes: 5,
+  },
+}  // prettier-ignore
+
 const base = fixtures()
 const overrides = (view) => ({
   'dodock_wolf.api.spa.get_boot': () => ({ ...BOOT, user: { name: 'ops@example.com', full_name: 'Ops' } }),
@@ -153,10 +167,12 @@ const overrides = (view) => ({
   'dodock_wolf.api.security.get_posture': () => POSTURE,
   'dodock_wolf.api.journal.get_status': () => ({ entries: 7, pending: 0, key: true, anchor: `7:${'3fa94c0be17d58a2'.repeat(4)}` }),
   'dodock_wolf.api.journal.verify': () => ({ ok: true, checked: 7, problem: null }),
+  'dodock_wolf.api.security_overview.get_overview': () => SECURITY_OVERVIEW,
 })
 
 const VIEWS = [
-  ['overview', '/wolf/?range=1h'],
+  ['overview', '/wolf/'],
+  ['operations', '/wolf/operations?range=1h'],
   ['incident', '/wolf/incidents/WINC-00001'],
   ['incident-resolved', '/wolf/incidents/WINC-00003'],
   ['monitoring', '/wolf/monitoring'],

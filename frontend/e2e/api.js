@@ -124,6 +124,33 @@ export function fixtures() {
       ],
     }),
     'dodock_wolf.api.journal.get_status': () => ({ entries: 12, anchor: `12:${'a'.repeat(64)}`, pending: 0, key: true }),
+    // the home page: every panel, as a manager sees them
+    'dodock_wolf.api.security_overview.get_overview': () => ({
+      restricted: false, time_zone: 'Europe/Paris', checked_at: NOW.toISOString(),
+      scores: { late_hours: 3, lookback_days: 7, sites: [
+        { site: 'a.example.com', score: 71, at: ago(20), late: false, change: -4 },
+        { site: 'b.example.com', score: 88, at: ago(20), late: false, change: 0 },
+        { site: 'c.example.com', score: null, at: null, late: false, change: null },
+      ] },
+      incidents: {
+        by_severity: { critical: 1, warning: 1, info: 0, total: 2 }, by_status: { Open: 1, Acknowledged: 1 },
+        newest: [
+          { name: 'WINC-00007', title: 'SSH brute force on bench-01', status: 'Open', severity: 'critical', site: null, bench: null,
+            host: 'bench-01', started_at: ago(25) },
+          { name: 'WINC-00006', title: 'Admin login from a new address: a.example.com', status: 'Acknowledged', severity: 'warning',
+            site: 'a.example.com', bench: null, host: null, started_at: ago(180) },
+        ],
+      },
+      responses: { waiting: 1, failed: 0, failed_days: 7, newest: [
+        { name: 'WRA-00003', label: 'Block 45.33.32.156 for 24 h on bench-01', status: 'Approved', incident: 'WINC-00007',
+          host: 'bench-01', site: null, result: null, at: ago(10) },
+      ] },
+      journal: { last_seq: 12, last_at: ago(1), pending: 1, oldest_pending_at: ago(0.5), behind: false, key: true, late_minutes: 5 },
+      agents: {
+        agents: { fresh: 1, stale: 0, never_seen: 0, disabled: 0, total: 1 }, satellites: { fresh: 0, stale: 0, never_seen: 0, disabled: 0, total: 0 },
+        setup_reported: 1, to_fix: [{ hostname: 'bench-01', failed: 1, warnings: 0 }], silence_minutes: 5,
+      },
+    }), // prettier-ignore
   }
 }
 

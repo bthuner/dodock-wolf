@@ -8,6 +8,7 @@ const router = makeRouter(createMemoryHistory('/wolf'))
 describe('routes', () => {
   it.each([
     ['/', 'overview'],
+    ['/operations', 'operations'],
     ['/incidents', 'incidents'],
     ['/incidents/WINC-00012', 'incident'],
     ['/events', 'events'],

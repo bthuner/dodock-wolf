@@ -13,7 +13,11 @@ const slow = (method) => async (args) => {
 
 // view, path, the read that fills it, its empty answer and what it then says
 const VIEWS = [
-  { name: 'overview', path: '/wolf/', read: 'dodock_wolf.api.scope.get_counts', denied: 'You may not see these counts.' },
+  { name: 'overview', path: '/wolf/', read: 'dodock_wolf.api.security_overview.get_overview',
+    empty: () => ({ ...F['dodock_wolf.api.security_overview.get_overview'](),
+      incidents: { by_severity: { critical: 0, warning: 0, info: 0, total: 0 }, by_status: {}, newest: [] } }),
+    says: 'No security incident open that you can see.', denied: 'You may not see this overview.' },
+  { name: 'operations', path: '/wolf/operations', read: 'dodock_wolf.api.scope.get_counts', denied: 'You may not see these counts.' },
   { name: 'incidents', path: '/wolf/incidents', read: 'dodock_wolf.api.incident_view.list_incidents',
     empty: () => ({ incidents: [], paging: { has_more: false } }), says: 'No unresolved incidents you can see.',
     denied: 'You may not see these incidents.' },
@@ -31,8 +35,8 @@ const VIEWS = [
   { name: 'security', path: '/wolf/security', read: 'dodock_wolf.api.security.get_posture', denied: 'You may not see this site.' },
 ] // prettier-ignore
 
-const NOTHING = /No unresolved incidents|Nothing recorded|No event records|No error groups/
-const CLAIMS = ['No unresolved incidents', 'Nothing recorded', 'No event records', 'No error groups']
+const NOTHING = /No unresolved incidents|Nothing recorded|No event records|No error groups|No security incident open/
+const CLAIMS = ['No unresolved incidents', 'Nothing recorded', 'No event records', 'No error groups', 'No security incident open']
 
 // Records every "nothing" claim the page ever shows, even for a single frame.
 async function watchClaims(page) {
@@ -90,10 +94,41 @@ test('an ended session asks to log in again, not "you may not see"', async ({ pa
   await expect(page.getByRole('alert')).toHaveText('Your session has ended: reload the page to log in again.')
 })
 
-test('the overview says when its monitoring panel fails', async ({ page }) => {
+test('operations says when its monitoring panel fails', async ({ page }) => {
   await mockApi(page, { 'dodock_wolf.api.dashboard.get_monitoring': () => fail(500, 'redis unreachable') })
-  await page.goto('/wolf/')
+  await page.goto('/wolf/operations')
   await expect(page.getByRole('alert').filter({ hasText: 'Monitoring: redis unreachable' })).toBeVisible()
+})
+
+test('the home page: a panel that fails or may not be seen says so, and the others still show', async ({ page }) => {
+  await watchClaims(page)
+  await mockApi(page, {
+    'dodock_wolf.api.security_overview.get_overview': () => ({
+      ...F['dodock_wolf.api.security_overview.get_overview'](),
+      incidents: { error: 'Wolf could not read this panel: the reason is in the Error Log.' },
+      agents: { forbidden: true },
+    }),
+  })
+  await page.goto('/wolf/')
+  await expect(page.getByRole('region', { name: 'Open security incidents' }).getByRole('alert')).toHaveText(/Wolf could not read this panel/)
+  await expect(page.getByRole('region', { name: 'Agents' })).toContainText('You may not see these agents.')
+  await expect(page.getByRole('region', { name: 'Security score by site' })).toContainText('71 / 100')
+  await expect(page.getByRole('region', { name: 'Journal' })).toContainText('entry 12')
+  expect(await claims(page), 'a "nothing" claim for a panel that failed').toEqual([])
+})
+
+test('the home page shows a Wolf User no manager panel', async ({ page }) => {
+  await mockApi(page, {
+    'dodock_wolf.api.spa.get_boot': () => ({ ...BOOT, can: { read: true, comment: true, act: false, configure: false } }),
+    'dodock_wolf.api.security_overview.get_overview': () => ({
+      ...F['dodock_wolf.api.security_overview.get_overview'](), responses: null, journal: null, restricted: true,
+    }),
+  })
+  await page.goto('/wolf/')
+  await expect(page.getByText('You see the sites, benches and hosts you were granted.')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Response actions' })).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Journal' })).toHaveCount(0)
+  await expect(page.getByRole('region', { name: 'Set up Wolf' })).toHaveCount(0)
 })
 
 test('a slow timeline never says "Nothing recorded" before it has read', async ({ page }) => {
