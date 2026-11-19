@@ -173,13 +173,13 @@ Development settings in production.
 | Sensitive file served | `security` / `web_sensitive_file_exposed` (agent, nginx) | `.env`, `.git/`, keys or a dump answered with a 2xx (critical) |
 | Server / Client Script can run new code | `security` / `server_script_change`, `client_script_change` (site) | a script created, enabled, or its code, type or trigger changed (warning; the event is critical for API and scheduled Server Scripts or guest access) |
 | System Console used | `security` / `console_execution` (site) | a System Console run (Python or SQL) |
-| Security settings weakened | `security` / `security_settings_weakened` (site) | System Settings: 2FA or password policy off, lower password score, looser lockout, longer sessions, guest uploads, one-session or logout-on-reset off; a Role's two-factor authentication off (critical) |
+| Security settings weakened | `security` / `security_settings_weakened` (site) | System Settings: 2FA or password policy off, lower password score, looser lockout, longer sessions, guest uploads, one-session or logout-on-reset off; a Role's two-factor authentication off, or a role with it deleted (critical) |
 | Permission rules changed | `security` / `permission_change` (site) | permission rules changed (Role Permission Manager, Data Import, REST, code), a Role Profile that grants more roles, a User Permission letting a user see more, a Website user given desk access |
 | API key generated | `security` / `api_key_generated` (site) | a new API secret written for a user (the event is critical for privileged users) |
 | Webhook to a new host | `security` / `webhook_external` (site) | a Webhook created, enabled or pointed at another host |
 | User impersonated | `security` / `user_impersonated` (site) | User → Impersonate opened a session as another user (the event is critical when that user is privileged) |
-| Credentials reset by someone else | `security` / `credentials_reset_by_other` (site) | a user's password set, or their OTP secret reset, by another user (the event is critical for privileged users) |
-| Password reset burst from one IP | sequence, same `ip`, `password_reset_requested` (site) | one public address asked to reset the passwords of 5+ accounts in 10 min (warning) |
+| Credentials reset by someone else | `security` / `credentials_reset_by_other` (site) | a user's password set, their OTP secret reset, or their LDAP password set, by another user (the event is critical for privileged users) |
+| Password reset burst from one IP | sequence, same `ip`, `password_reset_requested` (site) | one public address asked to reset the passwords of about 5+ accounts in 10 to 20 min (warning) |
 | Password resets for many accounts | `security` / `password_reset_requested` (site) | 10+ password reset requests for different accounts or from different addresses on a site in 10 min (warning) |
 | Unusual data export | `security` / `data_exfiltration` (site) | a user's exports and list reads this hour above 50 MB and 5x their largest hour of the last 14 days (critical at 20x, or without any history) |
 | Scan then login from the same IP | sequence, same `ip` | a web probe or Suricata alert, then within 60 min an SSH login after failures or as root, a privileged Frappe login from a new IP, or an API key used from a new IP, from that address (critical) |

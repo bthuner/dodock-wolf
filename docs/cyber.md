@@ -195,17 +195,25 @@ risky application changes** (on by default):
   policy, one session per user, SSO-only login or logout on password reset off, lower the
   password score or the lockout duration, allow more failed logins (or no lockout), lengthen
   sessions or let guests upload files (`security_settings_weakened`); and a Role save that turns
-  its two-factor authentication off (`kind: "role_2fa"`), critical for a privileged role.
+  its two-factor authentication off, or a role deleted with it on (`kind: "role_2fa"`,
+  `deleted: true`), critical for a privileged role. The preset is critical either way. Not seen:
+  a user removed from a role that requires 2FA.
 - **Impersonation** (T1078, `user_impersonated`): User → Impersonate opened a session as another
   user (Frappe 15: Administrator only; 16: the `impersonate` permission on User). The Activity Log
   Frappe inserts carries the impersonator; the reason they typed is kept on one line, cut at 200
-  characters. Critical when the impersonated user is privileged. Responses: log out or disable
-  the impersonated user, and the impersonator.
+  characters; the IP is the request's (Frappe fills an Activity Log's only for logins and
+  logouts). Only a call of Frappe's impersonate method counts (`app_security.called_method`), so
+  an Activity Log row forged through REST or Data Import raises nothing. Critical when the
+  impersonated user is privileged. Responses: log out or disable the impersonated user, and the
+  impersonator.
 - **Credentials reset by someone else** (T1098, `credentials_reset_by_other`): a user's password
   set on a save by another user (`kind: "password"`, read in `before_validate`, where Frappe
   still has it; never stored), or their OTP secret reset by another user
-  (`frappe.twofactor.reset_otp_secret`, `kind: "otp_secret"`, read in `after_request`). A new
-  user's first password is not one. Critical for privileged users.
+  (`frappe.twofactor.reset_otp_secret`, `kind: "otp_secret"`, read in `after_request`), or their
+  LDAP password set by a System Manager (`ldap_settings.reset_password`, `kind: "ldap_password"`,
+  read in `after_request`). A new user's first password is not one. Critical for privileged
+  users. Responses: log out, disable or revoke the keys of the user, and log out or disable
+  whoever reset them. Not seen: `update_password` from code.
 - **API keys** (T1098.001): a new API secret written for a user (`api_key_generated`), critical
   for privileged users.
 - **API key used from a new IP** (T1078, T1552, `api_key_new_ip`): every successful request
@@ -221,13 +229,24 @@ risky application changes** (on by default):
   (`webhook_external`).
 - **Password reset requests** (T1589.002, T1110, `password_reset_requested`, info), behind
   **Capture failed logins**: each call of the guest `reset_password` method, answered or refused,
-  read in `after_request`. The account typed is kept as a keyed hash (HMAC-SHA256 with the site's
-  encryption key), and by name only when it is an existing user; a decoy user is a honeytoken
-  touch instead. One event per address and account every 10 minutes. The rule engine has no
-  per-IP grouping for event rules, so the per-address preset (*Password reset burst from one IP*,
-  5 accounts in 10 min) is a sequence rule on the IP whose first and second events are both
-  resets; the site-wide one (*Password resets for many accounts*) counts events with
-  `min_samples`, that is distinct (address, account) pairs.
+  read in `after_request`. The method a request runs is read in Frappe's own order
+  (`app_security.called_method`): `cmd` first, then `/api/v2/method/<DocType>/<method>` (the
+  DocType's controller module, by Frappe's naming rule), then `/api/method/` and
+  `/api/v1/method/` up to the first `/`; the Role Permission Manager check reads it the same way.
+  The account typed is kept as a keyed hash (HMAC-SHA256 with a key derived from the site's
+  `encryption_key` under `dodock_wolf.identity.v1`; no hash when the site has no key yet, never
+  created from a guest's request), and by name only when it is an existing user; a decoy user is
+  a honeytoken touch instead. One event per address and account every 10 minutes; past 20
+  accounts from one address (a set in Redis that expires with the window), one event for the
+  address (`many_accounts`), so random accounts add at most 21 rows per address. No IP
+  reputation or CrowdSec lookup for these events. A signed-in user's requests are one event per
+  user (`by`, `signed_in`), so an administrator inviting users is no burst. The rule engine has
+  no per-IP grouping for event rules, so the per-address preset (*Password reset burst from one
+  IP*, about 5 accounts; the first request may be up to 20 min old) is a sequence rule on the IP
+  whose first and second events are both resets; the site-wide one (*Password resets for many
+  accounts*) counts events with `min_samples`, that is distinct (address, account) pairs. One
+  account asked for again and again is one event whose `count` grows: rules sum `count` per
+  group, not per event, so it is not alerted.
 - **Unusual data exports** (T1567 / T1030, `data_exfiltration`), behind its own setting,
   **Flag unusual data exports** (on by default):
   - **What counts:** report exports, Data Export, Data Import templates with records, bulk PDFs
