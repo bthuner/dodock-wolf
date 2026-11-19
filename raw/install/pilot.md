@@ -471,8 +471,6 @@ The site comes from the task's `site` / `sites` arguments; nothing else of the a
 
 ### How events are produced
 
-The same rules as on [Press servers](/install/press):
-
 - A `deployment` event is sent when the task starts, timestamped at `started_at`. An incident during a long migrate links to it, for example through the "502 spike after deployment" [preset](/alerts/presets).
 - An `error` event is sent if the task ends `failed`. It carries `failure.code`, `failure.message` and `exit_code`.
 - Reported task ids are kept for 3 days in `<spool_dir>/pilot-tasks.json`.

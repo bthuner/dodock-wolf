@@ -112,7 +112,7 @@ The agent does nothing unless you allow it on that host.
 
 <note>
 
-**Behind a proxy.** A block on a host only stops what reaches it directly. On a Press app server behind its proxy, a web client's packets come from the proxy, so Wolf proposes blocks there for SSH events only. The Response panel lists the other addresses as *Not proposed*, naming the proxy. The Wolf Agent on the [proxy server](/install/press#proxy-servers) proposes their blocks, where they take effect.
+**Behind a proxy.** A block on a host only stops what reaches it directly. On a host whose agent config names a proxy in front of it (the `behind_proxy` key of the [configuration](/agent/configuration), sent with every push: see the [protocol](/reference/protocol)), a web client's packets come from the proxy, so Wolf proposes blocks there for SSH events only. The Response panel lists the other addresses as *Not proposed*, naming the proxy: block them there, where they take effect.
 
 </note>
 

@@ -108,7 +108,3 @@ Art. 19)** or a **Personal data breach (GDPR Art. 33)** to start its deadlines. 
 the incident, and the **Regulatory deadline** preset alerts before each one. Wolf tracks dates only:
 it does not decide what is reportable and sends nothing to an authority. See
 [Compliance](/security/compliance).
-
-## Public status
-
-Give an incident a **Public Title** to control how it appears on a [status page](/alerts/status-pages).

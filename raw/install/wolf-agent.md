@@ -150,8 +150,7 @@ Without systemd (a container), the script prints the command to run as `wolf-age
 The agent finds benches by itself:
 
 - a `bench.toml`, or a directory with `sites/` and `apps/frappe`;
-- [Pilot benches](/install/pilot), read with Pilot's real `bench.toml` schema;
-- [Press servers](/install/press), detected from `/home/frappe/agent/config.json`.
+- [Pilot benches](/install/pilot), read with Pilot's real `bench.toml` schema.
 
 ```bash [host]
 sudo -u wolf-agent wolf-agent discover

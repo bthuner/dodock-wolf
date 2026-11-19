@@ -363,7 +363,6 @@ X-Wolf-Agent-Secret: <secret>
   "sent_at": "2026-10-29T02:00:30Z",
   "agent_version": "0.1.0",
   "hostname": "bench-01",
-  "behind_proxy": null,
   "metrics": [
     {"metric_name": "cpu_usage", "value": 12.5, "timestamp": "...", "host": "bench-01",
      "bench": null, "site": null, "labels": {}}
@@ -493,15 +492,19 @@ The same two headers authenticate the deployment marker, the status call and the
     </td>
     
     <td>
-      The proxy this host's web traffic comes through (a Press app server's <code>
-        proxy_ip
-      </code>
-      
-      ), or <code>
+      Optional. The proxy this host's web traffic comes through, or <code>
         null
       </code>
       
-      . Stored on Wolf Agent; blocks for web clients are then not proposed on this host. Absent from older agents: the stored value stays.
+      . Stored on Wolf Agent; blocks for web clients are then not proposed on this host. When absent, the stored value stays; <code>
+        null
+      </code>
+      
+       clears it. The agent sends its config's <code>
+        behind_proxy
+      </code>
+      
+       key with every push.
     </td>
   </tr>
   
@@ -1228,10 +1231,6 @@ before forwarding are merged into one event.
       </code>
       
       , <code>
-        press_job_failed
-      </code>
-      
-      , <code>
         pilot_task_failed
       </code>
       
@@ -1444,16 +1443,6 @@ before forwarding are merged into one event.
       ), <code>
         migrate
       </code>
-      
-      , <code>
-        press
-      </code>
-      
-       (Press agent jobs, see <a href="/install/press">
-        Press
-      </a>
-      
-      )
     </td>
   </tr>
 </tbody>
@@ -4329,12 +4318,6 @@ Where the links appear:
 </tbody>
 </table>
 
-Hourly digests are posted to webhooks as:
-
-```json [Digest webhook body]
-{"text": "...", "digest": [{"incident", "kind", "severity", "title", "at", "url"}]}
-```
-
 ### Response links
 
 One link per action Wolf proposes on the incident, up to 5:
@@ -4740,14 +4723,14 @@ Every request is recorded as a **Wolf Delivery**:
       , <code>
         action
       </code>
-      
-      , <code>
-        digest
-      </code>
     </td>
     
     <td>
-      What was sent.
+      What was sent. <code>
+        digest
+      </code>
+      
+       is set on the deliveries of an hourly digest, before 0.2.
     </td>
   </tr>
   
@@ -4780,6 +4763,3 @@ Every request is recorded as a **Wolf Delivery**:
   </tr>
 </tbody>
 </table>
-
-Digests of native channels are merged on a SHA-256 of the channel settings, and the digest item
-keeps a reference to the channel row rather than any secret.

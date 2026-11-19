@@ -322,7 +322,7 @@ Each severity has a colour and a shape, so it never depends on colour alone:
     </td>
     
     <td>
-      Worth knowing. Digest-friendly.
+      Worth knowing.
     </td>
   </tr>
   
@@ -354,7 +354,7 @@ Each severity has a colour and a shape, so it never depends on colour alone:
     </td>
     
     <td>
-      Someone wakes up. Never digested.
+      Someone wakes up.
     </td>
   </tr>
   
@@ -376,13 +376,13 @@ Each severity has a colour and a shape, so it never depends on colour alone:
 
 ## Deployments
 
-A `deployment` event marks the moment code changed: a `bench migrate` on the Wolf site, a Press or
+A `deployment` event marks the moment code changed: a `bench migrate` on the Wolf site, a
 Pilot task, or `wolf-agent mark-deployment`. Rules can require a recent deployment (the
 *502 spike after deployment* preset), and incidents show the deployment that preceded them, so the
 timeline reads "502s started 4 minutes after the 01:47 deploy".
 
 ## Where to look
 
-- **Wolf UI** at `/wolf`: overview, incidents, explorers, metrics, security, monitoring. For Wolf
+- **Wolf UI** at `/wolf`: overview, incidents, explorers, security, monitoring. For Wolf
 Users and Wolf Managers.
 - **Desk**: every DocType, configuration, reports such as **Wolf Incident Metrics**.

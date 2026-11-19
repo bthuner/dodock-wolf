@@ -181,11 +181,30 @@ seen in nginx, file integrity, outbound connections), the response to it, and th
 journal, NIS2, DORA and GDPR deadlines, SIEM export). No Frappe tool covers that, on Frappe Cloud
 or elsewhere.
 
-The general observability features (status pages, dashboards, the metrics explorer, host and
-service metrics) stay as they are: kept working and translated, for operators who run their own
-benches, but without new features. Frappe Cloud has its own telemetry, incident manager and status
+The general observability features (dashboards, host and service metrics) stay as they are:
+kept working and translated, for operators who run their own benches, but without new features.
+Version 0.2 removed the Press v1 integration, the live demos, status pages, the metrics explorer
+and digests; release v0.1.0 keeps them. Frappe Cloud has its own telemetry, incident manager and status
 page (Datum and Beacon); where a tool already does the job, Wolf connects to it rather than doing
 it again: Wazuh, Suricata, CrowdSec, a SIEM, PagerDuty, and Frappe's own tools as they open up.
+
+### Staying on v0.1.0
+
+To keep what 0.2 removed, Press v1 hosts among them, install the app and the agent from the
+v0.1.0 tag:
+
+```bash [bench]
+bench get-app https://github.com/bthuner/dodock-wolf --branch v0.1.0
+```
+
+```bash [host]
+curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/v0.1.0/agent/install.sh \
+  | sudo WOLF_AGENT_REF=v0.1.0 WOLF_URL=https://wolf.example.com WOLF_TOKEN=<registration token> bash
+```
+
+A 0.2 agent on a host a v0.1 agent registered as a Press v1 server logs a warning at start, and
+`wolf-agent doctor` fails with the same fix: Press v1 is supported by Dodock Wolf v0.1.0 only, so
+reinstall the agent with `WOLF_AGENT_REF=v0.1.0`.
 
 ## Next
 

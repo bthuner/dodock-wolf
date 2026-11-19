@@ -17,7 +17,6 @@
 - [Wolf App](https://bthuner.github.io/dodock-wolf/raw/install/wolf-app.md): Install the Frappe app that stores Wolf's data, evaluates rules and serves the Wolf UI.
 - [Wolf Agent](https://bthuner.github.io/dodock-wolf/raw/install/wolf-agent.md): Install the host daemon, register it with the Wolf site and check what it collects.
 - [Every site on a bench](https://bthuner.github.io/dodock-wolf/raw/install/every-site.md): Install the Wolf App on the bench's other sites as satellites that forward to the central site.
-- [Press servers](https://bthuner.github.io/dodock-wolf/raw/install/press.md): Run the Wolf Agent on a self-hosted Press app server and get deploy-correlated incidents from its benches.
 - [Pilot benches](https://bthuner.github.io/dodock-wolf/raw/install/pilot.md): Run the Wolf Agent on a Frappe Pilot host and turn Pilot tasks into deployment events.
 
 ## Wolf Agent
@@ -35,7 +34,6 @@
 - [Preset rules](https://bthuner.github.io/dodock-wolf/raw/alerts/presets.md): The rules installed with the app, what each one watches, and when it fires.
 - [Channels](https://bthuner.github.io/dodock-wolf/raw/alerts/channels.md): Send alerts to email, chat, push, SMS or PagerDuty, and set up each destination.
 - [Incidents](https://bthuner.github.io/dodock-wolf/raw/alerts/incidents.md): Acknowledge, assign, merge, split and close incidents, and write the postmortem.
-- [Status pages](https://bthuner.github.io/dodock-wolf/raw/alerts/status-pages.md): Publish a public status page for a site, with no internal detail.
 
 ## Security
 

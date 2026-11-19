@@ -59,8 +59,8 @@ Desk and the Wolf UI show Wolf in each user's language (**My Settings → Langua
 French are available: field labels, descriptions, buttons, messages, the Wolf UI's pages and the
 rule sentence. DocType names, event types, metric names and Select values stay in English, as in
 the code. What Wolf stored when it happened stays in the language it was written in: incident
-titles, event summaries, comments and the journal. Notifications, digests, the SIEM export and
-public status pages are in English for now.
+titles, event summaries, comments and the journal. Notifications and the SIEM export are in
+English for now.
 
 ## Signals with no agent
 

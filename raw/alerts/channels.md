@@ -196,8 +196,6 @@ one answered.
 always get the matching `acknowledge` / `resolve` event, so the alert closes on call too.
 - The other channels hear a resolution only when the rule has **Notify On Resolve**.
 - A test from the rule form triggers then resolves on PagerDuty, so it never leaves an alert open.
-- With an **hourly digest** on a row, `info` and `warning` alerts are batched into one message per
-destination. `critical` alerts are always immediate. PagerDuty is never digested.
 - During a [maintenance window](/alerts/rules#maintenance-windows), notifications wait until it ends.
 
 ## Signed action links
@@ -212,6 +210,14 @@ acts, so mail scanners cannot acknowledge for you. Security incidents also carry
 Every attempt is recorded as a **Wolf Delivery**: channel, target without secrets, kind, PagerDuty
 action, ok or error, HTTP status. The incident lists them under **Deliveries**. Deliveries follow
 the event retention.
+
+## Upgrading from 0.1
+
+Digests were removed in 0.2: every channel sends each alert at once. A channel that used hourly
+digests in 0.1 now gets every alert as it happens. Digests still pending at the upgrade are
+dropped, not sent: the upgrade prints how many and records the count in an **Error Log** titled
+*Dodock Wolf 0.2: pending digests dropped*. Release [v0.1.0](/getting-started#staying-on-v010)
+keeps digests.
 
 ## Setup per type
 

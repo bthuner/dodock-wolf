@@ -861,12 +861,6 @@ Create one:
 - through the REST API: `POST /api/resource/Wolf Silence`;
 - with the deployment marker: `wolf-agent mark-deployment --bench main --silence 15m`.
 
-## Digests
-
-Each channel row can use an **hourly digest**: `info` and `warning` alerts are batched into one
-message per destination. `critical` alerts are always sent at once, and PagerDuty is never
-digested.
-
 ## Test a rule
 
 **Send test notification** on the rule form sends a TEST to every enabled channel row and shows

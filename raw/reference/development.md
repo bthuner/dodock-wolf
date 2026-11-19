@@ -7,94 +7,10 @@
 MVP, tested on a Dokos (Dodock 5.18) bench, on MariaDB 10.6 and on Postgres 17 (see
 [`ci/db_smoke.py`](https://github.com/bthuner/dodock-wolf/blob/main/ci/db_smoke.py)).
 
-## Live demos
+## Demo stack
 
 The demo stack in [`dev/demo`](https://github.com/bthuner/dodock-wolf/tree/main/dev/demo) runs one
-Dokos bench with the Wolf App and its agent. Three profiles add simulated servers, each watched by
-an agent of its own; they can run together:
-
-```bash [dev/demo]
-WOLF_DEMO_BASE=registry.gitlab.com/dokos/dokos:latest docker compose --profile press --profile multi --profile single up -d --build
-docker compose --profile multi logs -f multi-demo   # "history written up to ...", then live
-```
-
-<table>
-<thead>
-  <tr>
-    <th>
-      Profile
-    </th>
-    
-    <th>
-      Host
-    </th>
-    
-    <th>
-      Server
-    </th>
-  </tr>
-</thead>
-
-<tbody>
-  <tr>
-    <td>
-      <code>
-        press
-      </code>
-    </td>
-    
-    <td>
-      <code>
-        f1-demo-press
-      </code>
-    </td>
-    
-    <td>
-      a Press app server, 3 benches, 8 sites
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      <code>
-        multi
-      </code>
-    </td>
-    
-    <td>
-      <code>
-        dokos-multi-1
-      </code>
-    </td>
-    
-    <td>
-      plain benches, 2 benches, 6 sites
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      <code>
-        single
-      </code>
-    </td>
-    
-    <td>
-      <code>
-        dokos-single-1
-      </code>
-    </td>
-    
-    <td>
-      one bench, one site
-    </td>
-  </tr>
-</tbody>
-</table>
-
-Each `<kind>-demo` service runs `bench generate-demo-<kind>`: 7 days of history, then an incident
-cycle every 30 minutes, with alerts sent to the stack's webhook sink (`docker compose logs catcher`).
-[Commands](/agent/commands) lists what a cycle contains.
+Dokos bench with the Wolf App and its agent, nginx and a webhook sink (`docker compose logs catcher`).
 
 ### Suricata and Wazuh
 

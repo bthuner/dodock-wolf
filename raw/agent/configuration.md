@@ -23,11 +23,9 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
   "push_interval": 30,
   "spool_dir": "/var/lib/wolf-agent/spool",
   "verify_tls": true,
+  "behind_proxy": null,
   "auth_log": null,
   "collect_host_metrics": true,
-  "platform": null,
-  "press": {"agent_dir": "/home/frappe/agent", "benches_directory": null, "nginx_access_log": "/var/log/nginx/access.log",
-            "rediscover_interval": 60, "deployments": true},
   "pilot": {"deployments": true, "api_url": null, "token": null, "jwt_secret": null},
   "benches": [
     {"name": "frappe-bench", "path": "/home/frappe/frappe-bench", "sites": ["a.example.com"],
@@ -36,7 +34,7 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
   ],
   "extra_logs": [{"path": "/var/log/myapp/error.log", "parser": "traceback", "bench": null, "site": null}],
   "rq": {"long_job_minutes": 30},
-  "backups": {"enabled": true, "interval": 600, "press": false, "dirs": {}},
+  "backups": {"enabled": true, "interval": 600, "dirs": {}},
   "tls": {"enabled": true, "interval": 3600, "port": 443, "timeout": 5, "connect_host": null,
           "domains": ["status.example.com"], "exclude": []},
   "mariadb": {"enabled": true, "cli": null, "host": null, "port": null, "user": null,
@@ -90,17 +88,20 @@ Verify the Wolf site's certificate. Default `true`.
 Tail offsets, the outbox of failed pushes (50 MB cap) and the watchdog state.
 
 </field>
+
+<field name="behind_proxy" type="string">
+
+The address of a reverse proxy in front of this host's web traffic, for example `"10.0.0.3"`.
+Default `null`. Sent with every push: Wolf then proposes blocks on this host for SSH events only,
+and names the proxy for web clients ([response actions](/agent/response-actions)). `null` clears
+what the Wolf site had stored.
+
+</field>
 </field-group>
 
 ## Sources
 
 <field-group>
-<field name="platform" type="null | "press" | "generic"">
-
-`null` auto-detects [Press](/install/press), `"press"` forces it, `"generic"` disables it.
-
-</field>
-
 <field name="benches" type="array">
 
 Name, path, sites, `logs_dir`, `nginx_access_log` (a path or a list) and `redis_queue` per bench.
@@ -130,13 +131,6 @@ optional `bench` and `site`.
 <field name="pilot" type="object">
 
 `deployments`, `api_url`, `token`, `jwt_secret`. See [Pilot benches](/install/pilot).
-
-</field>
-
-<field name="press" type="object">
-
-`agent_dir`, `benches_directory`, `nginx_access_log`, `rediscover_interval` (s), `deployments`. See
-[Press servers](/install/press).
 
 </field>
 </field-group>
@@ -193,10 +187,6 @@ others) turns a check off.
       </code>
       
        (600 s), <code>
-        press
-      </code>
-      
-       (skip Press benches), <code>
         dirs
       </code>
       

@@ -256,7 +256,7 @@ The names are now 33 characters for rollups and 28 for samples, against 32 and 1
 - `bench migrate` creates the index and drops the two it replaces. On 15 M rows, that took
 1.5 min.
 - Rows already stored keep their names, so a read speeds up once its window holds only new rows:
-after a day for the 24 h explorer, 7 days for the hourly reads.
+after a day for the 24 h reads of the metrics explorer (removed in 0.2), 7 days for the hourly reads.
 
 </note>
 
@@ -267,7 +267,7 @@ after a day for the 24 h explorer, 7 days for the hourly reads.
 rows of one metric and resolution sit together in the key since #56, so a window is a stretch
 of it. No row is looked up through a secondary index. Postgres does not store rows in key
 order and keeps one plain read.
-2. **Chart buckets in SQL** (`rollups.bucket_cells`). The explorer read one metric's 144 k minute
+2. **Chart buckets in SQL** (`rollups.bucket_cells`). The metrics explorer, removed in 0.2, read one metric's 144 k minute
 rollups twice, for the totals and the chart, and merged them in Python. It now reads one row
 per host and bucket, summed by the database; the totals are the merge of those.
 3. **Last values in one pass.** The value at each series' newest time came from a join of the
@@ -286,7 +286,7 @@ showed it on every read.
 **Rows named before #56.** Their names are 32 hex digits and sort below every new name, outside
 the name ranges. While some remain, a second pass reads them (`name < 'g'`), and MariaDB weighs
 it against the indexes. Measured with the 153 k minute rollups of one metric's last day renamed
-to old names, explorer over 24 h:
+to old names, the metrics explorer (removed in 0.2) over 24 h:
 
 <table>
 <thead>
@@ -1577,7 +1577,7 @@ drawing is about 0.06 to 0.1 s.
 <tbody>
   <tr>
     <td>
-      Metrics explorer, cpu_usage by host, before
+      Metrics explorer (removed in 0.2), cpu_usage by host, before
     </td>
     
     <td>
@@ -1601,7 +1601,7 @@ drawing is about 0.06 to 0.1 s.
   
   <tr>
     <td>
-      Metrics explorer, #56
+      Metrics explorer (removed in 0.2), #56
     </td>
     
     <td>
@@ -1625,7 +1625,7 @@ drawing is about 0.06 to 0.1 s.
   
   <tr>
     <td>
-      Metrics explorer, #57
+      Metrics explorer (removed in 0.2), #57
     </td>
     
     <td>
@@ -1736,7 +1736,7 @@ after 2 minutes when the scheduler ticks every 4 min (Dodock's default; the inst
 - Drawing takes 0.13 to 0.32 s on the bench with every row. Drawing the first rows only halves it
 on a faster load bench (100 to 53 ms cold, 50 to 20 ms warm); the rest is the page's own. The
 4 vCPU bench was not run again.
-- The metrics explorer over 24 h, 0.86 s, is the closest other read.
+- The metrics explorer over 24 h, 0.86 s, was the closest other read (the metrics explorer, removed in 0.2).
 
 These margins are for 100 hosts on this bench. At several times that, the inventory and the 24 h
 reads grow with the rows of their window, and so does a visit that reads.

@@ -66,11 +66,30 @@ seen in nginx, file integrity, outbound connections), the response to it, and th
 journal, NIS2, DORA and GDPR deadlines, SIEM export). No Frappe tool covers that, on Frappe Cloud
 or elsewhere.
 
-The general observability features (status pages, dashboards, the metrics explorer, host and
-service metrics) stay as they are: kept working and translated, for operators who run their own
-benches, but without new features. Frappe Cloud has its own telemetry, incident manager and status
+The general observability features (dashboards, host and service metrics) stay as they are:
+kept working and translated, for operators who run their own benches, but without new features.
+Version 0.2 removed the Press v1 integration, the live demos, status pages, the metrics explorer
+and digests; release v0.1.0 keeps them. Frappe Cloud has its own telemetry, incident manager and status
 page (Datum and Beacon); where a tool already does the job, Wolf connects to it rather than doing
 it again: Wazuh, Suricata, CrowdSec, a SIEM, PagerDuty, and Frappe's own tools as they open up.
+
+### Staying on v0.1.0
+
+To keep what 0.2 removed, Press v1 hosts among them, install the app and the agent from the
+v0.1.0 tag:
+
+```bash [bench]
+bench get-app https://github.com/bthuner/dodock-wolf --branch v0.1.0
+```
+
+```bash [host]
+curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/v0.1.0/agent/install.sh \
+  | sudo WOLF_AGENT_REF=v0.1.0 WOLF_URL=https://wolf.example.com WOLF_TOKEN=<registration token> bash
+```
+
+A 0.2 agent on a host a v0.1 agent registered as a Press v1 server logs a warning at start, and
+`wolf-agent doctor` fails with the same fix: Press v1 is supported by Dodock Wolf v0.1.0 only, so
+reinstall the agent with `WOLF_AGENT_REF=v0.1.0`.
 
 ## Next
 
@@ -181,7 +200,7 @@ that range. The figures under **Now**, the signals and the list of hosts always 
 ## Mark your deployments
 
 Rules such as *502 spike after deployment* only fire when a deployment hit the same scope recently.
-Bench migrations on the Wolf site, and Press and Pilot tasks, are recorded by themselves. For other
+Bench migrations on the Wolf site, and Pilot tasks, are recorded by themselves. For other
 benches, add one line to your deploy script:
 
 ```bash [deploy.sh]
@@ -249,23 +268,23 @@ flowchart LR
 
 Each severity has a colour and a shape, so it never depends on colour alone:
 
-| Severity   | Glyph | Meaning                           |
-| ---------- | ----- | --------------------------------- |
-| `info`     | ○     | Worth knowing. Digest-friendly.   |
-| `warning`  | ◐     | Look at it today.                 |
-| `critical` | ●     | Someone wakes up. Never digested. |
-| resolved   | ✓     | Back to normal.                   |
+| Severity   | Glyph | Meaning           |
+| ---------- | ----- | ----------------- |
+| `info`     | ○     | Worth knowing.    |
+| `warning`  | ◐     | Look at it today. |
+| `critical` | ●     | Someone wakes up. |
+| resolved   | ✓     | Back to normal.   |
 
 ## Deployments
 
-A `deployment` event marks the moment code changed: a `bench migrate` on the Wolf site, a Press or
+A `deployment` event marks the moment code changed: a `bench migrate` on the Wolf site, a
 Pilot task, or `wolf-agent mark-deployment`. Rules can require a recent deployment (the
 *502 spike after deployment* preset), and incidents show the deployment that preceded them, so the
 timeline reads "502s started 4 minutes after the 01:47 deploy".
 
 ## Where to look
 
-- **Wolf UI** at `/wolf`: overview, incidents, explorers, metrics, security, monitoring. For Wolf
+- **Wolf UI** at `/wolf`: overview, incidents, explorers, security, monitoring. For Wolf
   Users and Wolf Managers.
 - **Desk**: every DocType, configuration, reports such as **Wolf Incident Metrics**.
 
@@ -323,8 +342,8 @@ Desk and the Wolf UI show Wolf in each user's language (**My Settings → Langua
 French are available: field labels, descriptions, buttons, messages, the Wolf UI's pages and the
 rule sentence. DocType names, event types, metric names and Select values stay in English, as in
 the code. What Wolf stored when it happened stays in the language it was written in: incident
-titles, event summaries, comments and the journal. Notifications, digests, the SIEM export and
-public status pages are in English for now.
+titles, event summaries, comments and the journal. Notifications and the SIEM export are in
+English for now.
 
 ## Signals with no agent
 
@@ -407,8 +426,7 @@ Without systemd (a container), the script prints the command to run as `wolf-age
 The agent finds benches by itself:
 
 - a `bench.toml`, or a directory with `sites/` and `apps/frappe`;
-- [Pilot benches](https://bthuner.github.io/dodock-wolf/install/pilot), read with Pilot's real `bench.toml` schema;
-- [Press servers](https://bthuner.github.io/dodock-wolf/install/press), detected from `/home/frappe/agent/config.json`.
+- [Pilot benches](https://bthuner.github.io/dodock-wolf/install/pilot), read with Pilot's real `bench.toml` schema.
 
 ```bash [host]
 sudo -u wolf-agent wolf-agent discover
@@ -469,7 +487,9 @@ In Desk: **Wolf Settings → Register with central site**.
   Email Queue backlog and errors, and `bench migrate`.
 - It stores them in **Wolf Outbox** and pushes them every minute to the central site through the
   agent ingest API, with the same host, bench and site scope. Central rules and incidents see them
-  like any other event.
+  like any other event. The host is the machine's name and the bench the bench folder's name, as
+  the agent reports them; a Press v1 site's own scope (its container and server names) is read by
+  [v0.1.0](https://bthuner.github.io/dodock-wolf/getting-started#staying-on-v010) only.
 - While the central site is unreachable, it retries with backoff (1, 2, 4, 8, then every 15
   minutes) and keeps at most 10,000 pending events, dropping the oldest.
 - It shows the forwarding status on **Wolf Overview** and **Wolf Settings**. **Forward now** pushes
@@ -489,330 +509,6 @@ stops.
 - Set **Mode** back to `central` on the satellite to make it a standalone Wolf again.
 - The satellite keeps its secret encrypted in its Wolf Settings, since it has to send it. The
   central site stores only the hash.
-
-
-# Press servers
-
-[Press](https://github.com/frappe/press){rel="&#x22;nofollow&#x22;"} is the Frappe app behind Frappe Cloud. It manages servers through the **Press agent** ([frappe/agent](https://github.com/frappe/agent){rel="&#x22;nofollow&#x22;"}), a Flask + RQ service on each server. This page covers the Wolf Agent on an *app server* managed that way.
-
-::note
-This is for **self-hosted Press** deployments, where you control the server. Frappe Cloud's hosted servers are not open to customers.
-::
-
-Everything on this page was checked on a Press app server set up by **Press's own Ansible roles** (frappe/press [`7ce25f2`](https://github.com/frappe/press/tree/7ce25f221378cb4558cd3993f3283d75cc8fe7d7){rel="&#x22;nofollow&#x22;"}, frappe/agent [`6bbd199`](https://github.com/frappe/agent/tree/6bbd199c13e90f48950e2a06401ca98738455aaf){rel="&#x22;nofollow&#x22;"}, November 2026), with benches and sites created through the Press agent's API as Press creates them, and real deploys: New Bench, Update Site Migrate, Bench Restart, Archive Bench and failed jobs. The repository's [`dev/press`](https://github.com/bthuner/dodock-wolf/tree/main/dev/press){rel="&#x22;nofollow&#x22;"} sets the same server up in a container.
-
-::tip
-No Press server at hand? `dev/press` above, or the [Press demo](https://bthuner.github.io/dodock-wolf/reference/development), which simulates one for the Wolf Agent to read.
-::
-
-## Install
-
-Install the agent as on any host ([Wolf Agent](https://bthuner.github.io/dodock-wolf/install/wolf-agent)). Press mode needs no extra step and no Press credentials: everything is read from local files.
-
-::steps{level="3"}
-### Let detection run
-
-The agent switches to Press mode when `/home/frappe/agent/config.json` exists with a `benches_directory` key. The daemon's own user cannot read that file (mode `0600`): there, the file and `jobs.sqlite3` being present is enough. Registration runs as root and also saves `"platform": "press"` and the benches folder in Wolf's config. In Press mode, the `benches` list in the config is refreshed from disk at start and on every rediscovery.
-
-### Check what Wolf finds
-
-```bash
-wolf-agent discover --platform press
-```
-
-`discover` shows what bench discovery finds. `wolf-agent register --platform press` records the Press layout in the config.
-
-### Check what would be sent
-
-```bash
-wolf-agent check --platform press
-```
-
-`check` collects once and prints the JSON payload. Nothing is sent. See [Commands](https://bthuner.github.io/dodock-wolf/agent/commands).
-::
-
-### Configuration
-
-Press mode is auto-detected. To force it, or to change the paths, edit `/etc/wolf-agent/config.json`:
-
-```json [config.json]
-{
-  "platform": "press",
-  "press": {
-    "agent_dir": "/home/frappe/agent",
-    "nginx_access_log": "/var/log/nginx/access.log",
-    "rediscover_interval": 60,
-    "deployments": true
-  }
-}
-```
-
-::field-group
-  :::field{name="platform" type="string | null"}
-  `null` auto-detects Press, `"press"` forces it, `"generic"` disables Press handling.
-  :::
-
-  :::field{name="press.agent_dir" type="string"}
-  Press agent directory. Default `/home/frappe/agent`.
-  :::
-
-  :::field{name="press.benches_directory" type="string | null"}
-  The Press agent's `benches_directory`, saved by registration, which reads it as root. Used when the daemon cannot read the Press agent's config. Default `/home/frappe/benches`.
-  :::
-
-  :::field{name="press.nginx_access_log" type="string"}
-  Shared nginx access log. Default `/var/log/nginx/access.log`.
-  :::
-
-  :::field{name="press.rediscover_interval" type="number"}
-  Seconds between bench rescans. Default `60`.
-  :::
-
-  :::field{name="press.deployments" type="boolean"}
-  Turn Press agent jobs into `deployment` events. Default `true`.
-  :::
-
-  :::field{name="backups.press" type="boolean"}
-  Read Press benches' backups from their `sites/<site>/private/backups` folder, as on other benches. Default `false`: from the Press agent's Backup Site jobs.
-  :::
-::
-
-The full config is on [Configuration](https://bthuner.github.io/dodock-wolf/agent/configuration).
-
-### Permissions
-
-`install.sh` adds the `wolf-agent` user to the `frappe` and `adm` groups. On a server set up by Press's roles, that gives it:
-
-| File                                                             | Mode                 | `wolf-agent`          |
-| ---------------------------------------------------------------- | -------------------- | --------------------- |
-| `/home/frappe`                                                   | `0750 frappe:frappe` | enters (group)        |
-| `<bench>/logs/*`                                                 | `0644`               | reads                 |
-| `jobs.sqlite3`, `-wal`, `-shm`                                   | `0644`               | reads, with `mode=ro` |
-| `/var/log/nginx/access.log`                                      | `0640 www-data:adm`  | reads (group `adm`)   |
-| `<bench>/docker-compose.yml`, `<bench>/nginx.conf`               | `0644`               | reads                 |
-| `/home/frappe/agent/config.json`                                 | `0600`               | no                    |
-| `<bench>/config.json`                                            | `0600`               | no                    |
-| `sites/common_site_config.json`, `sites/<site>/site_config.json` | `0600`               | no                    |
-
-The Press agent writes its configs `0600`, so the daemon reads them only through registration, which runs as root. At run time a new bench is found from the files it can read: its image from `docker-compose.yml`; its web port, sites and custom domains from its `nginx.conf`; and its `rq_port` from that web port, since Press gives a bench one offset for all its ports (`web_port` 18000 + offset, `rq_port` 11000 + offset).
-
-## What Wolf does on a Press server
-
-| Area               | What Wolf does                                                                                                                                                                                                                                                                                                                                                                                            | Status                                                 |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Detection          | Press mode turns on when `/home/frappe/agent/config.json` has a `benches_directory` key, when it is there next to `jobs.sqlite3` (unreadable), or when `"platform": "press"` is set                                                                                                                                                                                                                       | checked                                                |
-| Benches            | Lists `<benches_directory>/*` that have a `sites/` directory and `config.json` with a `docker_image`, or, unreadable, `config.json` next to a `docker-compose.yml`                                                                                                                                                                                                                                        | checked                                                |
-| Rediscovery        | Rescans every `press.rediscover_interval` seconds (default 60), because each deploy creates a new bench directory                                                                                                                                                                                                                                                                                         | checked: a new bench is tailed within a minute         |
-| Bench logs         | Tails `<bench>/logs/*` (bind-mounted from the container) and `sites/<site>/logs/*`, with the same parsers as other benches                                                                                                                                                                                                                                                                                | done                                                   |
-| nginx              | Tails `/var/log/nginx/access.log` (Press's `main` format, which logs `$host`) and maps custom domains to sites                                                                                                                                                                                                                                                                                            | done, unit tested                                      |
-| Redis queue        | Reads `queue_length`, the RQ failed/started registries, live workers and Redis memory/evictions from `redis://127.0.0.1:<rq_port>` (bench `config.json`, or 11000 + the bench's port offset)                                                                                                                                                                                                              | checked                                                |
-| TLS expiry         | Checks every site and custom domain like on other benches. Certificates live on the proxy server, so the public handshake measures what customers see                                                                                                                                                                                                                                                     | done (generic)                                         |
-| Backups            | From the Press agent's job history: `backup_age_hours` per site from its newest successful **Backup Site** job, and a `backup_failed` event (critical, the *Backup failed* preset) when one fails. Press deletes offsite backups from the server after the upload, or streams them, so the backups folder says nothing. `backups.press: true` reads the folder instead                                    | checked                                                |
-| Processes          | **Skipped**: supervisor runs inside each bench container and Wolf never runs `docker`                                                                                                                                                                                                                                                                                                                     | —                                                      |
-| MariaDB            | Not on Press: the site's database password is in its `site_config.json`, readable by `frappe` only                                                                                                                                                                                                                                                                                                        | —                                                      |
-| Site config risks  | `developer_mode`, `allow_tests`… need the `0600` site configs: no sample, shown as unknown                                                                                                                                                                                                                                                                                                                | checked                                                |
-| Exposed services   | The Press agent publishes each bench's queue and cache Redis on all interfaces (`-p 0.0.0.0:<rq_port>:11000`, `<rq_cache_port>:13000`), for secondary servers. Wolf reports them as `service_exposed`: Press relies on the server's firewall to keep them private                                                                                                                                         | checked                                                |
-| Proxy server       | The Wolf Agent on a Press proxy reads its access log, each line's site from `$host`. A web client is blocked there: the app server behind it proposes blocks for SSH only                                                                                                                                                                                                                                 | checked                                                |
-| Deploy correlation | A `deployment` event for each deploy, update or migrate job in the Press agent's `jobs.sqlite3`, and an `error` event when one fails                                                                                                                                                                                                                                                                      | checked                                                |
-| Site events        | The Wolf App on a Press bench names its bench and server as the agent does: the container's hostname is the bench (`docker run --hostname <bench>`), and Press's `supervisor.conf` names the server (`<server>-gunicorn.access.log`, its name in Press). Registration names the agent's host the same way, from the Press agent's config, unless `--hostname` is given or the agent was registered before | checked (the test server's hostname is its Press name) |
-| Fallback           | If `jobs.sqlite3` cannot be read, a `deployment` event when a new bench appears or a site moves to another bench                                                                                                                                                                                                                                                                                          | done, unit tested                                      |
-
-The metrics themselves are described on [What is collected](https://bthuner.github.io/dodock-wolf/agent/collected).
-
-## Server layout
-
-### Press agent directory
-
-Ansible clones the Press agent into `/home/frappe/agent/repo`, creates a venv at `/home/frappe/agent/env`, and runs `agent setup config` and `agent setup database` from `/home/frappe/agent`. `agent setup config` writes `config.json` with `benches_directory: /home/<user>/benches`, `nginx_directory: /home/<user>/agent/nginx`, `redis_port: 25025`, `web_port: 25052`, and other keys. Wolf detects Press through this file and its `benches_directory` key.
-
-### Benches
-
-Each bench is `<benches_directory>/<name>/` with `logs/`, `sites/`, `config/` and a bench `config.json`. Bench names follow the pattern `bench-<candidate>-<server>`. Wolf uses the directory name.
-
-The apps live **inside the Docker image**. There is no `apps/frappe` on the host, so Wolf's generic check (`sites/` + `apps/frappe`) misses Press benches. A Press bench is identified by `config.json` with a `docker_image` key.
-
-Bench config keys come from Press's `Bench` doctype: `docker_image`, `web_port` (18000 + offset), `socketio_port`, `rq_port` (11000 + offset), `rq_cache_port`, `single_container: true`, and others.
-
-The bench containers bind-mount `<bench>/sites` and `<bench>/logs`, whether the bench runs as a single container or through `docker stack deploy`. The bench logs are ordinary files on the host. Wolf never runs `docker`.
-
-### Sites and custom domains
-
-Sites are `sites/<site>/` directories with a `site_config.json`. A site's custom domains are listed in its `site_config.json` under `domains`, and the bench nginx config maps them back to the site. Wolf reads the same key, so a 502 logged for `erp.customer.com` is counted against the right site.
-
-### Logs
-
-Inside the container, supervisor writes these files into `logs/`:
-
-- `web.log`, `web.error.log`
-- `schedule.log`, `schedule.error.log`
-- `worker.log`, `worker.error.log`
-
-Frappe's own loggers write `frappe.web.log`, `scheduler.log` and the other files there as on any bench. Wolf also tails `schedule.error.log` for tracebacks, on every bench. Where nothing writes it, the file is simply absent.
-
-### Redis queue
-
-`sites/common_site_config.json` holds the **in-container** address `redis://localhost:11000`. From the host, the queue Redis is reachable on the published `rq_port`, which is where the Press agent's own RQ exporter connects. Wolf uses `redis://127.0.0.1:<rq_port>`. When a bench has no `rq_port`, Wolf skips its queue metrics.
-
-### nginx
-
-The root `nginx.conf` is rendered to `/home/frappe/agent/nginx/nginx.conf`, symlinked to `/etc/nginx/nginx.conf`, and includes every `<benches_directory>/*/nginx.conf`. Every vhost uses one log:
-
-```nginx
-log_format main '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for" "$host" $request_time';
-access_log /var/log/nginx/access.log main;
-```
-
-The site name, or a custom domain, is the last quoted field `"$host"`. Wolf's nginx parser reads trailing quoted fields, and Press mode adds the domain → site map. The bench templates set no per-bench `access_log`. Behind a Press proxy, `$remote_addr` is still the client: the app server's nginx takes it from the proxy's `X-Real-IP` (`set_real_ip_from <proxy_ip>`, set by `agent setup config --proxy-ip`).
-
-### Proxy servers
-
-A Press proxy server (an `n*` host) terminates TLS for the sites of its app servers and forwards them to port 80, with the client in `X-Real-IP`. Install the Wolf Agent there too:
-
-- Registration recognises a proxy by the Press agent's `nginx/proxy.conf` (Press's `proxy` role creates it) and adds its `/var/log/nginx/access.log` to `extra_logs` with `"site_from_host": true`. A line's site is its `$host`. A custom domain maps to its site through the proxy's `nginx/hosts/<domain>/map.json` (Add Host to Proxy). The proxy's own name, its Press agent's vhost, is no site.
-- Its web events land in the same incidents as the app server's, under the same site.
-- **Blocking a web client works on the proxy, not on the app server.** On the app server, the client's packets come from the proxy, so a block there would stop nothing. The app server's agent reports its proxy (`proxy_ip` from the Press agent's config, saved by registration). For that host, the Wolf site proposes blocks for SSH events only, and lists the web clients it did not propose there with the reason. The proxy's agent proposes the blocks that take effect. See [Response actions](https://bthuner.github.io/dodock-wolf/agent/response-actions).
-
-The Press agent writes each site's TLS key (`nginx/hosts/<domain>/privkey.pem`) mode `0644` under `/home/frappe` (`0750`): the `frappe` group, the Wolf Agent's user included, can read them. Wolf never reads them.
-
-## Deployment events
-
-### Job history
-
-Every Press agent job is stored in the SQLite database `jobs.sqlite3`, in the agent's working directory (`/home/frappe/agent`). It runs in WAL mode. Two tables matter:
-
-- `jobmodel(id, name, status ∈ Pending/Running/Success/Failure, agent_job_id, data, enqueue, start, end, duration)`
-- `stepmodel(id, name, job_id, status, data, start, end, duration)`
-
-`agent_job_id` is the name of the **Agent Job** document in Press. Wolf copies it into the event payload, so you can open the same job in the Press dashboard.
-
-At enqueue time, `data` is `{"function", "args", "kwargs"}`. When the job ends, it is overwritten with the result or `{"traceback": …}`. Step `data` keeps each step's command result, including the `docker exec … <bench> bench --site <site> …` command line.
-
-Timestamps are naive server local time. Wolf converts them to UTC as local time.
-
-### Jobs treated as deployments
-
-| Press agent job                                                           | Bench / site taken from                |
-| ------------------------------------------------------------------------- | -------------------------------------- |
-| New Bench                                                                 | `args[0]` (bench)                      |
-| Update Site Pull, Update Site Migrate                                     | `args[0]` site, `args[2]` target bench |
-| Recover Failed Site Migrate, Recover Failed Site Pull, Move Site to Bench | `args[0]` site, `args[2]` target bench |
-| Recover Failed Site Update                                                | `args[0]` site, `args[1]` bench        |
-| Update Bench In Place                                                     | `args[0]` sites; bench from steps      |
-| Patch App, Bench Restart, Rebuild Bench Assets                            | steps                                  |
-| Migrate Site, Install App on Site, Uninstall App on Site                  | steps                                  |
-
-`Bench` and `Site` methods carry no bench or site name in their arguments. For those jobs, Wolf searches the job and step `data` for a known bench name and for `--site <name>`.
-
-### How events are produced
-
-- **Read-only access, creating no file.** Wolf opens `jobs.sqlite3` with `file:…?mode=ro` while the Press agent's `-wal` and `-shm` files are there, else with `immutable=1`. A reader creates them when they are missing (after the Press agent's last connection closed), the agent's folder is writable by the `frappe` group, and files Wolf created would leave the Press agent unable to write its own database. Wolf never writes to the database.
-- **One `deployment` event per job**, sent as soon as the job has started. Its timestamp is the job's `start`, so the "502 spike after deployment" [preset](https://bthuner.github.io/dodock-wolf/alerts/presets) links incidents that happen during a long migrate. If the bench cannot be determined yet, the event waits up to 2 minutes for a step to name it, then ships host-scoped. Incident correlation also matches host-scoped deployments. Fields: `category: "press"`, `source: "press-agent"`, and `payload.press_job`, `agent_job_id`, `local_job_id`, `sites`.
-- **One `backup_failed` event per failed Backup Site job** (an `error`, critical, the *Backup failed* preset), read apart from the deployment jobs: the backups Press queues for every site at once never hold a deployment event back, and the first poll after an install or an upgrade replays no old failure. Successful Backup Site jobs, local, offsite or streamed, give the sites' `backup_age_hours`.
-- **One `error` event** (`category: "press_job_failed"`, warning) when such a job ends in `Failure`. Its payload holds the failed step names and the tail of the traceback or output.
-- **Deduplication.** Emitted job ids and a floor id are saved in `<spool_dir>/press-jobs.json`, so restarts never emit an event twice. On the first run, history is skipped and only jobs still Pending or Running are picked up. A job stuck in Pending or Running for more than 24 h (for example, a crashed RQ worker) is dropped, so it cannot block progress.
-- **Fallback without database access.** `<spool_dir>/press-benches.json` keeps a bench → site snapshot. A new bench directory, or a site whose directory moved to another bench, produces a `deployment` event stamped with the time it was noticed.
-
-Rediscovery rebuilds the log sources when the set of benches or sites changes. Logs of a bench created while Wolf runs are read from the start, because they are new files. A moved site's logs move with its directory, so they are read from the end to avoid replaying them.
-
-Event fields are described in the [protocol](https://bthuner.github.io/dodock-wolf/reference/protocol).
-
-## Wolf next to Press's own monitoring
-
-Press already ships a monitoring stack. Wolf does not replace it and does not touch it.
-
-- **Monitor server** (`monitor.yml`): Prometheus, Alertmanager, Blackbox exporter and Grafana. Prometheus probes sites, domains and TLS with blackbox `http_2xx` and scrapes the Press-managed servers. Press pushes alert rules and routes to it through the agent's `Monitor` class, from Press doctypes such as *Prometheus Alert Rule*. The Alertmanager webhook lands in *Alertmanager Webhook Log*. Press's *Incident* doctype escalates outages by phone (Twilio) to Frappe staff and customers.
-- **App servers** (`server.yml`): node_exporter, cAdvisor, statsd_exporter (the bench config sets `statsd_host`), filebeat and fail2ban, among other roles. Filebeat ships `/var/log/*.log`, the nginx module and each bench's `logs/monitor.json.log` to a central Elasticsearch/Kibana log server. The Press agent also moves `monitor.json.log` aside for Press's analytics. Wolf does not tail that file.
-- The Press agent exposes RQ metrics per bench at `/benches/metrics`.
-
-What Wolf adds on a self-hosted Press install:
-
-- Frappe-level tracebacks, failed scheduled jobs and worker crashes read from bench logs.
-- 5xx/502 per site.
-- SSH signals.
-- Incidents correlated with the Press job that caused them.
-
-All of it lives on your own Wolf site, without access to the Press monitor server.
-
-The two stacks overlap on host metrics (node_exporter vs Wolf's `/proc` sampling) and on queue lengths. Wolf's are light. Turn host metrics off with `collect_host_metrics: false`.
-
-## Limitations and unverified points
-
-### Limitations
-
-- App servers with benches and proxy servers are supported directly ([Proxy servers](https://bthuner.github.io/dodock-wolf/#proxy-servers)). Database servers have no bench: add their logs through `extra_logs`.
-- When a job ends, the Press agent replaces its arguments with its result. A job Wolf first sees finished takes the bench its last step ran in (a site move ends on its target) and the site from `--site` in a step command. A job without any such step is reported host-scoped.
-- The filesystem fallback cannot tell a deploy from a manual move, and it has no failure signal.
-- A bench found after registration shows the image it was created with (its `docker-compose.yml`): Update Bench In Place changes only its `0600` config.
-- Jobs are matched by display name. If Press renames a job, it is no longer recognised. Add the new name to `DEPLOY_JOBS` in [`agent/wolf_agent/press.py`](https://github.com/bthuner/dodock-wolf/blob/main/agent/wolf_agent/press.py){rel="&#x22;nofollow&#x22;"}.
-- An auto-scaling **secondary** app server runs the primary's benches from an NFS mount, its containers writing to the same bench logs: Wolf Agents on both would read those logs twice. Not checked: install the Wolf Agent on the primary only.
-
-### Checked on a Press server
-
-1. **Modes.** `jobs.sqlite3` and its `-wal` and `-shm` files are `0644`, and `mode=ro` works for a member of the `frappe` group. The configs are `0600`: see [Permissions](https://bthuner.github.io/dodock-wolf/#permissions).
-2. **Job data.** Job names match `DEPLOY_JOBS`. A finished job's `data` is `null`, and its steps keep their command and `directory`, for example `docker exec … bench-0001-000002-f1 bench --site <site> migrate` for a migrate.
-3. **`$host`.** Every site request carries the site in `"$host"`. The Press agent's own vhost on 443 logs the server's name there, which is no site: Wolf leaves those lines out.
-4. **`rq_port`.** Press sets it on every new bench and publishes it. A bench whose config has none (an older one) gets no queue metrics: the daemon keeps what registration read in it rather than derive a port from the web port.
-5. **Behind a proxy server.** Through Press's proxy (its own `proxy` role and Add Upstream / Add Host / Add Site to Upstream jobs), the app server's `access.log` keeps the real client in `$remote_addr`, and the site sees it in its failed logins. A block applied on the app server stopped nothing, the one on the proxy did: hence [Proxy servers](https://bthuner.github.io/dodock-wolf/#proxy-servers).
-6. **Backups.** A local-only Backup Site job leaves its files in `sites/<site>/private/backups` and lists them in its result. An offsite one deletes them after the upload (`upload_offsite_backup`) unless the server keeps them, and a streamed one writes none. Wolf reads the job history: a backup and a failed one (the database server stopped) both came through.
-7. **Shared FS** (Run Benches on Shared FS, primary server). Press's `link_benches_to_nfs` role makes `/home/frappe/shared` a link to `/home/frappe/benches`, and the job points `benches_directory` at it and restarts the benches. Wolf kept reading the same benches through its saved folder, jobs stayed scoped (Wolf compares the folders with links resolved, so a New Bench there is scoped before the next `wolf-agent refresh`), and `refresh` saved the new folder. Bench paths are resolved, so each log keeps its read position across the switch.
-
-Not checked: an auto-scaling secondary server (see [Limitations](https://bthuner.github.io/dodock-wolf/#limitations)).
-
-::collapsible
-Sources were read at frappe/agent [`64b9812`](https://github.com/frappe/agent/tree/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a){rel=""nofollow""} (2026-10-27) and frappe/press [`aedd7d1`](https://github.com/frappe/press/tree/aedd7d1237e49153e4852a7ca693b3a50c6028b2){rel=""nofollow""} (2026-10-29). Every link is pinned to these commits. The full write-up is [`docs/press.md`](https://github.com/bthuner/dodock-wolf/blob/main/docs/press.md){rel=""nofollow""}.
-
-**Press agent directory and config**
-
-- Agent install: [`press/playbooks/roles/agent/tasks/main.yml#L1-L33`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/playbooks/roles/agent/tasks/main.yml#L1-L33){rel=""nofollow""}
-- `agent setup config`: [`agent/cli.py#L70-L101`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/cli.py#L70-L101){rel=""nofollow""}; keys read by `Server`: [`agent/server.py#L70-L79`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/server.py#L70-L79){rel=""nofollow""}
-- `/home/frappe/benches` created by [`press/playbooks/roles/bench/tasks/main.yml#L1-L7`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/playbooks/roles/bench/tasks/main.yml#L1-L7){rel=""nofollow""}
-
-**Benches and sites**
-
-- `Server.bench_init`: [`agent/server.py#L116-L148`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/server.py#L116-L148){rel=""nofollow""}
-- `Server.benches`: [`agent/server.py#L889-L894`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/server.py#L889-L894){rel=""nofollow""}; `Bench` requirements: [`agent/bench.py#L45-L69`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/bench.py#L45-L69){rel=""nofollow""}
-- Bench names: [`press/press/doctype/bench/bench.py#L222-L236`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/press/doctype/bench/bench.py#L222-L236){rel=""nofollow""}; bench config keys: [`#L347-L384`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/press/doctype/bench/bench.py#L347-L384){rel=""nofollow""}
-- `Bench.start` (single container, `-p 0.0.0.0:<rq_port>:11000`): [`agent/bench.py#L839-L882`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/bench.py#L839-L882){rel=""nofollow""}; stack deploy template: [`agent/templates/bench/docker-compose.yml.jinja2`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/templates/bench/docker-compose.yml.jinja2){rel=""nofollow""}
-- Custom domains: [`agent/bench.py#L1442-L1447`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/bench.py#L1442-L1447){rel=""nofollow""}, [`agent/templates/bench/nginx.conf.jinja2#L9-L15`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/templates/bench/nginx.conf.jinja2#L9-L15){rel=""nofollow""}
-- Supervisor log files: [`agent/build_configs/config/supervisor.conf#L7-L29`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/build_configs/config/supervisor.conf#L7-L29){rel=""nofollow""}
-
-**Redis and nginx**
-
-- In-container Redis address: [`agent/build_configs/common_site_config.json#L1-L9`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/build_configs/common_site_config.json#L1-L9){rel=""nofollow""}
-- RQ exporter (`/benches/metrics`): [`agent/web.py#L405-L431`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/web.py#L405-L431){rel=""nofollow""}, [`agent/exporter.py#L8-L11`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/exporter.py#L8-L11){rel=""nofollow""}
-- Root nginx config: [`agent/server.py#L1229-L1244`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/server.py#L1229-L1244){rel=""nofollow""}, symlink: [`press/playbooks/roles/agent/tasks/main.yml#L85-L97`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/playbooks/roles/agent/tasks/main.yml#L85-L97){rel=""nofollow""}
-- `log_format main`: [`agent/templates/nginx/nginx.conf.jinja2#L45-L48`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/templates/nginx/nginx.conf.jinja2#L45-L48){rel=""nofollow""}; `set_real_ip_from` at L59-L62 of the same file
-- Bench nginx template: [`agent/templates/bench/nginx.conf.jinja2`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/templates/bench/nginx.conf.jinja2){rel=""nofollow""}
-
-**Job history**
-
-- `jobs.sqlite3` and WAL mode: [`agent/job.py#L45-L54`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/job.py#L45-L54){rel=""nofollow""}, [`agent/templates/agent/supervisor.conf.jinja2#L1-L36`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/templates/agent/supervisor.conf.jinja2#L1-L36){rel=""nofollow""}
-- Peewee models: [`agent/job.py#L301-L344`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/job.py#L301-L344){rel=""nofollow""}, created by `agent setup database`: [`agent/cli.py#L171-L175`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/cli.py#L171-L175){rel=""nofollow""}
-- `X-Agent-Job-Id`: [`press/agent.py#L960-L966`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/agent.py#L960-L966){rel=""nofollow""}
-- Job `data` at enqueue: [`agent/job.py#L124-L138`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/job.py#L124-L138){rel=""nofollow""}; overwritten at the end: [`#L78-L91`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/job.py#L78-L91){rel=""nofollow""}
-- Step command lines: [`agent/base.py#L65-L111`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/base.py#L65-L111){rel=""nofollow""}, [`agent/bench.py#L177-L200`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/bench.py#L177-L200){rel=""nofollow""}, [`agent/site.py#L61-L62`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/site.py#L61-L62){rel=""nofollow""}
-
-**Jobs treated as deployments**
-
-- New Bench: [`agent/server.py#L157-L174`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/server.py#L157-L174){rel=""nofollow""}
-- Update Site Pull / Migrate: [`agent/server.py#L558-L600`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/server.py#L558-L600){rel=""nofollow""}
-- Recover Failed Site Migrate / Pull, Move Site to Bench: [`agent/server.py#L658-L705`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/server.py#L658-L705){rel=""nofollow""}
-- Recover Failed Site Update: [`agent/server.py#L729-L733`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/server.py#L729-L733){rel=""nofollow""}
-- `Server.move_site`: [`agent/server.py#L735-L750`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/server.py#L735-L750){rel=""nofollow""}
-- Update Bench In Place: [`agent/bench.py#L1086-L1092`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/bench.py#L1086-L1092){rel=""nofollow""}
-- Patch App, Bench Restart, Rebuild Bench Assets: [`agent/bench.py#L592-L602`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/bench.py#L592-L602){rel=""nofollow""}, [`#L1026-L1032`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/bench.py#L1026-L1032){rel=""nofollow""}
-- Migrate Site, Install / Uninstall App on Site: [`agent/site.py#L282-L322`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/site.py#L282-L322){rel=""nofollow""}
-- Shared-FS benches: [`agent/server.py#L312-L370`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/server.py#L312-L370){rel=""nofollow""}
-- Host-scoped deployment matching: `scope_clause` in [`dodock_wolf/wolf/events.py`](https://github.com/bthuner/dodock-wolf/blob/main/dodock_wolf/wolf/events.py){rel=""nofollow""}
-
-**Press monitoring**
-
-- [`press/playbooks/monitor.yml`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/playbooks/monitor.yml){rel=""nofollow""}, [`press/playbooks/roles/prometheus/templates/prometheus.yml`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/playbooks/roles/prometheus/templates/prometheus.yml){rel=""nofollow""}
-- `Monitor` class: [`agent/monitor.py#L11-L40`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/monitor.py#L11-L40){rel=""nofollow""}
-- Incident doctype: [`press/press/doctype/incident/incident.py`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/press/doctype/incident/incident.py){rel=""nofollow""}
-- [`press/playbooks/server.yml`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/playbooks/server.yml){rel=""nofollow""}, filebeat inputs: [`monitor.yml`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/playbooks/roles/filebeat/templates/inputs.d/monitor.yml){rel=""nofollow""}, [`nginx.yml`](https://github.com/frappe/press/blob/aedd7d1237e49153e4852a7ca693b3a50c6028b2/press/playbooks/roles/filebeat/templates/modules.d/nginx.yml){rel=""nofollow""}
-- `Bench.fetch_monitor_data`: [`agent/bench.py#L300-L330`](https://github.com/frappe/agent/blob/64b9812a8e4dc82188d3cbf3053dd4f2eb5f4f4a/agent/bench.py#L300-L330){rel=""nofollow""}
-::
 
 
 # Pilot benches
@@ -966,8 +662,6 @@ The site comes from the task's `site` / `sites` arguments; nothing else of the a
 
 ### How events are produced
 
-The same rules as on [Press servers](https://bthuner.github.io/dodock-wolf/install/press):
-
 - A `deployment` event is sent when the task starts, timestamped at `started_at`. An incident during a long migrate links to it, for example through the "502 spike after deployment" [preset](https://bthuner.github.io/dodock-wolf/alerts/presets).
 - An `error` event is sent if the task ends `failed`. It carries `failure.code`, `failure.message` and `exit_code`.
 - Reported task ids are kept for 3 days in `<spool_dir>/pilot-tasks.json`.
@@ -1081,9 +775,7 @@ full cache and evictions are normal there.
 
 `backup_age_hours` per site, from the newest `sites/<site>/private/backups/*-database.sql*`, every
 10 minutes. A site that never had a backup sends nothing, so *No backup for 26 h* cannot fire for it.
-On Press benches it comes from the Press agent's newest successful **Backup Site** job instead
-(Press deletes offsite backups from the server), and a failed one sends a `backup_failed` event.
-Other offsite-only setups can point `backups.dirs` at a mounted directory per site.
+Offsite-only setups can point `backups.dirs` at a mounted directory per site.
 
 ## TLS certificates
 
@@ -1114,8 +806,7 @@ Without a client on the host, or for Postgres benches, nothing is sent.
 From `supervisorctl status`, else `systemctl list-units` for units whose name contains the bench name.
 `bench_processes_down` per bench counts processes that are STOPPED, EXITED, BACKOFF, FATAL or
 UNKNOWN (systemd: `failed` or a restart loop). A process entering FATAL / UNKNOWN (systemd `failed`)
-also sends one `worker_failure` / `process_down` event. Press benches run processes in containers
-and are skipped.
+also sends one `worker_failure` / `process_down` event.
 
 ## Security posture
 
@@ -1171,11 +862,9 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
   "push_interval": 30,
   "spool_dir": "/var/lib/wolf-agent/spool",
   "verify_tls": true,
+  "behind_proxy": null,
   "auth_log": null,
   "collect_host_metrics": true,
-  "platform": null,
-  "press": {"agent_dir": "/home/frappe/agent", "benches_directory": null, "nginx_access_log": "/var/log/nginx/access.log",
-            "rediscover_interval": 60, "deployments": true},
   "pilot": {"deployments": true, "api_url": null, "token": null, "jwt_secret": null},
   "benches": [
     {"name": "frappe-bench", "path": "/home/frappe/frappe-bench", "sites": ["a.example.com"],
@@ -1184,7 +873,7 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
   ],
   "extra_logs": [{"path": "/var/log/myapp/error.log", "parser": "traceback", "bench": null, "site": null}],
   "rq": {"long_job_minutes": 30},
-  "backups": {"enabled": true, "interval": 600, "press": false, "dirs": {}},
+  "backups": {"enabled": true, "interval": 600, "dirs": {}},
   "tls": {"enabled": true, "interval": 3600, "port": 443, "timeout": 5, "connect_host": null,
           "domains": ["status.example.com"], "exclude": []},
   "mariadb": {"enabled": true, "cli": null, "host": null, "port": null, "user": null,
@@ -1228,15 +917,18 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
   :::field{name="spool_dir" type="string"}
   Tail offsets, the outbox of failed pushes (50 MB cap) and the watchdog state.
   :::
+
+  :::field{name="behind_proxy" type="string"}
+  The address of a reverse proxy in front of this host's web traffic, for example `"10.0.0.3"`.
+  Default `null`. Sent with every push: Wolf then proposes blocks on this host for SSH events only,
+  and names the proxy for web clients ([response actions](https://bthuner.github.io/dodock-wolf/agent/response-actions)). `null` clears
+  what the Wolf site had stored.
+  :::
 ::
 
 ## Sources
 
 ::field-group
-  :::field{name="platform" type="null | "press" | "generic""}
-  `null` auto-detects [Press](https://bthuner.github.io/dodock-wolf/install/press), `"press"` forces it, `"generic"` disables it.
-  :::
-
   :::field{name="benches" type="array"}
   Name, path, sites, `logs_dir`, `nginx_access_log` (a path or a list) and `redis_queue` per bench.
   Filled by discovery; edit to override.
@@ -1258,11 +950,6 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
   :::field{name="pilot" type="object"}
   `deployments`, `api_url`, `token`, `jwt_secret`. See [Pilot benches](https://bthuner.github.io/dodock-wolf/install/pilot).
   :::
-
-  :::field{name="press" type="object"}
-  `agent_dir`, `benches_directory`, `nginx_access_log`, `rediscover_interval` (s), `deployments`. See
-  [Press servers](https://bthuner.github.io/dodock-wolf/install/press).
-  :::
 ::
 
 ## Checks
@@ -1273,7 +960,7 @@ others) turns a check off.
 | Key             | Settings                                                                                                                                                                                                                                                                                                                                                         |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `rq`            | `long_job_minutes` (30)                                                                                                                                                                                                                                                                                                                                          |
-| `backups`       | `enabled`, `interval` (600 s), `press` (skip Press benches), `dirs` (backup directory per site)                                                                                                                                                                                                                                                                  |
+| `backups`       | `enabled`, `interval` (600 s), `dirs` (backup directory per site)                                                                                                                                                                                                                                                                                                |
 | `tls`           | `interval` (3600 s), `port` (443), `timeout` (5 s), `connect_host` (for example `127.0.0.1` to check the local nginx), `domains` (add), `exclude` (drop)                                                                                                                                                                                                         |
 | `mariadb`       | `cli` (else `mariadb` / `mysql`), `host`, `port`, `user`, `password`, `defaults_file`: a monitoring user for replication status                                                                                                                                                                                                                                  |
 | `processes`     | `manager`: `auto`, `supervisor` or `systemd`                                                                                                                                                                                                                                                                                                                     |
@@ -1302,17 +989,28 @@ Run commands as the `wolf-agent` user, which owns the config:
 
 Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
 
-| Command                                                                                   | What it does                                                                                                                                                                                                                                                                                                                                     |
-| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `register --url URL --token TOKEN [--bench PATH]...`                                      | Register the host, discover benches, write the config.                                                                                                                                                                                                                                                                                           |
-| `run`                                                                                     | The daemon loop. This is what systemd runs.                                                                                                                                                                                                                                                                                                      |
-| `refresh`                                                                                 | As root: read again what the agent's user cannot (a Press server's benches folder and proxy; a Press proxy's access log) and save it in the config, without registering again. `install.sh` runs it on every upgrade.                                                                                                                            |
-| `discover [--bench PATH] [--platform auto|press|generic]`                                 | Show what bench discovery finds.                                                                                                                                                                                                                                                                                                                 |
-| `check [--from-start] [--status] [--platform …]`                                          | Collect once and print the JSON payload. Nothing is sent. The watchdog state goes to stderr. `--status` also asks the site for its health.                                                                                                                                                                                                       |
-| `doctor [--json] [--offline]`                                                             | Check what this host gives the agent and what to fix: registration and the Wolf site, each log, bench, queue Redis and nginx log, the Press job database or Pilot export, the auth log or journal, response actions, the daemon. Read-only. Exits 1 when a check fails. See [Check a host](https://bthuner.github.io/dodock-wolf/#check-a-host). |
-| `mark-deployment --bench NAME [--site S] [--note TEXT] [--silence 15m]`                   | Put a deployment marker on the Wolf timeline. `--silence` also opens a maintenance window that mutes notifications for that bench or site.                                                                                                                                                                                                       |
-| `test-fallback`                                                                           | Send a test message through the [watchdog](https://bthuner.github.io/dodock-wolf/agent/watchdog) fallback channels.                                                                                                                                                                                                                              |
-| `demo press|multi|single [--root DIR] [--days N] [--no-live] [--cycle MIN] [--configure]` | Write a simulated server for this agent to read: days of history, then live traffic and incidents. For demos and tests only.                                                                                                                                                                                                                     |
+| Command                                                                 | What it does                                                                                                                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `register --url URL --token TOKEN [--bench PATH]...`                    | Register the host, discover benches, write the config.                                                                                                                                                                                                                                                                     |
+| `run`                                                                   | The daemon loop. This is what systemd runs.                                                                                                                                                                                                                                                                                |
+| `discover [--bench PATH]`                                               | Show what bench discovery finds.                                                                                                                                                                                                                                                                                           |
+| `check [--from-start] [--status] [--bench PATH]`                        | Collect once and print the JSON payload. Nothing is sent. The watchdog state goes to stderr. `--status` also asks the site for its health.                                                                                                                                                                                 |
+| `doctor [--json] [--offline]`                                           | Check what this host gives the agent and what to fix: registration and the Wolf site, each log, bench, queue Redis and nginx log, the Pilot export, the auth log or journal, response actions, the daemon. Read-only. Exits 1 when a check fails. See [Check a host](https://bthuner.github.io/dodock-wolf/#check-a-host). |
+| `mark-deployment --bench NAME [--site S] [--note TEXT] [--silence 15m]` | Put a deployment marker on the Wolf timeline. `--silence` also opens a maintenance window that mutes notifications for that bench or site.                                                                                                                                                                                 |
+| `test-fallback`                                                         | Send a test message through the [watchdog](https://bthuner.github.io/dodock-wolf/agent/watchdog) fallback channels.                                                                                                                                                                                                        |
+
+### Deprecated
+
+Press v1 support was removed in 0.2. Its options are still accepted, so old scripts and units keep
+working: each prints `removed in 0.2: ignored` to stderr and does nothing.
+
+| Option or command                                  | Since 0.2                                 |
+| -------------------------------------------------- | ----------------------------------------- |
+| `--platform` on `register`, `discover` and `check` | Ignored: benches are discovered as usual. |
+| `mark-deployment --source press`                   | Recorded as `manual`.                     |
+| `refresh`                                          | Does nothing and exits 0.                 |
+
+A host still on Press v1 stays on [v0.1.0](https://bthuner.github.io/dodock-wolf/getting-started#staying-on-v010).
 
 ## Mark a deployment
 
@@ -1325,42 +1023,7 @@ The marker is a `deployment` event. Rules with **Require recent deployment** onl
 and incidents link to the latest deployment of their scope. Text passed with `--note` is sent as is,
 without [scrubbing](https://bthuner.github.io/dodock-wolf/agent/scrubbing).
 
-Press and Pilot tasks, and `bench migrate` on sites running the Wolf App, are marked by themselves.
-
-## Run a demo
-
-`demo KIND` lays out a simulated server under `--root` (default `/home/frappe/demo-KIND`). Sites are
-names only: nothing runs behind them.
-
-| Kind     | Server                                                                                                                       | Deployments                                                       |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `press`  | a Press app server: 3 benches, 8 sites (two with a custom domain), the Press agent's `jobs.sqlite3`, nginx in Press's format | Press jobs, read by the agent                                     |
-| `multi`  | plain benches: 2 benches, 6 sites (two with a custom domain), one nginx log with `$host` first                               | marked through the deployment endpoint, as `mark-deployment` does |
-| `single` | one bench, one site                                                                                                          | same as `multi`                                                   |
-
-Every kind has an auth.log too. Use a host or container of its own, registered under a name of its own:
-
-```bash [demo host]
-wolf-agent register --url https://wolf.example.com --token TOKEN --hostname dokos-multi-1 --bench /home/frappe/demo-multi
-wolf-agent demo multi --configure   # points the agent at the demo; checks with nothing behind them off
-wolf-agent run &                    # the agent runs first: it must open the files while they are empty
-wolf-agent demo multi               # 7 days of history, then an incident cycle every 30 minutes
-```
-
-`--bench` names a directory that is not a bench yet, so the host registers without benches; the
-demo's benches reach Wolf with its telemetry. For `press`, also pass `--platform press`.
-
-The demo waits until the agent tracks every file, then writes the history, which reaches Wolf
-through the agent's own discovery, tailers and parsers. Past host metrics, which the agent samples
-live, go through its spool. Each cycle has a deployment followed by 4 minutes of 502s, a request
-traceback, a failed scheduled job, a killed worker, an SSH brute force (every third one succeeds),
-a web attack scan and, every other cycle, a failed bench operation (a Press Patch App job, or a
-`bench update` traceback).
-
-Rules look at the last minutes, so incidents open for the live cycles, not for the history.
-`bench --site SITE generate-demo-press` (or `-multi`, `-single`) with `--agent-config PATH` does the
-same from a bench that has the agent installed, and `--webhook URL` also sends the demo's alerts
-there. The [development page](https://bthuner.github.io/dodock-wolf/reference/development) runs it all in Docker.
+Pilot tasks, and `bench migrate` on sites running the Wolf App, are marked by themselves.
 
 ## Check a host
 
@@ -1376,11 +1039,11 @@ logs
   --   9 not written yet (read once they appear): bench-1/frappe.web.log ...
 
 platform
- FAIL  Press: /home/frappe/agent/jobs.sqlite3-wal is not the Press agent's: its jobs fail to write
-        fix: stop the Press agent (supervisorctl stop 'agent:'), delete ...-wal and -shm, start it
+ FAIL  Pilot wolf: cannot read /var/lib/wolf-pilot-export/wolf.json
+        fix: systemctl restart wolf-pilot-export.service (it sets the wolf-agent group)
 ```
 
-It checks the files the daemon would tail and the benches it works from (on Press, the ones it rediscovers), not only the config. `--json` prints the checks as a list, `--offline` skips the call to the Wolf site. Nothing is written, and it exits 1 when a check fails, so it can gate an install script.
+It checks the files the daemon would tail and the benches it works from, not only the config. `--json` prints the checks as a list, `--offline` skips the call to the Wolf site. Nothing is written, and it exits 1 when a check fails, so it can gate an install script.
 
 The daemon runs the same checks every hour (`setup_checks`) and sends them with a push: the Wolf UI's **Monitoring** page shows each host's setup, its problems and their fixes, and the *Host setup problem* preset opens an incident while a check fails.
 
@@ -1573,7 +1236,7 @@ and reports back, and the Response panel shows *Applied* or *Failed* with what t
 The agent does nothing unless you allow it on that host.
 
 ::note
-**Behind a proxy.** A block on a host only stops what reaches it directly. On a Press app server behind its proxy, a web client's packets come from the proxy, so Wolf proposes blocks there for SSH events only. The Response panel lists the other addresses as *Not proposed*, naming the proxy. The Wolf Agent on the [proxy server](https://bthuner.github.io/dodock-wolf/install/press#proxy-servers) proposes their blocks, where they take effect.
+**Behind a proxy.** A block on a host only stops what reaches it directly. On a host whose agent config names a proxy in front of it (the `behind_proxy` key of the [configuration](https://bthuner.github.io/dodock-wolf/agent/configuration), sent with every push: see the [protocol](https://bthuner.github.io/dodock-wolf/reference/protocol)), a web client's packets come from the proxy, so Wolf proposes blocks there for SSH events only. The Response panel lists the other addresses as *Not proposed*, naming the proxy: block them there, where they take effect.
 ::
 
 ::caution
@@ -1877,12 +1540,6 @@ Create one:
 - through the REST API: `POST /api/resource/Wolf Silence`;
 - with the deployment marker: `wolf-agent mark-deployment --bench main --silence 15m`.
 
-## Digests
-
-Each channel row can use an **hourly digest**: `info` and `warning` alerts are batched into one
-message per destination. `critical` alerts are always sent at once, and PagerDuty is never
-digested.
-
 ## Test a rule
 
 **Send test notification** on the rule form sends a TEST to every enabled channel row and shows
@@ -2079,8 +1736,6 @@ one answered.
   always get the matching `acknowledge` / `resolve` event, so the alert closes on call too.
 - The other channels hear a resolution only when the rule has **Notify On Resolve**.
 - A test from the rule form triggers then resolves on PagerDuty, so it never leaves an alert open.
-- With an **hourly digest** on a row, `info` and `warning` alerts are batched into one message per
-  destination. `critical` alerts are always immediate. PagerDuty is never digested.
 - During a [maintenance window](https://bthuner.github.io/dodock-wolf/alerts/rules#maintenance-windows), notifications wait until it ends.
 
 ## Signed action links
@@ -2095,6 +1750,14 @@ acts, so mail scanners cannot acknowledge for you. Security incidents also carry
 Every attempt is recorded as a **Wolf Delivery**: channel, target without secrets, kind, PagerDuty
 action, ok or error, HTTP status. The incident lists them under **Deliveries**. Deliveries follow
 the event retention.
+
+## Upgrading from 0.1
+
+Digests were removed in 0.2: every channel sends each alert at once. A channel that used hourly
+digests in 0.1 now gets every alert as it happens. Digests still pending at the upgrade are
+dropped, not sent: the upgrade prints how many and records the count in an **Error Log** titled
+*Dodock Wolf 0.2: pending digests dropped*. Release [v0.1.0](https://bthuner.github.io/dodock-wolf/getting-started#staying-on-v010)
+keeps digests.
 
 ## Setup per type
 
@@ -2255,42 +1918,6 @@ Art. 19)** or a **Personal data breach (GDPR Art. 33)** to start its deadlines. 
 the incident, and the **Regulatory deadline** preset alerts before each one. Wolf tracks dates only:
 it does not decide what is reportable and sends nothing to an authority. See
 [Compliance](https://bthuner.github.io/dodock-wolf/security/compliance).
-
-## Public status
-
-Give an incident a **Public Title** to control how it appears on a [status page](https://bthuner.github.io/dodock-wolf/alerts/status-pages).
-
-
-# Status pages
-
-A **Wolf Status Page** shows a site's health to guests at `/wolf-status/<slug>`. It is opt-in.
-
-## Create one
-
-| Field                 | Meaning                                                     |
-| --------------------- | ----------------------------------------------------------- |
-| **Title**             | Shown at the top of the page.                               |
-| **Slug**              | The address: `https://wolf.example.com/wolf-status/<slug>`. |
-| **Site**              | The site whose incidents are shown.                         |
-| **Bench**             | Optional: also show the bench's incidents.                  |
-| **Description**       | Optional text under the title.                              |
-| **Show History Days** | How far back resolved incidents are listed.                 |
-| **Minimum Severity**  | Incidents below it are not shown.                           |
-| **Enabled**           | Until it is ticked, the address answers 404.                |
-
-## What guests see
-
-- An overall banner.
-- Open incidents, and those resolved in the last *Show History Days*.
-- For each: a title, the severity, a public status (*Investigating*, *Identified*, *Resolved*) and
-  the times.
-
-Hosts, rules, summaries and payloads never leave the server.
-
-::caution
-Internal titles often name hosts. An incident is shown as "Degraded performance" or "Service
-disruption" unless you fill its **Public Title**.
-::
 
 
 # Security overview
@@ -2812,7 +2439,7 @@ calls is not the remote party of an attack. It is searchable by entity and check
 destination, but it never groups incidents by IP, feeds a sequence rule, goes to CrowdSec as an
 attacker or gets a block proposal.
 
-**Benches in containers** (Docker, Press, Podman) have their own network. The agent finds them
+**Benches in containers** (Docker, Podman) have their own network. The agent finds them
 without root: each container's cgroup names it (`/proc/<pid>/cgroup`), the folder it mounts from
 the host (`/proc/<pid>/mountinfo`, for example the bench's `sites/`, on the same filesystem) says
 which bench it is, and the container's own TCP table (`/proc/<pid>/net/tcp`) gives its
@@ -3473,8 +3100,8 @@ log cannot be read. Not read from `suricata.yaml`: `include:` files, outputs wri
 
 A Suricata in a container must write its logs to a folder bind-mounted from the host and readable
 by the `wolf-agent` user. A Docker volume (under `/var/lib/docker`) is not readable without root:
-the agent's log says so; mount a host folder instead, or set `suricata.eve_log`. Pilot and Press
-do not manage Suricata, so their hosts are read the same way.
+the agent's log says so; mount a host folder instead, or set `suricata.eve_log`. Pilot
+does not manage Suricata, so its hosts are read the same way.
 
 ```json [config.json]
 "suricata": {"enabled": true, "eve_log": null, "max_priority": 3, "exclude_sids": [2012888]}
@@ -3815,7 +3442,6 @@ X-Wolf-Agent-Secret: <secret>
   "sent_at": "2026-10-29T02:00:30Z",
   "agent_version": "0.1.0",
   "hostname": "bench-01",
-  "behind_proxy": null,
   "metrics": [
     {"metric_name": "cpu_usage", "value": 12.5, "timestamp": "...", "host": "bench-01",
      "bench": null, "site": null, "labels": {}}
@@ -3845,7 +3471,7 @@ The same two headers authenticate the deployment marker, the status call and the
 | `sent_at`        | When the request is sent, also for replayed spool batches. Used for [clock skew](https://bthuner.github.io/dodock-wolf/#clock-skew).                                                                                                                                                                                      |
 | `agent_version`  | Version of the agent.                                                                                                                                                                                                                                                                                                     |
 | `hostname`       | The host's name.                                                                                                                                                                                                                                                                                                          |
-| `behind_proxy`   | The proxy this host's web traffic comes through (a Press app server's `proxy_ip`), or `null`. Stored on Wolf Agent; blocks for web clients are then not proposed on this host. Absent from older agents: the stored value stays.                                                                                          |
+| `behind_proxy`   | Optional. The proxy this host's web traffic comes through, or `null`. Stored on Wolf Agent; blocks for web clients are then not proposed on this host. When absent, the stored value stays; `null` clears it. The agent sends its config's `behind_proxy` key with every push.                                            |
 | `metrics`        | List of metric samples.                                                                                                                                                                                                                                                                                                   |
 | `events`         | List of events.                                                                                                                                                                                                                                                                                                           |
 | `action_results` | Optional. Results of [response actions](https://bthuner.github.io/dodock-wolf/#response-actions).                                                                                                                                                                                                                         |
@@ -3975,12 +3601,12 @@ Satellites use the same endpoint with their satellite credentials.
 
 | `type`              | Typical `category` values                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `error`             | `http_5xx`, `http_502`, `traceback`, `press_job_failed`, `pilot_task_failed`, `backup_failed`, `email_queue_backlog`, `email_queue_error`                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `error`             | `http_5xx`, `http_502`, `traceback`, `pilot_task_failed`, `backup_failed`, `email_queue_backlog`, `email_queue_error`                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `cron_failure`      | `scheduled_job`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `worker_failure`    | `worker_crash`, `job_failed`, `worker_killed`, `process_down`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `security`          | `data_exfiltration`, `ssh_failed_login`, `ssh_root_login`, `ssh_login_after_failures`, `sudo_failure`, `account_created`, `service_account_created`, `admin_group_change`, `web_attack_probe`, `web_sensitive_file_exposed`, `server_script_change`, `client_script_change`, `console_execution`, `permission_change`, `security_settings_weakened`, `api_key_generated`, `api_key_new_ip`, `network_ids_alert`, `hids_alert`, `webhook_external`, `service_exposed`, `insecure_site_config`, `frappe_failed_login`, `new_admin_ip`, `admin_login_new_country`, `privileged_user` |
 | `host_metric_alert` | Created by the app: metric rule fired, `agent_silent`, `scheduler_stalled`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| `deployment`        | `manual`, `pilot` (Pilot tasks, see [Pilot](https://bthuner.github.io/dodock-wolf/install/pilot)), `migrate`, `press` (Press agent jobs, see [Press](https://bthuner.github.io/dodock-wolf/install/press))                                                                                                                                                                                                                                                                                                                                                                        |
+| `deployment`        | `manual`, `pilot` (Pilot tasks, see [Pilot](https://bthuner.github.io/dodock-wolf/install/pilot)), `migrate`                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 `severity`: `info` | `warning` | `critical`.
 
@@ -4223,12 +3849,6 @@ Where the links appear:
 | ntfy                | `Actions` header                                                           |
 | Matrix, Gotify, SMS | Incident URL only                                                          |
 
-Hourly digests are posted to webhooks as:
-
-```json [Digest webhook body]
-{"text": "...", "digest": [{"incident", "kind", "severity", "title", "at", "url"}]}
-```
-
 ### Response links
 
 One link per action Wolf proposes on the incident, up to 5:
@@ -4286,18 +3906,15 @@ PagerDuty event actions:
 
 Every request is recorded as a **Wolf Delivery**:
 
-| Field                      | Meaning                                                            |
-| -------------------------- | ------------------------------------------------------------------ |
-| `incident`, `alert_rule`   | What was notified.                                                 |
-| `at`                       | When.                                                              |
-| `channel_type`             | Slack, Matrix, PagerDuty…                                          |
-| `target`                   | The destination without secrets: host, room, masked phone numbers. |
-| `kind`, `action`, `digest` | What was sent.                                                     |
-| `ok`, `http_status`        | The result.                                                        |
-| `error`                    | The error, with secrets and URL paths and queries removed.         |
-
-Digests of native channels are merged on a SHA-256 of the channel settings, and the digest item
-keeps a reference to the channel row rather than any secret.
+| Field                    | Meaning                                                                           |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| `incident`, `alert_rule` | What was notified.                                                                |
+| `at`                     | When.                                                                             |
+| `channel_type`           | Slack, Matrix, PagerDuty…                                                         |
+| `target`                 | The destination without secrets: host, room, masked phone numbers.                |
+| `kind`, `action`         | What was sent. `digest` is set on the deliveries of an hourly digest, before 0.2. |
+| `ok`, `http_status`      | The result.                                                                       |
+| `error`                  | The error, with secrets and URL paths and queries removed.                        |
 
 
 # UI API
@@ -4314,7 +3931,6 @@ two reads share a short cache filtered per caller (see [Short cache](https://bth
 | [Incident page](https://bthuner.github.io/dodock-wolf/#incident-page)               | `incident_view.list_incidents`, `get_incident`, `get_timeline`, `act`, `merge_preview`, `split_preview` |
 | [Dashboards](https://bthuner.github.io/dodock-wolf/#dashboards)                     | `dashboard.get_signals`, `get_http`, `get_monitoring`                                                   |
 | [Explorers](https://bthuner.github.io/dodock-wolf/#explorers)                       | `explore.list_events`, `list_error_groups`, `get_error_group`                                           |
-| [Metrics explorer](https://bthuner.github.io/dodock-wolf/#metrics-explorer)         | `metrics.get_metric_catalog`, `query_metric`                                                            |
 | [Security](https://bthuner.github.io/dodock-wolf/#security)                         | `security.list_sites`, `get_posture`                                                                    |
 | [Regulatory reporting](https://bthuner.github.io/dodock-wolf/#regulatory-reporting) | `compliance.get_report`                                                                                 |
 | [Response actions](https://bthuner.github.io/dodock-wolf/#response-actions)         | `response.get_response`, `approve`                                                                      |
@@ -4345,7 +3961,7 @@ Every response that reads a window returns what it actually read, in UTC:
 browser's zone.
 
 In the Wolf UI, the window is in the URL (`?range=7d` or `?since=…&until=…`). A range selected on
-the HTTP chart of a dashboard, or on the chart of the metrics explorer, becomes an explicit
+the HTTP chart of a dashboard becomes an explicit
 `since`/`until`: the dashboard's counts and chart, and the event and error explorers opened from
 it, are read with it. **Back to a relative window** drops it.
 
@@ -4707,66 +4323,6 @@ Every visible record of one group, whatever its age:
 
 A restricted user sees only the records of their sites, benches or hosts, and counts over those.
 
-## Metrics explorer
-
-### `dodock_wolf.api.metrics.get_metric_catalog`
-
-Every catalogued metric
-([`wolf/catalog.py`](https://github.com/bthuner/dodock-wolf/blob/main/dodock_wolf/wolf/catalog.py){rel="&#x22;nofollow&#x22;"})
-and the custom metrics seen in the last 7 days. Each one has:
-
-| Field                       | Meaning                                              |
-| --------------------------- | ---------------------------------------------------- |
-| `kind`, `unit`              | What the value is.                                   |
-| `level`                     | `host`, `bench` or `site`.                           |
-| `label_key`                 | `mount`, `queue`, `domain`, `db`, `of` or `manager`. |
-| `aggregations`, `group_bys` | What it allows.                                      |
-| `seen`                      | Whether the caller has data for it.                  |
-
-- Gauges are read as `avg`, `min`, `max` or `last`.
-- Interval counts are read as `sum` (the total per bucket), `avg` or `max` (per push interval).
-- A custom metric is read as a level.
-- Grouping follows the metric's level: a host metric has no bench or site. Metrics with a label
-  also group by `host_label`, and so may a custom metric, whose labels the catalog cannot name.
-
-The catalog lists every metric the agent sends, which a unit test checks against the agent's
-source. `get_labels(metric, scope)` lists a metric's label values (at most 100), including those
-first seen in the last hour.
-
-### `dodock_wolf.api.metrics.query_metric`
-
-| Argument         | Meaning               |
-| ---------------- | --------------------- |
-| `metric`         | Metric name.          |
-| `aggregation`    | Default per kind.     |
-| `group_by`       | Default `none`.       |
-| `label`          | Label value.          |
-| window and scope | The common arguments. |
-
-A combination the catalog does not allow is refused: a sum of disk levels, the last value of an
-interval count, a host metric grouped by site.
-
-The answer reads whole buckets (`bucket_seconds`; `window` is what was read, `requested_window`
-what was asked) at a resolution fine enough for the window's length that still reaches back to
-its start (`resolution`). A two-hour zoom into last week reads minute rollups, because raw
-samples that old are purged (see [Metric storage](https://bthuner.github.io/dodock-wolf/reference/metric-storage)). It is exact across
-raw samples and rollups. Groups are ranked in SQL first, and only the shown ones are read per
-bucket.
-
-Each of `series` has:
-
-| Field                    | Meaning                                                                                                                                                                                                 |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `points`                 | One per bucket, `null` for a bucket without samples (a gap, not a zero).                                                                                                                                |
-| `value`                  | The aggregation over the whole window.                                                                                                                                                                  |
-| `samples`, `last_sample` | Sample count and newest sample.                                                                                                                                                                         |
-| `stale`                  | Judged only when the window reaches now (`live`), and from the newest sample, not the last whole bucket (which lags by up to a bucket). In a past window the last sample is just where the window ends. |
-
-`groups` says how many groups exist and which `MAX_GROUPS` (20) are shown, ranked by the
-aggregation, highest first (lowest for `min`). `retention.clipped` is true when the window starts
-before the data kept at this resolution (`kept_from`, the cutoff purge applies): those buckets
-are gaps.
-
 ## Live updates
 
 The Wolf UI stays current over Frappe's own socket.io server
@@ -5085,7 +4641,7 @@ The names are now 33 characters for rollups and 28 for samples, against 32 and 1
 - `bench migrate` creates the index and drops the two it replaces. On 15 M rows, that took
   1.5 min.
 - Rows already stored keep their names, so a read speeds up once its window holds only new rows:
-  after a day for the 24 h explorer, 7 days for the hourly reads.
+  after a day for the 24 h reads of the metrics explorer (removed in 0.2), 7 days for the hourly reads.
 ::
 
 ### SQL reads (#57)
@@ -5095,7 +4651,7 @@ The names are now 33 characters for rollups and 28 for samples, against 32 and 1
    rows of one metric and resolution sit together in the key since #56, so a window is a stretch
    of it. No row is looked up through a secondary index. Postgres does not store rows in key
    order and keeps one plain read.
-2. **Chart buckets in SQL** (`rollups.bucket_cells`). The explorer read one metric's 144 k minute
+2. **Chart buckets in SQL** (`rollups.bucket_cells`). The metrics explorer, removed in 0.2, read one metric's 144 k minute
    rollups twice, for the totals and the chart, and merged them in Python. It now reads one row
    per host and bucket, summed by the database; the totals are the merge of those.
 3. **Last values in one pass.** The value at each series' newest time came from a join of the
@@ -5114,7 +4670,7 @@ showed it on every read.
 **Rows named before #56.** Their names are 32 hex digits and sort below every new name, outside
 the name ranges. While some remain, a second pass reads them (`name < 'g'`), and MariaDB weighs
 it against the indexes. Measured with the 153 k minute rollups of one metric's last day renamed
-to old names, explorer over 24 h:
+to old names, the metrics explorer (removed in 0.2) over 24 h:
 
 | Second pass                                      | Plan                                      | Median   |
 | ------------------------------------------------ | ----------------------------------------- | -------- |
@@ -5366,11 +4922,11 @@ and timed twice each, alternating, in ms:
 
 ### Other reads
 
-| Read                                        | 1 h   | 6 h   | 24 h       | 7 d   |
-| ------------------------------------------- | ----- | ----- | ---------- | ----- |
-| Metrics explorer, cpu_usage by host, before | 1,757 | 7,126 | **25,762** | 2,467 |
-| Metrics explorer, #56                       | 219   | 914   | **2,936**  | 506   |
-| Metrics explorer, #57                       | 173   | 390   | 863        | 281   |
+| Read                                                         | 1 h   | 6 h   | 24 h       | 7 d   |
+| ------------------------------------------------------------ | ----- | ----- | ---------- | ----- |
+| Metrics explorer (removed in 0.2), cpu_usage by host, before | 1,757 | 7,126 | **25,762** | 2,467 |
+| Metrics explorer (removed in 0.2), #56                       | 219   | 914   | **2,936**  | 506   |
+| Metrics explorer (removed in 0.2), #57                       | 173   | 390   | 863        | 281   |
 
 | Rule query        | Before p95 | #56 p95 | #57 p95 |
 | ----------------- | ---------- | ------- | ------- |
@@ -5387,7 +4943,7 @@ Each read is under 1 s, and so is the overview page when its two slow reads come
 - Drawing takes 0.13 to 0.32 s on the bench with every row. Drawing the first rows only halves it
   on a faster load bench (100 to 53 ms cold, 50 to 20 ms warm); the rest is the page's own. The
   4 vCPU bench was not run again.
-- The metrics explorer over 24 h, 0.86 s, is the closest other read.
+- The metrics explorer over 24 h, 0.86 s, was the closest other read (the metrics explorer, removed in 0.2).
 
 These margins are for 100 hosts on this bench. At several times that, the inventory and the 24 h
 reads grow with the rows of their window, and so does a visit that reads.
@@ -5469,26 +5025,10 @@ Add `-e WOLF_LOAD_TEST=1`, and optionally `-e WOLF_LOAD_ARGS="--hosts 20 --days 
 MVP, tested on a Dokos (Dodock 5.18) bench, on MariaDB 10.6 and on Postgres 17 (see
 [`ci/db_smoke.py`](https://github.com/bthuner/dodock-wolf/blob/main/ci/db_smoke.py){rel="&#x22;nofollow&#x22;"}).
 
-## Live demos
+## Demo stack
 
 The demo stack in [`dev/demo`](https://github.com/bthuner/dodock-wolf/tree/main/dev/demo){rel="&#x22;nofollow&#x22;"} runs one
-Dokos bench with the Wolf App and its agent. Three profiles add simulated servers, each watched by
-an agent of its own; they can run together:
-
-```bash [dev/demo]
-WOLF_DEMO_BASE=registry.gitlab.com/dokos/dokos:latest docker compose --profile press --profile multi --profile single up -d --build
-docker compose --profile multi logs -f multi-demo   # "history written up to ...", then live
-```
-
-| Profile  | Host             | Server                                 |
-| -------- | ---------------- | -------------------------------------- |
-| `press`  | `f1-demo-press`  | a Press app server, 3 benches, 8 sites |
-| `multi`  | `dokos-multi-1`  | plain benches, 2 benches, 6 sites      |
-| `single` | `dokos-single-1` | one bench, one site                    |
-
-Each `<kind>-demo` service runs `bench generate-demo-<kind>`: 7 days of history, then an incident
-cycle every 30 minutes, with alerts sent to the stack's webhook sink (`docker compose logs catcher`).
-[Commands](https://bthuner.github.io/dodock-wolf/agent/commands) lists what a cycle contains.
+Dokos bench with the Wolf App and its agent, nginx and a webhook sink (`docker compose logs catcher`).
 
 ### Suricata and Wazuh
 

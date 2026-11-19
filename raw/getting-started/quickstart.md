@@ -90,7 +90,7 @@ that range. The figures under **Now**, the signals and the list of hosts always 
 ## Mark your deployments
 
 Rules such as *502 spike after deployment* only fire when a deployment hit the same scope recently.
-Bench migrations on the Wolf site, and Press and Pilot tasks, are recorded by themselves. For other
+Bench migrations on the Wolf site, and Pilot tasks, are recorded by themselves. For other
 benches, add one line to your deploy script:
 
 ```bash [deploy.sh]

@@ -28,7 +28,9 @@ Error Logs and failed backups, logins (including new IPs and countries), privile
 Email Queue backlog and errors, and `bench migrate`.
 - It stores them in **Wolf Outbox** and pushes them every minute to the central site through the
 agent ingest API, with the same host, bench and site scope. Central rules and incidents see them
-like any other event.
+like any other event. The host is the machine's name and the bench the bench folder's name, as
+the agent reports them; a Press v1 site's own scope (its container and server names) is read by
+[v0.1.0](/getting-started#staying-on-v010) only.
 - While the central site is unreachable, it retries with backoff (1, 2, 4, 8, then every 15
 minutes) and keeps at most 10,000 pending events, dropping the oldest.
 - It shows the forwarding status on **Wolf Overview** and **Wolf Settings**. **Forward now** pushes

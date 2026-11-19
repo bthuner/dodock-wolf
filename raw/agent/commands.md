@@ -48,23 +48,7 @@ Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
   <tr>
     <td>
       <code>
-        refresh
-      </code>
-    </td>
-    
-    <td>
-      As root: read again what the agent's user cannot (a Press server's benches folder and proxy; a Press proxy's access log) and save it in the config, without registering again. <code>
-        install.sh
-      </code>
-      
-       runs it on every upgrade.
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      <code>
-        discover [--bench PATH] [--platform auto|press|generic]
+        discover [--bench PATH]
       </code>
     </td>
     
@@ -76,7 +60,7 @@ Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
   <tr>
     <td>
       <code>
-        check [--from-start] [--status] [--platform …]
+        check [--from-start] [--status] [--bench PATH]
       </code>
     </td>
     
@@ -97,7 +81,7 @@ Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
     </td>
     
     <td>
-      Check what this host gives the agent and what to fix: registration and the Wolf site, each log, bench, queue Redis and nginx log, the Press job database or Pilot export, the auth log or journal, response actions, the daemon. Read-only. Exits 1 when a check fails. See <a href="#check-a-host">
+      Check what this host gives the agent and what to fix: registration and the Wolf site, each log, bench, queue Redis and nginx log, the Pilot export, the auth log or journal, response actions, the daemon. Read-only. Exits 1 when a check fails. See <a href="#check-a-host">
         Check a host
       </a>
       
@@ -136,20 +120,83 @@ Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
        fallback channels.
     </td>
   </tr>
-  
+</tbody>
+</table>
+
+### Deprecated
+
+Press v1 support was removed in 0.2. Its options are still accepted, so old scripts and units keep
+working: each prints `removed in 0.2: ignored` to stderr and does nothing.
+
+<table>
+<thead>
+  <tr>
+    <th>
+      Option or command
+    </th>
+    
+    <th>
+      Since 0.2
+    </th>
+  </tr>
+</thead>
+
+<tbody>
   <tr>
     <td>
       <code>
-        demo press|multi|single [--root DIR] [--days N] [--no-live] [--cycle MIN] [--configure]
+        --platform
+      </code>
+      
+       on <code>
+        register
+      </code>
+      
+      , <code>
+        discover
+      </code>
+      
+       and <code>
+        check
       </code>
     </td>
     
     <td>
-      Write a simulated server for this agent to read: days of history, then live traffic and incidents. For demos and tests only.
+      Ignored: benches are discovered as usual.
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        mark-deployment --source press
+      </code>
+    </td>
+    
+    <td>
+      Recorded as <code>
+        manual
+      </code>
+      
+      .
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        refresh
+      </code>
+    </td>
+    
+    <td>
+      Does nothing and exits 0.
     </td>
   </tr>
 </tbody>
 </table>
+
+A host still on Press v1 stays on [v0.1.0](/getting-started#staying-on-v010).
 
 ## Mark a deployment
 
@@ -162,118 +209,7 @@ The marker is a `deployment` event. Rules with **Require recent deployment** onl
 and incidents link to the latest deployment of their scope. Text passed with `--note` is sent as is,
 without [scrubbing](/agent/scrubbing).
 
-Press and Pilot tasks, and `bench migrate` on sites running the Wolf App, are marked by themselves.
-
-## Run a demo
-
-`demo KIND` lays out a simulated server under `--root` (default `/home/frappe/demo-KIND`). Sites are
-names only: nothing runs behind them.
-
-<table>
-<thead>
-  <tr>
-    <th>
-      Kind
-    </th>
-    
-    <th>
-      Server
-    </th>
-    
-    <th>
-      Deployments
-    </th>
-  </tr>
-</thead>
-
-<tbody>
-  <tr>
-    <td>
-      <code>
-        press
-      </code>
-    </td>
-    
-    <td>
-      a Press app server: 3 benches, 8 sites (two with a custom domain), the Press agent's <code>
-        jobs.sqlite3
-      </code>
-      
-      , nginx in Press's format
-    </td>
-    
-    <td>
-      Press jobs, read by the agent
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      <code>
-        multi
-      </code>
-    </td>
-    
-    <td>
-      plain benches: 2 benches, 6 sites (two with a custom domain), one nginx log with <code>
-        $host
-      </code>
-      
-       first
-    </td>
-    
-    <td>
-      marked through the deployment endpoint, as <code>
-        mark-deployment
-      </code>
-      
-       does
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      <code>
-        single
-      </code>
-    </td>
-    
-    <td>
-      one bench, one site
-    </td>
-    
-    <td>
-      same as <code>
-        multi
-      </code>
-    </td>
-  </tr>
-</tbody>
-</table>
-
-Every kind has an auth.log too. Use a host or container of its own, registered under a name of its own:
-
-```bash [demo host]
-wolf-agent register --url https://wolf.example.com --token TOKEN --hostname dokos-multi-1 --bench /home/frappe/demo-multi
-wolf-agent demo multi --configure   # points the agent at the demo; checks with nothing behind them off
-wolf-agent run &                    # the agent runs first: it must open the files while they are empty
-wolf-agent demo multi               # 7 days of history, then an incident cycle every 30 minutes
-```
-
-`--bench` names a directory that is not a bench yet, so the host registers without benches; the
-demo's benches reach Wolf with its telemetry. For `press`, also pass `--platform press`.
-
-The demo waits until the agent tracks every file, then writes the history, which reaches Wolf
-through the agent's own discovery, tailers and parsers. Past host metrics, which the agent samples
-live, go through its spool. Each cycle has a deployment followed by 4 minutes of 502s, a request
-traceback, a failed scheduled job, a killed worker, an SSH brute force (every third one succeeds),
-a web attack scan and, every other cycle, a failed bench operation (a Press Patch App job, or a
-`bench update` traceback).
-
-Rules look at the last minutes, so incidents open for the live cycles, not for the history.
-`bench --site SITE generate-demo-press` (or `-multi`, `-single`) with `--agent-config PATH` does the
-same from a bench that has the agent installed, and `--webhook URL` also sends the demo's alerts
-there. The [development page](/reference/development) runs it all in Docker.
+Pilot tasks, and `bench migrate` on sites running the Wolf App, are marked by themselves.
 
 ## Check a host
 
@@ -289,11 +225,11 @@ logs
   --   9 not written yet (read once they appear): bench-1/frappe.web.log ...
 
 platform
- FAIL  Press: /home/frappe/agent/jobs.sqlite3-wal is not the Press agent's: its jobs fail to write
-        fix: stop the Press agent (supervisorctl stop 'agent:'), delete ...-wal and -shm, start it
+ FAIL  Pilot wolf: cannot read /var/lib/wolf-pilot-export/wolf.json
+        fix: systemctl restart wolf-pilot-export.service (it sets the wolf-agent group)
 ```
 
-It checks the files the daemon would tail and the benches it works from (on Press, the ones it rediscovers), not only the config. `--json` prints the checks as a list, `--offline` skips the call to the Wolf site. Nothing is written, and it exits 1 when a check fails, so it can gate an install script.
+It checks the files the daemon would tail and the benches it works from, not only the config. `--json` prints the checks as a list, `--offline` skips the call to the Wolf site. Nothing is written, and it exits 1 when a check fails, so it can gate an install script.
 
 The daemon runs the same checks every hour (`setup_checks`) and sends them with a push: the Wolf UI's **Monitoring** page shows each host's setup, its problems and their fixes, and the *Host setup problem* preset opens an incident while a check fails.
 
