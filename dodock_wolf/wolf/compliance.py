@@ -28,6 +28,7 @@ deadline is close, `overdue` once passed) let the alert rules reach the people w
 import calendar
 from datetime import datetime, timedelta
 
+from dodock_wolf.wolf import i18n
 from dodock_wolf.wolf.i18n import _, fmt
 
 WARN_BEFORE = timedelta(hours=6)
@@ -179,7 +180,7 @@ def report_markdown(incident, rows, timeline=(), postmortem=None, time_zone=""):
 		"",
 		"- " + fmt(_("Wolf incident: {0}"), incident.get("name")),
 		"- " + fmt(_("Scope: {0}"), scope),
-		"- " + fmt(_("Severity: {0}; status: {1}"), incident.get("severity"), incident.get("status")),
+		"- " + fmt(_("Severity: {0}; status: {1}"), i18n.translate(incident.get("severity"), "Wolf Incident"), i18n.translate(incident.get("status"), "Wolf Incident")),
 		"- " + fmt(_("Started: {0}; resolved: {1}"), _fmt(_dt(incident.get("started_at"))), _fmt(_dt(incident.get("resolved_at")))),
 		"- " + (fmt(_("Times in {0}"), time_zone) if time_zone else _("Times in the site time zone")),
 	]
@@ -217,7 +218,7 @@ def report_markdown(incident, rows, timeline=(), postmortem=None, time_zone=""):
 		if items:
 			lines += ["", "## " + _("Measures taken or planned"), ""]
 			for i in items:
-				status = i.get("status") or "Open"
+				status = i18n.translate(i.get("status") or "Open", "Wolf Postmortem Action Item")
 				if i.get("assigned_to"):
 					lines.append("- " + fmt(_("{0} ({1}, owner {2})"), i.get("description"), status, i["assigned_to"]))
 				else:

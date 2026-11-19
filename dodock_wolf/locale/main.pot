@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Dodock Wolf VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/bthuner/dodock-wolf/issues\n"
-"POT-Creation-Date: 2026-11-18 23:50+0000\n"
-"PO-Revision-Date: 2026-11-18 23:50+0000\n"
+"POT-Creation-Date: 2026-11-19 00:04+0000\n"
+"PO-Revision-Date: 2026-11-19 00:04+0000\n"
 "Last-Translator: Dodock Wolf contributors\n"
 "Language-Team: Dodock Wolf contributors\n"
 "MIME-Version: 1.0\n"
@@ -317,7 +317,7 @@ msgstr ""
 #. Option for the 'Status' (Select) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:89
 #: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.py:73
-#: dodock_wolf/wolf/incident_ops.py:257 frontend/src/pages/IncidentPage.vue:314
+#: dodock_wolf/wolf/incident_ops.py:261 frontend/src/pages/IncidentPage.vue:314
 msgid "Acknowledged"
 msgstr ""
 
@@ -724,7 +724,7 @@ msgstr ""
 msgid "Authority reference"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:187
+#: dodock_wolf/wolf/compliance.py:188
 #, python-brace-format
 msgid "Authority reference: {0}"
 msgstr ""
@@ -739,7 +739,7 @@ msgstr ""
 msgid "Auto Resolve"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:255
+#: dodock_wolf/wolf/incident_ops.py:259
 msgid "Automatically resolved (condition cleared)"
 msgstr ""
 
@@ -1260,7 +1260,7 @@ msgstr ""
 msgid "DORA major ICT-related incident"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:193
+#: dodock_wolf/wolf/compliance.py:194
 #, python-brace-format
 msgid "DORA major ICT-related incident, aware since {0}, classified as major on {1}"
 msgstr ""
@@ -1300,7 +1300,7 @@ msgstr ""
 
 #. Label of the regulatory_html (HTML) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:432
-#: dodock_wolf/wolf/compliance.py:197
+#: dodock_wolf/wolf/compliance.py:198
 msgid "Deadlines"
 msgstr ""
 
@@ -1500,7 +1500,7 @@ msgid "Drag across the chart, or click two points (with the keyboard: arrow keys
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:90
-#: dodock_wolf/wolf/compliance.py:199 frontend/src/pages/IncidentPage.vue:354
+#: dodock_wolf/wolf/compliance.py:200 frontend/src/pages/IncidentPage.vue:354
 msgid "Due"
 msgstr ""
 
@@ -1529,7 +1529,7 @@ msgstr ""
 msgid "Early warning sent at"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:125
+#: dodock_wolf/wolf/compliance.py:126
 msgid "Early warning to the CSIRT / authority (24 h)"
 msgstr ""
 
@@ -1860,11 +1860,11 @@ msgstr ""
 msgid "Filter by {0}"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:131
+#: dodock_wolf/wolf/compliance.py:132
 msgid "Final report (1 month after the latest intermediate report)"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:127
+#: dodock_wolf/wolf/compliance.py:128
 msgid "Final report (1 month after the notification)"
 msgstr ""
 
@@ -2031,7 +2031,7 @@ msgstr ""
 msgid "GDPR personal data breach"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:196
+#: dodock_wolf/wolf/compliance.py:197
 #, python-brace-format
 msgid "GDPR personal data breach, aware since {0}"
 msgstr ""
@@ -2256,7 +2256,7 @@ msgstr ""
 
 #. Label of the impact (Text Editor) field in DocType 'Wolf Postmortem'
 #: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:140
-#: dodock_wolf/wolf/compliance.py:211
+#: dodock_wolf/wolf/compliance.py:212
 msgid "Impact"
 msgstr ""
 
@@ -2311,7 +2311,7 @@ msgstr ""
 msgid "Incident"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:126
+#: dodock_wolf/wolf/compliance.py:127
 msgid "Incident notification (72 h)"
 msgstr ""
 
@@ -2321,17 +2321,17 @@ msgstr ""
 msgid "Incident notification sent at"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:250
+#: dodock_wolf/wolf/incident_ops.py:254
 #, python-brace-format
 msgid "Incident opened by rule {0}"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:250
+#: dodock_wolf/wolf/incident_ops.py:254
 #, python-brace-format
 msgid "Incident opened by {0}"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:178
+#: dodock_wolf/wolf/compliance.py:179
 #, python-brace-format
 msgid "Incident report: {0}"
 msgstr ""
@@ -2400,7 +2400,7 @@ msgstr ""
 msgid "Ingest queue"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:129
+#: dodock_wolf/wolf/compliance.py:130
 msgid "Initial notification (4 h after classification, 24 h after awareness)"
 msgstr ""
 
@@ -2419,7 +2419,7 @@ msgstr ""
 msgid "Integration key of an Events API v2 integration."
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:130
+#: dodock_wolf/wolf/compliance.py:131
 msgid "Intermediate report (72 h after the initial notification)"
 msgstr ""
 
@@ -2435,7 +2435,7 @@ msgstr ""
 msgid "Intermediate report requested at"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:128
+#: dodock_wolf/wolf/compliance.py:129
 msgid "Intermediate report requested by the CSIRT / authority"
 msgstr ""
 
@@ -2732,7 +2732,7 @@ msgstr ""
 msgid "Lessons Learned"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:212
+#: dodock_wolf/wolf/compliance.py:213
 msgid "Lessons learned"
 msgstr ""
 
@@ -2994,7 +2994,7 @@ msgstr ""
 msgid "Max Pushes Per Minute"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:218
+#: dodock_wolf/wolf/compliance.py:219
 msgid "Measures taken or planned"
 msgstr ""
 
@@ -3032,7 +3032,7 @@ msgid "Merged into"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:211
-#: dodock_wolf/wolf/incident_ops.py:272
+#: dodock_wolf/wolf/incident_ops.py:276
 #, python-brace-format
 msgid "Merged into {0}"
 msgstr ""
@@ -3131,11 +3131,11 @@ msgstr ""
 msgid "Moves"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:207
+#: dodock_wolf/wolf/compliance.py:208
 msgid "NIS2 Art. 23(4)(e): if the incident is still ongoing when the final report is due, send a progress report then, and the final report within one month of handling the incident."
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:191
+#: dodock_wolf/wolf/compliance.py:192
 #, python-brace-format
 msgid "NIS2 intermediate report requested on {0}"
 msgstr ""
@@ -3144,7 +3144,7 @@ msgstr ""
 msgid "NIS2 significant incident"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:189
+#: dodock_wolf/wolf/compliance.py:190
 #, python-brace-format
 msgid "NIS2 significant incident, aware since {0}"
 msgstr ""
@@ -3265,7 +3265,7 @@ msgstr ""
 msgid "No published security advisory applies to Frappe or ERPNext"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:204
+#: dodock_wolf/wolf/compliance.py:205
 msgid "No regulatory flag is set on this incident."
 msgstr ""
 
@@ -3442,12 +3442,12 @@ msgid "OS"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:71
-#: dodock_wolf/wolf/compliance.py:165
+#: dodock_wolf/wolf/compliance.py:166
 msgid "OVERDUE"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:90
-#: dodock_wolf/wolf/compliance.py:199 frontend/src/pages/IncidentPage.vue:353
+#: dodock_wolf/wolf/compliance.py:200 frontend/src/pages/IncidentPage.vue:353
 msgid "Obligation"
 msgstr ""
 
@@ -3776,7 +3776,7 @@ msgstr ""
 msgid "Personal data breach (GDPR Art. 33)"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:132
+#: dodock_wolf/wolf/compliance.py:133
 msgid "Personal data breach notification to the authority (72 h)"
 msgstr ""
 
@@ -3805,7 +3805,7 @@ msgstr ""
 msgid "Postmortem"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:211
+#: dodock_wolf/wolf/compliance.py:212
 msgid "Postmortem summary"
 msgstr ""
 
@@ -3818,7 +3818,7 @@ msgstr ""
 msgid "Preceding change"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:228
+#: dodock_wolf/wolf/compliance.py:229
 msgid "Prepared from Dodock Wolf. Check every fact before sending it to an authority."
 msgstr ""
 
@@ -3951,7 +3951,7 @@ msgstr ""
 msgid "Raw metric samples are kept this long, then only their 1-minute and 1-hour rollups. Samples not rolled up yet are never purged."
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:259
+#: dodock_wolf/wolf/incident_ops.py:263
 msgid "Re-opened"
 msgstr ""
 
@@ -4274,7 +4274,7 @@ msgstr ""
 msgid "Root Cause"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:211
+#: dodock_wolf/wolf/compliance.py:212
 msgid "Root cause"
 msgstr ""
 
@@ -4431,7 +4431,7 @@ msgstr ""
 msgid "Scope filters"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:181
+#: dodock_wolf/wolf/compliance.py:182
 #, python-brace-format
 msgid "Scope: {0}"
 msgstr ""
@@ -4527,7 +4527,7 @@ msgid "Sending errors reported: {0} event records, last"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:90
-#: dodock_wolf/wolf/compliance.py:199 frontend/src/pages/IncidentPage.vue:355
+#: dodock_wolf/wolf/compliance.py:200 frontend/src/pages/IncidentPage.vue:355
 msgid "Sent"
 msgstr ""
 
@@ -4585,7 +4585,7 @@ msgstr ""
 msgid "Set it as <code>agent_secret</code> in <code>/etc/wolf-agent/config.json</code> on the host and restart <code>wolf-agent</code>, or run <code>wolf-agent register</code> again."
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:260
+#: dodock_wolf/wolf/incident_ops.py:264
 #, python-brace-format
 msgid "Set status to {0}"
 msgstr ""
@@ -4659,7 +4659,7 @@ msgstr ""
 msgid "Severity"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:182
+#: dodock_wolf/wolf/compliance.py:183
 #, python-brace-format
 msgid "Severity: {0}; status: {1}"
 msgstr ""
@@ -4906,7 +4906,7 @@ msgstr ""
 msgid "Started At"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:183
+#: dodock_wolf/wolf/compliance.py:184
 #, python-brace-format
 msgid "Started: {0}; resolved: {1}"
 msgstr ""
@@ -4935,7 +4935,7 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_postmortem_action_item/wolf_postmortem_action_item.json:39
 #: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:52
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:149
-#: dodock_wolf/wolf/compliance.py:199
+#: dodock_wolf/wolf/compliance.py:200
 #: frontend/src/components/ResponsePanel.vue:109
 #: frontend/src/pages/IncidentPage.vue:356
 msgid "Status"
@@ -4960,7 +4960,7 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:264
 #: dodock_wolf/dodock_wolf/doctype/wolf_journal_entry/wolf_journal_entry.json:51
 #: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:135
-#: dodock_wolf/wolf/compliance.py:209
+#: dodock_wolf/wolf/compliance.py:210
 msgid "Summary"
 msgstr ""
 
@@ -5283,7 +5283,7 @@ msgstr ""
 #. Label of the timeline_html (HTML) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:259
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:129
-#: dodock_wolf/wolf/compliance.py:226 frontend/src/pages/IncidentPage.vue:408
+#: dodock_wolf/wolf/compliance.py:227 frontend/src/pages/IncidentPage.vue:408
 #: frontend/src/pages/IncidentPage.vue:410
 msgid "Timeline"
 msgstr ""
@@ -5301,11 +5301,11 @@ msgstr ""
 msgid "Timeline Snapshot"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:184
+#: dodock_wolf/wolf/compliance.py:185
 msgid "Times in the site time zone"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:184 frontend/src/pages/IncidentPage.vue:413
+#: dodock_wolf/wolf/compliance.py:185 frontend/src/pages/IncidentPage.vue:413
 #, python-brace-format
 msgid "Times in {0}"
 msgstr ""
@@ -5394,10 +5394,6 @@ msgstr ""
 
 #: dodock_wolf/wolf/posture.py:37
 msgid "Two-factor authentication for System Managers"
-msgstr ""
-
-#: tests/test_i18n.py:8
-msgid "Two-factor authentication is off"
 msgstr ""
 
 #. Description of the 'Transport' (Select) field in DocType 'Wolf Settings'
@@ -5907,7 +5903,7 @@ msgstr ""
 msgid "Wolf did not propose this action for this incident (or it was already approved)."
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:180
+#: dodock_wolf/wolf/compliance.py:181
 #, python-brace-format
 msgid "Wolf incident: {0}"
 msgstr ""
@@ -6317,7 +6313,6 @@ msgstr ""
 msgid "disable_user"
 msgstr ""
 
-#: dodock_wolf/wolf/posture.py:96
 #: frontend/src/components/dash/MonitoringPanel.vue:23
 msgid "disabled"
 msgstr ""
@@ -6332,12 +6327,12 @@ msgstr ""
 msgid "disabled ({0}), jobs every {1}"
 msgstr ""
 
-#: dodock_wolf/wolf/posture.py:90
+#: dodock_wolf/wolf/posture.py:90 dodock_wolf/wolf/posture.py:96
 msgid "disabled in System Settings"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:71
-#: dodock_wolf/wolf/compliance.py:165
+#: dodock_wolf/wolf/compliance.py:166
 msgid "due within 6 h"
 msgstr ""
 
@@ -6611,10 +6606,6 @@ msgstr ""
 
 #: dodock_wolf/api/agent.py:38
 msgid "kind must be agent, satellite or integration"
-msgstr ""
-
-#: dodock_wolf/wolf/catalog.py:93
-msgid "label"
 msgstr ""
 
 #. Option for the 'Aggregation' (Select) field in DocType 'Wolf Alert Rule'
@@ -6933,7 +6924,7 @@ msgid "only for {0}"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:71
-#: dodock_wolf/wolf/compliance.py:165
+#: dodock_wolf/wolf/compliance.py:166
 msgid "open"
 msgstr ""
 
@@ -7096,12 +7087,12 @@ msgid "sent"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:72
-#: dodock_wolf/wolf/compliance.py:166
+#: dodock_wolf/wolf/compliance.py:167
 msgid "sent late"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:72
-#: dodock_wolf/wolf/compliance.py:165
+#: dodock_wolf/wolf/compliance.py:166
 msgid "sent on time"
 msgstr ""
 
@@ -7303,10 +7294,6 @@ msgstr ""
 msgid "udp"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:93
-msgid "unit"
-msgstr ""
-
 #: frontend/src/components/dash/MonitoringPanel.vue:136
 msgid "unknown"
 msgstr ""
@@ -7408,7 +7395,7 @@ msgstr ""
 msgid "you cannot apply this to your own account"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:201
+#: dodock_wolf/wolf/compliance.py:202
 #, python-brace-format
 msgid "{0} (estimated)"
 msgstr ""
@@ -7438,7 +7425,7 @@ msgstr ""
 msgid "{0} ({1})"
 msgstr ""
 
-#: dodock_wolf/wolf/compliance.py:222
+#: dodock_wolf/wolf/compliance.py:223
 #, python-brace-format
 msgid "{0} ({1}, owner {2})"
 msgstr ""
@@ -7453,7 +7440,7 @@ msgstr ""
 msgid "{0} SPF records: receivers treat that as an error"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:262
+#: dodock_wolf/wolf/incident_ops.py:266
 #, python-brace-format
 msgid "{0} acknowledged"
 msgstr ""
@@ -7493,27 +7480,27 @@ msgstr ""
 msgid "{0} cannot be grouped by {1}: use {2}"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:278
+#: dodock_wolf/wolf/incident_ops.py:282
 #, python-brace-format
 msgid "{0} cleared the merge target"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:276
+#: dodock_wolf/wolf/incident_ops.py:280
 #, python-brace-format
 msgid "{0} cleared the owner"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:274
+#: dodock_wolf/wolf/incident_ops.py:278
 #, python-brace-format
 msgid "{0} cleared the severity"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:280
+#: dodock_wolf/wolf/incident_ops.py:284
 #, python-brace-format
 msgid "{0} cleared {1}"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:282
+#: dodock_wolf/wolf/incident_ops.py:286
 #, python-brace-format
 msgid "{0} commented"
 msgstr ""
@@ -7660,7 +7647,7 @@ msgstr ""
 msgid "{0} medium"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:272
+#: dodock_wolf/wolf/incident_ops.py:276
 #, python-brace-format
 msgid "{0} merged it into {1}"
 msgstr ""
@@ -7782,7 +7769,7 @@ msgstr ""
 msgid "{0} per {1}, read from {2} data, {3} to {4}."
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:266
+#: dodock_wolf/wolf/incident_ops.py:270
 #, python-brace-format
 msgid "{0} re-opened"
 msgstr ""
@@ -7813,7 +7800,7 @@ msgstr ""
 msgid "{0} reported, last {1}"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:264
+#: dodock_wolf/wolf/incident_ops.py:268
 #, python-brace-format
 msgid "{0} resolved"
 msgstr ""
@@ -7850,22 +7837,22 @@ msgstr ""
 msgid "{0} services"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:267
+#: dodock_wolf/wolf/incident_ops.py:271
 #, python-brace-format
 msgid "{0} set status to {1}"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:276
+#: dodock_wolf/wolf/incident_ops.py:280
 #, python-brace-format
 msgid "{0} set the owner to {1}"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:274
+#: dodock_wolf/wolf/incident_ops.py:278
 #, python-brace-format
 msgid "{0} set the severity to {1}"
 msgstr ""
 
-#: dodock_wolf/wolf/incident_ops.py:280
+#: dodock_wolf/wolf/incident_ops.py:284
 #, python-brace-format
 msgid "{0} set {1} to {2}"
 msgstr ""
@@ -7956,6 +7943,7 @@ msgstr ""
 msgid "{0} within its rules"
 msgstr ""
 
+#: frontend/src/components/dash/MonitoringPanel.vue:89
 #: frontend/src/components/dash/WindowTiles.vue:53
 #, python-brace-format
 msgid "{0} worker"

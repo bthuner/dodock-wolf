@@ -13,7 +13,7 @@ value no rule watches, a value its rules accept, and a value a rule has opened a
 
 from datetime import timedelta
 
-from dodock_wolf.wolf.i18n import N_, _, fmt
+from dodock_wolf.wolf.i18n import N_, _, fmt, translate
 
 
 # Default agent cadences. An agent configured with a longer `tls.interval` or
@@ -90,12 +90,12 @@ def shown(spec):
 	A custom metric's label is its name: left as it is."""
 	if spec.get("metric") not in CATALOG:
 		return dict(spec)
-	return {**spec, "label": _(spec["label"]), "unit": _(spec["unit"])}
+	return {**spec, "label": translate(spec["label"]), "unit": translate(spec["unit"])}
 
 
 def caveats():
 	"""CAVEATS in the reader's language."""
-	return {metric: _(text) for metric, text in CAVEATS.items()}
+	return {metric: translate(text) for metric, text in CAVEATS.items()}
 
 
 def stale_after(metric):
@@ -194,7 +194,7 @@ def describe(metric):
 		"aggregations": AGGREGATIONS[spec["kind"]],
 		"default_aggregation": DEFAULT_AGGREGATION[spec["kind"]],
 		"group_bys": group_bys,
-		"caveat": _(CAVEATS[metric]) if metric in CAVEATS else None,
+		"caveat": translate(CAVEATS[metric]) if metric in CAVEATS else None,
 	}
 
 

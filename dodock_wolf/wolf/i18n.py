@@ -4,6 +4,7 @@
 
     _("Two-factor authentication is off")       # the reader's language in a request
     fmt(_("{0} of {1} hosts"), shown, total)    # placeholders filled safely
+    translate(status, "Wolf Incident")          # a value, looked up when shown
 
 `_` is frappe._ when Frappe is there (a request: the user's language; a job: the system's) and
 the English otherwise (the unit tests, the agent). Frappe's extractor reads the `_("...")`
@@ -28,6 +29,21 @@ def _(text):
 	if not getattr(frappe.local, "site", None):
 		return text  # no site: nothing to translate with
 	return frappe._(text)
+
+
+def translate(text, context=None):
+	"""A value looked up when it is shown: a string marked with `N_`, or a Select value with its
+	DocType as `context` (a status reads « Ouvert » on an incident). Not an extraction keyword, so a
+	variable never puts its own name into the catalog, as `_(variable)` would."""
+	if not text or not isinstance(text, str):
+		return text
+	try:
+		import frappe
+	except ImportError:
+		return text
+	if not getattr(frappe.local, "site", None):
+		return text
+	return frappe._(text, context=context)
 
 
 def N_(text):

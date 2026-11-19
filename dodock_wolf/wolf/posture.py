@@ -93,7 +93,7 @@ def check_settings(settings, system_manager_2fa):
 		rows.append(_row("password_policy", PASS, fmt(_("enabled, minimum score {0}"), f"{score:g}")))
 	else:
 		policy_on = _num(settings.get("enable_password_policy"))
-		rows.append(_row("password_policy", FAIL, _("disabled") if not policy_on else fmt(_("minimum score {0}"), f"{score:g}")))
+		rows.append(_row("password_policy", FAIL, _("disabled in System Settings") if not policy_on else fmt(_("minimum score {0}"), f"{score:g}")))
 	attempts = _num(settings.get("allow_consecutive_login_attempts"))
 	if attempts is not None and 1 <= attempts <= MAX_LOGIN_ATTEMPTS:
 		text = _("locked after 1 failed login") if attempts == 1 else fmt(_("locked after {0} failed logins"), f"{attempts:g}")

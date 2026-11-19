@@ -244,6 +244,10 @@ def describe_activity(entry, user_label=None, translate=False):
 	"""One line of plain text for an activity entry. English by default (the postmortem snapshot is
 	stored); `translate` gives the reader's language (the timeline, made per request)."""
 	_ = i18n._ if translate else _english
+
+	def value(v, doctype):  # a status or severity shown as it reads in Desk
+		return i18n.translate(v, doctype) if translate else v
+
 	who = user_label or entry.get("user") or ("Wolf" if entry.get("auto") or entry.get("kind") == "opened" else "")
 	kind = entry.get("kind")
 	if kind == "opened":
@@ -264,14 +268,14 @@ def describe_activity(entry, user_label=None, translate=False):
 			return fmt(_("{0} resolved"), who).strip()
 		if to == "Open":
 			return fmt(_("{0} re-opened"), who).strip()
-		return fmt(_("{0} set status to {1}"), who, to).strip()
+		return fmt(_("{0} set status to {1}"), who, value(to, "Wolf Incident")).strip()
 	if kind == "field":
 		field = entry.get("field") or ""
 		to = entry.get("to")
 		if field == "merged_into" and to:
 			return fmt(_("{0} merged it into {1}"), who, to) if who else fmt(_("Merged into {0}"), to)
 		if field == "severity":
-			return (fmt(_("{0} set the severity to {1}"), who, to) if to else fmt(_("{0} cleared the severity"), who)).strip()
+			return (fmt(_("{0} set the severity to {1}"), who, value(to, "Wolf Incident")) if to else fmt(_("{0} cleared the severity"), who)).strip()
 		if field == "assigned_to":
 			return (fmt(_("{0} set the owner to {1}"), who, to) if to else fmt(_("{0} cleared the owner"), who)).strip()
 		if field == "merged_into":
