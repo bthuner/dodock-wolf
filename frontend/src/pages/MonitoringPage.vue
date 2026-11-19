@@ -18,7 +18,6 @@ const onboarding = ref(null)
 async function load() {
   loading.value = true
   error.value = null
-  onboarding.value?.load()
   try {
     monitoring.value = await call('dodock_wolf.api.dashboard.get_monitoring')
   } catch (e) {
@@ -27,13 +26,17 @@ async function load() {
     loading.value = false
   }
 }
-onMounted(load)
+onMounted(load) // the checklist loads itself when it mounts
+function refresh() {
+  onboarding.value?.load()
+  return load()
+}
 </script>
 
 <template>
   <PageHeader>
     <PageTitle :title="__('Monitoring')" />
-    <Button :label="__('Refresh')" icon-left="lucide-refresh-cw" :loading="loading" @click="load" />
+    <Button :label="__('Refresh')" icon-left="lucide-refresh-cw" :loading="loading" @click="refresh" />
   </PageHeader>
   <div class="wolf-page space-y-5">
     <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>

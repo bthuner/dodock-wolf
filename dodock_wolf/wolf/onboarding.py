@@ -38,19 +38,24 @@ def steps(facts):
 		      _("How to install it"), f"{docs}/install/wolf-agent"),  # fmt: skip
 		_step("reporting", fresh,
 		      _("The agent reports"),
-		      fmt(_("{0} of {1} reporting"), fresh, agents) if agents else _("Waiting for a first agent."),
+		      ((fmt(_("1 of {0} reporting"), agents) if fresh == 1 else fmt(_("{0} of {1} reporting"), fresh, agents))
+		       if agents else _("Waiting for a first agent.")),
 		      _("Monitoring"), "/wolf/monitoring"),  # fmt: skip
-		_step("host_setup", reported and not failing,
+		# every reporting host checked (wolf-agent doctor, hourly), and none failing
+		_step("host_setup", fresh and reported == fresh and not failing,
 		      _("Each host gives the agent what it needs"),
 		      (fmt(_("{0} host to fix") if failing == 1 else _("{0} hosts to fix"), failing) if failing
-		       else _("Every reporting agent has what it needs.") if reported
+		       else _("Every reporting agent has what it needs.") if fresh and reported == fresh
+		       else fmt(_("{0} of {1} hosts checked; agents check their host every hour."), reported, fresh) if reported
 		       else _("Agents check their host every hour; none has reported yet.")),
 		      _("Monitoring"), "/wolf/monitoring"),  # fmt: skip
-		_step("scheduler", facts.get("scheduler_enabled") and tick and tick <= 60,
+		# an older Frappe does not say its tick: not a reason to keep the list up for ever
+		_step("scheduler", facts.get("scheduler_enabled") and (not tick or tick <= 60),
 		      _("Rules run every minute"),
 		      (_("The scheduler is disabled: no rule runs.") if not facts.get("scheduler_enabled")
 		       else fmt(_("Frappe's scheduler ticks every {0} s: set scheduler_tick_interval to 60."), tick)
-		       if tick and tick > 60 else _("The scheduler runs every minute.")),
+		       if tick and tick > 60 else _("The scheduler runs every minute.") if tick
+		       else _("The scheduler is on; this Frappe does not say how often it ticks.")),
 		      _("Scheduler pace"), f"{docs}/install/wolf-app#{facts.get('scheduler_anchor') or 'scheduler-pace'}"),  # fmt: skip
 		_step("rules", facts.get("rules", 0),
 		      _("Alert rules are on"),

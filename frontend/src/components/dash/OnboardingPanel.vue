@@ -5,20 +5,22 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import { call } from '@/services/api'
+import { call, failure } from '@/services/api'
 import { __ } from '@/services/i18n'
 
 const props = defineProps({ compact: { type: Boolean, default: false } })
 
 const data = ref(null)
 const error = ref(null)
+const expired = ref(false)
 
 async function load() {
   error.value = null
   try {
     data.value = await call('dodock_wolf.api.onboarding.get_onboarding')
   } catch (e) {
-    error.value = e?.message || String(e)
+    expired.value = !!e?.expired
+    error.value = failure(e, __('the setup checklist'))
   }
 }
 onMounted(load)
@@ -62,5 +64,6 @@ const inApp = (href) => href === '/wolf' || href.startsWith('/wolf/')
       {{ __('This list goes away once every step is done; Monitoring keeps it.') }}
     </p>
   </section>
-  <p v-else-if="error && !compact" role="alert" class="wolf-alert">{{ error }}</p>
+  <!-- the page says itself when the session ended: no second alert for the same thing -->
+  <p v-else-if="error && !compact && !expired" role="alert" class="wolf-alert">{{ error }}</p>
 </template>

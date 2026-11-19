@@ -14,3 +14,4 @@ dodock_wolf.patches.default_crowdsec_settings
 dodock_wolf.patches.default_entity_correlation
 dodock_wolf.patches.default_detector_modes
 dodock_wolf.patches.default_blocking
+dodock_wolf.patches.test_notification_ok_at

@@ -24,13 +24,24 @@ class TestOnboarding(unittest.TestCase):
 
 	def test_each_step_says_what_is_left(self):
 		s = by_id({**DONE, "fresh": 1, "setup_failing": 1, "tick_seconds": 240, "channels": 0, "tested": False})
-		self.assertEqual(s["reporting"]["detail"], "1 of 2 reporting")
+		self.assertEqual(s["reporting"]["detail"], "1 of 2 reporting")  # its own string: French agrees with 1
 		self.assertTrue(s["reporting"]["done"])  # one is enough to go on
 		self.assertEqual((s["host_setup"]["done"], s["host_setup"]["detail"]), (False, "1 host to fix"))
 		self.assertEqual(s["scheduler"]["detail"], "Frappe's scheduler ticks every 240 s: set scheduler_tick_interval to 60.")
 		self.assertFalse(s["scheduler"]["done"])
 		self.assertFalse(s["channel"]["done"])
 		self.assertFalse(s["test"]["done"])
+
+	def test_a_host_not_checked_yet_keeps_the_step_open(self):
+		s = by_id({**DONE, "setup_reported": 1})
+		self.assertEqual((s["host_setup"]["done"], s["host_setup"]["detail"]),
+		                 (False, "1 of 2 hosts checked; agents check their host every hour."))  # fmt: skip
+
+	def test_an_unknown_tick_does_not_keep_the_list_up(self):
+		s = by_id({**DONE, "tick_seconds": None})
+		self.assertTrue(s["scheduler"]["done"])
+		self.assertEqual(s["scheduler"]["detail"], "The scheduler is on; this Frappe does not say how often it ticks.")
+		self.assertFalse(by_id({**DONE, "scheduler_enabled": False})["scheduler"]["done"])
 
 	def test_no_setup_reported_yet_is_not_done(self):
 		s = by_id({**DONE, "setup_reported": 0})

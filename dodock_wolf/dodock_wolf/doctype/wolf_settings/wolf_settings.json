@@ -104,7 +104,8 @@
   "journal_retention_days",
   "links_section",
   "public_url",
-  "action_link_hours"
+  "action_link_hours",
+  "test_notification_ok_at"
  ],
  "fields": [
   {
@@ -782,12 +783,19 @@
    "fieldname": "action_link_hours",
    "fieldtype": "Int",
    "label": "Action Link Hours"
+  },
+  {
+   "fieldname": "test_notification_ok_at",
+   "fieldtype": "Datetime",
+   "label": "Test Notification Accepted At",
+   "read_only": 1,
+   "description": "When a channel of an alert rule last accepted a test notification (Send test notification on the rule). The setup checklist in the Wolf UI reads it."
   }
  ],
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-17 14:00:00.000000",
+ "modified": "2026-11-19 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Settings",
