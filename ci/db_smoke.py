@@ -737,27 +737,49 @@ def main():
 				at = start - back * 30 * step
 				rollups.replace_buckets(res_, at, at + step, {("load_1m", gone_host, None, None, None, at): part,
 				                                              ("smoke_kept", gone_host, None, None, None, at): part})
-		for name, kw in (("smoke host cpu", {"metric_name": "cpu_usage", "is_preset": 0}),
-		                 ("High CPU", {"metric_name": "cpu_usage", "is_preset": 1}),
-		                 ("High load", {"metric_name": "load_per_core", "is_preset": 1})):
+		pd = [{"channel_type": "PagerDuty", "enabled": 1, "pagerduty_url": "https://events.pagerduty.com/v2/enqueue",
+		       "pagerduty_routing_key": "smoke-routing-key"}]  # fmt: skip
+		rules_ = (("smoke host cpu", 1, {"metric_name": "cpu_usage", "is_preset": 0}),
+		          ("High CPU", 1, {"metric_name": "cpu_usage", "is_preset": 1, "notify_on_resolve": 1, "channels": pd}),
+		          ("High load", 1, {"metric_name": "load_per_core", "is_preset": 1}),
+		          ("smoke host disk off", 0, {"metric_name": "disk_used_percent", "is_preset": 0}))  # its user disabled it
+		for name, enabled, kw in rules_:
 			if frappe.db.exists("Wolf Alert Rule", name):
 				frappe.delete_doc("Wolf Alert Rule", name, force=True)
-			frappe.get_doc({"doctype": "Wolf Alert Rule", "rule_name": name, "enabled": 1, "signal_type": "metric",
+			frappe.get_doc({"doctype": "Wolf Alert Rule", "rule_name": name, "enabled": 0, "signal_type": "metric",
 			                "aggregation": "min", "operator": ">", "threshold": 90, "window_minutes": 10,
 			                "group_by": "host", "severity": "warning", **kw}).insert(ignore_permissions=True)
-		open_incident = frappe.get_doc({"doctype": "Wolf Incident", "title": "smoke CPU high", "status": "Open",
-		                                "severity": "warning", "alert_rule": "High CPU", "host": gone_host,
-		                                "started_at": now_datetime()}).insert(ignore_permissions=True).name  # fmt: skip
+			# enabled as a v0.1 site has them: 0.2 refuses to save an enabled rule on a removed metric
+			frappe.db.set_value("Wolf Alert Rule", name, "enabled", enabled, update_modified=False)
+		def incident(title, rule_name):
+			return frappe.get_doc({"doctype": "Wolf Incident", "title": title, "status": "Open", "severity": "warning",
+			                       "alert_rule": rule_name, "host": gone_host, "started_at": now_datetime()}).insert(ignore_permissions=True).name
+		open_incident, off_incident = incident("smoke CPU high", "High CPU"), incident("smoke disk full", "smoke host disk off")
 		frappe.db.commit()
+
+		def comments(name):
+			return frappe.get_all("Comment", filters={"reference_doctype": "Wolf Alert Rule", "reference_name": name,
+			                                          "comment_type": "Comment"}, pluck="content")  # fmt: skip
+
+		from dodock_wolf.wolf import notify
+		sent, real_enqueue = [], notify.enqueue
+		notify.enqueue = lambda name, kind, only_stateful=False: sent.append((name, kind, only_stateful)) or True
+		frappe.flags.in_migrate = True  # as bench migrate runs it
 		try:
 			remove_host_metrics.execute()
-			assert frappe.db.get_value("Wolf Incident", open_incident, "status") == "Resolved", "its open incident stayed open"
-			assert "rule was disabled" in (frappe.db.get_value("Wolf Incident", open_incident, "summary") or "")
+			frappe.flags.in_migrate = False
+			for name in (open_incident, off_incident):  # the user-disabled rule's too: nothing evaluates it
+				assert frappe.db.get_value("Wolf Incident", name, "status") == "Resolved", f"{name} stayed open"
+				assert "rule was disabled" in (frappe.db.get_value("Wolf Incident", name, "summary") or "")
+				# journal.capture skips during migrate: the patch's resolutions are recorded all the same
+				assert frappe.db.exists("Wolf Journal Entry", {"kind": "incident", "ref_name": name,
+				                                               "summary": f"{name} resolved automatically"}), f"{name}: no journal entry"
+			# PagerDuty hears it (its alert closes); notify_on_resolve does not: an upgrade pages nobody
+			assert sent == [(open_incident, "resolved", True)], sent
 			for name in ("smoke host cpu", "High CPU", "High load"):
 				assert not frappe.db.get_value("Wolf Alert Rule", name, "enabled"), f"{name} still enabled"
-				comments = frappe.get_all("Comment", filters={"reference_doctype": "Wolf Alert Rule", "reference_name": name,
-				                                              "comment_type": "Comment"}, pluck="content")  # fmt: skip
-				assert any("removed in 0.2" in c and "#136" in c for c in comments), comments
+				assert len([c for c in comments(name) if "removed in 0.2" in c and "#136" in c]) == 1, comments(name)
+			assert not comments("smoke host disk off"), "a rule its user disabled got the upgrade's comment"
 			assert frappe.db.get_value("Wolf Alert Rule", "smoke queue", "enabled"), "a rule on a kept metric was disabled"
 			left = frappe.db.sql("""select count(*) from `tabWolf Metric Sample` where metric_name in %(m)s""",
 			                     {"m": tuple(REMOVED_METRICS)})[0][0]
@@ -769,15 +791,45 @@ def main():
 			log = frappe.get_all("Error Log", filters={"method": "Dodock Wolf 0.2: host resource metrics removed"},
 			                     fields=["error"], order_by="creation desc", limit=1)
 			assert log and "High CPU" in log[0].error and "smoke host cpu" in log[0].error, log
-			remove_host_metrics.execute()  # again: nothing left to do, no error
-		finally:
-			frappe.delete_doc("Wolf Incident", open_incident, force=True, ignore_permissions=True)
+			assert "smoke host disk off" not in log[0].error.split("were disabled", 1)[1].split(")", 1)[0], log
+
+			# again: every rule is disabled already, nothing is open or stored: no second comment, no error
+			remove_host_metrics.execute()
 			for name in ("smoke host cpu", "High CPU", "High load"):
+				assert len(comments(name)) == 1, f"{name}: the re-run commented again: {comments(name)}"
+			assert len(sent) == 1, sent
+
+			# 0.2 refuses an enabled rule on a removed metric, saved or imported; a disabled one stays editable
+			doc = frappe.get_doc("Wolf Alert Rule", "smoke host cpu")
+			doc.threshold = 95
+			doc.save(ignore_permissions=True)
+			doc.enabled = 1
+			try:
+				doc.save(ignore_permissions=True)
+				raise AssertionError("an enabled rule on cpu_usage was saved")
+			except frappe.ValidationError as e:
+				assert "was removed in Dodock Wolf 0.2" in str(e), e
+			frappe.local.message_log = []
+			from dodock_wolf.api import rules_io as rules_yaml_api
+			plan = rules_yaml_api.import_document({"version": 1, "rules": [
+				{"rule_name": "smoke host cpu", "enabled": 1},
+				{"rule_name": "smoke yaml load", "enabled": 1, "metric_name": "load_1m", "threshold": 4}]}, apply=True)  # fmt: skip
+			assert not plan["applied"] and plan["counts"]["invalid"] == 2, plan
+			assert all("was removed in Dodock Wolf 0.2" in r["errors"][0] for r in plan["rules"]), plan["rules"]
+			assert not frappe.db.exists("Wolf Alert Rule", "smoke yaml load")
+			assert not frappe.db.get_value("Wolf Alert Rule", "smoke host cpu", "enabled")
+		finally:
+			notify.enqueue = real_enqueue
+			frappe.flags.in_migrate = False
+			for name in (open_incident, off_incident):
+				frappe.delete_doc("Wolf Incident", name, force=True, ignore_permissions=True)
+			for name, _enabled, _kw in rules_:
 				frappe.delete_doc("Wolf Alert Rule", name, force=True, ignore_missing=True)
 			frappe.db.delete("Wolf Metric Sample", {"host": gone_host})
 			frappe.db.delete("Wolf Metric Rollup", {"host": gone_host})
 			frappe.db.commit()
-		return "a v0.1 agent's host metrics dropped on ingest; the patch disabled 3 rules with a comment, resolved their open incident and deleted their rows"
+		return ("a v0.1 agent's host metrics dropped on ingest; the patch disabled 3 enabled rules with one comment each, "
+		        "resolved 2 open incidents (journaled, PagerDuty told), deleted their rows; enabled rules on them refused")
 
 	def purge_metrics():
 		raw_hours, minute_days, hour_days = rollups.retention()
