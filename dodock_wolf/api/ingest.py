@@ -158,6 +158,8 @@ def store_batch(agent, metrics, events_in, correlate=None, attempt=None):
 	"""
 	if correlate is None:
 		correlate = not satellite.is_satellite()  # a satellite opens no incidents
+	# a push queued before the upgrade to 0.2 may still hold host resource metrics: never stored
+	metrics = [m for m in metrics if m["metric_name"] not in catalog.REMOVED_METRICS]
 	try:
 		events.insert_metrics(metrics, agent=agent)
 		dropper = detectors.Dropper()  # `external` mode: Wolf's own detector gives way (#72 step 4)

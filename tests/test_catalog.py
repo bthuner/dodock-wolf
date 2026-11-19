@@ -55,6 +55,9 @@ class TestRemovedMetrics(unittest.TestCase):
 
 		src = pathlib.Path(__file__).parents[1].joinpath("dodock_wolf/api/ingest.py").read_text()
 		self.assertIn('if metric["metric_name"] in catalog.REMOVED_METRICS:\n\t\t\tcontinue', src)
+		# and so does the store, for a push queued before the upgrade
+		store = src.split("def store_batch(", 1)[1].split("events.insert_metrics(", 1)[0]
+		self.assertIn('metrics = [m for m in metrics if m["metric_name"] not in catalog.REMOVED_METRICS]', store)
 
 	def test_the_upgrade_patch_runs(self):
 		import pathlib
