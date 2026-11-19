@@ -19,7 +19,7 @@ server yet.
 | 05 Les trajets | Six flows, hop by hop: a server is created, a hostname is routed, a number is measured, a person is paged, a customer is told, an image is built |
 | 06 Ce qui sort | The eight metrics a customer's server sends, and what stays on it |
 | 07 L'angle mort | Who sees what: Atlas, Datum and Beacon, Central, the Wolf Agent |
-| 08 Les ponts | The bridges, cheapest first, and the closed ones |
+| 08 Les ponts | The bridges, cheapest first, and what depends on who runs the platform (Dokos will run its own, with dokopilot) |
 | 09 Les corrections | What the code corrected in #133, #134, #135 and in Frappe's own documents |
 | 10 Le terrain | What to check on a real server |
 
