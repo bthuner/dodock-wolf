@@ -35,6 +35,30 @@ class TestCatalog(unittest.TestCase):
 		self.assertEqual(sent - set(catalog.CATALOG), set())
 
 
+class TestSecurityMetrics(unittest.TestCase):
+	"""The metrics security reads (#136, step 2): named once, so the operations metrics can go."""
+
+	def test_they_are_catalogued(self):
+		self.assertEqual(catalog.SECURITY_METRICS - set(catalog.CATALOG), set())
+		self.assertEqual(catalog.role("tls_days_left"), "security")
+		self.assertEqual(catalog.role("cpu_usage"), "operations")
+
+	def test_the_security_score_reads_only_them(self):
+		import pathlib
+		import re
+
+		src = pathlib.Path(__file__).parents[1].joinpath("dodock_wolf/api/security.py").read_text()
+		read = set(re.findall(r'_latest\("([a-z0-9_]+)"', src)) | set(re.findall(r'"metric_name": "([a-z0-9_]+)"', src))
+		self.assertTrue(read)
+		self.assertEqual(read - catalog.SECURITY_METRICS, set())
+
+	def test_every_metric_preset_is_one_or_the_other(self):
+		# a security preset on an operations metric would break when those go
+		security = {p["metric_name"] for p in PRESETS if p.get("signal_type") == "metric"} & catalog.SECURITY_METRICS
+		self.assertEqual(security, {"backup_age_hours", "tls_days_left", "exposed_services", "site_config_risks",
+		                            "security_score", "agent_setup_failed"})  # fmt: skip
+
+
 class TestState(unittest.TestCase):
 	RULE = {"name": "R1", "metric_name": "disk_used_percent", "filter_host": None, "filter_bench": None, "filter_site": None}
 
