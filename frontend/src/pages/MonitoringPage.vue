@@ -5,6 +5,7 @@ import { inject, onMounted, ref } from 'vue'
 import LoadingNote from '@/components/LoadingNote.vue'
 import PageTitle from '@/components/PageTitle.vue'
 import MonitoringPanel from '@/components/dash/MonitoringPanel.vue'
+import OnboardingPanel from '@/components/dash/OnboardingPanel.vue'
 import { call, failure } from '@/services/api'
 import { __ } from '@/services/i18n'
 
@@ -12,6 +13,7 @@ const boot = inject('boot')
 const monitoring = ref(null)
 const error = ref(null)
 const loading = ref(false)
+const onboarding = ref(null)
 
 async function load() {
   loading.value = true
@@ -24,17 +26,22 @@ async function load() {
     loading.value = false
   }
 }
-onMounted(load)
+onMounted(load) // the checklist loads itself when it mounts
+function refresh() {
+  onboarding.value?.load()
+  return load()
+}
 </script>
 
 <template>
   <PageHeader>
     <PageTitle :title="__('Monitoring')" />
-    <Button :label="__('Refresh')" icon-left="lucide-refresh-cw" :loading="loading" @click="load" />
+    <Button :label="__('Refresh')" icon-left="lucide-refresh-cw" :loading="loading" @click="refresh" />
   </PageHeader>
   <div class="wolf-page space-y-5">
     <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>
     <LoadingNote v-if="loading && !monitoring && !error" />
+    <OnboardingPanel v-if="boot.can?.configure && !boot.satellite" ref="onboarding" />
     <MonitoringPanel v-if="monitoring" :monitoring="monitoring" :time-zone="boot.time_zone" />
   </div>
 </template>

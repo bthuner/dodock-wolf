@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Dodock Wolf VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/bthuner/dodock-wolf/issues\n"
-"POT-Creation-Date: 2026-11-19 00:04+0000\n"
-"PO-Revision-Date: 2026-11-19 00:04+0000\n"
+"POT-Creation-Date: 2026-11-19 09:18+0000\n"
+"PO-Revision-Date: 2026-11-19 09:18+0000\n"
 "Last-Translator: Dodock Wolf contributors\n"
 "Language-Team: Dodock Wolf contributors\n"
 "MIME-Version: 1.0\n"
@@ -19,6 +19,10 @@ msgstr ""
 #. Option for the 'Operator' (Select) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:250
 msgid "!="
+msgstr ""
+
+#: frontend/src/components/dash/OnboardingPanel.vue:49
+msgid "(done)"
 msgstr ""
 
 #: frontend/src/pages/IncidentPage.vue:363
@@ -49,6 +53,10 @@ msgstr ""
 msgid "(none)"
 msgstr ""
 
+#: frontend/src/components/dash/OnboardingPanel.vue:49
+msgid "(to do)"
+msgstr ""
+
 #: frontend/src/pages/ErrorsPage.vue:73
 #, python-brace-format
 msgid "({0} in window)"
@@ -71,6 +79,10 @@ msgstr ""
 msgid "1 = yes"
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:37
+msgid "1 agent registered"
+msgstr ""
+
 #: frontend/src/components/MergeDialog.vue:65
 msgid "1 comment"
 msgstr ""
@@ -82,6 +94,10 @@ msgstr ""
 
 #: dodock_wolf/wolf/posture.py:166
 msgid "1 day"
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:67
+msgid "1 enabled channel"
 msgstr ""
 
 #: frontend/src/components/MergeDialog.vue:64
@@ -109,6 +125,11 @@ msgstr ""
 msgid "1 new row: show"
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:41
+#, python-brace-format
+msgid "1 of {0} reporting"
+msgstr ""
+
 #: frontend/src/pages/IncidentPage.vue:65
 msgid "1 record"
 msgstr ""
@@ -125,6 +146,10 @@ msgstr ""
 msgid "1 risky setting reported by the agent (see the insecure_site_config event)"
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:62
+msgid "1 rule enabled"
+msgstr ""
+
 #: frontend/src/components/dash/SignalsPanel.vue:18
 msgid "1 rule firing"
 msgstr ""
@@ -138,18 +163,18 @@ msgid "1 unknown"
 msgstr ""
 
 #. Label of the hour_retention_days (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:750
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:751
 msgid "1-Hour Rollup Retention (days)"
 msgstr ""
 
 #. Label of the minute_retention_days (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:738
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:739
 msgid "1-Minute Rollup Retention (days)"
 msgstr ""
 
 #. Description of the '1-Hour Rollup Retention (days)' (Int) field in DocType
 #. 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:747
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:748
 msgid "1-hour rollups (7-day charts and longer)."
 msgstr ""
 
@@ -160,7 +185,7 @@ msgstr ""
 
 #. Description of the '1-Minute Rollup Retention (days)' (Int) field in DocType
 #. 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:735
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:736
 msgid "1-minute rollups (charts up to 2 days, long rule windows)."
 msgstr ""
 
@@ -236,7 +261,7 @@ msgid "A System Settings value as stored in the site's database (unset: 0); syst
 msgstr ""
 
 #. Description of the 'Wazuh API User' (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:522
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:523
 msgid "A Wazuh API user allowed to read agents and run active response commands."
 msgstr ""
 
@@ -247,8 +272,12 @@ msgstr ""
 
 #. Description of the 'Apply approved blocks' (Check) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:612
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:613
 msgid "A block a Wolf Manager approves also goes to CrowdSec as a ban for the approved duration, so every bouncer applies it."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:71
+msgid "A channel accepted a test notification."
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:105
@@ -266,18 +295,26 @@ msgstr ""
 
 #. Description of the 'Wazuh Active Response Command' (Data) field in DocType
 #. 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:504
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:505
 msgid "A named command with its timeout, as Wazuh lists it in shared/ar.conf: an <active-response> block for firewall-drop with <timeout>86400</timeout> gives firewall-drop86400. Wazuh removes the block when the timeout runs out; that is the block's duration."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:65
+msgid "A rule tells someone"
 msgstr ""
 
 #. Description of the 'Group Incidents by IP or User' (Check) field in DocType
 #. 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:278
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:279
 msgid "A security event joins the open incident holding an event that names the same IP or e-mail user, whatever its source, host or site. Off: events are attached by site, bench or host only."
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.py:16
 msgid "A site alias is a domain, not an address."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:70
+msgid "A test notification reached its channel"
 msgstr ""
 
 #. Label of the api_key (Data) field in DocType 'Wolf API Key IP'
@@ -310,7 +347,7 @@ msgstr ""
 
 #. Description of the 'Action Link Hours' (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:781
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:782
 msgid "Acknowledge/resolve links in alerts stay valid this long. 0 disables them."
 msgstr ""
 
@@ -357,7 +394,7 @@ msgid "Action Items"
 msgstr ""
 
 #. Label of the action_link_hours (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:784
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:785
 msgid "Action Link Hours"
 msgstr ""
 
@@ -440,7 +477,7 @@ msgid "Agent"
 msgstr ""
 
 #. Label of the agent_silence_minutes (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:216
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:217
 msgid "Agent Silence Minutes"
 msgstr ""
 
@@ -477,7 +514,7 @@ msgstr ""
 
 #. Label of the agents_section (Section Break) field in DocType 'Wolf Settings'
 #. Label of a shortcut in the Dodock Wolf Workspace
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:196
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:197
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:24
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:124
 #: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:187
@@ -487,6 +524,10 @@ msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:39
 msgid "Agents already registered keep working. New registrations need the new token. Continue?"
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:50
+msgid "Agents check their host every hour; none has reported yet."
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:104
@@ -523,6 +564,7 @@ msgstr ""
 msgid "Alert Rules"
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:63 dodock_wolf/wolf/onboarding.py:73
 #: frontend/src/components/dash/MonitoringPanel.vue:65
 msgid "Alert rules"
 msgstr ""
@@ -533,6 +575,10 @@ msgstr ""
 
 #: frontend/src/components/dash/MonitoringPanel.vue:77
 msgid "Alert rules are evaluated at that pace, not every minute."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:61
+msgid "Alert rules are on"
 msgstr ""
 
 #. Label of a Card Break in the Dodock Wolf Workspace
@@ -550,7 +596,7 @@ msgstr ""
 msgid "All"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:140
+#: frontend/src/pages/DashboardPage.vue:142
 msgid "All incidents"
 msgstr ""
 
@@ -566,7 +612,7 @@ msgstr ""
 
 #. Description of the 'Send the journal' (Check) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:715
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:716
 msgid "Also send every signed journal entry (seq, digest, mac): an external copy of the chain."
 msgstr ""
 
@@ -645,7 +691,7 @@ msgid "Apply"
 msgstr ""
 
 #. Label of the crowdsec_apply_blocks (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:615
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:616
 msgid "Apply approved blocks"
 msgstr ""
 
@@ -781,7 +827,7 @@ msgid "Backups"
 msgstr ""
 
 #. Description of the 'Public Url' (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:773
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:774
 msgid "Base URL used in alert links. Defaults to this site's URL."
 msgstr ""
 
@@ -796,7 +842,7 @@ msgstr ""
 
 #. Description of the 'Export Floor (MB per hour)' (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:387
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:388
 msgid "Below this volume in an hour (MB of responses), nothing is compared."
 msgstr ""
 
@@ -841,7 +887,7 @@ msgstr ""
 msgid "Bench services not listening beyond loopback"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:37
+#: frontend/src/pages/DashboardPage.vue:38
 #, python-brace-format
 msgid "Bench {0} on {1}"
 msgstr ""
@@ -860,7 +906,7 @@ msgid "Bind MariaDB, Redis, socket.io and gunicorn to 127.0.0.1 (or a private ad
 msgstr ""
 
 #. Label of the block_with (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:498
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:499
 msgid "Block With"
 msgstr ""
 
@@ -881,7 +927,7 @@ msgstr ""
 
 #. Label of the blocking_section (Section Break) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:491
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:492
 msgid "Blocking"
 msgstr ""
 
@@ -901,7 +947,7 @@ msgstr ""
 
 #. Label of the crowdsec_bouncer_key (Password) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:566
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:567
 msgid "Bouncer API key"
 msgstr ""
 
@@ -957,18 +1003,18 @@ msgid "Cannot import: {0}"
 msgstr ""
 
 #. Label of the capture_error_logs (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:339
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:340
 msgid "Capture Error Logs"
 msgstr ""
 
 #. Label of the capture_scheduler_failures (Check) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:333
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:334
 msgid "Capture failed Scheduled Job Logs"
 msgstr ""
 
 #. Label of the capture_login_failures (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:349
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:350
 msgid "Capture failed logins"
 msgstr ""
 
@@ -996,7 +1042,7 @@ msgstr ""
 
 #. Label of the central_url (Data) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:58
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:128
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:129
 msgid "Central URL"
 msgstr ""
 
@@ -1041,6 +1087,7 @@ msgstr ""
 
 #. Label of the channels (Table) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:402
+#: dodock_wolf/wolf/onboarding.py:68
 msgid "Channels"
 msgstr ""
 
@@ -1054,7 +1101,7 @@ msgstr ""
 
 #. Label of the check_security_advisories (Check) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:464
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:465
 msgid "Check versions against GitHub Security Advisories"
 msgstr ""
 
@@ -1097,17 +1144,17 @@ msgid "Clock skew"
 msgstr ""
 
 #. Label of the siem_ca_file (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:664
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:665
 msgid "Collector CA file"
 msgstr ""
 
 #. Label of the siem_host (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:634
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:635
 msgid "Collector host"
 msgstr ""
 
 #. Description of the 'Event types' (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:707
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:708
 msgid "Comma-separated: security, error, cron_failure, worker_failure, host_metric_alert, deployment."
 msgstr ""
 
@@ -1181,7 +1228,7 @@ msgstr ""
 
 #. Label of the correlation_section (Section Break) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:260
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:261
 msgid "Correlation"
 msgstr ""
 
@@ -1199,7 +1246,7 @@ msgstr ""
 msgid "Count"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:135
+#: frontend/src/pages/DashboardPage.vue:137
 #, python-brace-format
 msgid "Counts: {0}"
 msgstr ""
@@ -1235,7 +1282,7 @@ msgstr ""
 
 #. Label of the crowdsec_section (Section Break) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:545
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:546
 msgid "CrowdSec"
 msgstr ""
 
@@ -1312,29 +1359,29 @@ msgstr ""
 
 #. Label of the honeytoken_api_keys (Small Text) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:480
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:481
 msgid "Decoy API keys"
 msgstr ""
 
 #. Description of the 'Decoy API keys' (Small Text) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:477
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:478
 msgid "Decoy API keys (one per line), e.g. left in an old backup or a repository: any request using one is critical. Do not create them on a real user."
 msgstr ""
 
 #. Description of the 'Decoy users' (Small Text) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:471
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:472
 msgid "Decoy accounts nobody uses (one email per line): any login attempt on them is critical."
 msgstr ""
 
 #. Label of the honeytoken_paths (Small Text) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:486
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:487
 msgid "Decoy paths"
 msgstr ""
 
 #. Label of the honeytoken_users (Small Text) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:474
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:475
 msgid "Decoy users"
 msgstr ""
 
@@ -1373,7 +1420,7 @@ msgstr ""
 #. Label of the deployment_window_minutes (Int) field in DocType 'Wolf
 #. Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:374
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:267
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:268
 msgid "Deployment Window Minutes"
 msgstr ""
 
@@ -1381,13 +1428,13 @@ msgstr ""
 msgid "Deployment before it"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:167
+#: frontend/src/pages/DashboardPage.vue:169
 msgid "Deployments in this window"
 msgstr ""
 
 #. Description of the 'Deployment Window Minutes' (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:264
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:265
 msgid "Deployments this recent are linked to new incidents."
 msgstr ""
 
@@ -1416,7 +1463,7 @@ msgid "Details"
 msgstr ""
 
 #. Label of the detector_match_minutes (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:322
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:323
 msgid "Detector Match Minutes"
 msgstr ""
 
@@ -1476,13 +1523,13 @@ msgstr ""
 
 #. Description of the 'Check versions against GitHub Security Advisories'
 #. (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:461
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:462
 msgid "Download the Frappe and ERPNext security advisories from GitHub once a day and compare them with the versions the agents report (Security posture). An unauthenticated read of public data: nothing about this installation is sent."
 msgstr ""
 
 #. Description of the 'Use IP reputation lists' (Check) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:446
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:447
 msgid "Download the lists below once a day and tag security events whose IP is on one (one severity step more). Only the lists are downloaded; nothing is sent."
 msgstr ""
 
@@ -1523,6 +1570,10 @@ msgstr ""
 msgid "Duration (minutes)"
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:46
+msgid "Each host gives the agent what it needs"
+msgstr ""
+
 #. Label of the nis2_early_warning_at (Datetime) field in DocType 'Wolf
 #. Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:326
@@ -1540,7 +1591,7 @@ msgstr ""
 
 #. Label of the email_queue_stale_minutes (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:418
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:419
 msgid "Email Queue Stale Minutes"
 msgstr ""
 
@@ -1556,7 +1607,7 @@ msgstr ""
 
 #. Label of the signals_section (Section Break) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:403
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:404
 msgid "Email queue and login geography (this site)"
 msgstr ""
 
@@ -1580,7 +1631,7 @@ msgstr ""
 
 #. Label of the entity_correlation_minutes (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:289
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:290
 msgid "Entity Correlation Minutes"
 msgstr ""
 
@@ -1664,7 +1715,7 @@ msgid "Event Count"
 msgstr ""
 
 #. Label of the event_retention_days (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:757
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:758
 msgid "Event Retention Days"
 msgstr ""
 
@@ -1701,7 +1752,7 @@ msgid "Event type"
 msgstr ""
 
 #. Label of the siem_event_types (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:710
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:711
 msgid "Event types"
 msgstr ""
 
@@ -1738,7 +1789,7 @@ msgstr ""
 
 #. Description of the 'Timeline Padding Minutes' (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:271
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:272
 msgid "Events this long before an incident started are shown in its timeline."
 msgstr ""
 
@@ -1748,7 +1799,7 @@ msgstr ""
 
 #. Description of the 'Watch the Email Queue' (Check) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:407
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:408
 msgid "Every 5 minutes: an event while emails wait in the Email Queue longer than the limit below, and while sending errors keep appearing."
 msgstr ""
 
@@ -1759,6 +1810,10 @@ msgstr ""
 
 #: frontend/src/pages/ErrorGroupPage.vue:60
 msgid "Every record of this group you may see, whatever its age."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:48
+msgid "Every reporting agent has what it needs."
 msgstr ""
 
 #: frontend/src/components/TimelineRow.vue:21
@@ -1776,7 +1831,7 @@ msgstr ""
 msgid "Executor"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:128
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:133
 msgid "Expected the rule's fields"
 msgstr ""
 
@@ -1796,12 +1851,12 @@ msgid "Explore"
 msgstr ""
 
 #. Label of the exfiltration_factor (Float) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:398
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:399
 msgid "Export Factor"
 msgstr ""
 
 #. Label of the exfiltration_floor_mb (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:390
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:391
 msgid "Export Floor (MB per hour)"
 msgstr ""
 
@@ -1810,7 +1865,7 @@ msgid "Export to YAML"
 msgstr ""
 
 #. Label of the siem_enabled (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:628
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:629
 msgid "Export to a SIEM"
 msgstr ""
 
@@ -1937,29 +1992,29 @@ msgid "Fix: {0}"
 msgstr ""
 
 #. Label of the capture_admin_logins (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:355
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:356
 msgid "Flag privileged logins from new IPs"
 msgstr ""
 
 #. Label of the capture_admin_countries (Check) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:429
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:430
 msgid "Flag privileged logins from new countries"
 msgstr ""
 
 #. Label of the capture_app_security (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:375
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:376
 msgid "Flag risky application changes"
 msgstr ""
 
 #. Label of the capture_exfiltration (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:382
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:383
 msgid "Flag unusual data exports"
 msgstr ""
 
 #. Label of the capture_privileged_users (Check) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:361
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:362
 msgid "Flag users granted privileged roles"
 msgstr ""
 
@@ -1970,12 +2025,12 @@ msgid "Flapping control"
 msgstr ""
 
 #. Label of the siem_format (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:693
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:694
 msgid "Format"
 msgstr ""
 
 #. Label of the forward_failures (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:190
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:191
 msgid "Forward Failures"
 msgstr ""
 
@@ -1994,8 +2049,13 @@ msgid "Forwarding: {0}"
 msgstr ""
 
 #. Label of the siem_framing (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:672
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:673
 msgid "Framing"
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:56
+#, python-brace-format
+msgid "Frappe's scheduler ticks every {0} s: set scheduler_tick_interval to 60."
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:8
@@ -2008,12 +2068,12 @@ msgstr ""
 
 #. Description of the 'Bouncer API key' (Password) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:563
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:564
 msgid "From `cscli bouncers add dodock-wolf`: lets Wolf read the decisions. Security events whose IP is under one are tagged and raised one severity step."
 msgstr ""
 
 #. Description of the 'Machine ID' (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:570
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:571
 msgid "From `cscli machines add dodock-wolf --password ...`: lets Wolf send alerts and decisions."
 msgstr ""
 
@@ -2047,7 +2107,7 @@ msgid "Gateway URL"
 msgstr ""
 
 #. Label of the geoip_database (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:436
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:437
 msgid "GeoIP Database"
 msgstr ""
 
@@ -2076,7 +2136,7 @@ msgid "Group By"
 msgstr ""
 
 #. Label of the correlate_by_entity (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:281
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:282
 msgid "Group Incidents by IP or User"
 msgstr ""
 
@@ -2121,7 +2181,7 @@ msgstr ""
 msgid "HTTP Status"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:54
+#: frontend/src/pages/DashboardPage.vue:55
 msgid "HTTP activity"
 msgstr ""
 
@@ -2129,7 +2189,7 @@ msgstr ""
 msgid "HTTP responses"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:163
+#: frontend/src/pages/DashboardPage.vue:165
 #, python-brace-format
 msgid "HTTP: {0}"
 msgstr ""
@@ -2171,7 +2231,7 @@ msgid "Host"
 msgstr ""
 
 #. Label of the host_detection_mode (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:314
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:315
 msgid "Host Logins and Accounts"
 msgstr ""
 
@@ -2191,7 +2251,7 @@ msgstr ""
 msgid "Host setup"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:38
+#: frontend/src/pages/DashboardPage.vue:39
 #, python-brace-format
 msgid "Host {0}"
 msgstr ""
@@ -2219,14 +2279,18 @@ msgid "Hours"
 msgstr ""
 
 #. Description of the 'Framing' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:669
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:670
 msgid "How messages are separated on TCP and TLS (RFC 6587): octet counting (rsyslog, syslog-ng, Graylog), or one message per line (Wazuh, most line-based collectors)."
 msgstr ""
 
 #. Description of the 'Entity Correlation Minutes' (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:286
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:287
 msgid "How recent that event must be."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:38
+msgid "How to install it"
 msgstr ""
 
 #. Label of the ip (Data) field in DocType 'Wolf API Key IP'
@@ -2245,7 +2309,7 @@ msgstr ""
 
 #. Label of the ip_reputation_sources (Small Text) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:457
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:458
 msgid "IP reputation lists"
 msgstr ""
 
@@ -2281,7 +2345,7 @@ msgstr ""
 
 #. Description of the 'Detector Match Minutes' (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:319
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:320
 msgid "In both mode, how close in time two events must be to be one finding."
 msgstr ""
 
@@ -2392,7 +2456,7 @@ msgid "Info"
 msgstr ""
 
 #. Label of the ingest_mode (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:254
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:255
 msgid "Ingest Mode"
 msgstr ""
 
@@ -2411,6 +2475,10 @@ msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:32
 msgid "Install the Wolf agent"
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:36
+msgid "Install the agent on a host"
 msgstr ""
 
 #. Description of the 'Routing Key' (Password) field in DocType 'Wolf Alert
@@ -2464,7 +2532,7 @@ msgstr ""
 msgid "Invalid registration token"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:180
+#: frontend/src/pages/DashboardPage.vue:182
 #, python-brace-format
 msgid "Inventory: {0}"
 msgstr ""
@@ -2572,7 +2640,7 @@ msgid "Journal"
 msgstr ""
 
 #. Label of the journal_retention_days (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:764
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:765
 msgid "Journal Retention Days"
 msgstr ""
 
@@ -2649,18 +2717,18 @@ msgid "Last Fired"
 msgstr ""
 
 #. Label of the last_forward_at (Datetime) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:162
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:163
 msgid "Last Forward At"
 msgstr ""
 
 #. Label of the last_forward_error (Small Text) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:176
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:177
 msgid "Last Forward Error"
 msgstr ""
 
 #. Label of the last_forward_status (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:169
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:170
 msgid "Last Forward Status"
 msgstr ""
 
@@ -2717,7 +2785,7 @@ msgstr ""
 
 #. Description of the 'Last Forward At' (Datetime) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:159
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:160
 msgid "Last successful push to the central site."
 msgstr ""
 
@@ -2738,7 +2806,7 @@ msgstr ""
 
 #. Label of the crowdsec_detection_remediation (Check) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:607
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:608
 msgid "Let CrowdSec decide on detections"
 msgstr ""
 
@@ -2789,7 +2857,7 @@ msgstr ""
 msgid "Load per core"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:164
+#: frontend/src/pages/DashboardPage.vue:166
 msgid "Loading HTTP activity…"
 msgstr ""
 
@@ -2805,7 +2873,7 @@ msgstr ""
 msgid "Loading incidents…"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:133
+#: frontend/src/pages/DashboardPage.vue:135
 msgid "Loading the counts…"
 msgstr ""
 
@@ -2829,7 +2897,7 @@ msgstr ""
 msgid "Loading the security score…"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:179
+#: frontend/src/pages/DashboardPage.vue:181
 msgid "Loading the signals…"
 msgstr ""
 
@@ -2849,12 +2917,12 @@ msgid "Loading…"
 msgstr ""
 
 #. Label of the crowdsec_url (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:559
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:560
 msgid "Local API URL"
 msgstr ""
 
 #. Label of the local_section (Section Break) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:327
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:328
 msgid "Local signals (this site)"
 msgstr ""
 
@@ -2935,12 +3003,12 @@ msgid "MTTR p90"
 msgstr ""
 
 #. Label of the crowdsec_machine_id (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:573
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:574
 msgid "Machine ID"
 msgstr ""
 
 #. Label of the crowdsec_password (Password) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:579
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:580
 msgid "Machine password"
 msgstr ""
 
@@ -2970,12 +3038,12 @@ msgid "Max"
 msgstr ""
 
 #. Label of the max_clock_skew_seconds (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:223
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:224
 msgid "Max Clock Skew (seconds)"
 msgstr ""
 
 #. Label of the max_events_per_push (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:233
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:234
 msgid "Max Events Per Push"
 msgstr ""
 
@@ -2985,12 +3053,12 @@ msgid "Max Length"
 msgstr ""
 
 #. Label of the max_metrics_per_push (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:239
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:240
 msgid "Max Metrics Per Push"
 msgstr ""
 
 #. Label of the max_pushes_per_minute (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:246
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:247
 msgid "Max Pushes Per Minute"
 msgstr ""
 
@@ -3047,7 +3115,7 @@ msgid "Merge…"
 msgstr ""
 
 #. Label of the siem_header (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:681
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:682
 msgid "Message header"
 msgstr ""
 
@@ -3100,28 +3168,29 @@ msgid "Minimum Severity"
 msgstr ""
 
 #. Label of the siem_min_severity (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:701
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:702
 msgid "Minimum severity"
 msgstr ""
 
 #. Label of the crowdsec_min_severity (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:598
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:599
 msgid "Minimum severity sent"
 msgstr ""
 
 #. Label of the mode_section (Section Break) field in DocType 'Wolf Settings'
 #. Label of the mode (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:113
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:114
 msgid "Mode"
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:43 dodock_wolf/wolf/onboarding.py:51
 #: frontend/src/components/WolfSidebar.vue:52
 #: frontend/src/components/dash/MonitoringPanel.vue:62
-#: frontend/src/pages/MonitoringPage.vue:32 frontend/src/router.js:26
+#: frontend/src/pages/MonitoringPage.vue:38 frontend/src/router.js:26
 msgid "Monitoring"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:185
+#: frontend/src/pages/DashboardPage.vue:187
 #, python-brace-format
 msgid "Monitoring: {0}"
 msgstr ""
@@ -3179,7 +3248,7 @@ msgid "Newest record"
 msgstr ""
 
 #. Label of the forward_retry_at (Datetime) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:183
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:184
 msgid "Next Retry At"
 msgstr ""
 
@@ -3199,6 +3268,10 @@ msgstr ""
 msgid "No agent registered yet. Get the install command from Wolf Settings."
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:62
+msgid "No alert rule is enabled."
+msgstr ""
+
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:58
 msgid "No data in the window."
 msgstr ""
@@ -3209,6 +3282,10 @@ msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:80
 msgid "No enabled channel to test."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:67
+msgid "No enabled rule has an enabled channel: incidents show in Wolf only."
 msgstr ""
 
 #: frontend/src/pages/ErrorGroupPage.vue:26
@@ -3230,6 +3307,10 @@ msgstr ""
 
 #: dodock_wolf/public/js/wolf.js:82
 msgid "No events in this range."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:37
+msgid "No host agent has registered with this site yet."
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:217
@@ -3302,13 +3383,13 @@ msgstr ""
 msgid "Nobody yet"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:154
+#: frontend/src/pages/DashboardPage.vue:156
 msgid "None open that you can see."
 msgstr ""
 
 #. Description of the 'Email Queue Stale Minutes' (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:415
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:416
 msgid "Not Sent / Sending emails older than this (and due) count as a backlog."
 msgstr ""
 
@@ -3388,7 +3469,7 @@ msgstr ""
 #. Incident'
 #. Label of the links_section (Section Break) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:222
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:770
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:771
 #: frontend/src/pages/IncidentPage.vue:32
 msgid "Notifications"
 msgstr ""
@@ -3458,13 +3539,13 @@ msgstr ""
 
 #. Description of the 'Verify Wazuh TLS Certificate' (Check) field in DocType
 #. 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:536
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:537
 msgid "Off only for a self-signed certificate on a trusted network."
 msgstr ""
 
 #. Description of the 'Let CrowdSec decide on detections' (Check) field in
 #. DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:604
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:605
 msgid "Off: CrowdSec records Wolf's alerts and decides nothing. On: its profiles decide, and the default profile bans the IP for 4 h, without a human approving it."
 msgstr ""
 
@@ -3484,7 +3565,7 @@ msgstr ""
 
 #. Description of the 'IP reputation lists' (Small Text) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:454
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:455
 msgid "One list per line: a name, then a URL or a file path (relative to the site). One address or CIDR per line in each list."
 msgstr ""
 
@@ -3501,7 +3582,7 @@ msgstr ""
 
 #. Description of the 'Privileged Roles' (Small Text) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:365
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:366
 msgid "One role per line."
 msgstr ""
 
@@ -3581,6 +3662,10 @@ msgstr ""
 msgid "Open Wolf UI (preview)"
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:72
+msgid "Open a rule with a channel and use Send test notification."
+msgstr ""
+
 #: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.js:12
 msgid "Open incident from this event"
 msgstr ""
@@ -3653,13 +3738,13 @@ msgstr ""
 
 #. Label of the detectors_section (Section Break) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:294
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:295
 msgid "Overlapping detectors"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:42
 #: frontend/src/components/WolfSidebar.vue:38
-#: frontend/src/pages/DashboardPage.vue:40 frontend/src/router.js:11
+#: frontend/src/pages/DashboardPage.vue:41 frontend/src/router.js:11
 msgid "Overview"
 msgstr ""
 
@@ -3677,7 +3762,7 @@ msgstr ""
 
 #. Description of the 'Collector CA file' (Data) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:661
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:662
 msgid "PEM file of the CA that signed the collector's certificate, when it is not a public one (an absolute path, or relative to the site, e.g. private/files/collector-ca.pem). Empty: the system's CAs."
 msgstr ""
 
@@ -3716,13 +3801,13 @@ msgid "Past {0} days"
 msgstr ""
 
 #. Description of the 'GeoIP Database' (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:433
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:434
 msgid "Path to an offline database on this server: a MaxMind-format .mmdb (GeoLite2-Country, DB-IP Lite, IPinfo Lite) or a CSV of start_ip,end_ip,country ranges. Relative paths are read from the site directory. No online lookup is ever made."
 msgstr ""
 
 #. Description of the 'Decoy paths' (Small Text) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:483
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:484
 msgid "Paths linked from nowhere (one per line, e.g. /app/backup-admin): any request for one is critical."
 msgstr ""
 
@@ -3745,7 +3830,7 @@ msgstr ""
 
 #. Description of the 'Max Pushes Per Minute' (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:243
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:244
 msgid "Per agent (and satellite). Pushes over the limit get HTTP 429 and the agent retries with backoff. 0 turns the limit off."
 msgstr ""
 
@@ -3790,7 +3875,7 @@ msgid "Pick an unresolved incident"
 msgstr ""
 
 #. Label of the siem_port (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:641
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:642
 msgid "Port"
 msgstr ""
 
@@ -3839,7 +3924,7 @@ msgid "Previous MAC"
 msgstr ""
 
 #. Label of the privileged_roles (Small Text) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:368
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:369
 msgid "Privileged Roles"
 msgstr ""
 
@@ -3863,7 +3948,7 @@ msgid "Public Title"
 msgstr ""
 
 #. Label of the public_url (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:776
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:777
 msgid "Public Url"
 msgstr ""
 
@@ -3891,7 +3976,7 @@ msgid "Published"
 msgstr ""
 
 #. Label of the push_interval (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:209
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:210
 msgid "Push Interval"
 msgstr ""
 
@@ -3910,7 +3995,7 @@ msgstr ""
 
 #. Description of the 'Agent Silence Minutes' (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:213
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:214
 msgid "Raise a warning event when an agent has not pushed for this long."
 msgstr ""
 
@@ -3941,13 +4026,13 @@ msgid "Raven Channel ID (name of the Raven Channel document)."
 msgstr ""
 
 #. Label of the raw_retention_hours (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:730
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:731
 msgid "Raw Metric Retention (hours)"
 msgstr ""
 
 #. Description of the 'Raw Metric Retention (hours)' (Int) field in DocType
 #. 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:727
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:728
 msgid "Raw metric samples are kept this long, then only their 1-minute and 1-hour rollups. Samples not rolled up yet are never purged."
 msgstr ""
 
@@ -3957,7 +4042,7 @@ msgstr ""
 
 #. Description of the 'CrowdSec' (Section Break) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:546
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:547
 msgid "Read the decisions of a CrowdSec Local API, send it Wolf's detections and the blocks a Wolf Manager approved. See docs/cyber.md (step 4)."
 msgstr ""
 
@@ -3975,7 +4060,7 @@ msgstr ""
 msgid "Receives a generic JSON body ({text, incident}). Use the Slack or Mattermost types for their native formats."
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:166
+#: frontend/src/pages/DashboardPage.vue:168
 msgid "Recent changes"
 msgstr ""
 
@@ -4022,12 +4107,12 @@ msgid "Redis memory used"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:22
-#: frontend/src/pages/DashboardPage.vue:124
+#: frontend/src/pages/DashboardPage.vue:125
 #: frontend/src/pages/ErrorsPage.vue:38 frontend/src/pages/EventsPage.vue:61
 #: frontend/src/pages/IncidentPage.vue:290
 #: frontend/src/pages/IncidentsPage.vue:84
 #: frontend/src/pages/MetricsPage.vue:179
-#: frontend/src/pages/MonitoringPage.vue:33
+#: frontend/src/pages/MonitoringPage.vue:39
 #: frontend/src/pages/SecurityPage.vue:146
 msgid "Refresh"
 msgstr ""
@@ -4064,7 +4149,7 @@ msgstr ""
 
 #. Label of the registration_token (Password) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:62
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:202
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:203
 msgid "Registration Token"
 msgstr ""
 
@@ -4119,7 +4204,7 @@ msgstr ""
 
 #. Description of the 'Flag unusual data exports' (Check) field in DocType
 #. 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:379
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:380
 msgid "Report exports, Data Export, bulk PDFs and list reads, counted per user and hour. An event when a user's hour is far above their largest hour of the last 14 days (critical at 20x, or without any history), once past the floor below."
 msgstr ""
 
@@ -4242,7 +4327,7 @@ msgstr ""
 
 #. Label of the retention_section (Section Break) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:723
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:724
 msgid "Retention"
 msgstr ""
 
@@ -4324,6 +4409,10 @@ msgstr ""
 msgid "Rules imported"
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:54
+msgid "Rules run every minute"
+msgstr ""
+
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:33
 msgid "Run on each host, as root:"
 msgstr ""
@@ -4334,7 +4423,7 @@ msgid "SHA-256 of content"
 msgstr ""
 
 #. Label of the siem_section (Section Break) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:621
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:622
 msgid "SIEM export (syslog)"
 msgstr ""
 
@@ -4372,13 +4461,13 @@ msgid "Samples"
 msgstr ""
 
 #. Label of the satellite_id (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:143
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:144
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:145
 msgid "Satellite ID"
 msgstr ""
 
 #. Label of the satellite_secret (Password) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:150
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:151
 msgid "Satellite Secret"
 msgstr ""
 
@@ -4409,6 +4498,10 @@ msgstr ""
 
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:158
 msgid "Scheduler failures, errors, logins, privileged role grants and migrations on this site are forwarded to the central Wolf site. Incidents, rules and the timeline live there."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:59
+msgid "Scheduler pace"
 msgstr ""
 
 #. Label of the scope_section (Section Break) field in DocType 'Wolf Event'
@@ -4449,7 +4542,7 @@ msgid "Search those events"
 msgstr ""
 
 #. Description of the 'Push Interval' (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:206
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:207
 msgid "Seconds between agent pushes (sent back to agents)."
 msgstr ""
 
@@ -4480,7 +4573,7 @@ msgstr ""
 
 #. Description of the 'Send detections' (Check) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:588
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:589
 msgid "Security events with an IP, as CrowdSec alerts (scenario dodock-wolf/<category>). Past events are not replayed."
 msgstr ""
 
@@ -4502,13 +4595,13 @@ msgstr ""
 
 #. Label of the crowdsec_send_detections (Check) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:591
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:592
 msgid "Send detections"
 msgstr ""
 
 #. Description of the 'SIEM export (syslog)' (Section Break) field in DocType
 #. 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:622
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:623
 msgid "Send security events, and the journal, to UniSOC, Wazuh, Graylog or any syslog collector: RFC 5424 carrying CEF or OCSF JSON."
 msgstr ""
 
@@ -4517,7 +4610,7 @@ msgid "Send test notification"
 msgstr ""
 
 #. Label of the siem_journal (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:718
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:719
 msgid "Send the journal"
 msgstr ""
 
@@ -4562,7 +4655,7 @@ msgstr ""
 
 #. Description of the 'Flag risky application changes' (Check) field in DocType
 #. 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:372
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:373
 msgid "Server and Client Scripts that can run new code, System Console runs, permission rule and Role Profile changes, weakened System Settings (2FA, password policy, lockout, sessions), API keys generated and Webhooks to a new host."
 msgstr ""
 
@@ -4571,7 +4664,7 @@ msgid "Set both Active From and Active To, or neither"
 msgstr ""
 
 #. Description of the 'Central URL' (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:125
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:126
 msgid "Set by Register with central site."
 msgstr ""
 
@@ -4604,6 +4697,11 @@ msgstr ""
 #. 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:379
 msgid "Set to now when the flag is ticked. The initial notification is due 4 h after the classification (and within 24 h of awareness)."
+msgstr ""
+
+#: frontend/src/components/dash/OnboardingPanel.vue:38
+#: frontend/src/components/dash/OnboardingPanel.vue:40
+msgid "Set up Wolf"
 msgstr ""
 
 #: frontend/src/components/dash/MonitoringPanel.vue:78
@@ -4670,7 +4768,7 @@ msgstr ""
 
 #. Description of the 'Registration Token' (Password) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:199
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:200
 msgid "Shared secret that `wolf-agent register --token` must present. Leave empty to disable new registrations."
 msgstr ""
 
@@ -4741,7 +4839,7 @@ msgstr ""
 msgid "Signals"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:178
+#: frontend/src/pages/DashboardPage.vue:180
 #, python-brace-format
 msgid "Signals: {0}"
 msgstr ""
@@ -4797,7 +4895,7 @@ msgstr ""
 msgid "Site"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:39
+#: frontend/src/pages/DashboardPage.vue:40
 #, python-brace-format
 msgid "Site {0}"
 msgstr ""
@@ -4985,7 +5083,7 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:192
 #: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:174
 #: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:66
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:804
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:812
 #: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:123
 #: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:111
 #: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:58
@@ -5037,7 +5135,7 @@ msgstr ""
 
 #. Description of the 'Journal Retention Days' (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:761
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:762
 msgid "Tamper-evident journal entries older than this are removed every night, after a signed purge record that verification checks. 0 keeps them forever. Entries the SIEM export has not sent yet are kept."
 msgstr ""
 
@@ -5065,27 +5163,37 @@ msgstr ""
 msgid "Template with {to}, {text} and {secret}, e.g. https://sms.example.com/send?to={to}&msg={text}. Values are URL-encoded."
 msgstr ""
 
+#. Label of the test_notification_ok_at (Datetime) field in DocType 'Wolf
+#. Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:790
+msgid "Test Notification Accepted At"
+msgstr ""
+
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:76
 msgid "Test notification"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:156
+#: frontend/src/pages/DashboardPage.vue:158
 #, python-brace-format
 msgid "The 10 newest of {0}."
 msgstr ""
 
 #. Description of the 'Local API URL' (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:556
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:557
 msgid "The Local API, e.g. http://127.0.0.1:8080."
 msgstr ""
 
 #. Description of the 'Wazuh API URL' (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:515
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:516
 msgid "The Wazuh manager's API, for example https://wazuh-manager:55000."
 msgstr ""
 
 #: frontend/src/pages/LogsPage.vue:22
 msgid "The agent reads bench, nginx and auth logs and records what matters in them as events: 5xx and 502 responses, failed jobs, worker crashes, failed logins."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:40
+msgid "The agent reports"
 msgstr ""
 
 #. Description of the 'Setup Checks' (Code) field in DocType 'Wolf Agent'
@@ -5166,6 +5274,18 @@ msgstr ""
 msgid "The proxy this host's web traffic comes through (a Press app server's proxy_ip), as its agent reports it. Web attackers are blocked on the proxy, not here."
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:55
+msgid "The scheduler is disabled: no rule runs."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:58
+msgid "The scheduler is on; this Frappe does not say how often it ticks."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:57
+msgid "The scheduler runs every minute."
+msgstr ""
+
 #: frontend/src/pages/SecurityPage.vue:255
 #, python-brace-format
 msgid "The score gains {0} if this check passes"
@@ -5227,6 +5347,10 @@ msgstr ""
 msgid "This link is not valid."
 msgstr ""
 
+#: frontend/src/components/dash/OnboardingPanel.vue:64
+msgid "This list goes away once every step is done; Monitoring keeps it."
+msgstr ""
+
 #: dodock_wolf/www/wolf_status.html:73
 msgid "This page refreshes every minute."
 msgstr ""
@@ -5267,7 +5391,7 @@ msgid "This view is not built yet. When it is, it will show:"
 msgstr ""
 
 #. Label of the threat_section (Section Break) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:442
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:443
 msgid "Threat intelligence and deception"
 msgstr ""
 
@@ -5289,7 +5413,7 @@ msgid "Timeline"
 msgstr ""
 
 #. Label of the timeline_padding_minutes (Int) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:274
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:275
 msgid "Timeline Padding Minutes"
 msgstr ""
 
@@ -5326,7 +5450,7 @@ msgstr ""
 
 #. Description of the 'Max Clock Skew (seconds)' (Int) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:220
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:221
 msgid "Timestamps further in the future than this are clamped to the server time on ingest. 0 disables."
 msgstr ""
 
@@ -5388,7 +5512,7 @@ msgid "Topic"
 msgstr ""
 
 #. Label of the siem_transport (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:649
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:650
 msgid "Transport"
 msgstr ""
 
@@ -5397,7 +5521,7 @@ msgid "Two-factor authentication for System Managers"
 msgstr ""
 
 #. Description of the 'Transport' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:646
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:647
 msgid "UDP may drop or cut messages, and Wolf cannot tell: prefer TCP or TLS."
 msgstr ""
 
@@ -5444,8 +5568,8 @@ msgid "Unresolved"
 msgstr ""
 
 #: frontend/src/components/dash/CountTiles.vue:22
-#: frontend/src/pages/DashboardPage.vue:137
 #: frontend/src/pages/DashboardPage.vue:139
+#: frontend/src/pages/DashboardPage.vue:141
 msgid "Unresolved incidents"
 msgstr ""
 
@@ -5464,12 +5588,12 @@ msgid "Use <b>min</b> for “value stayed above the threshold for the whole wind
 msgstr ""
 
 #. Label of the crowdsec_enabled (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:552
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:553
 msgid "Use CrowdSec"
 msgstr ""
 
 #. Label of the ip_reputation_enabled (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:449
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:450
 msgid "Use IP reputation lists"
 msgstr ""
 
@@ -5528,17 +5652,17 @@ msgstr ""
 
 #. Label of the verify_tls (Check) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:66
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:136
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:137
 msgid "Verify TLS"
 msgstr ""
 
 #. Label of the wazuh_verify_tls (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:539
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:540
 msgid "Verify Wazuh TLS Certificate"
 msgstr ""
 
 #. Label of the siem_verify_tls (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:657
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:658
 msgid "Verify the collector's certificate"
 msgstr ""
 
@@ -5550,38 +5674,42 @@ msgstr ""
 msgid "Version of each app in the bench (apps/<app>/<app>/__init__.py) as major * 1e6 + minor * 1e3 + patch: 15100000 is 15.100.0; development versions are not sent."
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:42
+msgid "Waiting for a first agent."
+msgstr ""
+
 #: frontend/src/components/SeverityGlyph.vue:10
 #: frontend/src/components/dash/MonitoringPanel.vue:156
 msgid "Warning"
 msgstr ""
 
 #. Description of the 'Export Factor' (Float) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:395
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:396
 msgid "Warning when a user's hour is this many times their largest hour of the last 14 days."
 msgstr ""
 
 #. Label of the capture_email_queue (Check) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:410
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:411
 msgid "Watch the Email Queue"
 msgstr ""
 
 #. Label of the wazuh_api_password (Password) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:531
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:532
 msgid "Wazuh API Password"
 msgstr ""
 
 #. Label of the wazuh_api_url (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:518
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:519
 msgid "Wazuh API URL"
 msgstr ""
 
 #. Label of the wazuh_api_user (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:525
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:526
 msgid "Wazuh API User"
 msgstr ""
 
 #. Label of the wazuh_ar_command (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:507
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:508
 msgid "Wazuh Active Response Command"
 msgstr ""
 
@@ -5591,7 +5719,7 @@ msgid "Wazuh Agent ID"
 msgstr ""
 
 #. Label of the web_detection_mode (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:302
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:303
 msgid "Web Attacks"
 msgstr ""
 
@@ -5624,13 +5752,19 @@ msgstr ""
 msgid "What {0} needs ({1} on the host shows the same)"
 msgstr ""
 
+#. Description of the 'Test Notification Accepted At' (Datetime) field in
+#. DocType 'Wolf Settings'
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:792
+msgid "When a channel of an alert rule last accepted a test notification (Send test notification on the rule). The setup checklist in the Wolf UI reads it."
+msgstr ""
+
 #: frontend/src/pages/ErrorGroupPage.vue:63
 msgid "Where"
 msgstr ""
 
 #. Description of the 'Overlapping detectors' (Section Break) field in DocType
 #. 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:295
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:296
 msgid "Where Wolf's own detection and Suricata or Wazuh see the same thing. own: Wolf's detector, as when it works alone. both: keep both; an event and the other source's alert about the same IP and technique are one finding (the later one is marked as such and not sent again to CrowdSec or the SIEM). external: drop Wolf's own events of that detector while the other source reports from the host; if it is quiet for an hour, Wolf's come back."
 msgstr ""
 
@@ -5640,7 +5774,7 @@ msgstr ""
 
 #. Description of the 'Blocking' (Section Break) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:492
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:493
 msgid "Who applies a block_ip a Wolf Manager approved. wolf_agent: the Wolf Agent on the attacked host (nftables or fail2ban). wazuh: Wazuh active response on that host's Wazuh agent, through the manager's API. both: each of them. Approval, signed links and the journal are the same whichever applies it."
 msgstr ""
 
@@ -5670,7 +5804,7 @@ msgstr ""
 
 #. Description of the 'Flag privileged logins from new countries' (Check) field
 #. in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:426
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:427
 msgid "With a GeoIP database below: flag privileged logins from a country none of the user's earlier logins came from."
 msgstr ""
 
@@ -5700,7 +5834,7 @@ msgid "Wolf Agent"
 msgstr ""
 
 #. Description of the 'Satellite ID' (Data) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:140
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:141
 msgid "Wolf Agent name of this site on the central site."
 msgstr ""
 
@@ -5792,7 +5926,7 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:204
 #: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:186
 #: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:71
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:816
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:824
 #: dodock_wolf/dodock_wolf/doctype/wolf_silence/wolf_silence.json:135
 #: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:120
 #: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.json:67
@@ -5846,7 +5980,7 @@ msgstr ""
 
 #. Name of a DocType
 #. Label of a Link in the Dodock Wolf Workspace
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:793
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:801
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:164
 #: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:122
 msgid "Wolf Settings"
@@ -5903,6 +6037,10 @@ msgstr ""
 msgid "Wolf did not propose this action for this incident (or it was already approved)."
 msgstr ""
 
+#: frontend/src/components/dash/OnboardingPanel.vue:43
+msgid "Wolf has what it needs to wake someone up."
+msgstr ""
+
 #: dodock_wolf/wolf/compliance.py:181
 #, python-brace-format
 msgid "Wolf incident: {0}"
@@ -5926,8 +6064,8 @@ msgstr ""
 msgid "Wolf tracks the deadlines; it does not decide whether the incident is reportable and sends nothing to an authority."
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:58
-#: frontend/src/pages/MonitoringPage.vue:22
+#: frontend/src/pages/DashboardPage.vue:59
+#: frontend/src/pages/MonitoringPage.vue:24
 msgid "Wolf's own monitoring"
 msgstr ""
 
@@ -5977,7 +6115,7 @@ msgstr ""
 msgid "You need the Wolf User or Wolf Manager role to open Dodock Wolf."
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:129
+#: frontend/src/pages/DashboardPage.vue:131
 msgid "You see the sites, benches and hosts you were granted."
 msgstr ""
 
@@ -6096,12 +6234,12 @@ msgid "as asked"
 msgstr ""
 
 #. Option for the 'Ingest Mode' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:255
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:256
 msgid "async"
 msgstr ""
 
 #. Description of the 'Ingest Mode' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:251
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:252
 msgid "async: a push is validated, queued on the short queue and stored by a worker (inline when the queue is unreachable). sync: stored during the request."
 msgstr ""
 
@@ -6115,7 +6253,7 @@ msgstr ""
 
 #. Description of the 'Host Logins and Accounts' (Select) field in DocType
 #. 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:311
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:312
 msgid "auth.log signals (SSH, sudo, accounts) vs Wazuh alerts (hids_alert)."
 msgstr ""
 
@@ -6182,8 +6320,8 @@ msgstr ""
 #. Option for the 'Host Logins and Accounts' (Select) field in DocType 'Wolf
 #. Settings'
 #. Option for the 'Block With' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:303
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:499
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:304
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:500
 msgid "both"
 msgstr ""
 
@@ -6197,17 +6335,17 @@ msgid "by {0}"
 msgstr ""
 
 #. Option for the 'Format' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:694
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:695
 msgid "cef"
 msgstr ""
 
 #. Option for the 'Mode' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:121
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:122
 msgid "central"
 msgstr ""
 
 #. Description of the 'Mode' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:117
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:118
 msgid "central: this site stores events, evaluates rules and opens incidents. satellite: this site only captures its local signals and forwards them to a central Wolf site."
 msgstr ""
 
@@ -6261,7 +6399,7 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:191
 #: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:63
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:99
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:599
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:600
 #: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:93
 msgid "critical"
 msgstr ""
@@ -6445,7 +6583,7 @@ msgstr ""
 #. Option for the 'Web Attacks' (Select) field in DocType 'Wolf Settings'
 #. Option for the 'Host Logins and Accounts' (Select) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:303
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:304
 msgid "external"
 msgstr ""
 
@@ -6554,7 +6692,7 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:191
 #: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:63
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:99
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:599
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:600
 #: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:93
 msgid "info"
 msgstr ""
@@ -6727,12 +6865,12 @@ msgid "newest value of each series; thresholds come from the alert rules"
 msgstr ""
 
 #. Option for the 'Framing' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:673
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:674
 msgid "newline"
 msgstr ""
 
 #. Description of the 'Web Attacks' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:299
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:300
 msgid "nginx web probes (web_attack_probe) vs Suricata alerts (network_ids_alert)."
 msgstr ""
 
@@ -6839,7 +6977,7 @@ msgstr ""
 #. Option for the 'Message header' (Select) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:57
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:277
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:682
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:683
 msgid "none"
 msgstr ""
 
@@ -6885,12 +7023,12 @@ msgid "ntfy Server URL"
 msgstr ""
 
 #. Option for the 'Format' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:694
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:695
 msgid "ocsf"
 msgstr ""
 
 #. Option for the 'Framing' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:673
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:674
 msgid "octet-counting"
 msgstr ""
 
@@ -6945,7 +7083,7 @@ msgstr ""
 #. Option for the 'Web Attacks' (Select) field in DocType 'Wolf Settings'
 #. Option for the 'Host Logins and Accounts' (Select) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:303
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:304
 msgid "own"
 msgstr ""
 
@@ -7032,13 +7170,13 @@ msgid "revoke_api_keys"
 msgstr ""
 
 #. Option for the 'Message header' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:682
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:683
 msgid "rfc5424"
 msgstr ""
 
 #. Description of the 'Message header' (Select) field in DocType 'Wolf
 #. Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:678
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:679
 msgid "rfc5424: a syslog header before each message (rsyslog, syslog-ng, Graylog). none: the bare JSON or CEF, which Wazuh decodes (OCSF, newline framing over TCP; see docs/siem.md)."
 msgstr ""
 
@@ -7049,7 +7187,7 @@ msgstr ""
 #. Option for the 'Kind' (Select) field in DocType 'Wolf Agent'
 #. Option for the 'Mode' (Select) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:58
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:121
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:122
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:199
 #: frontend/src/components/dash/MonitoringPanel.vue:29
 msgid "satellite"
@@ -7123,7 +7261,7 @@ msgstr ""
 msgid "since must be before until"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:149
+#: frontend/src/pages/DashboardPage.vue:151
 #, python-brace-format
 msgid "since {0}"
 msgstr ""
@@ -7160,12 +7298,12 @@ msgid "sum"
 msgstr ""
 
 #. Option for the 'Ingest Mode' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:255
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:256
 msgid "sync"
 msgstr ""
 
 #. Option for the 'Transport' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:650
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:651
 msgid "tcp"
 msgstr ""
 
@@ -7200,7 +7338,7 @@ msgstr ""
 msgid "the highest {0}"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:57
+#: frontend/src/pages/DashboardPage.vue:58
 msgid "the inventory"
 msgstr ""
 
@@ -7238,6 +7376,10 @@ msgstr ""
 msgid "the same {0} sets off {1} and then {2} within {3} of it, and the number of times it happens over the last {4} is {5} {6}"
 msgstr ""
 
+#: frontend/src/components/dash/OnboardingPanel.vue:23
+msgid "the setup checklist"
+msgstr ""
+
 #: frontend/src/pages/SecurityPage.vue:73
 msgid "the sites"
 msgstr ""
@@ -7247,11 +7389,11 @@ msgstr ""
 msgid "the sum of {0}"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:53
+#: frontend/src/pages/DashboardPage.vue:54
 msgid "these counts"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:56
+#: frontend/src/pages/DashboardPage.vue:57
 #: frontend/src/pages/IncidentsPage.vue:55
 msgid "these incidents"
 msgstr ""
@@ -7260,7 +7402,7 @@ msgstr ""
 msgid "these records"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:55
+#: frontend/src/pages/DashboardPage.vue:56
 msgid "these signals"
 msgstr ""
 
@@ -7285,12 +7427,12 @@ msgid "this site"
 msgstr ""
 
 #. Option for the 'Transport' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:650
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:651
 msgid "tls"
 msgstr ""
 
 #. Option for the 'Transport' (Select) field in DocType 'Wolf Settings'
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:650
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:651
 msgid "udp"
 msgstr ""
 
@@ -7348,7 +7490,7 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:191
 #: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.json:63
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:99
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:599
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:600
 #: dodock_wolf/dodock_wolf/doctype/wolf_status_page/wolf_status_page.json:93
 msgid "warning"
 msgstr ""
@@ -7356,7 +7498,7 @@ msgstr ""
 #. Option for the 'Executor' (Select) field in DocType 'Wolf Response Action'
 #. Option for the 'Block With' (Select) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:81
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:499
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:500
 msgid "wazuh"
 msgstr ""
 
@@ -7376,7 +7518,7 @@ msgstr ""
 #. Option for the 'Executor' (Select) field in DocType 'Wolf Response Action'
 #. Option for the 'Block With' (Select) field in DocType 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:81
-#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:499
+#: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:500
 msgid "wolf_agent"
 msgstr ""
 
@@ -7443,6 +7585,11 @@ msgstr ""
 #: dodock_wolf/wolf/incident_ops.py:266
 #, python-brace-format
 msgid "{0} acknowledged"
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:37
+#, python-brace-format
+msgid "{0} agents registered"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.py:21
@@ -7541,6 +7688,11 @@ msgstr ""
 msgid "{0} days"
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:66
+#, python-brace-format
+msgid "{0} enabled channels"
+msgstr ""
+
 #: dodock_wolf/wolf/rule_sentence.py:230 dodock_wolf/wolf/rule_sentence.py:243
 #, python-brace-format
 msgid "{0} evaluations"
@@ -7587,6 +7739,12 @@ msgstr ""
 msgid "{0} high"
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:47
+#, python-brace-format
+msgid "{0} host to fix"
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:47
 #: frontend/src/components/dash/MonitoringPanel.vue:101
 #, python-brace-format
 msgid "{0} hosts to fix"
@@ -7709,6 +7867,11 @@ msgstr ""
 msgid "{0} of category {1}"
 msgstr ""
 
+#: frontend/src/components/dash/OnboardingPanel.vue:41
+#, python-brace-format
+msgid "{0} of {1} done"
+msgstr ""
+
 #: frontend/src/components/dash/MonitoringPanel.vue:109
 #, python-brace-format
 msgid "{0} of {1} forwarding"
@@ -7717,6 +7880,11 @@ msgstr ""
 #: frontend/src/components/dash/InventoryPanel.vue:99
 #, python-brace-format
 msgid "{0} of {1} host match."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:49
+#, python-brace-format
+msgid "{0} of {1} hosts checked; agents check their host every hour."
 msgstr ""
 
 #: frontend/src/components/dash/InventoryPanel.vue:99
@@ -7732,6 +7900,11 @@ msgstr ""
 #: frontend/src/pages/IncidentPage.vue:418
 #, python-brace-format
 msgid "{0} of {1} loaded rows match; more rows are not loaded yet."
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:41
+#, python-brace-format
+msgid "{0} of {1} reporting"
 msgstr ""
 
 #: frontend/src/components/dash/MonitoringPanel.vue:96
@@ -7814,6 +7987,11 @@ msgstr ""
 #: dodock_wolf/wolf/posture.py:120
 #, python-brace-format
 msgid "{0} risky settings reported by the agent (see the insecure_site_config event)"
+msgstr ""
+
+#: dodock_wolf/wolf/onboarding.py:62
+#, python-brace-format
+msgid "{0} rules enabled"
 msgstr ""
 
 #: frontend/src/components/dash/SignalsPanel.vue:18

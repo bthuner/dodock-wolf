@@ -111,8 +111,13 @@ class WolfAlertRule(Document):
 				"summary": "This is a test sent from the alert rule form.",
 			}
 		).insert()
-		rows = list(self.get("channels") or []) + list(self.get("escalation_channels") or [])
-		results = notify.send(incident.name, "test", channels=rows)
+		main, escalation = list(self.get("channels") or []), list(self.get("escalation_channels") or [])
+		results = notify.send(incident.name, "test", channels=main) if main else []
+		if any(r.get("ok") for r in results):
+			# the setup checklist's last step: a channel that hears a firing incident accepted one
+			frappe.db.set_single_value("Wolf Settings", "test_notification_ok_at", now_datetime())
+		if escalation:
+			results += notify.send(incident.name, "test", channels=escalation)
 		return {"incident": incident.name, "results": results}
 
 

@@ -93,6 +93,12 @@ export function fixtures() {
           { area: 'logs', status: 'fail', title: 'cannot read /var/log/nginx/access.log (permission denied)', fix: 'add wolf-agent to the adm group' },
         ] } }],
     }),
+    'dodock_wolf.api.onboarding.get_onboarding': () => ({ done: 2, total: 3, steps: [
+      { id: 'agent', done: true, title: 'Install the agent on a host', detail: '1 agent registered', action: null },
+      { id: 'reporting', done: true, title: 'The agent reports', detail: '1 of 1 reporting', action: null },
+      { id: 'test', done: false, title: 'A test notification reached its channel',
+        detail: 'Open a rule with a channel and use Send test notification.', action: { label: 'Alert rules', href: '/app/wolf-alert-rule' } },
+    ] }), // prettier-ignore
     'dodock_wolf.api.incident_view.get_incident': () => INCIDENT,
     'dodock_wolf.api.incident_view.get_timeline': () => ({ rows: ROWS, paging: { has_more: false, next_cursor: null }, totals: {}, truncated: {}, window: null }),
     'dodock_wolf.api.incident_view.act': () => ({ ...INCIDENT, status: 'Acknowledged', acknowledged: { at: NOW.toISOString(), by: 'ops@example.com', by_name: 'Ops' },

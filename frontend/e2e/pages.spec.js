@@ -56,6 +56,24 @@ for (const scheme of ['light', 'dark']) {
   })
 }
 
+test('setup checklist: the overview lists what is left, Monitoring every step, and it goes away when done', async ({ page }) => {
+  await mockApi(page)
+  await page.goto('/wolf/')
+  const card = page.getByRole('region', { name: 'Set up Wolf' })
+  await expect(card).toContainText('2 of 3 done')
+  await expect(card).toContainText('A test notification reached its channel')
+  await expect(card).not.toContainText('The agent reports') // done: only what is left
+  await expect(card.getByRole('link', { name: 'Alert rules' })).toHaveAttribute('href', '/app/wolf-alert-rule')
+  await page.goto('/wolf/monitoring')
+  await expect(page.getByRole('region', { name: 'Set up Wolf' })).toContainText('The agent reports')
+
+  await mockApi(page, { 'dodock_wolf.api.onboarding.get_onboarding': () => ({ done: 1, total: 1, steps: [
+    { id: 'agent', done: true, title: 'Install the agent on a host', detail: '1 agent registered', action: null }] }) }) // prettier-ignore
+  await page.goto('/wolf/')
+  await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Set up Wolf' })).toHaveCount(0)
+})
+
 test('keyboard: the sidebar is reachable with Tab and a link opens with Enter', async ({ page }) => {
   await mockApi(page)
   await page.goto('/wolf/')
@@ -219,6 +237,7 @@ test.describe('range selected on the HTTP chart', () => {
     const chart = page.locator('.wolf-brush svg, .wolf-brush canvas').first()
     await expect(chart).toBeVisible()
     await page.waitForLoadState('networkidle')
+    await chart.scrollIntoViewIfNeeded() // panels above it (the setup checklist) may push it down
     return chart.boundingBox()
   }
   const selected = async (page) => {
