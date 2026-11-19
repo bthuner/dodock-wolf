@@ -12,10 +12,11 @@ class WolfMetricRollup(Document):
 def on_doctype_update():
 	# Rows are stored in name order, and names start with resolution, metric and bucket
 	# (storage.rollup_name): a time range of one metric is read from neighbouring pages.
-	# Reads filter one resolution and a bucket range, per metric (rules) or per host (charts).
+	# Reads filter one resolution and a bucket range, per metric (rules) or per host (the host page).
 	frappe.db.add_index("Wolf Metric Rollup", ["resolution", "metric_name", "bucket_start"])
-	# a host chart reads a few metrics of one host: with the metric in the index, it looks up
-	# those rows only, not the host's every metric (rows of one host are one per page)
+	# the host page's signals panel (api/dashboard.py, _signal_series) reads the catalogued metrics
+	# of one host: with the metric in the index, it looks up those rows only, not every row of the
+	# range (rows of one host are one per page)
 	frappe.db.add_index("Wolf Metric Rollup", ["resolution", "host", "metric_name", "bucket_start"])
 	_drop_index("Wolf Metric Rollup", "resolution_host_bucket_start_index")
 	# The rollup job and the purge read and delete one resolution's bucket range. The inventory
