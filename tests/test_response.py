@@ -3,11 +3,11 @@ import unittest
 from dodock_wolf.wolf import response
 
 
-def ev(category, payload, agent="agent-1", event_type="security", host="bench-01", block_agent="same"):
+def ev(category, payload, agent="agent-1", event_type="security", host="bench-01", block_agent="same", **extra):
 	# block_host / block_agent: the attacked host and the Wolf Agent on it (api/response.py resolves them)
 	return {"event_type": event_type, "category": category, "title": category, "agent": agent, "host": host,
 	        "bench": None, "site": "erp.example.com", "payload": payload, "block_host": host,
-	        "block_agent": agent if block_agent == "same" else block_agent}  # fmt: skip
+	        "block_agent": agent if block_agent == "same" else block_agent, **extra}  # fmt: skip
 
 
 class TestChecks(unittest.TestCase):
@@ -104,6 +104,19 @@ class TestSuggest(unittest.TestCase):
 		users = [(p["action"], p["target"]) for p in response.suggest(events) if p["action"] != "block_ip"]
 		self.assertEqual(users, [("disable_user", "intruder@example.com"), ("logout_sessions", "intruder@example.com"),
 		                         ("revoke_api_keys", "intruder@example.com")])  # fmt: skip
+
+	def test_user_actions_for_a_satellite_s_users(self):
+		# a satellite applies them itself; an agent's event (a host account) never proposes one
+		events = [
+			ev("api_key_new_ip", {"user": "intruder@example.com"}, agent="WAG-SAT", sender_kind="satellite", site="b.example.com"),
+			ev("api_key_new_ip", {"user": "intruder@example.com"}, agent=None),  # the same address on the Wolf site
+			ev("frappe_failed_login", {"user": "someone@example.com"}, agent="WAG-1", sender_kind="agent"),
+		]
+		users = [(p["action"], p["target"], p["agent"], p["site"]) for p in response.suggest(events) if p["action"] == "disable_user"]
+		self.assertEqual(users, [("disable_user", "intruder@example.com", "WAG-SAT", "b.example.com"),
+		                         ("disable_user", "intruder@example.com", None, "erp.example.com")])  # fmt: skip
+		self.assertEqual(response.label("disable_user", "intruder@example.com", site="b.example.com"),
+		                 "Disable user intruder@example.com on b.example.com")  # fmt: skip
 
 	def test_bounded(self):
 		events = [ev("web_attack_probe", {"ip": f"45.33.{i // 250}.{i % 250 + 1}"}) for i in range(100)]

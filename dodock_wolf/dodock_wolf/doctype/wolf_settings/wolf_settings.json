@@ -10,6 +10,7 @@
   "verify_tls",
   "satellite_id",
   "satellite_secret",
+  "accept_response_actions",
   "cb_mode",
   "last_forward_at",
   "last_forward_status",
@@ -150,6 +151,14 @@
    "fieldtype": "Password",
    "label": "Satellite Secret",
    "read_only": 1
+  },
+  {
+   "fieldname": "accept_response_actions",
+   "fieldtype": "Check",
+   "default": "0",
+   "label": "Apply Response Actions From the Central Site",
+   "depends_on": "eval:doc.mode=='satellite'",
+   "description": "A Wolf Manager on the central site can then disable a user of this site, log out their sessions or revoke their API keys, from an incident its events opened. This site applies it at its next push and reports back. Administrator, Guest and System Managers are never acted on from there."
   },
   {
    "fieldname": "cb_mode",
@@ -795,7 +804,7 @@
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-19 12:00:00.000000",
+ "modified": "2026-11-19 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Settings",

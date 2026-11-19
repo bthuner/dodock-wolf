@@ -79,6 +79,7 @@ def flush(force=False):
 		return
 
 	trim_outbox()
+	frappe.local.wolf_central_actions = []  # what this run's pushes are handed; a worker keeps frappe.local
 	rows = frappe.get_all(
 		"Wolf Outbox",
 		fields=["name", "event", "count"],
@@ -113,6 +114,12 @@ def flush(force=False):
 				notes.append(detail)
 		frappe.db.commit()
 
+	results = apply_actions(getattr(frappe.local, "wolf_central_actions", None) or [], settings)
+	if results:
+		# reported at once; if that fails, the central site hands them again and they run again (each is
+		# idempotent: a disabled user stays disabled)
+		frappe.db.commit()
+		_post(settings, secret, forwarding.push_body([], host, __version__, action_results=results))
 	_record(
 		status="ok" if not notes else "ok with rejections",
 		error="\n".join(notes)[:1000] or None,
@@ -143,8 +150,47 @@ def _post(settings, secret, body):
 	except (ValueError, AttributeError):
 		# e.g. a proxy answering 200 with an HTML page
 		return "retry", f"invalid JSON response: {resp.text[:200]!r}"
-	rejected = message.get("rejected") if isinstance(message, dict) else None
+	if not isinstance(message, dict):
+		message = {}
+	frappe.local.wolf_central_actions = message.get("actions") if isinstance(message.get("actions"), list) else []
+	rejected = message.get("rejected")
 	return "ok", ("rejected: " + "; ".join(map(str, rejected)))[:500] if rejected else None
+
+
+def apply_actions(actions, settings=None):
+	"""Apply the user actions a Wolf Manager approved on the central site (api/response.py), each on
+	this site's own user, and return `[{id, ok, detail}]` for the central site. Only with Wolf Settings
+	→ Apply Response Actions From the Central Site; never on Administrator, Guest or a System Manager:
+	those are acted on from this site itself."""
+	from dodock_wolf.api import journal
+	from dodock_wolf.api import response as response_api
+	from dodock_wolf.wolf import response
+
+	settings = settings or frappe.get_single("Wolf Settings")
+	allowed = cint(settings.get("accept_response_actions"))
+	results = []
+	for item in actions[:100]:
+		if not isinstance(item, dict) or not isinstance(item.get("id"), str) or item.get("action") not in response.USER_ACTIONS:
+			continue  # a block is for a Wolf Agent, not for a site
+		user = str(item.get("user") or "").strip()
+		refused = (
+			"this site does not apply response actions from the central site (Wolf Settings)" if not allowed
+			else response.check(item["action"], user)
+			or (f"{user} does not exist on this site" if not frappe.db.exists("User", user) else None)
+			or (f"{user} is a System Manager on this site: act on it there" if "System Manager" in frappe.get_roles(user) else None)
+		)  # fmt: skip
+		if refused:
+			results.append({"id": item["id"], "ok": False, "detail": refused})
+			continue
+		try:
+			detail = response_api._apply_user_action(item["action"], user)
+			results.append({"id": item["id"], "ok": True, "detail": detail})
+		except Exception as e:
+			results.append({"id": item["id"], "ok": False, "detail": str(e)[:500]})
+			continue
+		journal.capture("response_action", "User", user, {"action": item["action"], "central_action": item["id"]},
+		                f"{item['action']} on {user}, approved on the central site ({item['id']})")  # fmt: skip
+	return results
 
 
 def _record(status, error=None, **values):

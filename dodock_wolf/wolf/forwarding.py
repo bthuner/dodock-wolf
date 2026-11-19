@@ -55,14 +55,17 @@ def with_count(event, count):
 	return {**event, "count": max(int(count or 1), 1)}
 
 
-def push_body(events, hostname, version, sent_at=None):
-	return {
+def push_body(events, hostname, version, sent_at=None, action_results=None):
+	body = {
 		"sent_at": sent_at or utc_now_iso(),
 		"agent_version": version,
 		"hostname": hostname,
 		"metrics": [],
 		"events": events,
 	}
+	if action_results:
+		body["action_results"] = action_results  # what this site did with the actions it was handed
+	return body
 
 
 def register_body(token, scope, version, os_name=None, bench_path=None):

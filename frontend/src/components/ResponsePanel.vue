@@ -20,7 +20,8 @@ const confirming = ref(null) // key of the proposal waiting for its confirmation
 const hours = ref(24)
 const busy = ref(false)
 
-const key = (p) => `${p.action}|${p.target}|${p.host || p.agent || ''}` // a block is one address on one host
+// a block is one address on one host; a user action, one user on one site (this one, or a satellite: its agent)
+const key = (p) => `${p.action}|${p.target}|${p.action === 'block_ip' ? p.host || p.agent || '' : p.agent || ''}`
 // a Wolf Response Action status, as the reader sees it
 function status(s) {
   if (s === 'Approved') return __('Approved, waiting for the agent')

@@ -2975,6 +2975,60 @@ def main():
 		assert block["name"] in expired, expired
 		return f"{block['name']} blocked then expired, {disabled['name']} {disabled['result']}, refusals ok"
 
+	def satellite_response():
+		"""A user of a satellite: proposed and approved on the central site, applied by the satellite."""
+		from dodock_wolf import satellite
+		from dodock_wolf.api import ingest as ingest_api
+		from dodock_wolf.api import response as response_api
+
+		sat_site = "sat-response.localhost"
+		sat = frappe.get_doc({"doctype": "Wolf Agent", "hostname": sat_site, "status": "Active", "kind": "satellite"}).insert(ignore_permissions=True).name
+		user = frappe.get_doc({"doctype": "User", "email": "wolf-sat-intruder@example.com", "first_name": "Sat",
+		                       "send_welcome_email": 0}).insert(ignore_permissions=True).name  # fmt: skip
+		admin = frappe.get_doc({"doctype": "User", "email": "wolf-sat-admin@example.com", "first_name": "SatAdmin",
+		                        "send_welcome_email": 0, "roles": [{"role": "System Manager"}]}).insert(ignore_permissions=True).name  # fmt: skip
+		inc = frappe.get_doc({"doctype": "Wolf Incident", "title": "smoke satellite response", "severity": "critical",
+		                      "site": sat_site}).insert(ignore_permissions=True)  # fmt: skip
+		for who in (user, admin):
+			data = {"type": "security", "category": "api_key_new_ip", "site": sat_site, "payload": {"user": who, "ip": "45.33.32.157"}}
+			name = events.insert_event(schema.normalize_event(data, tz, now_datetime()), agent=sat)
+			frappe.db.set_value("Wolf Event", name, "incident", inc.name)
+		proposals = {(p["action"], p["target"]): p for p in response_api.get_response(inc.name)["proposals"]}
+		p = proposals.get(("disable_user", user))
+		assert p and p["agent"] == sat and sat_site in p["label"], proposals  # named with its site
+
+		approved = response_api.approve(inc.name, "disable_user", user, agent=sat)
+		assert approved["status"] == "Approved" and approved["agent"] == sat, approved
+		assert frappe.db.get_value("User", user, "enabled"), "applied on the central site"
+		for_admin = response_api.approve(inc.name, "disable_user", admin, agent=sat)  # checked there, not here
+		res = ingest_api.accept(sat, {"hostname": sat_site, "metrics": [], "events": []})
+		handed = {a["user"]: a for a in res["actions"]}
+		assert set(handed) == {user, admin} and handed[user]["action"] == "disable_user", res["actions"]
+
+		# the satellite: refused while its setting is off, then applied; never on a System Manager
+		frappe.db.set_single_value("Wolf Settings", "accept_response_actions", 0)
+		results = satellite.apply_actions(res["actions"])
+		assert all(not r["ok"] for r in results) and frappe.db.get_value("User", user, "enabled"), results
+		frappe.db.set_single_value("Wolf Settings", "accept_response_actions", 1)
+		try:
+			results = {r["id"]: r for r in satellite.apply_actions(res["actions"])}
+		finally:
+			frappe.db.set_single_value("Wolf Settings", "accept_response_actions", 0)
+		assert results[approved["name"]]["ok"] and not frappe.db.get_value("User", user, "enabled"), results
+		assert not results[for_admin["name"]]["ok"] and "System Manager" in results[for_admin["name"]]["detail"], results
+		assert frappe.db.get_value("User", admin, "enabled")
+
+		res = ingest_api.accept(sat, {"hostname": sat_site, "metrics": [], "events": [], "action_results": list(results.values())})
+		assert res["actions"] == [], res["actions"]  # reported: not handed out again
+		assert frappe.db.get_value("Wolf Response Action", approved["name"], "status") == "Applied"
+		assert frappe.db.get_value("Wolf Response Action", for_admin["name"], "status") == "Failed"
+
+		# one the satellite never takes expires after a day
+		left = response_api.approve(inc.name, "revoke_api_keys", user, agent=sat)
+		assert left["name"] in response_api.expire_actions(now_datetime() + timedelta(hours=25))
+		assert frappe.db.get_value("Wolf Response Action", left["name"], "status") == "Expired"
+		return f"{approved['name']} applied by the satellite, a System Manager refused there, {left['name']} expired untaken"
+
 	def response_links():
 		"""Signed links to proposed response actions: in the alert, confirmed only by a logged-in manager."""
 		from types import SimpleNamespace
@@ -3316,7 +3370,7 @@ def main():
 	                 ("outbound connections", outbound_connections),
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
-	                 ("response actions", response_actions), ("response links", response_links), ("journal", journal_chain),
+	                 ("response actions", response_actions), ("satellite response", satellite_response), ("response links", response_links), ("journal", journal_chain),
 	                 ("siem export", siem_export), ("journal retention", journal_retention), ("rules YAML", rules_yaml)]:
 		check(name, fn)
 
