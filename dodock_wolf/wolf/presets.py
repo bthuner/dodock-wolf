@@ -351,8 +351,8 @@ PRESETS = [
 	{
 		"rule_name": "Security settings weakened",
 		"description": "System Settings lowered a defence: 2FA or the password policy off, lockout "
-		"loosened, longer sessions, guest uploads; or a Role's two-factor authentication turned off "
-		"(MITRE T1562.001).",
+		"loosened, longer sessions, guest uploads; or a Role's two-factor authentication turned off, or "
+		"a role that had it deleted (MITRE T1562.001).",
 		"signal_type": "event", "event_type": "security", "event_category": "security_settings_weakened",
 		"operator": ">=", "threshold": 1, "window_minutes": 10, "group_by": "site",
 		"severity": "critical", "auto_resolve": 0, "cooldown_minutes": 0,
@@ -417,11 +417,12 @@ PRESETS = [
 	},
 	{
 		# events are one per address and account (10 min): a sequence on the address counts the
-		# other accounts it asked for after the first, so 4 means 5 accounts
+		# other accounts it asked for after the first, so 4 means about 5 accounts (an event's last
+		# request is within the 10 min, its first may be 10 min older)
 		"rule_name": "Password reset burst from one IP",
-		"description": "One public address asked to reset the passwords of 5 accounts or more within "
-		"10 minutes: account enumeration or a takeover attempt (MITRE T1589.002, T1110). Private "
-		"addresses are not grouped.",
+		"description": "One public address asked to reset the passwords of about 5 accounts or more "
+		"within 10 to 20 minutes: account enumeration or a takeover attempt (MITRE T1589.002, T1110). "
+		"Private addresses are not grouped.",
 		"signal_type": "sequence", "sequence_entity": "ip", "sequence_minutes": 10,
 		"first_categories": "password_reset_requested", "then_categories": "password_reset_requested",
 		"operator": ">=", "threshold": 4, "window_minutes": 10, "group_by": "none",
