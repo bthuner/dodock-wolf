@@ -812,7 +812,8 @@ def main():
 			frappe.local.message_log = []
 			from dodock_wolf.api import rules_io as rules_yaml_api
 			plan = rules_yaml_api.import_document({"version": 1, "rules": [
-				{"rule_name": "smoke host cpu", "enabled": 1},
+				# a YAML rule is the whole rule: a field left out takes its default, so the metric is named
+				{"rule_name": "smoke host cpu", "enabled": 1, "metric_name": "cpu_usage", "threshold": 90},
 				{"rule_name": "smoke yaml load", "enabled": 1, "metric_name": "load_1m", "threshold": 4}]}, apply=True)  # fmt: skip
 			assert not plan["applied"] and plan["counts"]["invalid"] == 2, plan
 			assert all("was removed in Dodock Wolf 0.2" in r["errors"][0] for r in plan["rules"]), plan["rules"]
