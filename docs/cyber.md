@@ -194,7 +194,18 @@ risky application changes** (on by default):
 - **Weakened settings** (T1562.001, critical): System Settings saves that turn 2FA, the password
   policy, one session per user, SSO-only login or logout on password reset off, lower the
   password score or the lockout duration, allow more failed logins (or no lockout), lengthen
-  sessions or let guests upload files (`security_settings_weakened`).
+  sessions or let guests upload files (`security_settings_weakened`); and a Role save that turns
+  its two-factor authentication off (`kind: "role_2fa"`), critical for a privileged role.
+- **Impersonation** (T1078, `user_impersonated`): User → Impersonate opened a session as another
+  user (Frappe 15: Administrator only; 16: the `impersonate` permission on User). The Activity Log
+  Frappe inserts carries the impersonator; the reason they typed is kept on one line, cut at 200
+  characters. Critical when the impersonated user is privileged. Responses: log out or disable
+  the impersonated user, and the impersonator.
+- **Credentials reset by someone else** (T1098, `credentials_reset_by_other`): a user's password
+  set on a save by another user (`kind: "password"`, read in `before_validate`, where Frappe
+  still has it; never stored), or their OTP secret reset by another user
+  (`frappe.twofactor.reset_otp_secret`, `kind: "otp_secret"`, read in `after_request`). A new
+  user's first password is not one. Critical for privileged users.
 - **API keys** (T1098.001): a new API secret written for a user (`api_key_generated`), critical
   for privileged users.
 - **API key used from a new IP** (T1078, T1552, `api_key_new_ip`): every successful request
@@ -208,6 +219,15 @@ risky application changes** (on by default):
   proposed responses are revoking the user's API keys and blocking the address.
 - **Outbound webhooks** (T1567): a Webhook created, enabled or pointed at another host
   (`webhook_external`).
+- **Password reset requests** (T1589.002, T1110, `password_reset_requested`, info), behind
+  **Capture failed logins**: each call of the guest `reset_password` method, answered or refused,
+  read in `after_request`. The account typed is kept as a keyed hash (HMAC-SHA256 with the site's
+  encryption key), and by name only when it is an existing user; a decoy user is a honeytoken
+  touch instead. One event per address and account every 10 minutes. The rule engine has no
+  per-IP grouping for event rules, so the per-address preset (*Password reset burst from one IP*,
+  5 accounts in 10 min) is a sequence rule on the IP whose first and second events are both
+  resets; the site-wide one (*Password resets for many accounts*) counts events with
+  `min_samples`, that is distinct (address, account) pairs.
 - **Unusual data exports** (T1567 / T1030, `data_exfiltration`), behind its own setting,
   **Flag unusual data exports** (on by default):
   - **What counts:** report exports, Data Export, Data Import templates with records, bulk PDFs
@@ -651,3 +671,6 @@ Wolf alone stays fully supported.
 | `api_key_new_ip` | site | T1078 Valid Accounts, T1552 Unsecured Credentials |
 | `webhook_external` | site | T1567 Exfiltration Over Web Service |
 | `data_exfiltration` | site | T1567 Exfiltration Over Web Service, T1030 Data Transfer Size Limits |
+| `user_impersonated` | site | T1078 Valid Accounts |
+| `credentials_reset_by_other` | site | T1098 Account Manipulation |
+| `password_reset_requested` | site | T1589.002 Email Addresses, T1110 Brute Force |
