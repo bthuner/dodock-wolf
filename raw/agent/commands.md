@@ -125,8 +125,9 @@ Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
 
 ### Deprecated
 
-Press v1 support was removed in 0.2. Its options are still accepted, so old scripts and units keep
-working: each prints `removed in 0.2: ignored` to stderr and does nothing.
+Press v1 support and the host resource metrics were removed in 0.2. Their options are still
+accepted, so old scripts, units and configs keep working: each prints `removed in 0.2: ignored`
+to stderr and does nothing.
 
 <table>
 <thead>
@@ -191,6 +192,36 @@ working: each prints `removed in 0.2: ignored` to stderr and does nothing.
     
     <td>
       Does nothing and exits 0.
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        collect_host_metrics
+      </code>
+      
+       in the config
+    </td>
+    
+    <td>
+      Ignored: the agent no longer measures host resources. <code>
+        run
+      </code>
+      
+       logs the warning, <code>
+        check
+      </code>
+      
+       prints it to stderr, <code>
+        doctor
+      </code>
+      
+       lists it, <code>
+        register
+      </code>
+      
+       drops the key.
     </td>
   </tr>
 </tbody>

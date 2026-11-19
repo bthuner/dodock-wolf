@@ -1445,7 +1445,9 @@ per metric, host, bench, site and label. Each series has a `state`:
 
 A restricted user sees what each rule checks, but not the host, bench or site filters it names.
 The metric meanings (unit, kind, cadence) are in
-[`wolf/catalog.py`](https://github.com/bthuner/dodock-wolf/blob/main/dodock_wolf/wolf/catalog.py).
+[`wolf/catalog.py`](https://github.com/bthuner/dodock-wolf/blob/main/dodock_wolf/wolf/catalog.py). The
+`host` group holds the agent's setup checks (`agent_setup_failed`, `agent_setup_warnings`): the
+host resource metrics (CPU, memory, swap, disk, load) were removed in 0.2.
 
 ### Short cache
 

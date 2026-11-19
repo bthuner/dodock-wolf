@@ -185,7 +185,7 @@ and Agents whose site, bench or host matches one of their rows. This applies in 
 reports, forms, link searches, the Wolf Overview page, charts and incident timelines.
 
 - Rows are OR-ed.
-- Host-wide records (CPU, disk, SSH logins: no site) need a `host` row.
+- Host-wide records (SSH logins, listening services: no site) need a `host` row.
 - A site's security score, on the Security page and the home page, needs a `site` row: a `host`
 row does not show it.
 - A Wolf User without any row is not restricted.

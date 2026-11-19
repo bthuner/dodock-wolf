@@ -79,7 +79,7 @@ All runs used synthetic data and a demo bench, not production observations.
   
   <tr>
     <td>
-      Desk overview under 1 s
+      Desk overview under 1 s (its host chart was removed in 0.2)
     </td>
     
     <td>
@@ -275,8 +275,8 @@ rows with their own group-by. On fresh data MariaDB turned that join into a look
 each walking all of its metric's minute rollups: `get_signals` took **194 to 233 s** (two
 runs). `row_number()` over each series reads the rows once: 0.62 s.
 4. **Host chart index.** `(resolution, host, metric_name, bucket_start)` replaces
-`(resolution, host, bucket_start)`: Desk's host chart reads four metrics of one host, no
-longer all fifteen.
+`(resolution, host, bucket_start)`: Desk's host chart (removed in 0.2, with the host resource
+metrics) read four metrics of one host, no longer all fifteen.
 
 The 194 s were missed at first. #56's "after" reads ran on data 40 to 45 min old, and a later run
 on data 85 to 103 min old: `get_signals` reads the last 2 h, so it saw part of its window. One
@@ -572,7 +572,8 @@ again.
 
 ### Desk overview
 
-`ui.get_overview` plus one host chart:
+`ui.get_overview` plus one host chart. The chart and its CPU, memory, disk and load metrics were
+removed in 0.2: these numbers are historical.
 
 <table>
 <thead>
@@ -1766,7 +1767,9 @@ order, which is already time order, so row names matter less there.
 `ci/load_test.py` fills a throwaway site with N hosts × M metrics × D days and times push and the
 overview. CI does not run it. At 100 hosts × 7 days it writes about 20 M rows, which takes 15 to
 25 minutes on a GitHub runner before any timing starts. `ci/load_http.py` times the agent's push
-over HTTP on the same site.
+over HTTP on the same site. Since 0.2 it loads queue, Redis and database gauges where it loaded the
+host resource metrics, and no longer times Desk's host chart (both removed in 0.2): a new run is
+not comparable, row for row, with the Desk overview numbers above.
 
 <steps level="3">
 

@@ -407,102 +407,6 @@ Presets have no channels. They open incidents but notify nobody until you add a
 <tbody>
   <tr>
     <td>
-      Disk almost full
-    </td>
-    
-    <td>
-      <code>
-        min(disk_used_percent)
-      </code>
-      
-       > 90 in 5 min
-    </td>
-    
-    <td>
-      <code>
-        host_label
-      </code>
-    </td>
-    
-    <td>
-      ● critical
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      High CPU
-    </td>
-    
-    <td>
-      <code>
-        min(cpu_usage)
-      </code>
-      
-       > 90 in 10 min
-    </td>
-    
-    <td>
-      <code>
-        host
-      </code>
-    </td>
-    
-    <td>
-      ◐ warning
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      High memory
-    </td>
-    
-    <td>
-      <code>
-        min(memory_used_percent)
-      </code>
-      
-       > 90 in 10 min
-    </td>
-    
-    <td>
-      <code>
-        host
-      </code>
-    </td>
-    
-    <td>
-      ◐ warning
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      High load
-    </td>
-    
-    <td>
-      <code>
-        avg(load_per_core)
-      </code>
-      
-       > 2 in 10 min
-    </td>
-    
-    <td>
-      <code>
-        host
-      </code>
-    </td>
-    
-    <td>
-      ◐ warning
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
       Agent silent
     </td>
     
@@ -1929,8 +1833,8 @@ Presets have no channels. They open incidents but notify nobody until you add a
 </tbody>
 </table>
 
-**Per** is the rule's **Group By**: one incident per site, bench, host or `host_label` (a disk mount,
-a queue, a domain). For a [sequence rule](/alerts/rules#sequence-rules) it is the entity: one incident
+**Per** is the rule's **Group By**: one incident per site, bench, host or `host_label` (a queue,
+a domain). For a [sequence rule](/alerts/rules#sequence-rules) it is the entity: one incident
 per IP, user or host. The conditions are those of a fresh install, generated from
 [`dodock_wolf/wolf/presets.py`](https://github.com/bthuner/dodock-wolf/blob/main/dodock_wolf/wolf/presets.py)
 by `docs-site/scripts/presets-table.py`. See [Security](/security) for the signals behind the

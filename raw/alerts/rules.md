@@ -8,8 +8,8 @@ opens one incident per group and notifies its channels.
 The top of the form reads the rule back in plain words, and redraws it as you change a field or
 a channel, before you save:
 
-> Opens a **critical** incident when the lowest **disk_used_percent** over the last **5 min** is
-> **above** **90**, **per host and series (a disk, a queue...)**. It needs at least **3** samples in
+> Opens a **critical** incident when the lowest **queue_length** over the last **5 min** is
+> **above** **500**, **per host and series (a queue, a domain...)**. It needs at least **3** samples in
 > the window. It resolves by itself once the condition no longer holds; if it matches again within
 > **1 h** of being resolved, the same incident reopens. It notifies **ntfy** and **Email**, and
 > again when it resolves.
@@ -236,7 +236,7 @@ If the sentence is not what you meant, the rule is not either.
         host_label
       </code>
       
-       (for example per disk mount) or <code>
+       (for example per RQ queue or TLS domain) or <code>
         none
       </code>
       
@@ -512,7 +512,7 @@ The rule form shows **Last Evaluated**, **Last Fired** and **Last Error**.
 
 </tabs-item>
 
-<tabs-item label="Disk stayed full">
+<tabs-item label="Queue stayed backed up">
 <table>
 <thead>
   <tr>
@@ -546,7 +546,7 @@ The rule form shows **Last Evaluated**, **Last Fired** and **Last Error**.
     
     <td>
       <code>
-        disk_used_percent
+        queue_length
       </code>
     </td>
   </tr>
@@ -574,7 +574,7 @@ The rule form shows **Last Evaluated**, **Last Fired** and **Last Error**.
       </code>
       
       , <code>
-        90
+        500
       </code>
     </td>
   </tr>
@@ -610,14 +610,14 @@ The rule form shows **Last Evaluated**, **Last Fired** and **Last Error**.
     
     <td>
       <code>
-        80
+        100
       </code>
     </td>
   </tr>
 </tbody>
 </table>
 
-*Every sample of a mount above 90 % for 15 minutes. Resolves at or below 80 %.*
+*Every sample of an RQ queue above 500 jobs for 15 minutes. Resolves at or below 100 jobs.*
 
 </tabs-item>
 
@@ -881,12 +881,12 @@ In Desk, the **Wolf Alert Rule** list's menu has **Export to YAML** (the selecte
 ```yaml [rules.yaml]
 version: 1
 rules:
-- rule_name: Disk almost full
+- rule_name: Worker queue backlog
   enabled: 1
   severity: critical
-  metric_name: disk_used_percent
+  metric_name: queue_length
   aggregation: min
-  threshold: 90
+  threshold: 500
   group_by: host_label
   channels:
   - channel_type: ntfy

@@ -7,8 +7,6 @@ tuned in the [configuration](/agent/configuration).
 
 ## Host
 
-From `/proc`, every push (`push_interval`, 30 s):
-
 <table>
 <thead>
   <tr>
@@ -23,72 +21,6 @@ From `/proc`, every push (`push_interval`, 30 s):
 </thead>
 
 <tbody>
-  <tr>
-    <td>
-      <code>
-        cpu_usage
-      </code>
-    </td>
-    
-    <td>
-      percent
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      <code>
-        memory_used_percent
-      </code>
-      
-      , <code>
-        swap_used_percent
-      </code>
-    </td>
-    
-    <td>
-      
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      <code>
-        load_1m
-      </code>
-      
-      , <code>
-        load_5m
-      </code>
-      
-      , <code>
-        load_15m
-      </code>
-      
-      , <code>
-        load_per_core
-      </code>
-    </td>
-    
-    <td>
-      
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
-      <code>
-        disk_used_percent
-      </code>
-    </td>
-    
-    <td>
-      per real mount, label <code>
-        mount
-      </code>
-    </td>
-  </tr>
-  
   <tr>
     <td>
       <code>
@@ -112,6 +44,9 @@ From `/proc`, every push (`push_interval`, 30 s):
   </tr>
 </tbody>
 </table>
+
+The agent does not measure the host's resources (CPU, memory, swap, disk, load): Frappe Cloud v2
+and [Pilot](/install/pilot) report them. See [Upgrading from 0.1](#upgrading-from-01).
 
 ## Bench logs
 
@@ -709,6 +644,28 @@ When present on the host, the agent also tails:
 - **Wazuh**'s `alerts.json` on the manager: `hids_alert` events.
 
 See [Wazuh and Suricata](/security/wazuh-suricata).
+
+## Upgrading from 0.1
+
+The host resource metrics were removed in 0.2: `cpu_usage`, `memory_used_percent`,
+`swap_used_percent`, `disk_used_percent`, `load_1m`, `load_5m`, `load_15m` and `load_per_core`.
+Read host resources in Frappe Cloud v2 or Pilot, or stay on [v0.1.0](/getting-started#staying-on-v010).
+
+- The upgrade disables the enabled alert rules on these metrics, and the presets *Disk almost full*,
+*High CPU*, *High memory* and *High load*, with a comment on each saying why. They are not
+deleted. A rule you had disabled yourself is left as it is, without a comment.
+- The open incidents of these rules, enabled or disabled, are resolved, since nothing evaluates them
+any more. Each resolution is recorded in the [journal](/security/journal#tamper-evident-journal).
+**PagerDuty** channels hear about it, so the alert closes on call too; the other channels stay
+quiet, even with **Notify On Resolve**: an upgrade pages nobody.
+- It deletes the stored samples and rollups of these metrics, and records what it did in an
+**Error Log** titled *Dodock Wolf 0.2: host resource metrics removed*.
+- A rule on one of these metrics can no longer be enabled, in the form or through a
+[YAML import](/alerts/rules#rules-as-yaml): choose another metric. A disabled one stays, with its history.
+- A v0.1 agent still sends these metrics until you upgrade it: the Wolf site drops them without an
+error.
+- The `collect_host_metrics` key of a v0.1 config is ignored, with a warning (see
+[Configuration](/agent/configuration)).
 
 ## Delivery guarantees
 

@@ -43,7 +43,6 @@ sites on a bench can forward the same signals as [satellites](https://bthuner.gi
 | 5xx and 502 spikes          | 14 × 502 on `a.example.com` in 5 min, after a deployment at 01:47           | nginx access log (agent)                              |
 | Cron and scheduler failures | The nightly job failed at 02:00, or the scheduler stalled                   | `scheduler.log` (agent), Scheduled Job Log (site)     |
 | Worker problems             | Worker OOM-killed, RQ queue backlog, no live worker                         | `worker.log`, Redis (agent)                           |
-| Host resources              | Disk at 93 % on `/`, load per core above 2                                  | `/proc` (agent)                                       |
 | Security                    | SSH brute force, admin login from a new country, a web attack scan          | auth log, nginx (agent); login and audit hooks (site) |
 | Operations                  | No backup for 26 h, TLS certificate expiring in 3 days, replication stopped | backups, TLS, MariaDB (agent)                         |
 
@@ -66,10 +65,10 @@ seen in nginx, file integrity, outbound connections), the response to it, and th
 journal, NIS2, DORA and GDPR deadlines, SIEM export). No Frappe tool covers that, on Frappe Cloud
 or elsewhere.
 
-The general observability features (dashboards, host and service metrics) stay as they are:
+The general observability features (dashboards, service metrics) stay as they are:
 kept working and translated, for operators who run their own benches, but without new features.
-Version 0.2 removed the Press v1 integration, the live demos, status pages, the metrics explorer
-and digests; release v0.1.0 keeps them. Frappe Cloud has its own telemetry, incident manager and status
+Version 0.2 removed the Press v1 integration, the live demos, status pages, the metrics explorer,
+digests and the host resource metrics (CPU, memory, swap, disk, load); release v0.1.0 keeps them. Frappe Cloud has its own telemetry, incident manager and status
 page (Datum and Beacon); where a tool already does the job, Wolf connects to it rather than doing
 it again: Wazuh, Suricata, CrowdSec, a SIEM, PagerDuty, and Frappe's own tools as they open up.
 
@@ -246,7 +245,7 @@ Every record carries up to three names. Wolf always reads them in this order:
 | **bench** | the bench that serves it            | `frappe-bench`   |
 | **host**  | the Linux machine the agent runs on | `bench-01`       |
 
-Host-wide records (CPU, disk, SSH logins) have no site. Rules group by one of these, and
+Host-wide records (SSH logins, listening services) have no site. Rules group by one of these, and
 [user scopes](https://bthuner.github.io/dodock-wolf/security/access) restrict who sees which.
 
 ## From a log line to an alert
@@ -273,7 +272,7 @@ flowchart LR
 | DocType                | What it holds                                                                                                                                                                                                                                        |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Wolf Event**         | Something that happened: `error`, `cron_failure`, `worker_failure`, `security`, `host_metric_alert`, `deployment`. Has a category (for example `web_attack_probe`), a severity (`info`, `warning`, `critical`), a scope, a count and a JSON payload. |
-| **Wolf Metric Sample** | One value of one metric (`cpu_usage`, `http_502`, `tls_days_left`…) for one scope at one time. Rolled up into **Wolf Metric Rollup** by minute and by hour. See [Metric storage](https://bthuner.github.io/dodock-wolf/reference/metric-storage).    |
+| **Wolf Metric Sample** | One value of one metric (`queue_length`, `http_502`, `tls_days_left`…) for one scope at one time. Rolled up into **Wolf Metric Rollup** by minute and by hour. See [Metric storage](https://bthuner.github.io/dodock-wolf/reference/metric-storage). |
 | **Wolf Alert Rule**    | *When X > Y for Z minutes, send alert.* Signal, aggregation, window, group by, channels. See [Alert rules](https://bthuner.github.io/dodock-wolf/alerts/rules).                                                                                      |
 | **Wolf Incident**      | Events that share a cause, for one group of one rule. Status `Open`, `Acknowledged` or `Resolved`. Linked to the deployment that preceded it. See [Incidents](https://bthuner.github.io/dodock-wolf/alerts/incidents).                               |
 | **Wolf Silence**       | A maintenance window: incidents still open, notifications wait.                                                                                                                                                                                      |
@@ -720,15 +719,12 @@ tuned in the [configuration](https://bthuner.github.io/dodock-wolf/agent/configu
 
 ## Host
 
-From `/proc`, every push (`push_interval`, 30 s):
+| Metric                                       | Notes                                                                                                                                                                                |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `agent_setup_failed`, `agent_setup_warnings` | every hour: the failures and warnings of the agent's own [`wolf-agent doctor`](https://bthuner.github.io/dodock-wolf/agent/commands#check-a-host) run, listed on the Monitoring page |
 
-| Metric                                            | Notes                                                                                                                                                                                |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `cpu_usage`                                       | percent                                                                                                                                                                              |
-| `memory_used_percent`, `swap_used_percent`        |                                                                                                                                                                                      |
-| `load_1m`, `load_5m`, `load_15m`, `load_per_core` |                                                                                                                                                                                      |
-| `disk_used_percent`                               | per real mount, label `mount`                                                                                                                                                        |
-| `agent_setup_failed`, `agent_setup_warnings`      | every hour: the failures and warnings of the agent's own [`wolf-agent doctor`](https://bthuner.github.io/dodock-wolf/agent/commands#check-a-host) run, listed on the Monitoring page |
+The agent does not measure the host's resources (CPU, memory, swap, disk, load): Frappe Cloud v2
+and [Pilot](https://bthuner.github.io/dodock-wolf/install/pilot) report them. See [Upgrading from 0.1](https://bthuner.github.io/dodock-wolf/#upgrading-from-01).
 
 ## Bench logs
 
@@ -845,6 +841,28 @@ When present on the host, the agent also tails:
 
 See [Wazuh and Suricata](https://bthuner.github.io/dodock-wolf/security/wazuh-suricata).
 
+## Upgrading from 0.1
+
+The host resource metrics were removed in 0.2: `cpu_usage`, `memory_used_percent`,
+`swap_used_percent`, `disk_used_percent`, `load_1m`, `load_5m`, `load_15m` and `load_per_core`.
+Read host resources in Frappe Cloud v2 or Pilot, or stay on [v0.1.0](https://bthuner.github.io/dodock-wolf/getting-started#staying-on-v010).
+
+- The upgrade disables the enabled alert rules on these metrics, and the presets *Disk almost full*,
+  *High CPU*, *High memory* and *High load*, with a comment on each saying why. They are not
+  deleted. A rule you had disabled yourself is left as it is, without a comment.
+- The open incidents of these rules, enabled or disabled, are resolved, since nothing evaluates them
+  any more. Each resolution is recorded in the [journal](https://bthuner.github.io/dodock-wolf/security/journal#tamper-evident-journal).
+  **PagerDuty** channels hear about it, so the alert closes on call too; the other channels stay
+  quiet, even with **Notify On Resolve**: an upgrade pages nobody.
+- It deletes the stored samples and rollups of these metrics, and records what it did in an
+  **Error Log** titled *Dodock Wolf 0.2: host resource metrics removed*.
+- A rule on one of these metrics can no longer be enabled, in the form or through a
+  [YAML import](https://bthuner.github.io/dodock-wolf/alerts/rules#rules-as-yaml): choose another metric. A disabled one stays, with its history.
+- A v0.1 agent still sends these metrics until you upgrade it: the Wolf site drops them without an
+  error.
+- The `collect_host_metrics` key of a v0.1 config is ignored, with a warning (see
+  [Configuration](https://bthuner.github.io/dodock-wolf/agent/configuration)).
+
 ## Delivery guarantees
 
 - Logs are read from the end on first start. Offsets are kept in
@@ -880,7 +898,6 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
   "verify_tls": true,
   "behind_proxy": null,
   "auth_log": null,
-  "collect_host_metrics": true,
   "pilot": {"deployments": true, "api_url": null, "token": null, "jwt_secret": null},
   "benches": [
     {"name": "frappe-bench", "path": "/home/frappe/frappe-bench", "sites": ["a.example.com"],
@@ -955,7 +972,11 @@ Use another file with `--config PATH` or `$WOLF_AGENT_CONFIG`.
   :::
 
   :::field{name="collect_host_metrics" type="boolean"}
-  CPU, memory, swap, load and disk. Default `true`.
+  Removed in 0.2: the agent no longer measures CPU, memory, swap, disk and load (Frappe Cloud v2 and
+  Pilot report them). A v0.1 config that still has the key works: `wolf-agent run` logs
+  `removed in 0.2: ignored` at start, `wolf-agent check` says it on stderr, `wolf-agent doctor`
+  lists it, and `wolf-agent register` drops it from the config it writes. See
+  [Upgrading from 0.1](https://bthuner.github.io/dodock-wolf/agent/collected#upgrading-from-01).
   :::
 
   :::field{name="extra_logs" type="array"}
@@ -1017,14 +1038,16 @@ Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
 
 ### Deprecated
 
-Press v1 support was removed in 0.2. Its options are still accepted, so old scripts and units keep
-working: each prints `removed in 0.2: ignored` to stderr and does nothing.
+Press v1 support and the host resource metrics were removed in 0.2. Their options are still
+accepted, so old scripts, units and configs keep working: each prints `removed in 0.2: ignored`
+to stderr and does nothing.
 
-| Option or command                                  | Since 0.2                                 |
-| -------------------------------------------------- | ----------------------------------------- |
-| `--platform` on `register`, `discover` and `check` | Ignored: benches are discovered as usual. |
-| `mark-deployment --source press`                   | Recorded as `manual`.                     |
-| `refresh`                                          | Does nothing and exits 0.                 |
+| Option or command                                  | Since 0.2                                                                                                                                               |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--platform` on `register`, `discover` and `check` | Ignored: benches are discovered as usual.                                                                                                               |
+| `mark-deployment --source press`                   | Recorded as `manual`.                                                                                                                                   |
+| `refresh`                                          | Does nothing and exits 0.                                                                                                                               |
+| `collect_host_metrics` in the config               | Ignored: the agent no longer measures host resources. `run` logs the warning, `check` prints it to stderr, `doctor` lists it, `register` drops the key. |
 
 A host still on Press v1 stays on [v0.1.0](https://bthuner.github.io/dodock-wolf/getting-started#staying-on-v010).
 
@@ -1444,8 +1467,8 @@ opens one incident per group and notifies its channels.
 The top of the form reads the rule back in plain words, and redraws it as you change a field or
 a channel, before you save:
 
-> Opens a **critical** incident when the lowest **disk_used_percent** over the last **5 min** is
-> **above** **90**, **per host and series (a disk, a queue...)**. It needs at least **3** samples in
+> Opens a **critical** incident when the lowest **queue_length** over the last **5 min** is
+> **above** **500**, **per host and series (a queue, a domain...)**. It needs at least **3** samples in
 > the window. It resolves by itself once the condition no longer holds; if it matches again within
 > **1 h** of being resolved, the same incident reopens. It notifies **ntfy** and **Email**, and
 > again when it resolves.
@@ -1462,7 +1485,7 @@ If the sentence is not what you meant, the rule is not either.
 | **Operator**, **Threshold**                                            | `>`, `>=`, `<`, `<=`, `==`, `!=` against a number.                                                                                                                                                                                                                                                                                                |
 | **Window Minutes**                                                     | The look-back. Default 5.                                                                                                                                                                                                                                                                                                                         |
 | **Min Samples**                                                        | Fewer samples in the window than this, and the rule does not breach.                                                                                                                                                                                                                                                                              |
-| **Group By**                                                           | `host`, `bench`, `site`, `host_label` (for example per disk mount) or `none`. One incident per group.                                                                                                                                                                                                                                             |
+| **Group By**                                                           | `host`, `bench`, `site`, `host_label` (for example per RQ queue or TLS domain) or `none`. One incident per group.                                                                                                                                                                                                                                 |
 | **Filter Host / Bench / Site**                                         | Limit the rule to one scope.                                                                                                                                                                                                                                                                                                                      |
 | **Active From / To**                                                   | Only evaluate in this window. It may wrap midnight (`04:00 → 01:00`).                                                                                                                                                                                                                                                                             |
 | **Require Recent Deployment**                                          | Only fire if a deployment hit the same bench, site or host in the last **Deployment Window Minutes** (30).                                                                                                                                                                                                                                        |
@@ -1493,18 +1516,18 @@ The rule form shows **Last Evaluated**, **Last Fired** and **Last Error**.
   *10 or more 502 responses on a site within 5 minutes.*
   :::
 
-  :::tabs-item{label="Disk stayed full"}
-  | Field                      | Value               |
-  | -------------------------- | ------------------- |
-  | Signal Type                | `metric`            |
-  | Metric Name                | `disk_used_percent` |
-  | Aggregation                | `min`               |
-  | Operator, Threshold        | `>`, `90`           |
-  | Window Minutes             | `15`                |
-  | Group By                   | `host_label`        |
-  | Separate Resolve Threshold | `80`                |
+  :::tabs-item{label="Queue stayed backed up"}
+  | Field                      | Value          |
+  | -------------------------- | -------------- |
+  | Signal Type                | `metric`       |
+  | Metric Name                | `queue_length` |
+  | Aggregation                | `min`          |
+  | Operator, Threshold        | `>`, `500`     |
+  | Window Minutes             | `15`           |
+  | Group By                   | `host_label`   |
+  | Separate Resolve Threshold | `100`          |
 
-  *Every sample of a mount above 90 % for 15 minutes. Resolves at or below 80 %.*
+  *Every sample of an RQ queue above 500 jobs for 15 minutes. Resolves at or below 100 jobs.*
   :::
 
   :::tabs-item{label="Night cron"}
@@ -1576,12 +1599,12 @@ In Desk, the **Wolf Alert Rule** list's menu has **Export to YAML** (the selecte
 ```yaml [rules.yaml]
 version: 1
 rules:
-- rule_name: Disk almost full
+- rule_name: Worker queue backlog
   enabled: 1
   severity: critical
-  metric_name: disk_used_percent
+  metric_name: queue_length
   aggregation: min
-  threshold: 90
+  threshold: 500
   group_by: host_label
   channels:
   - channel_type: ntfy
@@ -1634,14 +1657,10 @@ Presets have no channels. They open incidents but notify nobody until you add a
 
 ## Hosts and agents
 
-| Preset             | Fires when                                                 | Per          | Severity   |
-| ------------------ | ---------------------------------------------------------- | ------------ | ---------- |
-| Disk almost full   | `min(disk_used_percent)` > 90 in 5 min                     | `host_label` | ● critical |
-| High CPU           | `min(cpu_usage)` > 90 in 10 min                            | `host`       | ◐ warning  |
-| High memory        | `min(memory_used_percent)` > 90 in 10 min                  | `host`       | ◐ warning  |
-| High load          | `avg(load_per_core)` > 2 in 10 min                         | `host`       | ◐ warning  |
-| Agent silent       | `host_metric_alert` / `agent_silent` events >= 1 in 15 min | `host`       | ◐ warning  |
-| Host setup problem | `last(agent_setup_failed)` >= 1 in 120 min                 | `host`       | ◐ warning  |
+| Preset             | Fires when                                                 | Per    | Severity  |
+| ------------------ | ---------------------------------------------------------- | ------ | --------- |
+| Agent silent       | `host_metric_alert` / `agent_silent` events >= 1 in 15 min | `host` | ◐ warning |
+| Host setup problem | `last(agent_setup_failed)` >= 1 in 120 min                 | `host` | ◐ warning |
 
 ## Backups, TLS, database and email
 
@@ -1711,8 +1730,8 @@ Presets have no channels. They open incidents but notify nobody until you add a
 | New-IP login then export or new key     | one of `new_admin_ip`, `admin_login_new_country`, `api_key_new_ip`, then one of `data_exfiltration`, `api_key_generated`, `webhook_external` on the same `user` within 120 min                                                                                                       | `user` | ● critical |
 | IDS alert then risky change on the host | one of `network_ids_alert`, `hids_alert` (critical), then one of `server_script_change`, `client_script_change`, `console_execution`, `permission_change`, `security_settings_weakened`, `privileged_user`, `api_key_generated`, `webhook_external` on the same `host` within 60 min | `host` | ● critical |
 
-**Per** is the rule's **Group By**: one incident per site, bench, host or `host_label` (a disk mount,
-a queue, a domain). For a [sequence rule](https://bthuner.github.io/dodock-wolf/alerts/rules#sequence-rules) it is the entity: one incident
+**Per** is the rule's **Group By**: one incident per site, bench, host or `host_label` (a queue,
+a domain). For a [sequence rule](https://bthuner.github.io/dodock-wolf/alerts/rules#sequence-rules) it is the entity: one incident
 per IP, user or host. The conditions are those of a fresh install, generated from
 [`dodock_wolf/wolf/presets.py`](https://github.com/bthuner/dodock-wolf/blob/main/dodock_wolf/wolf/presets.py){rel="&#x22;nofollow&#x22;"}
 by `docs-site/scripts/presets-table.py`. See [Security](https://bthuner.github.io/dodock-wolf/security) for the signals behind the
@@ -2563,7 +2582,7 @@ and Agents whose site, bench or host matches one of their rows. This applies in 
 reports, forms, link searches, the Wolf Overview page, charts and incident timelines.
 
 - Rows are OR-ed.
-- Host-wide records (CPU, disk, SSH logins: no site) need a `host` row.
+- Host-wide records (SSH logins, listening services: no site) need a `host` row.
 - A site's security score, on the Security page and the home page, needs a `site` row: a `host`
   row does not show it.
 - A Wolf User without any row is not restricted.
@@ -3463,8 +3482,8 @@ X-Wolf-Agent-Secret: <secret>
   "agent_version": "0.1.0",
   "hostname": "bench-01",
   "metrics": [
-    {"metric_name": "cpu_usage", "value": 12.5, "timestamp": "...", "host": "bench-01",
-     "bench": null, "site": null, "labels": {}}
+    {"metric_name": "queue_length", "value": 12, "timestamp": "...", "host": "bench-01",
+     "bench": "main", "site": null, "labels": {"queue": "default"}}
   ],
   "events": [
     {"type": "error", "category": "http_502", "severity": "critical", "timestamp": "...",
@@ -3499,13 +3518,13 @@ The same two headers authenticate the deployment marker, the status call and the
 
 A metric sample:
 
-| Field                   | Meaning                                                                  |
-| ----------------------- | ------------------------------------------------------------------------ |
-| `metric_name`           | See [Metric names](https://bthuner.github.io/dodock-wolf/#metric-names). |
-| `value`                 | Number.                                                                  |
-| `timestamp`             | UTC.                                                                     |
-| `host`, `bench`, `site` | Scope. `null` where it does not apply.                                   |
-| `labels`                | Object, for example `{"mount": "/"}` or `{"queue": "default"}`.          |
+| Field                   | Meaning                                                                      |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| `metric_name`           | See [Metric names](https://bthuner.github.io/dodock-wolf/#metric-names).     |
+| `value`                 | Number.                                                                      |
+| `timestamp`             | UTC.                                                                         |
+| `host`, `bench`, `site` | Scope. `null` where it does not apply.                                       |
+| `labels`                | Object, for example `{"queue": "default"}` or `{"domain": "a.example.com"}`. |
 
 An event:
 
@@ -3677,13 +3696,7 @@ Metrics emitted by the agent, unless noted.
 
 | `metric_name`                                | Unit                         | Scope / labels                                                                                                                                                                                                                                                                                                                                                     |
 | -------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `cpu_usage`                                  | %                            | host                                                                                                                                                                                                                                                                                                                                                               |
-| `memory_used_percent`                        | %                            | host                                                                                                                                                                                                                                                                                                                                                               |
-| `swap_used_percent`                          | %                            | host                                                                                                                                                                                                                                                                                                                                                               |
-| `disk_used_percent`                          | %                            | host, `labels.mount`                                                                                                                                                                                                                                                                                                                                               |
 | `agent_setup_failed`, `agent_setup_warnings` | checks                       | host: from the agent's hourly `wolf-agent doctor` run                                                                                                                                                                                                                                                                                                              |
-| `load_1m` / `load_5m` / `load_15m`           | —                            | host                                                                                                                                                                                                                                                                                                                                                               |
-| `load_per_core`                              | —                            | host (`load_1m` / CPU count)                                                                                                                                                                                                                                                                                                                                       |
 | `http_requests`                              | count per minute of log time | host, bench, site                                                                                                                                                                                                                                                                                                                                                  |
 | `http_5xx`                                   | count per minute of log time | host, bench, site                                                                                                                                                                                                                                                                                                                                                  |
 | `http_502`                                   | count per minute of log time | host, bench, site                                                                                                                                                                                                                                                                                                                                                  |
@@ -3716,6 +3729,11 @@ Metrics emitted by the agent, unless noted.
 
 Agents older than these signals do not send them. The app accepts any metric name, so no server
 change is needed to receive them; the presets only need the samples to exist.
+
+The host resource metrics were removed in 0.2: `cpu_usage`, `memory_used_percent`,
+`swap_used_percent`, `disk_used_percent`, `load_1m`, `load_5m`, `load_15m` and `load_per_core`.
+A v0.1 agent still sends them; the app drops them from the push without storing them and without
+listing them in `rejected`. See [Upgrading from 0.1](https://bthuner.github.io/dodock-wolf/agent/collected#upgrading-from-01).
 
 ## Deployment marker
 
@@ -4268,7 +4286,9 @@ per metric, host, bench, site and label. Each series has a `state`:
 
 A restricted user sees what each rule checks, but not the host, bench or site filters it names.
 The metric meanings (unit, kind, cadence) are in
-[`wolf/catalog.py`](https://github.com/bthuner/dodock-wolf/blob/main/dodock_wolf/wolf/catalog.py){rel="&#x22;nofollow&#x22;"}.
+[`wolf/catalog.py`](https://github.com/bthuner/dodock-wolf/blob/main/dodock_wolf/wolf/catalog.py){rel="&#x22;nofollow&#x22;"}. The
+`host` group holds the agent's setup checks (`agent_setup_failed`, `agent_setup_warnings`): the
+host resource metrics (CPU, memory, swap, disk, load) were removed in 0.2.
 
 ### Short cache
 
@@ -4632,12 +4652,12 @@ All runs used synthetic data and a demo bench, not production observations.
 
 ## Summary
 
-| Target                             | Before (#55)                      | Row order (#56)                   | SQL reads (#57)                                                                                                                  |
-| ---------------------------------- | --------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `push` p95 under 200 ms            | **Met.** 115 ms over HTTP         | **Met.** 108 ms over HTTP         | **Met.** 20.7 ms server side (HTTP not run again)                                                                                |
-| Desk overview under 1 s            | Met, except its 24 h chart: 2.1 s | Met, except its 24 h chart: 1.8 s | **Met.** 0.56 s at most (24 h)                                                                                                   |
-| Wolf UI overview under 1 s         | **Not met: 13.8 to 23.8 s**       | **Not met: 1.5 s**                | **Met per read: 0.73 s for the slowest**                                                                                         |
-| Wolf UI overview page in a browser |                                   |                                   | Without cache: p50 0.82 to 0.97 s, p95 1.00 to 1.26 s. **With the cache, met: p95 0.61 s; after 45 s or 150 s idle, max 0.65 s** |
+| Target                                                      | Before (#55)                      | Row order (#56)                   | SQL reads (#57)                                                                                                                  |
+| ----------------------------------------------------------- | --------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `push` p95 under 200 ms                                     | **Met.** 115 ms over HTTP         | **Met.** 108 ms over HTTP         | **Met.** 20.7 ms server side (HTTP not run again)                                                                                |
+| Desk overview under 1 s (its host chart was removed in 0.2) | Met, except its 24 h chart: 2.1 s | Met, except its 24 h chart: 1.8 s | **Met.** 0.56 s at most (24 h)                                                                                                   |
+| Wolf UI overview under 1 s                                  | **Not met: 13.8 to 23.8 s**       | **Not met: 1.5 s**                | **Met per read: 0.73 s for the slowest**                                                                                         |
+| Wolf UI overview page in a browser                          |                                   |                                   | Without cache: p50 0.82 to 0.97 s, p95 1.00 to 1.26 s. **With the cache, met: p95 0.61 s; after 45 s or 150 s idle, max 0.65 s** |
 
 The page time runs from navigation start until every panel is drawn, in Chromium on the bench
 (see [The page in a browser](https://bthuner.github.io/dodock-wolf/#the-page-in-a-browser)). Without the cache its median is under 1 s,
@@ -4724,8 +4744,8 @@ The names are now 33 characters for rollups and 28 for samples, against 32 and 1
    each walking all of its metric's minute rollups: `get_signals` took **194 to 233 s** (two
    runs). `row_number()` over each series reads the rows once: 0.62 s.
 4. **Host chart index.** `(resolution, host, metric_name, bucket_start)` replaces
-   `(resolution, host, bucket_start)`: Desk's host chart reads four metrics of one host, no
-   longer all fifteen.
+   `(resolution, host, bucket_start)`: Desk's host chart (removed in 0.2, with the host resource
+   metrics) read four metrics of one host, no longer all fifteen.
 
 The 194 s were missed at first. #56's "after" reads ran on data 40 to 45 min old, and a later run
 on data 85 to 103 min old: `get_signals` reads the last 2 h, so it saw part of its window. One
@@ -4819,7 +4839,8 @@ again.
 
 ### Desk overview
 
-`ui.get_overview` plus one host chart:
+`ui.get_overview` plus one host chart. The chart and its CPU, memory, disk and load metrics were
+removed in 0.2: these numbers are historical.
 
 | Range  | 1 h | 6 h | 24 h      | 7 d |
 | ------ | --- | --- | --------- | --- |
@@ -5036,7 +5057,9 @@ reads grow with the rows of their window, and so does a visit that reads.
 `ci/load_test.py` fills a throwaway site with N hosts × M metrics × D days and times push and the
 overview. CI does not run it. At 100 hosts × 7 days it writes about 20 M rows, which takes 15 to
 25 minutes on a GitHub runner before any timing starts. `ci/load_http.py` times the agent's push
-over HTTP on the same site.
+over HTTP on the same site. Since 0.2 it loads queue, Redis and database gauges where it loaded the
+host resource metrics, and no longer times Desk's host chart (both removed in 0.2): a new run is
+not comparable, row for row, with the Desk overview numbers above.
 
 ::steps{level="3"}
 ### Load and time the reads

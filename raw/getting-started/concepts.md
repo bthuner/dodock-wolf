@@ -80,7 +80,7 @@ Every record carries up to three names. Wolf always reads them in this order:
 </tbody>
 </table>
 
-Host-wide records (CPU, disk, SSH logins) have no site. Rules group by one of these, and
+Host-wide records (SSH logins, listening services) have no site. Rules group by one of these, and
 [user scopes](/security/access) restrict who sees which.
 
 ## From a log line to an alert
@@ -179,7 +179,7 @@ on every event.
     
     <td>
       One value of one metric (<code>
-        cpu_usage
+        queue_length
       </code>
       
       , <code>

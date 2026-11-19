@@ -112,28 +112,6 @@ sites on a bench can forward the same signals as [satellites](/install/every-sit
   
   <tr>
     <td>
-      Host resources
-    </td>
-    
-    <td>
-      Disk at 93 % on <code>
-        /
-      </code>
-      
-      , load per core above 2
-    </td>
-    
-    <td>
-      <code>
-        /proc
-      </code>
-      
-       (agent)
-    </td>
-  </tr>
-  
-  <tr>
-    <td>
       Security
     </td>
     
@@ -181,10 +159,10 @@ seen in nginx, file integrity, outbound connections), the response to it, and th
 journal, NIS2, DORA and GDPR deadlines, SIEM export). No Frappe tool covers that, on Frappe Cloud
 or elsewhere.
 
-The general observability features (dashboards, host and service metrics) stay as they are:
+The general observability features (dashboards, service metrics) stay as they are:
 kept working and translated, for operators who run their own benches, but without new features.
-Version 0.2 removed the Press v1 integration, the live demos, status pages, the metrics explorer
-and digests; release v0.1.0 keeps them. Frappe Cloud has its own telemetry, incident manager and status
+Version 0.2 removed the Press v1 integration, the live demos, status pages, the metrics explorer,
+digests and the host resource metrics (CPU, memory, swap, disk, load); release v0.1.0 keeps them. Frappe Cloud has its own telemetry, incident manager and status
 page (Datum and Beacon); where a tool already does the job, Wolf connects to it rather than doing
 it again: Wazuh, Suricata, CrowdSec, a SIEM, PagerDuty, and Frappe's own tools as they open up.
 
