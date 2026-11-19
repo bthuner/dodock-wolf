@@ -2,7 +2,7 @@
 
 Run from the bench's sites/ directory:  ../env/bin/python /path/to/ci/db_smoke.py <site>
 Inserts demo rows, runs ingest, rules, correlation, timeline, charts, channels, purge and the
-incident workflow (assignment, comments, merge/split, postmortem, metrics report, public status page),
+incident workflow (assignment, comments, merge/split, postmortem, metrics report),
 and prints one line per check ("ok" or "FAIL"). Exits non-zero on the first failure.
 CI runs it from ci/integration.sh.
 """
@@ -827,41 +827,6 @@ def main():
 		# the two merged incidents are left out: b and the split c remain
 		assert row["incidents"] == 2 and row["acknowledged"] == 1 and row["resolved"] == 1, row
 		return f"groups {out}, {WF_SITE}: mttr={row['mttr']} mtta={row['mtta']}"
-
-	def status_page():
-		from frappe.utils import set_request
-		from frappe.website.serve import get_response
-
-		from dodock_wolf.wolf.status_page import get_public_status
-
-		slug = "smoke-status"
-		page = frappe.get_doc("Wolf Status Page", slug) if frappe.db.exists("Wolf Status Page", slug) else frappe.new_doc("Wolf Status Page")
-		page.update({"title": "Smoke status", "slug": slug, "site": WF_SITE, "enabled": 1, "min_severity": "info",
-		             "show_history_days": 7})
-		page.save()
-		frappe.db.set_value("Wolf Incident", wf["b"], "public_title", "Checkout <slow>")
-		view = get_public_status(slug)
-		assert [i["title"] for i in view["current"]] == ["Checkout <slow>"], view["current"]
-		assert view["history"], "split incident missing from history"
-		assert HOST not in repr(view) and "b1" not in repr(view), view
-		frappe.db.commit()
-		frappe.set_user("Guest")
-		try:
-			set_request(method="GET", path=f"/wolf-status/{slug}")
-			resp = get_response()
-			html = resp.get_data(as_text=True)
-			assert resp.status_code == 200, resp.status_code
-			assert "Checkout &lt;slow&gt;" in html and "Checkout <slow>" not in html, "title not escaped"
-			assert "<h1>Smoke status</h1>" in html, "page title missing"
-			assert HOST not in html, "host leaked into the page"
-			set_request(method="GET", path="/wolf-status/no-such-page")
-			missing = get_response().status_code
-			assert missing == 404, missing
-		finally:
-			frappe.set_user("Administrator")
-		frappe.db.set_value("Wolf Status Page", slug, "enabled", 0)
-		assert get_public_status(slug) is None, "disabled page still served"
-		return f"/wolf-status/{slug}: 200 for guests, escaped, 404 when unknown or disabled"
 
 	def ui_counts():
 		"""Exact KPI counts past list limits, bench-under-host, and the same access rules for a scoped user."""
@@ -3375,7 +3340,7 @@ def main():
 	                 ("scoped user", scoped_user), ("agent secrets", agent_secrets),
 	                 ("channels", channels), ("purge", purge), ("auto-resolve", resolve),
 	                 ("assign+comment+activity", workflow), ("merge+split", merge_split), ("postmortem", postmortem),
-	                 ("metrics report", metrics), ("status page", status_page),
+	                 ("metrics report", metrics),
 	                 ("rollup", rollup), ("legacy names", legacy_names), ("resolution", resolution), ("ingest modes", ingest_modes),
 	                 ("purge metrics", purge_metrics), ("ui counts+inventory", ui_counts),
 	                 ("incident view", incident_view), ("dashboards", dashboards), ("read cache", read_cache_check),

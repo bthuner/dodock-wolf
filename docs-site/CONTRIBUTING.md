@@ -46,7 +46,7 @@ twin at the same path, so the language switch lands on the same page.
 | `1.getting-started` | `1.index` (introduction), `2.quickstart`, `3.concepts` |
 | `2.install` | `1.wolf-app`, `2.wolf-agent`, `3.every-site` (satellites), `5.pilot` |
 | `3.agent` | `1.collected` (what is collected), `2.configuration`, `3.commands`, `4.scrubbing`, `5.watchdog`, `6.response-actions` |
-| `4.alerts` | `1.rules`, `2.presets`, `3.channels`, `4.incidents`, `5.status-pages` |
+| `4.alerts` | `1.rules`, `2.presets`, `3.channels`, `4.incidents` |
 | `5.security` | `1.index` (overview), `2.site-signals`, `3.detection` (web and host), `4.access` (roles, scopes, secrets), `5.journal` (tamper-evident journal, deception, IP reputation), `6.compliance` (NIS2/GDPR), `7.siem-export`, `8.wazuh-suricata` |
 | `6.reference` | `1.protocol`, `2.ui-api`, `3.metric-storage`, `4.performance` (load test), `5.development` |
 

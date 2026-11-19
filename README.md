@@ -16,7 +16,7 @@ before customers notice, and keeps all data on your own Frappe site.
 - **Security**: web attack and host intrusion detection, MITRE ATT&CK tags on every security
   event, and a roadmap towards a Frappe-native SOC layer: [`docs/cyber.md`](docs/cyber.md).
 - **Direction** ([#136](https://github.com/bthuner/dodock-wolf/issues/136)): new work goes to the
-  security and compliance of the bench. Status pages, dashboards and metrics stay as they are for
+  security and compliance of the bench. Dashboards and metrics stay as they are for
   operators who run their own benches, and Wolf connects to existing tools (Wazuh, Suricata,
   CrowdSec, a SIEM, PagerDuty, Frappe Cloud's Datum and Beacon) instead of rebuilding them.
 - **Documentation**: [bthuner.github.io/dodock-wolf](https://bthuner.github.io/dodock-wolf/), in English
@@ -303,14 +303,6 @@ vs Suricata) and **Host Logins and Accounts** (auth.log signals vs Wazuh):
   Each Wolf Agent counts the events it sent that gave way (**Own Events Given Way**).
 
 Every timeline row says who raised the event: the Wolf agent, the Wolf site, Suricata or Wazuh.
-
-**Public status pages** (opt-in): a **Wolf Status Page** (title, slug, site, optional bench,
-history days, minimum severity) is served to guests at `/wolf-status/<slug>` once **Enabled** is
-ticked; otherwise the address answers 404. It shows an overall banner, open incidents and the
-resolved ones of the last N days, with only a title, severity, public status (Investigating /
-Identified / Resolved) and times. Hosts, rules, summaries and payloads never leave the server.
-Internal titles often name hosts, so an incident is shown as "Degraded performance" or "Service
-disruption" unless you fill its **Public Title**.
 
 ## Metric storage
 

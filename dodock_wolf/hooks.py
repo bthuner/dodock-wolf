@@ -22,10 +22,8 @@ add_to_apps_screen = [
 	}
 ]
 
-# Public, opt-in status pages (Wolf Status Page): www/wolf_status.py
 # The Wolf UI (frontend/, www/wolf.py) owns /wolf and every route under it.
 website_route_rules = [
-	{"from_route": "/wolf-status/<slug>", "to_route": "wolf_status"},
 	{"from_route": "/wolf/<path:app_path>", "to_route": "wolf"},
 ]
 
