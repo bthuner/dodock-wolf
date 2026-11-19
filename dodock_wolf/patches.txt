@@ -18,3 +18,4 @@ dodock_wolf.patches.test_notification_ok_at
 dodock_wolf.patches.remove_status_pages
 dodock_wolf.patches.remove_digests
 dodock_wolf.patches.event_incident_index
+dodock_wolf.patches.remove_host_metrics

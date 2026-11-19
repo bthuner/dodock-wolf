@@ -98,9 +98,9 @@ class TestSilence(unittest.TestCase):
 		self.assertTrue(c.silence_matches({"host": "h1"}, {"host": "h1"}))
 
 	def test_rule_restriction(self):
-		self.assertTrue(c.silence_matches({"alert_rule": "High CPU"}, self.scope, "High CPU"))
-		self.assertFalse(c.silence_matches({"alert_rule": "High CPU"}, self.scope, "5xx spike"))
-		self.assertFalse(c.silence_matches({"alert_rule": "High CPU"}, self.scope, None))
+		self.assertTrue(c.silence_matches({"alert_rule": "Worker queue backlog"}, self.scope, "Worker queue backlog"))
+		self.assertFalse(c.silence_matches({"alert_rule": "Worker queue backlog"}, self.scope, "5xx spike"))
+		self.assertFalse(c.silence_matches({"alert_rule": "Worker queue backlog"}, self.scope, None))
 
 
 class TestEscalationAndChannels(unittest.TestCase):

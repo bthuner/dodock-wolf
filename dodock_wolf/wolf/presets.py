@@ -79,34 +79,6 @@ PRESETS = [
 		"severity": "critical", "auto_resolve": 0, "cooldown_minutes": 0,
 	},
 	{
-		"rule_name": "Disk almost full",
-		"description": "A mount stayed above 90% for 5 minutes.",
-		"signal_type": "metric", "metric_name": "disk_used_percent", "aggregation": "min",
-		"operator": ">", "threshold": 90, "window_minutes": 5, "min_samples": 3, "group_by": "host_label",
-		"severity": "critical", "auto_resolve": 1, "cooldown_minutes": 60,
-	},
-	{
-		"rule_name": "High CPU",
-		"description": "CPU stayed above 90% for 10 minutes.",
-		"signal_type": "metric", "metric_name": "cpu_usage", "aggregation": "min",
-		"operator": ">", "threshold": 90, "window_minutes": 10, "min_samples": 5, "group_by": "host",
-		"severity": "warning", "auto_resolve": 1, "cooldown_minutes": 30,
-	},
-	{
-		"rule_name": "High memory",
-		"description": "Memory stayed above 90% for 10 minutes.",
-		"signal_type": "metric", "metric_name": "memory_used_percent", "aggregation": "min",
-		"operator": ">", "threshold": 90, "window_minutes": 10, "min_samples": 5, "group_by": "host",
-		"severity": "warning", "auto_resolve": 1, "cooldown_minutes": 30,
-	},
-	{
-		"rule_name": "High load",
-		"description": "Load per core averaged above 2 for 10 minutes.",
-		"signal_type": "metric", "metric_name": "load_per_core", "aggregation": "avg",
-		"operator": ">", "threshold": 2, "window_minutes": 10, "min_samples": 5, "group_by": "host",
-		"severity": "warning", "auto_resolve": 1, "cooldown_minutes": 30,
-	},
-	{
 		"rule_name": "Agent silent",
 		"description": "A registered Wolf agent stopped reporting.",
 		"signal_type": "event", "event_type": "host_metric_alert", "event_category": "agent_silent",
@@ -504,6 +476,10 @@ PRESETS = [
 		"severity": "critical", "auto_resolve": 0, "cooldown_minutes": 0,
 	},
 ]  # fmt: skip
+
+# Presets 0.2 removed with the host resource metrics (#136, step 2c): a site upgraded from v0.1
+# keeps the rules, disabled by patches/remove_host_metrics.py.
+REMOVED_PRESETS = ("Disk almost full", "High CPU", "High memory", "High load")
 
 
 def install_presets():

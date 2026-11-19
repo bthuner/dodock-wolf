@@ -9,14 +9,14 @@ def text(rule):
 
 class TestRuleSentence(unittest.TestCase):
 	def test_a_metric_rule(self):
-		rule = {"rule_name": "Disk", "severity": "critical", "signal_type": "metric", "metric_name": "disk_used_percent",
-		        "aggregation": "min", "operator": ">", "threshold": 90.0, "window_minutes": 5, "group_by": "host",
+		rule = {"rule_name": "Backlog", "severity": "critical", "signal_type": "metric", "metric_name": "queue_length",
+		        "aggregation": "min", "operator": ">", "threshold": 500.0, "window_minutes": 5, "group_by": "host",
 		        "min_samples": 3, "auto_resolve": 1, "cooldown_minutes": 60, "filter_bench": "prod",
 		        "channels": [{"channel_type": "ntfy", "enabled": 1}, {"channel_type": "Email", "enabled": 1},
 		                     {"channel_type": "Email", "enabled": 1}, {"channel_type": "Slack", "enabled": 0}],
 		        "notify_on_resolve": 0}  # fmt: skip
 		self.assertEqual(text(rule), (
-			"Opens a critical incident when the lowest disk_used_percent over the last 5 min is above 90, per host, "
+			"Opens a critical incident when the lowest queue_length over the last 5 min is above 500, per host, "
 			"only for bench prod. It needs at least 3 samples in the window. It resolves by itself once the "
 			"condition no longer holds; if it matches again within 1 h of being resolved, the same incident reopens. "
 			"It notifies ntfy and 2 Email."

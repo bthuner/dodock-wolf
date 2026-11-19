@@ -3,7 +3,7 @@
 The catalog names every metric the agent sends that a dashboard shows: its unit, its kind and
 how often it arrives. `kind` decides how it may be read:
 
-- gauge: a level now (disk used, backup age); the latest value is meaningful;
+- gauge: a level now (queue length, backup age); the latest value is meaningful;
 - interval_count: events counted per push interval (5xx responses, failed jobs added); sum
   them over a window, never read one sample as "the count".
 
@@ -46,14 +46,6 @@ _SPEC = [
 	("hsts_max_age_days", "tls", N_("HSTS max-age"), "gauge", N_("days"), "site", 3600),
 	("agent_setup_failed", "host", N_("Agent setup checks failed"), "gauge", "", "host", 3600),
 	("agent_setup_warnings", "host", N_("Agent setup warnings"), "gauge", "", "host", 3600),
-	("cpu_usage", "host", N_("CPU"), "gauge", "%", "host", PUSH_SECONDS),
-	("memory_used_percent", "host", N_("Memory used"), "gauge", "%", "host", PUSH_SECONDS),
-	("disk_used_percent", "host", N_("Disk used"), "gauge", "%", "host", PUSH_SECONDS),
-	("load_per_core", "host", N_("Load per core"), "gauge", N_("per core"), "host", PUSH_SECONDS),
-	("load_1m", "host", N_("Load (1 min)"), "gauge", "", "host", PUSH_SECONDS),
-	("load_5m", "host", N_("Load (5 min)"), "gauge", "", "host", PUSH_SECONDS),
-	("load_15m", "host", N_("Load (15 min)"), "gauge", "", "host", PUSH_SECONDS),
-	("swap_used_percent", "host", N_("Swap used"), "gauge", "%", "host", PUSH_SECONDS),
 	("exposed_services", "security", N_("Bench services listening beyond loopback"), "gauge", N_("services"), "host", 600),
 	("site_config_risks", "security", N_("Risky site_config settings"), "gauge", N_("settings"), "site", 600),
 	("integrity_files", "security", N_("Files under integrity watch"), "gauge", N_("files"), "bench", 900),
@@ -80,6 +72,14 @@ SECURITY_METRICS = frozenset({
 	"backup_age_hours", "tls_days_left", "hsts_max_age_days",
 	"integrity_files", "integrity_unreadable", "bench_outbound_destinations", "bench_new_outbound_usual",
 	"agent_setup_failed", "agent_setup_warnings",
+})  # fmt: skip
+
+
+# Host resource metrics (CPU, memory, swap, disk, load), removed in 0.2: Frappe Cloud v2 and Pilot
+# report them (#136, step 2c). A v0.1 agent still sends them: ingest drops them without an error.
+REMOVED_METRICS = frozenset({
+	"cpu_usage", "memory_used_percent", "swap_used_percent", "disk_used_percent",
+	"load_1m", "load_5m", "load_15m", "load_per_core",
 })  # fmt: skip
 
 
@@ -131,7 +131,7 @@ def incident_matches(incident, series):
 	"""An open incident is about a series when every scope field it names is the series'.
 
 	A rule grouped by label (host_label) opens one incident per label: its group_key ends with
-	"label_key=<label>", and only that series is concerned, not every disk or queue of the host.
+	"label_key=<label>", and only that series is concerned, not every queue of the bench.
 	"""
 	if not all(not incident.get(k) or incident.get(k) == series.get(k) for k in ("host", "bench", "site")):
 		return False

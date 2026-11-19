@@ -21,8 +21,8 @@ SECRETS = {"ntfy": ("ntfy_token",), "Slack": ("chat_webhook_url",)}
 
 
 def stored(**over):
-	rule = {"rule_name": "Disk almost full", "enabled": 1, "signal_type": "metric", "severity": "warning", "is_preset": 1,
-	        "metric_name": "disk_used_percent", "aggregation": "max", "operator": ">", "threshold": 90.0,
+	rule = {"rule_name": "Worker queue backlog", "enabled": 1, "signal_type": "metric", "severity": "warning", "is_preset": 1,
+	        "metric_name": "queue_length", "aggregation": "max", "operator": ">", "threshold": 90.0,
 	        "window_minutes": 10, "group_by": "host", "active_from": None, "active_to": None,
 	        "last_fired": "2026-11-18 20:00:00", "evaluation_state": '{"x": 1}',
 	        "channels": [{"name": "c1", "channel_type": "ntfy", "enabled": 1, "ntfy_server": "https://ntfy.sh",
@@ -38,7 +38,7 @@ class TestExport(unittest.TestCase):
 		self.assertEqual(doc["version"], 1)
 		rule = doc["rules"][0]
 		self.assertEqual(rule, {
-			"rule_name": "Disk almost full", "enabled": 1, "metric_name": "disk_used_percent", "aggregation": "max",
+			"rule_name": "Worker queue backlog", "enabled": 1, "metric_name": "queue_length", "aggregation": "max",
 			"threshold": 90, "window_minutes": 10, "group_by": "host",
 			"channels": [{"channel_type": "ntfy", "ntfy_server": "https://ntfy.sh", "ntfy_topic": "ops"}],
 		})  # fmt: skip
@@ -75,7 +75,7 @@ class TestImport(unittest.TestCase):
 		])  # fmt: skip
 
 	def test_a_left_out_field_goes_back_to_its_default(self):
-		wanted = rules_io.target({"rule_name": "Disk almost full", "metric_name": "disk_used_percent", "threshold": 95}, FIELDS)
+		wanted = rules_io.target({"rule_name": "Worker queue backlog", "metric_name": "queue_length", "threshold": 95}, FIELDS)
 		self.assertEqual((wanted["aggregation"], wanted["window_minutes"], wanted["threshold"], wanted["enabled"]), ("avg", 5, 95, 1))
 		self.assertNotIn("evaluation_state", wanted)
 		self.assertEqual(rules_io.changes(stored(), wanted, FIELDS), ["aggregation", "group_by", "threshold", "window_minutes"])

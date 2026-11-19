@@ -4,12 +4,11 @@ import frappe
 from frappe.utils import add_to_date, cint, now_datetime
 
 from dodock_wolf import satellite
-from dodock_wolf.wolf import access, inventory, rollups, schema, spa, storage, timeline, window
+from dodock_wolf.wolf import access, inventory, schema, spa, timeline, window
 from dodock_wolf.wolf.incidents import get_timeline, parse_payload
-from dodock_wolf.wolf.series import bucket_series
 from dodock_wolf.wolf.workflow import get_activity
 
-# the chart ranges Desk offers (any range wolf/window.py parses is accepted)
+# the ranges Desk offers (any range wolf/window.py parses is accepted)
 RANGES = {"1h": 60, "6h": 360, "24h": 1440, "7d": 10080}
 READ_ROLES = spa.READ_ROLES
 
@@ -108,33 +107,6 @@ def _known_scopes():
 	agents = frappe.get_list("Wolf Agent", filters={"kind": ("!=", "satellite")}, pluck="hostname")
 	out["host"] = sorted(set(out["host"]) | set(agents))
 	return out
-
-
-@frappe.whitelist()
-def get_metric_series(host, metrics=None, range="6h", site=None):
-	"""Time series per metric (and label) for charts, bucketed to at most ~120 points.
-
-	Reads raw samples for the 1 h range and minute or hour rollups for longer ones
-	(plus the raw samples not rolled up yet), see wolf/rollups.py.
-	"""
-	frappe.only_for(READ_ROLES)
-	metrics = frappe.parse_json(metrics) if metrics else ["cpu_usage", "memory_used_percent", "disk_used_percent", "load_per_core"]
-	minutes = _minutes(range, "6h")
-	resolution = rollups.resolution_for(minutes * 60)
-	bucket = storage.chart_bucket(minutes * 60, resolution)
-	params = {"host": host, "metrics": tuple(metrics)}
-	where = ["host = %(host)s", "metric_name in %(metrics)s"]
-	if site:
-		where.append("site = %(site)s")
-		params["site"] = site
-	# restricted Wolf Users: same scope columns on samples and rollups
-	allowed, allowed_params = access.sql_condition("Wolf Metric Sample")
-	if allowed:
-		where.append(allowed.removeprefix(" and "))
-		params.update(allowed_params)
-	rows = rollups.series_rows(where, params, resolution, _since(range), add_to_date(now_datetime(), minutes=1))
-	series = bucket_series(rows, bucket)
-	return {"bucket_seconds": bucket, "resolution": storage.LABELS[resolution], "series": series}
 
 
 @frappe.whitelist()

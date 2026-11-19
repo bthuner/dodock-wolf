@@ -15,25 +15,25 @@ class TestSeries(unittest.TestCase):
 
 	def test_gauges_average_counters_sum(self):
 		rows = [
-			row("cpu_usage", "2026-10-29 02:00:10", 10),
-			row("cpu_usage", "2026-10-29 02:00:40", 30),
-			row("cpu_usage", "2026-10-29 02:01:05", 50),
+			row("redis_used_memory_percent", "2026-10-29 02:00:10", 10),
+			row("redis_used_memory_percent", "2026-10-29 02:00:40", 30),
+			row("redis_used_memory_percent", "2026-10-29 02:01:05", 50),
 			row("http_502", "2026-10-29 02:00:10", 4),
 			row("http_502", "2026-10-29 02:00:40", 6),
 		]
 		out = bucket_series(rows, 60)
-		self.assertEqual(out["cpu_usage"], [["2026-10-29 02:00:00", 20.0], ["2026-10-29 02:01:00", 50.0]])
+		self.assertEqual(out["redis_used_memory_percent"], [["2026-10-29 02:00:00", 20.0], ["2026-10-29 02:01:00", 50.0]])
 		self.assertEqual(out["http_502"], [["2026-10-29 02:00:00", 10.0]])
 
 	def test_labels_split_series_and_sorting(self):
 		rows = [
-			row("disk_used_percent", "2026-10-29 02:02:00", 91.5, "mount=/"),
-			row("disk_used_percent", "2026-10-29 02:00:00", 90.0, "mount=/"),
-			row("disk_used_percent", "2026-10-29 02:00:00", 40.0, "mount=/data"),
+			row("queue_length", "2026-10-29 02:02:00", 91.5, "queue=default"),
+			row("queue_length", "2026-10-29 02:00:00", 90.0, "queue=default"),
+			row("queue_length", "2026-10-29 02:00:00", 40.0, "queue=long"),
 		]
 		out = bucket_series(rows, 60)
-		self.assertEqual([p[0] for p in out["disk_used_percent [mount=/]"]], ["2026-10-29 02:00:00", "2026-10-29 02:02:00"])
-		self.assertEqual(out["disk_used_percent [mount=/data]"], [["2026-10-29 02:00:00", 40.0]])
+		self.assertEqual([p[0] for p in out["queue_length [queue=default]"]], ["2026-10-29 02:00:00", "2026-10-29 02:02:00"])
+		self.assertEqual(out["queue_length [queue=long]"], [["2026-10-29 02:00:00", 40.0]])
 
 
 if __name__ == "__main__":

@@ -32,15 +32,15 @@ class TestTimestamps(unittest.TestCase):
 class TestMetric(unittest.TestCase):
 	def test_normalize(self):
 		m = schema.normalize_metric(
-			{"metric_name": "disk_used_percent", "value": "91.5", "timestamp": "2026-10-29T02:00:00Z", "labels": {"mount": "/"}},
+			{"metric_name": "queue_length", "value": "91.5", "timestamp": "2026-10-29T02:00:00Z", "labels": {"queue": "default"}},
 			"UTC",
 			NOW,
 			default_host="bench-01",
 		)
 		self.assertEqual(m["value"], 91.5)
 		self.assertEqual(m["host"], "bench-01")
-		self.assertEqual(m["label_key"], "mount=/")
-		self.assertEqual(json.loads(m["labels"]), {"mount": "/"})
+		self.assertEqual(m["label_key"], "queue=default")
+		self.assertEqual(json.loads(m["labels"]), {"queue": "default"})
 
 	def test_rejects_bad_values(self):
 		bad_values = (

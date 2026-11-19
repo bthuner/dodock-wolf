@@ -14,8 +14,8 @@ Then it times, server side (no HTTP, no agent authentication):
   * push: ingest.accept() of one host's batch (M metrics, an event every 10th push), in async
     mode (validate + enqueue) and in sync mode (validate + insert + correlate);
   * the queued jobs (store_batch), as a worker would run them;
-  * the overview: Desk's get_overview and get_metric_series for every range, the Wolf UI's
-    overview (its six reads, in sequence and the slowest one), and rule queries.
+  * the overview: Desk's get_overview for every range, the Wolf UI's overview (its six reads, in
+    sequence and the slowest one), and rule queries.
 With --reads-only it keeps the data a previous run loaded and times the reads only, for
 instance after an index change. Prints p50 / p95 / max per operation. Not run in CI; ci/integration.sh runs it after
 db_smoke.py when WOLF_LOAD_TEST=1 (flags in WOLF_LOAD_ARGS).
@@ -33,7 +33,8 @@ import frappe
 from frappe.utils import now_datetime
 
 PREFIX = "load-"
-CHART_METRICS = ["cpu_usage", "memory_used_percent", "disk_used_percent", "load_per_core"]
+# gauges an agent sends every push (the host resource metrics that led this list were removed in 0.2)
+BASE_METRICS = ["queue_length", "redis_used_memory_percent", "db_connections_used_percent", "rq_workers"]
 
 
 def parse_args():
@@ -51,7 +52,7 @@ def parse_args():
 
 
 def metric_names(m):
-	return (CHART_METRICS + [f"load_metric_{i}" for i in range(m)])[:m]
+	return (BASE_METRICS + [f"load_metric_{i}" for i in range(m)])[:m]
 
 
 def timed(fn):
@@ -280,12 +281,7 @@ def main():
 	for range_key in ui.RANGES:
 		results[f"get_overview {range_key}"] = summary(
 			[timed(lambda r=range_key: ui.get_overview(range=r))[0] for _ in range(args.repeat)])
-		results[f"get_metric_series {range_key}"] = summary(
-			[timed(lambda r=range_key: ui.get_metric_series(loader.hosts[0], range=r))[0] for _ in range(args.repeat)])
-		page = [timed(lambda r=range_key: (ui.get_overview(range=r), ui.get_metric_series(loader.hosts[0], range=r)))[0]
-		        for _ in range(args.repeat)]
-		results[f"overview page {range_key} (overview + chart)"] = summary(page)
-		print(f"  overview page {range_key}: {results[f'overview page {range_key} (overview + chart)']}", flush=True)
+		print(f"  Desk overview {range_key}: {results[f'get_overview {range_key}']}", flush=True)
 
 	# the Wolf UI's overview (/wolf): six reads the browser sends at once
 	from dodock_wolf.api import dashboard, incident_view, scope
@@ -323,7 +319,7 @@ def main():
 
 	for minutes, agg in ((5, "avg"), (1440, "max"), (10080, "last")):
 		doc = frappe.get_doc({"doctype": "Wolf Alert Rule", "rule_name": f"load {minutes} {agg}", "signal_type": "metric",
-		                      "metric_name": "cpu_usage", "aggregation": agg, "operator": ">", "threshold": 1000,
+		                      "metric_name": "queue_length", "aggregation": agg, "operator": ">", "threshold": 1000,
 		                      "window_minutes": minutes, "group_by": "host", "enabled": 0})
 		since = now_datetime() - timedelta(minutes=minutes)
 		times, rows = [], []
