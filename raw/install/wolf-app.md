@@ -58,8 +58,9 @@ Desk keeps the configuration DocTypes; a view the Wolf UI does not have yet link
 Desk and the Wolf UI show Wolf in each user's language (**My Settings → Language**). English and
 French are available: field labels, descriptions, buttons, messages, the Wolf UI's pages and the
 rule sentence. DocType names, event types, metric names and Select values stay in English, as in
-the code. Some text the server writes is still in English: security check details, signal
-labels, notes and error messages.
+the code. What Wolf stored when it happened stays in the language it was written in: incident
+titles, event summaries, comments and the journal. Notifications, digests, the SIEM export and
+public status pages are in English for now.
 
 ## Signals with no agent
 
