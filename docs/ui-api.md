@@ -43,9 +43,27 @@ A restricted Wolf User (one with Wolf User Scope rows) gets counts and inventory
 records they may see, and `"restricted": true`. A Wolf User **without any** Wolf User Scope
 row is not restricted: they see everything, as in Desk. That is the current rule, kept as is.
 
+## Home page: `dodock_wolf.api.security_overview.get_overview`
+
+The Wolf UI opens on the security of the bench (`/wolf`, **Overview**); the general overview it
+used to show is **Operations** (`/wolf/operations`, `get_counts` and `get_inventory` below), frozen
+with the rest of observability ([#136](https://github.com/bthuner/dodock-wolf/issues/136)).
+
+No argument. One answer with a key per panel, each within the caller's access. A panel the caller
+may not have is `null`; one that could not be read is `{"error": "…"}` (the reason goes to the
+Error Log) or `{"forbidden": true}`, and the others are still answered.
+
+| Panel | What it reads |
+|---|---|
+| `scores` | The stored `security_score` of each site the caller may see: the newest sample of the last 7 days (`site`, `score`, `at`), never recomputed. `change` is the difference with the newest score of 23 to 25 h earlier, `null` when there is none; `late` when the newest is over 3 h old (the job is hourly). Worst first; a site `security.list_sites` knows but that has no score yet comes last with `score: null`, never 0. |
+| `incidents` | Open or Acknowledged incidents holding at least one `security` event, merged ones excluded, under the incident access rules: `by_severity` (with `total`), `by_status`, and the 5 `newest`. `null` on a satellite. |
+| `responses` | Wolf Response Actions `waiting` (Approved: for the agent or satellite that applies them) and `failed` in the last `failed_days` (7), with the 5 `newest` (`label`, `status`, `incident`, `result`, `at`). Wolf Managers and System Managers only, else `null`. |
+| `journal` | `last_seq` and `last_at` of the newest signed entry, `pending`, `oldest_pending_at`, and `behind` when an entry has waited over 5 minutes (signing runs every minute); `key`. Wolf Managers and System Managers only, else `null`. |
+| `agents` | `agents` and `satellites` per state (`fresh`, `stale`, `never_seen`, `disabled`, `total`) and `to_fix`, the reporting hosts whose last `wolf-agent doctor` run found a failure or a warning (as `get_monitoring` reports it), with `silence_minutes`. |
+
 ## `dodock_wolf.api.scope.get_counts`
 
-Exact counts for the overview and entity dashboards. Arguments: window and scope.
+Exact counts for Operations and the entity dashboards. Arguments: window and scope.
 
 ```json
 {

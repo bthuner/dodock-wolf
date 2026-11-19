@@ -166,8 +166,8 @@ The 24 h chart reads one host's minute rollups, and the row order keeps a metric
 a host: that host's rows are one per page. With the metric in the host index (#57), it fetches
 the four charted metrics' rows only.
 
-**Wolf UI overview** (`/wolf`). Its six reads go out at once, so a page waits at least for the
-slowest one:
+**Wolf UI overview** (`/wolf` then; **Operations**, `/wolf/operations`, since 0.2). Its six reads
+go out at once, so a page waits at least for the slowest one:
 - the reads were timed one after another;
 - run in parallel, they share the CPU, the disk and the buffer pool, so the page itself is
   slower.

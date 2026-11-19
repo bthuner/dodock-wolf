@@ -131,8 +131,8 @@ Long detail the reader rarely needs.
 ````
 
 Wolf UI screenshots (light and dark, from `docs/screenshots`) follow the reader's colour mode:
-`:screenshot{name="overview" alt="The Wolf UI overview"}`. Names: `overview`, `incident`,
-`incident-resolved`, `metrics`, `monitoring`, `security`.
+`:screenshot{name="overview" alt="The Wolf UI overview"}`. Names: `overview` (the home page),
+`operations`, `incident`, `incident-resolved`, `metrics`, `monitoring`, `security`.
 
 Code blocks take a file name: ` ```json [config.json] `.
 
