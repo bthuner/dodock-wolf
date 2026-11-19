@@ -322,6 +322,24 @@ First demo scenario
 
         Alerts emitted to email/Raven.
 
+Product direction (since 19 November 2026, issue #136)
+
+    The MVP brief above predates Frappe Cloud v2, which has its own telemetry (frappe/datum), control plane (frappe/central), and incidents, SLOs, paging and status page (frappe/beacon). Dokos does not pursue features that overlap Frappe's. So:
+
+    - New work goes to the security and compliance of the bench:
+      - Frappe-level signals: permissions, Server Scripts, settings, exports, API keys, logins, honeytokens, the security score;
+      - host and web security: SSH/auth, nginx attacks, file integrity, outbound connections;
+      - response actions;
+      - evidence: the journal, NIS2/DORA/GDPR, SIEM export;
+      - the agent that collects them.
+
+      The rule and incident engine and the channels are extended only where security needs it.
+    - Frozen, kept as it is for operators outside Frappe Cloud: status pages, dashboards, the metrics explorer, host and service metric collectors and their presets, escalation and digests. Fix bugs and security issues, keep the translations and Frappe/Dokos compatibility, but add no features.
+    - Not pursued (overlaps Frappe): SLOs and error budgets, status-page uptime bars, subscriptions, unlisted incidents and maintenance announcements, on-call rotations and phone paging, traces, log search.
+    - Interoperability over rebuilding: connect to Wazuh, Suricata, CrowdSec, SIEMs, PagerDuty, and Frappe's tools as they open up (a Beacon channel, a Datum sink, Frappe Cloud v2 hosts as Pilot hosts: #133, #134, #135).
+
+    When a request falls in the frozen or not-pursued lists, say so and point to #136 before building it.
+
 Documentation site
 
     The user documentation lives in docs-site/ (Nuxt UI + Nuxt Content, the same stack as doc.dokos.io), in two languages: content/en/ and content/fr/, with the same file at the same path in both. docs-site/CONTRIBUTING.md has the page map and conventions, docs-site/scripts/TRANSLATING.md the French glossary and typography.

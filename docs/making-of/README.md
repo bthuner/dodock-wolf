@@ -274,11 +274,10 @@ they are grouped by day.
 
 - **The inside of the bench, not the whole estate:** Wolf covers what a network probe or an EDR cannot know about Frappe, and forwards everything to the organisation's SOC in a standard form.
 - **Approval, not automation:** Wolf proposes a response and a manager approves it. When CrowdSec is asked to decide on detections, that is CrowdSec's choice, and the setting says so.
+- **The bench's security, not general observability** (#136, 19 Nov): Frappe Cloud v2 brought its own telemetry, incident manager and status page (Datum, Beacon), and Dokos does not build what Frappe builds. New work goes to the security and compliance of the bench; status pages, dashboards and metrics stay as they are for operators who run their own benches; Wolf connects to existing tools instead of rebuilding them.
 
 ## Next
 
-- **French in the app:** the documentation is in English and French; Desk and the Wolf UI are in English only.
-- **An onboarding checklist** in the Wolf UI, from the first agent to the first test alert.
 - **Packages:** `.deb`, `.rpm` and PyPI for the agent, with auto-update, then the Frappe Marketplace.
-- **Log search:** waits for raw-line storage, which Wolf deliberately doesn't have yet.
-- **The overview's first visit at 100 hosts:** a visit the background reads do not cover (the first in 10 quiet minutes on a scope) still takes 0.9 to 1.2 s ([`docs/load-test.md`](../load-test.md)).
+- **Next to Frappe Cloud v2:** v2 servers as Pilot hosts, a Beacon channel, a Datum sink once it opens up (#133–#135).
+- **Deeper in the bench's security:** the work #136 points to.

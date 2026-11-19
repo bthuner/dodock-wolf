@@ -15,6 +15,10 @@ before customers notice, and keeps all data on your own Frappe site.
   auth logs, reads `/proc`, and ships batches over HTTPS.
 - **Security**: web attack and host intrusion detection, MITRE ATT&CK tags on every security
   event, and a roadmap towards a Frappe-native SOC layer: [`docs/cyber.md`](docs/cyber.md).
+- **Direction** ([#136](https://github.com/bthuner/dodock-wolf/issues/136)): new work goes to the
+  security and compliance of the bench. Status pages, dashboards and metrics stay as they are for
+  operators who run their own benches, and Wolf connects to existing tools (Wazuh, Suricata,
+  CrowdSec, a SIEM, PagerDuty, Frappe Cloud's Datum and Beacon) instead of rebuilding them.
 - **Documentation**: [bthuner.github.io/dodock-wolf](https://bthuner.github.io/dodock-wolf/), in English
   and French (source in [`docs-site/`](docs-site/)).
 - Wire protocol: [`docs/protocol.md`](docs/protocol.md). The design story is in the [making-of](https://bthuner.github.io/dodock-wolf/making-of/).
