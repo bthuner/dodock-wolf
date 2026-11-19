@@ -14,8 +14,19 @@ The handlers in local_signals.py feed documents in; this module decides what is 
 - `new_api_secret(value)`: a User save that writes a new API secret (Desk shows saved Password
   fields as asterisks, so an unchanged one never looks new). Read it in before_save: Frappe
   masks Password fields right after, so on_update only ever sees asterisks.
+- `role_2fa_off(before, after)`: a Role save that turned its two-factor authentication off, or a
+  role with it on deleted (`after` None).
+- `called_method(path, form_dict, doctype_module)`: the whitelisted method a request runs, in
+  Frappe's own order (`cmd` first, then the v2 and v1 method paths), for the signals read in
+  after_request and the Role Permission Manager check.
+- `identity_hash(value, key)`: a keyed hash of an account name a guest typed (a password reset
+  request), so bursts can be counted per account without storing what may not be anyone's address.
+- `reason_text(value)`: free text a user typed (an impersonation reason), on one line and short.
 """
 
+import hashlib
+import hmac
+import re
 from urllib.parse import urlsplit
 
 # field, label, how it gets weaker: "off" (1 -> 0), "on" (0 -> 1), "lower", "higher", "longer" (HH:MM)
@@ -177,3 +188,94 @@ def excerpt(code, limit=300):
 	"""The start of a script, for the event: enough to recognise it, not the whole program."""
 	text = str(code or "")
 	return text if len(text) <= limit else text[:limit] + "…"
+
+
+ROLE_2FA_LABEL = "Two-factor authentication for the role"
+
+
+def role_2fa_off(before, after):
+	"""`{field, label, old, new}` when a Role save turned two-factor authentication off, or a role
+	with it on was deleted (`after` None, `new` None), else None.
+
+	A new role (no `before`) is not compared: creating a role without 2FA lowers nothing.
+	"""
+	if not before:
+		return None
+	old, new = before.get("two_factor_auth"), (after or {}).get("two_factor_auth")
+	if _truthy(old) and not _truthy(new):
+		return {"field": "two_factor_auth", "label": ROLE_2FA_LABEL, "old": old, "new": new}
+	return None
+
+
+# `/api/method/<m>` and `/api/v1/method/<m>` (v1); v2 names a method, or a DocType and one of its
+# controller's methods
+V1_METHOD_PATHS = ("/api/method/", "/api/v1/method/")
+V2_METHOD_PATH = "/api/v2/method/"
+
+
+def _scrub(text):
+	"""frappe.scrub: `Sales Order` -> `sales_order`."""
+	return str(text or "").replace(" ", "_").replace("-", "_").lower()
+
+
+def doctype_module_path(app, module, doctype):
+	"""The dotted path of a DocType's controller module, by Frappe's naming rule
+	(frappe.modules.utils.get_module_name): `frappe.core.doctype.user.user` for User."""
+	return f"{_scrub(app)}.{_scrub(module)}.doctype.{_scrub(doctype)}.{_scrub(doctype)}"
+
+
+def called_method(path, form_dict=None, doctype_module=None):
+	"""The dotted method a request runs, read in Frappe's own order, or None (a page, a resource, a file).
+
+	1. `cmd` in the request's arguments: Frappe (app.py) runs it before looking at the path, so
+	   `POST /api/method/frappe.ping` with `cmd=<m>` in the body runs `<m>`. A v1 call also sets it.
+	2. `/api/v2/method/<m>`, or `/api/v2/method/<DocType>/<m>`: `<m>` of the DocType's controller
+	   module, whose dotted path `doctype_module(doctype)` gives (None when unknown).
+	3. `/api/method/<m>` and `/api/v1/method/<m>`: up to the first `/`, as v1 does
+	   (`/api/method/<m>/x` runs `<m>`).
+	"""
+	cmd = str((form_dict or {}).get("cmd") or "").strip()
+	if cmd:
+		return cmd
+	path = str(path or "")
+	if path.startswith(V2_METHOD_PATH):
+		# Frappe's routes ignore a trailing slash
+		parts = path[len(V2_METHOD_PATH) :].removesuffix("/").split("/")
+		if len(parts) == 1:
+			return parts[0] or None
+		if len(parts) == 2 and all(parts) and doctype_module:
+			module = doctype_module(parts[0])
+			return f"{module}.{parts[1]}" if module else None
+		return None
+	for prefix in V1_METHOD_PATHS:
+		if path.startswith(prefix):
+			return path[len(prefix) :].split("/")[0] or None
+	return None
+
+
+# the context a site's encryption key is derived under for identity_hash (links.derive_key)
+IDENTITY_CONTEXT = b"dodock_wolf.identity.v1"
+
+
+def identity_hash(value, key):
+	"""16 hex characters of HMAC-SHA256(`key`, the lowercased account name), or None (no account,
+	or no key).
+
+	Keyed with a secret derived from the site's encryption key (IDENTITY_CONTEXT): a list of known
+	e-mail addresses cannot be hashed to find who was targeted, and the same account gives the same
+	hash on this site, so bursts still add up.
+	"""
+	text = str(value or "").strip().lower()
+	if not text or not key:
+		return None
+	return hmac.new(str(key or "").encode(), text.encode(), hashlib.sha256).hexdigest()[:16]
+
+
+_CONTROL = re.compile(r"[\x00-\x1f\x7f]+")
+
+
+def reason_text(value, limit=200):
+	"""Free text a user typed, for an event: control characters and runs of spaces become one space,
+	cut at `limit` characters (`excerpt`)."""
+	text = " ".join(_CONTROL.sub(" ", str(value or "")).split())
+	return excerpt(text, limit) if text else None

@@ -115,3 +115,72 @@ class TestUserPermissionWidens(unittest.TestCase):
 		self.assertTrue(widens(apply_to_all_doctypes=0, applicable_for="Sales Invoice"))
 		self.assertFalse(widens(hide_descendants=1))  # narrows
 		self.assertFalse(widens(is_default=1))  # preselects a value only
+
+
+class TestAccountSignals(unittest.TestCase):
+	def test_role_2fa_off(self):
+		on, off = {"two_factor_auth": 1}, {"two_factor_auth": 0}
+		self.assertEqual(appsec.role_2fa_off(on, off), {"field": "two_factor_auth", "label": appsec.ROLE_2FA_LABEL, "old": 1, "new": 0})
+		self.assertIsNotNone(appsec.role_2fa_off({"two_factor_auth": "1"}, {"two_factor_auth": None}))
+		self.assertIsNone(appsec.role_2fa_off(off, on))  # turned on
+		self.assertIsNone(appsec.role_2fa_off(off, off))
+		self.assertIsNone(appsec.role_2fa_off(on, on))
+		self.assertIsNone(appsec.role_2fa_off(None, off))  # a new role lowers nothing
+		# a role deleted with 2FA on: its users lose it too
+		self.assertEqual(appsec.role_2fa_off(on, None), {"field": "two_factor_auth", "label": appsec.ROLE_2FA_LABEL, "old": 1, "new": None})
+		self.assertIsNone(appsec.role_2fa_off(off, None))
+
+	def test_called_method(self):
+		m = "frappe.core.doctype.user.user.reset_password"
+		self.assertEqual(appsec.called_method("/api/method/" + m), m)
+		self.assertEqual(appsec.called_method("/api/v1/method/" + m), m)
+		self.assertEqual(appsec.called_method("/api/v2/method/" + m), m)
+		self.assertEqual(appsec.called_method("/api/v2/method/" + m + "/"), m)  # routes ignore a trailing slash
+		self.assertEqual(appsec.called_method("/", {"cmd": m}), m)
+
+	def test_called_method_follows_frappe_s_order(self):
+		m = "frappe.core.doctype.user.user.reset_password"
+		modules = {"User": "frappe.core.doctype.user.user"}.get
+		# v1 runs the part before the first slash
+		self.assertEqual(appsec.called_method(f"/api/method/{m}/x"), m)
+		self.assertEqual(appsec.called_method(f"/api/v1/method/{m}/x/y"), m)
+		# `cmd` first, whatever the path names (app.py runs it before routing /api/)
+		self.assertEqual(appsec.called_method("/api/method/frappe.ping", {"cmd": m}), m)
+		self.assertEqual(appsec.called_method("/api/v2/method/frappe.ping", {"cmd": f" {m} "}), m)
+		# v2: a DocType's controller method
+		self.assertEqual(appsec.called_method("/api/v2/method/User/reset_password", {}, modules), m)
+		self.assertEqual(appsec.called_method("/api/v2/method/User/reset_password/", {}, modules), m)
+		self.assertIsNone(appsec.called_method("/api/v2/method/Nothing/reset_password", {}, modules))  # unknown DocType
+		self.assertIsNone(appsec.called_method("/api/v2/method/User/reset_password", {}))  # no resolver
+		self.assertIsNone(appsec.called_method("/api/v2/method/User/x/y", {}, modules))  # no such route
+		self.assertIsNone(appsec.called_method("/api/v2/method//reset_password", {}, modules))
+		# not a method call
+		self.assertIsNone(appsec.called_method("/api/resource/User"))
+		self.assertIsNone(appsec.called_method("/api/method/"))
+		self.assertIsNone(appsec.called_method("/app/user", {"cmd": ""}))
+		self.assertIsNone(appsec.called_method(None))
+
+	def test_doctype_module_path(self):
+		# frappe.modules.utils.get_module_name's naming rule
+		self.assertEqual(appsec.doctype_module_path("frappe", "Core", "User"), "frappe.core.doctype.user.user")
+		self.assertEqual(appsec.doctype_module_path("erpnext", "Selling", "Sales Order"),
+		                 "erpnext.selling.doctype.sales_order.sales_order")  # fmt: skip
+		self.assertEqual(appsec.doctype_module_path("dodock_wolf", "Dodock Wolf", "Wolf Settings"),
+		                 "dodock_wolf.dodock_wolf.doctype.wolf_settings.wolf_settings")  # fmt: skip
+
+	def test_identity_hash(self):
+		h = appsec.identity_hash(" Jane@Example.com ", "site-key")
+		self.assertEqual(len(h), 16)
+		self.assertEqual(h, appsec.identity_hash("jane@example.com", "site-key"))  # the same account adds up
+		self.assertNotEqual(h, appsec.identity_hash("jane@example.com", "other-site"))  # keyed per site
+		self.assertNotEqual(h, appsec.identity_hash("john@example.com", "site-key"))
+		self.assertNotIn("jane", h)
+		self.assertIsNone(appsec.identity_hash("  ", "site-key"))
+		self.assertIsNone(appsec.identity_hash("jane@example.com", None))  # no key, no hash
+		self.assertIsNone(appsec.identity_hash("jane@example.com", ""))
+
+	def test_reason_text(self):
+		self.assertEqual(appsec.reason_text("  support\nticket\t#42  "), "support ticket #42")
+		self.assertEqual(len(appsec.reason_text("x" * 500)), 201)  # 200 and an ellipsis
+		self.assertIsNone(appsec.reason_text(None))
+		self.assertIsNone(appsec.reason_text("\x00 \n"))

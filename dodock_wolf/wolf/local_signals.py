@@ -5,7 +5,7 @@ import os
 import frappe
 from frappe.utils import cint
 
-from dodock_wolf.wolf import app_security, events, geoip
+from dodock_wolf.wolf import app_security, events, geoip, links
 from dodock_wolf.wolf.reputation import lines as setting_lines
 from dodock_wolf.wolf.schema import fingerprint
 
@@ -85,6 +85,9 @@ def on_error_log(doc):
 
 @_safe
 def on_activity_log(doc):
+	if doc.operation == "Impersonate":
+		check_impersonation(doc, _settings())
+		return
 	if doc.operation != "Login":
 		return
 	settings = _settings()
@@ -117,6 +120,39 @@ def on_activity_log(doc):
 			payload={"user": doc.user, "ip": doc.ip_address, "activity_log": doc.name},
 		)
 		check_new_country(doc, previous, settings)
+
+
+IMPERSONATE = "frappe.core.doctype.user.user.impersonate"
+
+
+def check_impersonation(doc, settings):
+	"""`user_impersonated`: User → Impersonate opens a session as another user (Frappe 15:
+	Administrator only; 16: whoever has the `impersonate` permission on User). Frappe inserts the
+	Activity Log before it switches the session, so its owner is the impersonator; the reason
+	comes with the same request.
+
+	Only inside a call of Frappe's impersonate method: an Activity Log row inserted any other way
+	(the REST API, Data Import, code) opens no session, and a `reason` argument proves nothing, as
+	anyone can add one to their own request. Frappe fills the row's IP for logins and logouts only:
+	the request's address is used.
+	"""
+	if not _app_security(settings) or request_method() != IMPERSONATE:
+		return
+	target, actor = doc.user, doc.owner or frappe.session.user
+	ip = doc.get("ip_address") or getattr(frappe.local, "request_ip", None)
+	privileged = is_privileged(target, settings) if target else False
+	events.emit(
+		"security",
+		f"{actor} impersonated {'privileged user ' if privileged else ''}{target or 'unknown user'}"[:255],
+		severity="critical" if privileged else "warning",
+		category="user_impersonated",
+		source="frappe",
+		payload={
+			"user": target, "by": actor, "reason": app_security.reason_text(frappe.form_dict.get("reason")),
+			"ip": ip, "privileged": privileged, "activity_log": doc.name,
+		},
+		fingerprint=fingerprint("user_impersonated", actor, target),
+	)  # fmt: skip
 
 
 def check_new_country(doc, previous, settings):
@@ -157,6 +193,7 @@ def on_user_update(doc):
 	settings = _settings()
 	check_api_key(doc, settings)
 	check_desk_access(doc, settings)
+	check_password_by_other(doc, settings)
 	if not cint(settings.capture_privileged_users) or not doc.enabled:
 		return
 	privileged = privileged_roles(settings)
@@ -194,6 +231,46 @@ def on_user_before_save(doc, method=None):
 		doc.flags.wolf_new_api_secret = app_security.new_api_secret(doc.get("api_secret"))
 	except Exception:
 		frappe.logger("dodock_wolf").exception("could not inspect the API secret")
+
+
+def on_user_before_validate(doc, method=None):
+	"""User.validate moves `new_password` aside and empties the field: only here is a password
+	typed on the form (Desk, REST, Data Import) still visible. Only that one was set is kept."""
+	try:
+		doc.flags.wolf_password_set = bool(doc.get("new_password"))
+	except Exception:
+		frappe.logger("dodock_wolf").exception("could not inspect the new password")
+
+
+def check_password_by_other(doc, settings):
+	"""`credentials_reset_by_other`: a user's password set, on a save, by someone else.
+
+	A new user's first password is not one: whoever creates an account gives it one.
+	"""
+	if not _app_security(settings) or not doc.flags.get("wolf_password_set"):
+		return
+	if frappe.session.user == doc.name or doc.get_doc_before_save() is None:
+		return
+	credentials_event(doc.name, frappe.session.user, "password", settings)
+
+
+CREDENTIAL_KINDS = {"password": "Password", "otp_secret": "OTP secret", "ldap_password": "LDAP password"}
+
+
+def credentials_event(target, actor, kind, settings):
+	"""One `credentials_reset_by_other` event. Never carries the credential itself."""
+	privileged = is_privileged(target, settings)
+	events.emit(
+		"security",
+		f"{CREDENTIAL_KINDS[kind]} of {'privileged user ' if privileged else ''}{target} reset by {actor}"[:255],
+		severity="critical" if privileged else "warning",
+		category="credentials_reset_by_other",
+		source="frappe",
+		payload={"kind": kind, "user": target, "by": actor, "ip": getattr(frappe.local, "request_ip", None),
+		         "privileged": privileged, "via": _via()},  # fmt: skip
+		fingerprint=fingerprint("credentials_reset_by_other", kind, target, actor),
+		dedupe_minutes=10,
+	)
 
 
 def check_api_key(doc, settings):
@@ -291,39 +368,184 @@ PERMISSION_MANAGER = "frappe.core.page.permission_manager.permission_manager."
 PERMISSION_ACTIONS = {"add": "added", "update": "changed", "remove": "removed", "reset": "reset to standard"}
 
 
-def after_request(response=None, request=None):
-	"""hooks.py after_request: runs after the request's commit, so it commits its own event."""
+RESET_PASSWORD = "frappe.core.doctype.user.user.reset_password"
+RESET_OTP_SECRET = "frappe.twofactor.reset_otp_secret"
+RESET_LDAP_PASSWORD = "frappe.integrations.doctype.ldap_settings.ldap_settings.reset_password"
+
+
+def _doctype_module(doctype):
+	"""The dotted path of a DocType's controller module, for a `/api/v2/method/<DocType>/<m>` call,
+	from Frappe's own cached maps (frappe.modules.utils.get_doctype_module and module_app): nothing
+	imported and nothing thrown, as a guest's request may name any DocType. None when unknown."""
 	try:
-		path = getattr(request, "path", "") or ""
-		if not path.startswith("/api/method/" + PERMISSION_MANAGER):
-			return
-		action = PERMISSION_ACTIONS.get(path.rsplit(".", 1)[-1])
-		if not action or getattr(response, "status_code", None) != 200 or not _app_security():
-			return
-		args = frappe.form_dict
-		doctype = args.get("doctype") or args.get("parent")
-		role = args.get("role")
-		detail = {k: args.get(k) for k in ("permlevel", "ptype", "value", "if_owner") if args.get(k) is not None}
-		subject = f"{role} on {doctype}" if role else doctype
-		events.emit(
-			"security",
-			f"Permission rule {action}: {subject}"[:255],
-			severity="warning",
-			category="permission_change",
-			source="frappe",
-			payload={"doctype": doctype, "role": role, "action": action, **detail, "by": frappe.session.user},
-			fingerprint=fingerprint("permission_change", doctype, role),
-			dedupe_minutes=10,
+		modules = frappe.cache.get_value(
+			"doctype_modules", generator=lambda: dict(frappe.qb.from_("DocType").select("name", "module").run())
 		)
-		frappe.db.commit()
+		module = (modules or {}).get(doctype)
+		app = module and (getattr(frappe.local, "module_app", None) or {}).get(frappe.scrub(module))
+		return app_security.doctype_module_path(app, module, doctype) if app else None
 	except Exception:
-		frappe.logger("dodock_wolf").exception("could not record a permission change")
+		return None
+
+
+def request_method():
+	"""The whitelisted method the current request runs, in Frappe's own order (app_security.
+	called_method), or None outside a method call."""
+	path = getattr(getattr(frappe.local, "request", None), "path", "")
+	return app_security.called_method(path, frappe.form_dict, _doctype_module)
+
+
+def after_request(response=None, request=None):
+	"""hooks.py after_request: runs after the request's commit, so each signal commits its own event.
+
+	It also runs when the request failed (a refused or rate-limited call): each check says which
+	answers count.
+	"""
+	try:
+		method = app_security.called_method(getattr(request, "path", ""), frappe.form_dict, _doctype_module)
+		if not method:
+			return
+		if method.startswith(PERMISSION_MANAGER):
+			permission_manager_call(method, response)
+		elif method == RESET_PASSWORD:
+			password_reset_call(response)
+		elif method == RESET_OTP_SECRET:
+			otp_reset_call(response, "otp_secret")
+		elif method == RESET_LDAP_PASSWORD:
+			otp_reset_call(response, "ldap_password")
+	except Exception:
+		frappe.logger("dodock_wolf").exception("could not record a request signal")
+
+
+def permission_manager_call(method, response):
+	action = PERMISSION_ACTIONS.get(method.rsplit(".", 1)[-1])
+	if not action or getattr(response, "status_code", None) != 200 or not _app_security():
+		return
+	args = frappe.form_dict
+	doctype = args.get("doctype") or args.get("parent")
+	role = args.get("role")
+	detail = {k: args.get(k) for k in ("permlevel", "ptype", "value", "if_owner") if args.get(k) is not None}
+	subject = f"{role} on {doctype}" if role else doctype
+	events.emit(
+		"security",
+		f"Permission rule {action}: {subject}"[:255],
+		severity="warning",
+		category="permission_change",
+		source="frappe",
+		payload={"doctype": doctype, "role": role, "action": action, **detail, "by": frappe.session.user},
+		fingerprint=fingerprint("permission_change", doctype, role),
+		dedupe_minutes=10,
+	)
+	frappe.db.commit()
+
+
+# a guest's reset requests: one event per address and account in the window, up to this many
+# accounts per address; past it, one event for the address (`many_accounts`)
+RESET_WINDOW_MINUTES = 10
+RESET_ACCOUNTS_PER_IP = 20
+
+
+def password_reset_call(response):
+	"""`password_reset_requested` for each call of the "Forgot password" method by a guest,
+	answered or refused (unknown account, rate limit): bursts mean account enumeration or a
+	takeover attempt.
+
+	The account is whatever the visitor typed: it is kept as a keyed hash (app_security.identity_hash),
+	and by name only when it is an existing user. A decoy user is a honeytoken touch instead.
+	A signed-in user's requests (Desk's Reset Password button) are not a guest's: one event per user
+	in the window, with `by`, so an administrator inviting users does not look like a burst.
+	"""
+	typed = str(frappe.form_dict.get("user") or "").strip()
+	if not typed:
+		return
+	settings = _settings()
+	if typed.lower() in decoy_users(settings):
+		from dodock_wolf.api import threat
+
+		threat.touched("user", typed, {"via": "password reset"})
+		frappe.db.commit()
+		return
+	if not cint(settings.capture_login_failures):
+		return
+	ip = getattr(frappe.local, "request_ip", None)
+	status = getattr(response, "status_code", None)
+	by = frappe.session.user
+	if by and by != "Guest":
+		title = f"Password reset requested by signed-in user {by} from {ip or 'unknown IP'}"
+		payload = {"by": by, "signed_in": True, "ip": ip, "status": status}
+		key = ("by", by)
+	else:
+		site_key = frappe.conf.get("encryption_key")  # never created from a guest's request
+		user_hash = app_security.identity_hash(typed, links.derive_key(site_key, app_security.IDENTITY_CONTEXT)) if site_key else None
+		if user_hash and not _new_reset_account(ip, user_hash):
+			title = f"Password reset requested for many accounts from {ip or 'unknown IP'}"
+			payload = {"user_hash": None, "many_accounts": True, "ip": ip, "status": status}
+			key = ("many accounts",)
+		else:
+			user = frappe.db.exists("User", typed) or None
+			title = f"Password reset requested for {user or 'an unknown account'} from {ip or 'unknown IP'}"
+			payload = {"user_hash": user_hash, "user_exists": bool(user), "ip": ip, "status": status}
+			if user:
+				payload["user"] = user
+			key = (user_hash,)
+	events.emit(
+		"security",
+		title[:255],
+		severity="info",
+		category="password_reset_requested",
+		source="frappe",
+		payload=payload,
+		# one row per address and account (`count` the repeats): rows count the accounts an address
+		# asked for (presets)
+		fingerprint=fingerprint("password_reset_requested", ip, *key),
+		dedupe_minutes=RESET_WINDOW_MINUTES,
+		enrich=False,  # a guest can send many: no reputation or CrowdSec lookup for an info event
+	)
+	frappe.db.commit()
+
+
+def _new_reset_account(ip, account):
+	"""True when `account` gets an event of its own: it is among the first RESET_ACCOUNTS_PER_IP
+	accounts this address asked a reset for in the window. Kept in the cache, in a set that never
+	holds more than that and expires RESET_WINDOW_MINUTES after its first account."""
+	key = frappe.cache.make_key(f"wolf_password_reset|{ip or ''}")
+	pipe = frappe.cache.pipeline()
+	pipe.sismember(key, account)
+	pipe.scard(key)
+	known, size = pipe.execute()
+	if known:
+		return True
+	if size >= RESET_ACCOUNTS_PER_IP:
+		return False
+	pipe = frappe.cache.pipeline()
+	pipe.sadd(key, account)
+	if not size:
+		pipe.expire(key, RESET_WINDOW_MINUTES * 60)
+	pipe.execute()
+	return True
+
+
+def otp_reset_call(response, kind):
+	"""`credentials_reset_by_other` when someone reset another user's OTP secret (System Managers
+	may): the next login registers a new authenticator, whoever holds the password. Or their LDAP
+	password (LDAP Settings → Reset Password, System Managers only): it is set in the directory, so
+	no User save shows it."""
+	if getattr(response, "status_code", None) != 200:
+		return
+	settings = _settings()
+	target, actor = str(frappe.form_dict.get("user") or "").strip(), frappe.session.user
+	if not _app_security(settings) or not target or target == actor:
+		return
+	credentials_event(target, actor, kind, settings)
+	frappe.db.commit()
 
 
 def _permission_manager_request():
 	"""True inside a Role Permission Manager call: after_request records those."""
-	path = getattr(getattr(frappe.local, "request", None), "path", "") or ""
-	return path.startswith("/api/method/" + PERMISSION_MANAGER)
+	if getattr(frappe.local, "request", None) is None:
+		return False
+	method = request_method()
+	return bool(method) and method.startswith(PERMISSION_MANAGER)
 
 
 def _via():
@@ -467,6 +689,46 @@ def on_system_settings(doc):
 		source="frappe",
 		payload={"changes": rows, "by": frappe.session.user},
 	)
+
+
+@_safe
+def on_role(doc):
+	"""`security_settings_weakened`: a Role's two-factor authentication turned off. Its users then
+	log in with their password alone (when System Settings enables 2FA at all)."""
+	_role_2fa_event(doc, _before(doc), doc.as_dict())
+
+
+@_safe
+def on_role_trash(doc):
+	"""The same when a role with two-factor authentication on is deleted: its users lose it too."""
+	_role_2fa_event(doc, doc.as_dict(), None)
+
+
+def _role_2fa_event(doc, before, after):
+	settings = _settings()
+	if not _app_security(settings):
+		return
+	row = app_security.role_2fa_off(before, after)
+	if not row:
+		return
+	deleted = after is None
+	privileged = doc.name in privileged_roles(settings)
+	events.emit(
+		"security",
+		(f"Security settings weakened: role {doc.name} with two-factor authentication deleted" if deleted else
+		 f"Security settings weakened: two-factor authentication off for role {doc.name}")[:255],
+		severity="critical" if privileged else "warning",
+		category="security_settings_weakened",
+		source="frappe",
+		payload={
+			"kind": "role_2fa", "role": doc.name, "changes": [row], "privileged_role": privileged,
+			**({"deleted": True} if deleted else {}),
+			"system_2fa": cint(frappe.db.get_single_value("System Settings", "enable_two_factor_auth")),
+			"by": frappe.session.user, "via": _via(),
+		},
+		fingerprint=fingerprint("security_settings_weakened", "role_2fa", doc.name, "deleted" if deleted else ""),
+		dedupe_minutes=10,
+	)  # fmt: skip
 
 
 @_safe

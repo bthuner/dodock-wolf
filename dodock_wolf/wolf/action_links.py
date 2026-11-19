@@ -1,7 +1,5 @@
 """Frappe side of the signed acknowledge/resolve links (see links.py for the crypto)."""
 
-import hashlib
-import hmac
 from urllib.parse import urlencode
 
 import frappe
@@ -17,7 +15,7 @@ MAX_RESPONSE_LINKS = 5
 
 def link_secret():
 	"""Derived from the site's encryption key: per site, never stored, nothing to sync."""
-	return hmac.new(get_encryption_key().encode(), b"dodock_wolf.action_links.v1", hashlib.sha256).hexdigest()
+	return links.derive_key(get_encryption_key(), b"dodock_wolf.action_links.v1")
 
 
 def link_hours():

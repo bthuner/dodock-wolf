@@ -105,6 +105,38 @@ class TestSuggest(unittest.TestCase):
 		self.assertEqual(users, [("disable_user", "intruder@example.com"), ("logout_sessions", "intruder@example.com"),
 		                         ("revoke_api_keys", "intruder@example.com")])  # fmt: skip
 
+	def test_impersonation_and_credentials_reset(self):
+		# the impersonated user's sessions (the one opened as them) and the impersonator's own;
+		# credentials reset by someone else: the account whose credentials changed, and whoever reset them
+		events = [
+			ev("user_impersonated", {"user": "clerk@example.com", "by": "ops@example.com"}, agent=None),
+			ev("user_impersonated", {"user": "boss@example.com", "by": "Administrator"}, agent=None),  # protected impersonator
+			ev("credentials_reset_by_other", {"user": "cfo@example.com", "by": "it@example.com", "kind": "password"}, agent=None),
+			ev("user_impersonated", {"user": "x@example.com", "by": "y@example.com"}, agent="WAG-SAT", sender_kind="satellite"),
+		]
+		users = [(p["action"], p["target"]) for p in response.suggest(events) if p["action"] != "block_ip"]
+		self.assertEqual(users, [
+			("disable_user", "clerk@example.com"), ("logout_sessions", "clerk@example.com"), ("revoke_api_keys", "clerk@example.com"),
+			("logout_sessions", "ops@example.com"), ("disable_user", "ops@example.com"),
+			("disable_user", "boss@example.com"), ("logout_sessions", "boss@example.com"), ("revoke_api_keys", "boss@example.com"),
+			("disable_user", "cfo@example.com"), ("logout_sessions", "cfo@example.com"), ("revoke_api_keys", "cfo@example.com"),
+			("logout_sessions", "it@example.com"), ("disable_user", "it@example.com"),
+		])  # fmt: skip
+
+	def test_credentials_reset_actor(self):
+		# whoever reset someone else's credentials can log in as them: logged out or disabled, never
+		# their API keys revoked; Administrator and Guest never proposed, nor a satellite's or an agent's
+		events = [
+			ev("credentials_reset_by_other", {"user": "Administrator", "by": "ops@example.com", "kind": "otp_secret"}, agent=None),
+			ev("credentials_reset_by_other", {"user": "cfo@example.com", "by": "Administrator", "kind": "ldap_password"}, agent=None),
+			ev("credentials_reset_by_other", {"user": "a@example.com", "by": "Guest", "kind": "password"}, agent=None),
+			ev("credentials_reset_by_other", {"user": "b@example.com", "by": "sat@example.com", "user_known": True},
+			   agent="WAG-SAT", sender_kind="satellite"),
+		]
+		actors = {(p["action"], p["target"]) for p in response.suggest(events)} & {
+			(a, u) for a in response.USER_ACTIONS for u in ("ops@example.com", "Administrator", "Guest", "sat@example.com")}
+		self.assertEqual(actors, {("logout_sessions", "ops@example.com"), ("disable_user", "ops@example.com")})
+
 	def test_user_actions_for_a_satellite_s_users(self):
 		# a satellite applies them itself; an agent's event (a host account) never proposes one
 		events = [

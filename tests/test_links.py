@@ -59,6 +59,17 @@ class TestLinks(unittest.TestCase):
 	def test_actions_sign_differently(self):
 		self.assertNotEqual(self.params(action="ack")["sig"], self.params(action="resolve")["sig"])
 
+	def test_derive_key(self):
+		import hashlib
+		import hmac
+
+		# the action links' secret is unchanged: HMAC-SHA256(site key, context) in hex
+		expected = hmac.new(b"site-key", b"dodock_wolf.action_links.v1", hashlib.sha256).hexdigest()
+		self.assertEqual(links.derive_key("site-key", b"dodock_wolf.action_links.v1"), expected)
+		self.assertEqual(links.derive_key(b"site-key", b"dodock_wolf.action_links.v1"), expected)
+		# one secret per use: the identity hash never shares the links' key
+		self.assertNotEqual(links.derive_key("site-key", b"dodock_wolf.identity.v1"), expected)
+
 	def test_build_url(self):
 		url = links.build_url("https://wolf.example.com/api/method/x", SECRET, "WINC-1", "resolve", 60, actor="a@b.c", now=NOW)
 		parsed = urlparse(url)

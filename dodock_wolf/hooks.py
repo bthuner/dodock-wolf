@@ -56,6 +56,7 @@ doc_events = {
 	"Error Log": {"after_insert": "dodock_wolf.wolf.local_signals.on_error_log"},
 	"Activity Log": {"after_insert": "dodock_wolf.wolf.local_signals.on_activity_log"},
 	"User": {
+		"before_validate": "dodock_wolf.wolf.local_signals.on_user_before_validate",
 		"before_save": "dodock_wolf.wolf.local_signals.on_user_before_save",
 		"on_update": "dodock_wolf.wolf.local_signals.on_user_update",
 	},
@@ -74,6 +75,10 @@ doc_events = {
 		"on_trash": "dodock_wolf.wolf.local_signals.on_user_permission_trash",
 	},
 	"System Settings": {"on_update": "dodock_wolf.wolf.local_signals.on_system_settings"},
+	"Role": {
+		"on_update": "dodock_wolf.wolf.local_signals.on_role",
+		"on_trash": "dodock_wolf.wolf.local_signals.on_role_trash",
+	},
 	"Webhook": {"on_update": "dodock_wolf.wolf.local_signals.on_webhook"},
 	# live updates for the Wolf UI (wolf/live.py): invalidations only, never telemetry;
 	# tamper-evident journal (api/journal.py): unsigned entries, chained every minute
@@ -93,7 +98,8 @@ doc_events = {
 	},
 }
 
-# Role Permission Manager changes bypass doc events (raw SQL): read from the request;
+# Role Permission Manager changes bypass doc events (raw SQL), password reset requests and
+# OTP secret resets write no document: read from the request (wolf/local_signals.py);
 # data exports and list reads counted per user (api/exfiltration.py); API keys used from a
 # new address (api/api_keys.py)
 after_request = [

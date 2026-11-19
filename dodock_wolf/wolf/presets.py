@@ -351,7 +351,8 @@ PRESETS = [
 	{
 		"rule_name": "Security settings weakened",
 		"description": "System Settings lowered a defence: 2FA or the password policy off, lockout "
-		"loosened, longer sessions, guest uploads (MITRE T1562.001).",
+		"loosened, longer sessions, guest uploads; or a Role's two-factor authentication turned off, or "
+		"a role that had it deleted (MITRE T1562.001).",
 		"signal_type": "event", "event_type": "security", "event_category": "security_settings_weakened",
 		"operator": ">=", "threshold": 1, "window_minutes": 10, "group_by": "site",
 		"severity": "critical", "auto_resolve": 0, "cooldown_minutes": 0,
@@ -396,6 +397,45 @@ PRESETS = [
 		"signal_type": "event", "event_type": "security", "event_category": "data_exfiltration",
 		"operator": ">=", "threshold": 1, "window_minutes": 60, "group_by": "site",
 		"severity": "warning", "auto_resolve": 0, "cooldown_minutes": 60,
+	},
+	# --- cyber: accounts taken over from inside or reset from outside (site signals) ---
+	{
+		"rule_name": "User impersonated",
+		"description": "Someone opened a session as another user with User → Impersonate (MITRE T1078). "
+		"Critical when that user is privileged; the reason they gave is in the event.",
+		"signal_type": "event", "event_type": "security", "event_category": "user_impersonated",
+		"operator": ">=", "threshold": 1, "window_minutes": 10, "group_by": "site",
+		"severity": "warning", "auto_resolve": 0, "cooldown_minutes": 0,
+	},
+	{
+		"rule_name": "Credentials reset by someone else",
+		"description": "A user's password was set, or their OTP secret reset, by another user: whoever "
+		"did it can log in as them (MITRE T1098). Critical for privileged users.",
+		"signal_type": "event", "event_type": "security", "event_category": "credentials_reset_by_other",
+		"operator": ">=", "threshold": 1, "window_minutes": 10, "group_by": "site",
+		"severity": "warning", "auto_resolve": 0, "cooldown_minutes": 0,
+	},
+	{
+		# events are one per address and account (10 min): a sequence on the address counts the
+		# other accounts it asked for after the first, so 4 means about 5 accounts (an event's last
+		# request is within the 10 min, its first may be 10 min older)
+		"rule_name": "Password reset burst from one IP",
+		"description": "One public address asked to reset the passwords of about 5 accounts or more "
+		"within 10 to 20 minutes: account enumeration or a takeover attempt (MITRE T1589.002, T1110). "
+		"Private addresses are not grouped.",
+		"signal_type": "sequence", "sequence_entity": "ip", "sequence_minutes": 10,
+		"first_categories": "password_reset_requested", "then_categories": "password_reset_requested",
+		"operator": ">=", "threshold": 4, "window_minutes": 10, "group_by": "none",
+		"severity": "warning", "auto_resolve": 1, "cooldown_minutes": 60,
+	},
+	{
+		# one event per address and account: 10 events are 10 accounts, or one account from 10 addresses
+		"rule_name": "Password resets for many accounts",
+		"description": "Password resets asked for 10 different accounts, or from 10 different addresses, "
+		"on a site within 10 minutes: a distributed enumeration or takeover attempt (MITRE T1589.002, T1110).",
+		"signal_type": "event", "event_type": "security", "event_category": "password_reset_requested",
+		"operator": ">=", "threshold": 10, "window_minutes": 10, "min_samples": 10, "group_by": "site",
+		"severity": "warning", "auto_resolve": 1, "cooldown_minutes": 60,
 	},
 	# --- cyber: sequences across sources (#72 step 5, wolf/sequences.py) ---
 	{

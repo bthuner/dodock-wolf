@@ -354,6 +354,7 @@
   },
   {
    "default": "1",
+   "description": "Failed logins, and requests to reset a password (\"Forgot password\"): the address, and the account as a hash unless it is an existing user.",
    "fieldname": "capture_login_failures",
    "fieldtype": "Check",
    "label": "Capture failed logins"
@@ -379,7 +380,7 @@
   },
   {
    "default": "1",
-   "description": "Server and Client Scripts that can run new code, System Console runs, permission rule and Role Profile changes, weakened System Settings (2FA, password policy, lockout, sessions), API keys generated and Webhooks to a new host.",
+   "description": "Server and Client Scripts that can run new code, System Console runs, permission rule and Role Profile changes, weakened System Settings (2FA, password policy, lockout, sessions) and roles with 2FA turned off, API keys generated, Webhooks to a new host, impersonations, and passwords or OTP secrets reset by another user.",
    "fieldname": "capture_app_security",
    "fieldtype": "Check",
    "label": "Flag risky application changes"
@@ -804,7 +805,7 @@
  "index_web_pages_for_search": 0,
  "issingle": 1,
  "links": [],
- "modified": "2026-11-19 16:00:00.000000",
+ "modified": "2026-11-19 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Settings",

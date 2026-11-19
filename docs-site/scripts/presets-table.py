@@ -19,8 +19,9 @@ GROUPS = [
 		"Replication lag", "Replication stopped", "Email queue backlog", "Email sending errors"]),
 	("Logins and accounts", [
 		"SSH brute force", "SSH login after brute force", "Repeated sudo failures", "New system account",
-		"User added to admin group", "Repeated failed Frappe logins", "Admin login from new IP",
-		"Admin login from new country", "Privileged role granted"]),
+		"User added to admin group", "Repeated failed Frappe logins", "Password reset burst from one IP",
+		"Password resets for many accounts", "Admin login from new IP", "Admin login from new country",
+		"Privileged role granted", "User impersonated", "Credentials reset by someone else"]),
 	("Attacks and intrusion", [
 		"Web attack scan", "Sensitive file served", "Network IDS alert (critical)",
 		"Host intrusion alert (critical)", "Honeytoken touched", "Bench service exposed",
@@ -64,8 +65,11 @@ def condition(d):
 		first = cats("first_categories")
 		if d.get("first_min_severity"):
 			first += f" ({d['first_min_severity']})"
-		return (f"one of {first}, then one of {cats('then_categories')} on the same "
+		text = (f"one of {first}, then one of {cats('then_categories')} on the same "
 			f"`{d['sequence_entity']}` within {d['sequence_minutes']} min")
+		if thr != 1:  # how many second events the entity needs in the window
+			text += f", {d.get('operator', '>=')} {thr} times in {win} min"
+		return text
 	if d.get("signal_type") == "metric":
 		what = f"`{d.get('aggregation', 'avg')}({d['metric_name']})`"
 	else:
@@ -74,6 +78,8 @@ def condition(d):
 		if d.get("min_severity"):
 			what += f" ({d['min_severity']})"
 	text = f"{what} {d.get('operator', '>')} {thr} in {win} min"
+	if d.get("signal_type") == "event" and (d.get("min_samples") or 1) > 1:
+		text += f", {d['min_samples']}+ distinct events"  # events deduplicated by fingerprint
 	if d.get("active_from"):
 		text += f", {d['active_from'][:5]}–{d['active_to'][:5]}"
 	if d.get("require_recent_deployment"):

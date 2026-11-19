@@ -36,6 +36,7 @@ TECHNIQUES = {
 	"T1030": ("Data Transfer Size Limits", "exfiltration"),
 	"T1041": ("Exfiltration Over C2 Channel", "exfiltration"),
 	"T1071": ("Application Layer Protocol", "command-and-control"),
+	"T1589.002": ("Gather Victim Identity Information: Email Addresses", "reconnaissance"),
 	"T1595.002": ("Active Scanning: Vulnerability Scanning", "reconnaissance"),
 	"T1595.003": ("Active Scanning: Wordlist Scanning", "reconnaissance"),
 }
@@ -72,6 +73,11 @@ CATEGORIES = {
 	"api_key_new_ip": ["T1078", "T1552"],
 	"webhook_external": ["T1567"],
 	"data_exfiltration": ["T1567", "T1030"],
+	# accounts (local signals): a session as someone else, their credentials reset by another
+	# user, "forgot password" asked from outside (enumeration, takeover)
+	"user_impersonated": ["T1078"],
+	"credentials_reset_by_other": ["T1098"],
+	"password_reset_requested": ["T1589.002", "T1110"],
 	# exposure (agent): weaknesses, mapped to what they open the door to
 	"service_exposed": ["T1190"],
 	"insecure_site_config": ["T1190"],
