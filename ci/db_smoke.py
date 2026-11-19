@@ -3039,6 +3039,17 @@ def main():
 		anchor = journal_api.get_status()["anchor"]
 		assert journal_api.verify_journal(anchor)["ok"]
 
+		# the race on a fresh site: a process loaded its conf before another created the key
+		on_disk = journal_api._disk_key()
+		assert on_disk, "the key is not in site_config.json"
+		frappe.local.conf.pop(journal_api.KEY_CONF, None)
+		assert journal_api.journal_key(create=False) == on_disk  # read from the file, not None
+		frappe.local.conf.pop(journal_api.KEY_CONF, None)
+		assert journal_api.journal_key() == on_disk and journal_api._disk_key() == on_disk  # adopted, not overwritten
+		frappe.local.conf[journal_api.KEY_CONF] = "stale"
+		assert journal_api.journal_key(fresh=True) == on_disk  # signing and verifying read the file
+		assert frappe.local.conf[journal_api.KEY_CONF] == on_disk
+
 		entry = frappe.get_all("Wolf Journal Entry", filters={"kind": "settings"}, fields=["content"], order_by="seq desc", limit=1)[0]
 		assert "honeytoken_paths" in entry.content and "secret-decoy" not in entry.content, entry.content  # names only
 

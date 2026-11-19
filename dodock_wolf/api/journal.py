@@ -31,15 +31,40 @@ DOCTYPE = "Wolf Journal Entry"
 KEY_CONF = "wolf_journal_key"
 BATCH = 2000
 LOCK = "wolf_journal_chain"
+KEY_LOCK = "wolf_journal_key"
 
 
-def journal_key(create=True):
-	key = frappe.conf.get(KEY_CONF)
+def _disk_key():
+	"""The key in site_config.json now: frappe.conf is read once per process, so it can be stale."""
+	import json
+	import os
+
+	try:
+		with open(os.path.join(frappe.local.site_path, "site_config.json")) as f:
+			return (json.load(f) or {}).get(KEY_CONF)
+	except (OSError, ValueError):
+		return None
+
+
+def journal_key(create=True, fresh=False):
+	"""The HMAC key, created once per site even when several processes ask for it at once.
+
+	A process whose conf has no key reads the file: another may have created it since; `fresh`
+	reads the file first, for signing and verifying, which must not use a stale key. Creating
+	happens under a file lock (its own: chain_journal calls this while holding LOCK), after
+	reading the file again, so a second process adopts the first one's key instead of
+	overwriting it, which would leave the entries already signed unverifiable.
+	"""
+	key = (_disk_key() if fresh else None) or frappe.conf.get(KEY_CONF) or (None if fresh else _disk_key())
 	if not key and create:
-		from frappe.installer import update_site_config
+		with _lock(KEY_LOCK):
+			key = _disk_key()
+			if not key:
+				from frappe.installer import update_site_config
 
-		key = secrets.token_hex(32)
-		update_site_config(KEY_CONF, key)
+				key = secrets.token_hex(32)
+				update_site_config(KEY_CONF, key)
+	if key:
 		frappe.local.conf[KEY_CONF] = key
 	return key
 
@@ -137,11 +162,11 @@ def _last():
 	return (row[0].seq, row[0].mac) if row else (0, journal.GENESIS)
 
 
-def _lock():
+def _lock(name=LOCK):
 	try:
 		from frappe.utils.synchronization import filelock
 
-		return filelock(LOCK, timeout=300)
+		return filelock(name, timeout=300)
 	except ImportError:  # older Frappe: the scheduler runs one instance of the job anyway
 		from contextlib import nullcontext
 
@@ -171,7 +196,7 @@ def _sign_pending():
 	pending = _pending()  # read again inside the lock: another run may have signed them
 	if not pending:
 		return 0
-	key = journal_key()
+	key = journal_key(fresh=True)
 	last_seq, last_mac = _last()
 	for entry, seq, mac in journal.chain(key, pending, last_seq, last_mac):
 		frappe.db.sql(
@@ -249,7 +274,7 @@ def _entries(batch=5000):
 
 
 def verify_journal(anchor=None):
-	key = journal_key(create=False)
+	key = journal_key(create=False, fresh=True)
 	if not key:
 		return {"ok": False, "checked": 0, "problem": {"seq": None, "why": fmt(_("no {0} in the site config"), KEY_CONF)}}
 	parsed = journal.parse_anchor(anchor) if anchor else None
