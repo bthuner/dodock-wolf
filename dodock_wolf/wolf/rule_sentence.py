@@ -33,7 +33,7 @@ def _aggregation_templates(_):
 
 def _group_words(_):
 	return {"none": _("across everything it watches"), "host": _("per host"), "bench": _("per bench"),
-	        "site": _("per site"), "host_label": _("per host and series (a disk, a queue...)")}  # fmt: skip
+	        "site": _("per site"), "host_label": _("per host and series (a queue, a domain...)")}  # fmt: skip
 
 
 def _entity_words(_):

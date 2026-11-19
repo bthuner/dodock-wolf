@@ -270,7 +270,7 @@
   },
   {
    "default": "host",
-   "description": "One incident per group. host_label = per host and per label (e.g. disk mount).",
+   "description": "One incident per group. host_label = per host and per label (e.g. an RQ queue, a TLS domain).",
    "fieldname": "group_by",
    "fieldtype": "Select",
    "label": "Group By",
