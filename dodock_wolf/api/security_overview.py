@@ -5,6 +5,7 @@ each failing on its own (a panel that cannot be read says so; the others still s
 
 - `scores`: the stored `security_score` of each site (api/security.record_security_scores,
   hourly), its age and the change from about 24 h earlier. The posture is not recomputed here.
+  None on a satellite, which records no score (`satellite` says so: they are on the central site).
 - `incidents`: open or acknowledged incidents holding a security event, as the incident access
   rules let the reader see them. None on a satellite, which keeps no incidents.
 - `responses`: response actions waiting for their agent or satellite, and those that failed in
@@ -187,7 +188,8 @@ def get_overview():
 	central = not satellite.is_satellite()  # a satellite keeps no incidents, so no response either
 	return {
 		"restricted": access.grants() is not None,
-		"scores": _panel(lambda: _scores(now, tz)),
+		"satellite": not central,  # the scores and incidents are kept on the central site
+		"scores": _panel(lambda: _scores(now, tz)) if central else None,
 		"incidents": _panel(lambda: _incidents(tz)) if central else None,
 		"responses": _panel(lambda: _responses(now, tz)) if manager and central else None,
 		"journal": _panel(lambda: _journal(now, tz)) if manager else None,

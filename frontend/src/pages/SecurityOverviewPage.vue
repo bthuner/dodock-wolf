@@ -92,7 +92,9 @@ const live = useLive(hub, {
     <p v-if="error" role="alert" class="wolf-alert">{{ error }}</p>
 
     <div v-if="data" class="wolf-home">
-      <section class="wolf-card wolf-home-scores space-y-2" :aria-label="__('Security score by site')">
+      <!-- a satellite records no score: the central site keeps them -->
+      <p v-if="data.satellite" class="wolf-card wolf-home-scores text-sm text-ink-gray-6">{{ __('Security scores are kept on the central site.') }}</p>
+      <section v-else class="wolf-card wolf-home-scores space-y-2" :aria-label="__('Security score by site')">
         <div class="flex flex-wrap items-baseline justify-between gap-2">
           <h2 class="wolf-h2">{{ __('Security score by site') }}</h2>
           <RouterLink class="wolf-link text-sm" :to="{ name: 'security' }">{{ __('Security') }}</RouterLink>

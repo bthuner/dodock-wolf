@@ -126,7 +126,7 @@ export function fixtures() {
     'dodock_wolf.api.journal.get_status': () => ({ entries: 12, anchor: `12:${'a'.repeat(64)}`, pending: 0, key: true }),
     // the home page: every panel, as a manager sees them
     'dodock_wolf.api.security_overview.get_overview': () => ({
-      restricted: false, time_zone: 'Europe/Paris', checked_at: NOW.toISOString(),
+      restricted: false, satellite: false, time_zone: 'Europe/Paris', checked_at: NOW.toISOString(),
       scores: { late_hours: 3, lookback_days: 7, sites: [
         { site: 'a.example.com', score: 71, at: ago(20), late: false, change: -4 },
         { site: 'b.example.com', score: 88, at: ago(20), late: false, change: 0 },

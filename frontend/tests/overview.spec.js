@@ -13,7 +13,7 @@ const MANAGER = {
 const ago = (minutes) => new Date(Date.now() - minutes * 60000).toISOString()
 
 const OVERVIEW = {
-  restricted: false,
+  restricted: false, satellite: false,
   scores: {
     late_hours: 3, lookback_days: 7,
     sites: [
@@ -150,6 +150,15 @@ describe('SecurityOverviewPage', () => {
     server(() => ({ ...OVERVIEW, incidents: null, responses: null }))
     const page = await open({ ...MANAGER, capabilities: { incidents: { available: false } } })
     expect(section(page, 'Open security incidents').exists()).toBe(false)
+  })
+
+  it('says on a satellite that the scores are on the central site, never "not scored yet"', async () => {
+    server(() => ({ ...OVERVIEW, satellite: true, scores: null, incidents: null, responses: null }))
+    const page = await open({ ...MANAGER, satellite: true, capabilities: { incidents: { available: false } } })
+    expect(section(page, 'Security score by site').exists()).toBe(false)
+    expect(page.text()).toContain('Security scores are kept on the central site.')
+    expect(page.text()).not.toContain('not scored yet')
+    expect(section(page, 'Agents').exists()).toBe(true)
   })
 
   it('listens to incidents only: an event does not reload every panel, the poll covers the rest', async () => {
