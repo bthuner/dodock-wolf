@@ -21,7 +21,8 @@ import { call, failure } from '@/services/api'
 import { __ } from '@/services/i18n'
 import { clock, full } from '@/services/time'
 
-// The overview (no scope) and the site, host and bench dashboards (scope from the route).
+// Operations, the general overview (no scope: /operations), and the site, host and bench
+// dashboards (scope from the route). Observability is frozen (#136): the home page is security.
 const route = useRoute()
 const boot = inject('boot')
 const tz = boot.time_zone
@@ -38,7 +39,7 @@ const title = computed(() => {
   if (s.bench) return __('Bench {0} on {1}', [s.bench, s.host])
   if (s.host) return __('Host {0}', [s.host])
   if (s.site) return __('Site {0}', [s.site])
-  return __('Overview')
+  return __('Operations')
 })
 const isOverview = computed(() => !Object.keys(scope.value).length)
 // a satellite keeps no incidents: saying "none open" would suggest all is well

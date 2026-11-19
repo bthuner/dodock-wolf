@@ -55,7 +55,7 @@ function server(overrides = {}) {
   return fetchFn
 }
 
-async function open(path = '/') {
+async function open(path = '/operations') {
   const router = makeRouter(createMemoryHistory('/wolf'), BOOT)
   await router.push(path)
   await router.isReady()

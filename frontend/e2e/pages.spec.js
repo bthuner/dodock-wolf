@@ -8,7 +8,8 @@ import { fixtures, INCIDENT, mockApi } from './api.js'
 // the light or the dark theme.
 // the text each view must show from its own data: never a label the sidebar also has
 const PAGES = [
-  ['/wolf/', '502 spike after deployment: a.example.com'],
+  ['/wolf/', 'SSH brute force on bench-01'],
+  ['/wolf/operations', '502 spike after deployment: a.example.com'],
   ['/wolf/incidents', '502 spike after deployment: a.example.com'],
   ['/wolf/incidents/WINC-00001', 'restarting workers'],
   ['/wolf/events', 'KeyError: customer'],
@@ -55,7 +56,7 @@ for (const scheme of ['light', 'dark']) {
   })
 }
 
-test('setup checklist: the overview lists what is left, Monitoring every step, and it goes away when done', async ({ page }) => {
+test('setup checklist: the home page lists what is left, Monitoring every step, and it goes away when done', async ({ page }) => {
   await mockApi(page)
   await page.goto('/wolf/')
   const card = page.getByRole('region', { name: 'Set up Wolf' })
@@ -175,7 +176,7 @@ test('focus: after a comment the box keeps the focus', async ({ page }) => {
 test('focus: a new page focuses its title; a filter or the first load does not', async ({ page }) => {
   await mockApi(page)
   await page.goto('/wolf/')
-  await expect(page.getByText('502 spike after deployment: a.example.com').first()).toBeVisible()
+  await expect(page.getByText('SSH brute force on bench-01').first()).toBeVisible()
   expect(await focused(page)).toBe('body') // the first load leaves focus where the browser puts it
   await page.getByRole('link', { name: 'Incidents' }).first().focus()
   await page.keyboard.press('Enter')
@@ -188,7 +189,7 @@ test('focus: a new page focuses its title; a filter or the first load does not',
   await page.keyboard.press('Space')
   await expect(page).toHaveURL(/status=resolved/)
   expect(await focused(page)).toContain('Resolved')
-  await page.goBack() // the filter replaced the URL: one step back is the overview
+  await page.goBack() // the filter replaced the URL: one step back is the home page
   await expect(page).toHaveURL(/\/wolf\/$/)
   await expect.poll(() => focused(page)).toMatch(/^h1:/)
 })
@@ -232,7 +233,7 @@ test('merge: the dialog says what moves, passes axe, gives focus back, and merge
 test.describe('range selected on the HTTP chart', () => {
   const plot = async (page) => {
     await mockApi(page)
-    await page.goto('/wolf/')
+    await page.goto('/wolf/operations')
     const chart = page.locator('.wolf-brush svg, .wolf-brush canvas').first()
     await expect(chart).toBeVisible()
     await page.waitForLoadState('networkidle')
@@ -284,7 +285,7 @@ test.describe('range selected on the HTTP chart', () => {
 
 test('range selected on the HTTP chart with the keyboard: arrows, then Enter twice', async ({ page }) => {
   await mockApi(page)
-  await page.goto('/wolf/')
+  await page.goto('/wolf/operations')
   const plot = page.locator('.wolf-brush [tabindex="0"]').first()
   await expect(plot).toBeVisible()
   await page.waitForLoadState('networkidle')

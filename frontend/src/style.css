@@ -372,6 +372,116 @@ body {
   }
 }
 
+/* home page (SecurityOverviewPage): the scores across, then the other panels two by two */
+.wolf-home {
+  display: grid;
+  gap: 20px;
+}
+@media (min-width: 900px) {
+  .wolf-home {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  .wolf-home-scores {
+    grid-column: 1 / -1;
+  }
+}
+.wolf-scores {
+  font-size: 0.875rem;
+}
+.wolf-scores li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-top: 1px solid var(--wolf-line);
+}
+.wolf-scores li:first-child {
+  border-top: 0;
+}
+.wolf-scores-site {
+  overflow-wrap: anywhere;
+}
+.wolf-scores-figure {
+  font-weight: 500;
+  text-align: right;
+}
+.wolf-scores-of {
+  color: var(--wolf-muted);
+}
+/* the score as a length: no colour grades it (the page adds no threshold of its own) */
+.wolf-scores-bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--wolf-line);
+  overflow: hidden;
+}
+.wolf-scores-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--wolf-ink);
+}
+.wolf-scores-meta {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  color: var(--wolf-muted);
+}
+.wolf-scores li[data-scored='no'] .wolf-scores-meta {
+  grid-column: 2;
+}
+@media (min-width: 900px) {
+  .wolf-scores li {
+    grid-template-columns: minmax(0, 16rem) 5rem minmax(0, 1fr) minmax(0, 1.4fr);
+  }
+  .wolf-scores-bar {
+    grid-column: 3;
+    align-self: center;
+  }
+  .wolf-scores-meta {
+    grid-column: 4;
+  }
+  .wolf-scores li[data-scored='no'] .wolf-scores-meta {
+    grid-column: 2 / -1;
+  }
+}
+.wolf-home-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  font-size: 0.875rem;
+}
+.wolf-home-counts > div {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.wolf-home-counts dd {
+  font-weight: 500;
+  color: var(--wolf-ink);
+}
+.wolf-home-list li {
+  padding: 6px 0;
+  border-top: 1px solid var(--wolf-line);
+}
+.wolf-home-list li:first-child {
+  border-top: 0;
+}
+.wolf-home-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  color: var(--wolf-muted);
+}
+.wolf-home-result {
+  display: block;
+  color: var(--wolf-muted);
+  overflow-wrap: anywhere;
+}
+
 /* security page */
 .wolf-security {
   display: grid;

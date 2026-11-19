@@ -48,6 +48,7 @@ const menu = computed(() => [
       <SidebarLabel>{{ __('Explore') }}</SidebarLabel>
       <SidebarItem :label="__('Logs')" icon="lucide-scroll-text" :route="{ name: 'logs' }" />
       <SidebarLabel>Wolf</SidebarLabel>
+      <SidebarItem :label="__('Operations')" icon="lucide-gauge" :route="{ name: 'operations' }" />
       <SidebarItem :label="__('Monitoring')" icon="lucide-activity" :route="{ name: 'monitoring' }" />
       <SidebarItem
         v-if="boot.can.configure"

@@ -8,7 +8,9 @@ const Pending = () => import('@/pages/PendingPage.vue')
 // until it is built here; `planned` tells the reader what the view will show. `title` (and
 // `planned`) is a function, so it is translated when shown, not when this module loads.
 export const routes = [
-  { path: '/', name: 'overview', component: () => import('@/pages/DashboardPage.vue'), meta: { title: () => __('Overview') } },
+  // the home page: the security of the bench (#136); the general overview is Operations
+  { path: '/', name: 'overview', component: () => import('@/pages/SecurityOverviewPage.vue'), meta: { title: () => __('Overview') } },
+  { path: '/operations', name: 'operations', component: () => import('@/pages/DashboardPage.vue'), meta: { title: () => __('Operations') } },
   { path: '/incidents', name: 'incidents', component: () => import('@/pages/IncidentsPage.vue'),
     meta: { title: () => __('Incidents'), capability: 'incidents' } },
   { path: '/incidents/:incident', name: 'incident', component: () => import('@/pages/IncidentPage.vue'),

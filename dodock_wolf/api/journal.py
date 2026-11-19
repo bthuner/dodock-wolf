@@ -176,7 +176,7 @@ def _lock(name=LOCK):
 def _pending():
 	return frappe.db.sql(
 		f"""select name, `at`, kind, ref_doctype, ref_name, digest from `tab{DOCTYPE}`
-		where coalesce(seq, 0) = 0 order by creation asc, name asc limit {BATCH}""",
+		where seq = 0 order by creation asc, name asc limit {BATCH}""",
 		as_dict=True,
 	)
 
@@ -200,7 +200,7 @@ def _sign_pending():
 	last_seq, last_mac = _last()
 	for entry, seq, mac in journal.chain(key, pending, last_seq, last_mac):
 		frappe.db.sql(
-			f"update `tab{DOCTYPE}` set seq = %s, prev_mac = %s, mac = %s where name = %s and coalesce(seq, 0) = 0",
+			f"update `tab{DOCTYPE}` set seq = %s, prev_mac = %s, mac = %s where name = %s and seq = 0",
 			(seq, last_mac, mac, entry["name"]),
 		)
 		last_mac = mac
@@ -290,6 +290,20 @@ def _last_purge():
 	                      order_by="seq desc", limit=1)  # fmt: skip
 	record = journal.purge_record(rows[0].content) if rows else None
 	return {**record, "at": rows[0].at} if record else None
+
+
+def signing():
+	"""The newest signed entry (seq, at), the entries waiting to be signed and when the oldest of
+	them was written: whether chain_journal keeps up (the home page's journal panel)."""
+	newest = frappe.db.sql(f"select seq, `at` from `tab{DOCTYPE}` where seq > 0 order by seq desc limit 1", as_dict=True)
+	waiting = frappe.db.sql(f"select count(*), min(`at`) from `tab{DOCTYPE}` where seq = 0")[0]  # Int: not null, default 0
+	return {
+		"last_seq": newest[0].seq if newest else 0,
+		"last_at": newest[0].at if newest else None,
+		"pending": cint(waiting[0]),
+		"oldest_pending_at": waiting[1],
+		"key": bool(journal_key(create=False)),
+	}
 
 
 @frappe.whitelist()
