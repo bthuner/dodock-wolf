@@ -745,9 +745,14 @@ def main():
 			frappe.get_doc({"doctype": "Wolf Alert Rule", "rule_name": name, "enabled": 1, "signal_type": "metric",
 			                "aggregation": "min", "operator": ">", "threshold": 90, "window_minutes": 10,
 			                "group_by": "host", "severity": "warning", **kw}).insert(ignore_permissions=True)
+		open_incident = frappe.get_doc({"doctype": "Wolf Incident", "title": "smoke CPU high", "status": "Open",
+		                                "severity": "warning", "alert_rule": "High CPU", "host": gone_host,
+		                                "started_at": now_datetime()}).insert(ignore_permissions=True).name  # fmt: skip
 		frappe.db.commit()
 		try:
 			remove_host_metrics.execute()
+			assert frappe.db.get_value("Wolf Incident", open_incident, "status") == "Resolved", "its open incident stayed open"
+			assert "rule was disabled" in (frappe.db.get_value("Wolf Incident", open_incident, "summary") or "")
 			for name in ("smoke host cpu", "High CPU", "High load"):
 				assert not frappe.db.get_value("Wolf Alert Rule", name, "enabled"), f"{name} still enabled"
 				comments = frappe.get_all("Comment", filters={"reference_doctype": "Wolf Alert Rule", "reference_name": name,
@@ -766,12 +771,13 @@ def main():
 			assert log and "High CPU" in log[0].error and "smoke host cpu" in log[0].error, log
 			remove_host_metrics.execute()  # again: nothing left to do, no error
 		finally:
+			frappe.delete_doc("Wolf Incident", open_incident, force=True, ignore_permissions=True)
 			for name in ("smoke host cpu", "High CPU", "High load"):
 				frappe.delete_doc("Wolf Alert Rule", name, force=True, ignore_missing=True)
 			frappe.db.delete("Wolf Metric Sample", {"host": gone_host})
 			frappe.db.delete("Wolf Metric Rollup", {"host": gone_host})
 			frappe.db.commit()
-		return "a v0.1 agent's host metrics dropped on ingest; the patch disabled 3 rules with a comment and deleted their rows"
+		return "a v0.1 agent's host metrics dropped on ingest; the patch disabled 3 rules with a comment, resolved their open incident and deleted their rows"
 
 	def purge_metrics():
 		raw_hours, minute_days, hour_days = rollups.retention()
