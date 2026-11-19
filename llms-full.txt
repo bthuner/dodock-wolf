@@ -151,6 +151,12 @@ See [Channels](https://bthuner.github.io/dodock-wolf/alerts/channels) for Slack,
 Go to `https://wolf.example.com/wolf`. The overview lists hosts, benches and sites with their
 latest metrics and open incidents. Within a minute of the first push, the host shows up.
 
+For a Wolf Manager, **Set up Wolf** at the top says what is left before Wolf can wake someone up,
+each step read from the site itself: an agent registered and reporting, its host setup without a
+failure, the scheduler at one minute, rules on, a rule with a channel, and a test notification a
+channel accepted. The list leaves the overview once every step is done; the **Monitoring** page
+keeps it.
+
 To look at one moment, select a range on the **HTTP responses** chart: drag across it, or click
 its first and last point (with the keyboard: arrow keys, then Enter twice). The chart, the
 figures under **In this window** and the Events and Errors pages opened from them then cover
