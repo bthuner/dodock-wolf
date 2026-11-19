@@ -28,9 +28,13 @@ deadline is close, `overdue` once passed) let the alert rules reach the people w
 import calendar
 from datetime import datetime, timedelta
 
+from dodock_wolf.wolf import i18n
+from dodock_wolf.wolf.i18n import _, fmt
+
 WARN_BEFORE = timedelta(hours=6)
 
-# id, regime, label, done field
+# id, regime, label (English: the reminder events and comments keep it; obligation_label() is the
+# reader's), done field
 OBLIGATIONS = [
 	("nis2_early_warning", "NIS2", "Early warning to the CSIRT / authority (24 h)", "nis2_early_warning_at"),
 	("nis2_notification", "NIS2", "Incident notification (72 h)", "nis2_notification_at"),
@@ -116,6 +120,25 @@ def deadlines(incident, now):
 	return rows
 
 
+def obligation_label(ob_id):
+	"""An obligation's label in the reader's language (the incident page, the report draft)."""
+	return {
+		"nis2_early_warning": _("Early warning to the CSIRT / authority (24 h)"),
+		"nis2_notification": _("Incident notification (72 h)"),
+		"nis2_final_report": _("Final report (1 month after the notification)"),
+		"nis2_intermediate": _("Intermediate report requested by the CSIRT / authority"),
+		"dora_initial": _("Initial notification (4 h after classification, 24 h after awareness)"),
+		"dora_intermediate": _("Intermediate report (72 h after the initial notification)"),
+		"dora_final": _("Final report (1 month after the latest intermediate report)"),
+		"gdpr_notification": _("Personal data breach notification to the authority (72 h)"),
+	}[ob_id]
+
+
+def translated(rows):
+	"""deadlines() rows with their label in the reader's language, for a request."""
+	return [{**r, "label": obligation_label(r["id"])} for r in rows]
+
+
 def initial_due(aware, classified):
 	"""DORA initial notification: 4 h after classification, but no later than 24 h after
 	awareness; a classification made after those 24 h gives 4 h from itself (2025/301 Art. 5)."""
@@ -139,62 +162,69 @@ def _fmt(dt):
 	return dt.strftime("%Y-%m-%d %H:%M") if dt else "—"
 
 
-STATUS_TEXT = {"open": "open", "due_soon": "due within 6 h", "overdue": "OVERDUE", "done": "sent on time", "done_late": "sent late"}
+def _status_text(status):
+	return {"open": _("open"), "due_soon": _("due within 6 h"), "overdue": _("OVERDUE"), "done": _("sent on time"),
+	        "done_late": _("sent late")}[status]  # fmt: skip
 
 
 def report_markdown(incident, rows, timeline=(), postmortem=None, time_zone=""):
-	"""A plain report to start the authority's form from: facts, deadlines, timeline, measures.
+	"""A plain report to start the authority's form from: facts, deadlines, timeline, measures, in
+	the reader's language (made per request, never stored).
 
 	`timeline` is a list of `(at, text)`; `postmortem` a dict with summary, impact, root_cause,
 	lessons_learned and action_items. Text Editor fields arrive as HTML: the caller strips it. Nothing in it is sent anywhere.
 	"""
 	scope = ", ".join(f"{k} {incident.get(k)}" for k in ("site", "bench", "host") if incident.get(k)) or "—"
 	lines = [
-		f"# Incident report: {incident.get('title') or incident.get('name')}",
+		"# " + fmt(_("Incident report: {0}"), incident.get("title") or incident.get("name")),
 		"",
-		f"- Wolf incident: {incident.get('name')}",
-		f"- Scope: {scope}",
-		f"- Severity: {incident.get('severity')}; status: {incident.get('status')}",
-		f"- Started: {_fmt(_dt(incident.get('started_at')))}; resolved: {_fmt(_dt(incident.get('resolved_at')))}",
-		f"- Times in {time_zone or 'the site time zone'}",
+		"- " + fmt(_("Wolf incident: {0}"), incident.get("name")),
+		"- " + fmt(_("Scope: {0}"), scope),
+		"- " + fmt(_("Severity: {0}; status: {1}"), i18n.translate(incident.get("severity"), "Wolf Incident"), i18n.translate(incident.get("status"), "Wolf Incident")),
+		"- " + fmt(_("Started: {0}; resolved: {1}"), _fmt(_dt(incident.get("started_at"))), _fmt(_dt(incident.get("resolved_at")))),
+		"- " + (fmt(_("Times in {0}"), time_zone) if time_zone else _("Times in the site time zone")),
 	]
 	if incident.get("regulatory_reference"):
-		lines.append(f"- Authority reference: {incident['regulatory_reference']}")
+		lines.append("- " + fmt(_("Authority reference: {0}"), incident["regulatory_reference"]))
 	if incident.get("nis2_significant"):
-		lines.append(f"- NIS2 significant incident, aware since {_fmt(_dt(incident.get('nis2_aware_at')))}")
+		lines.append("- " + fmt(_("NIS2 significant incident, aware since {0}"), _fmt(_dt(incident.get("nis2_aware_at")))))
 	if incident.get("nis2_significant") and _dt(incident.get("nis2_intermediate_requested_at")):
-		lines.append(f"- NIS2 intermediate report requested on {_fmt(_dt(incident.get('nis2_intermediate_requested_at')))}")
+		lines.append("- " + fmt(_("NIS2 intermediate report requested on {0}"), _fmt(_dt(incident.get("nis2_intermediate_requested_at")))))
 	if incident.get("dora_major"):
-		lines.append(f"- DORA major ICT-related incident, aware since {_fmt(_dt(incident.get('dora_aware_at')))}, "
-		             f"classified as major on {_fmt(_dt(incident.get('dora_classified_at')))}")  # fmt: skip
+		lines.append("- " + fmt(_("DORA major ICT-related incident, aware since {0}, classified as major on {1}"),
+		                        _fmt(_dt(incident.get("dora_aware_at"))), _fmt(_dt(incident.get("dora_classified_at")))))  # fmt: skip
 	if incident.get("gdpr_breach"):
-		lines.append(f"- GDPR personal data breach, aware since {_fmt(_dt(incident.get('gdpr_aware_at')))}")
-	lines += ["", "## Deadlines", ""]
+		lines.append("- " + fmt(_("GDPR personal data breach, aware since {0}"), _fmt(_dt(incident.get("gdpr_aware_at")))))
+	lines += ["", "## " + _("Deadlines"), ""]
 	if rows:
-		lines += ["| Obligation | Due | Sent | Status |", "|---|---|---|---|"]
+		lines += ["| " + " | ".join((_("Obligation"), _("Due"), _("Sent"), _("Status"))) + " |", "|---|---|---|---|"]
 		for r in rows:
-			due = _fmt(r["due_at"]) + (" (estimated)" if r["estimated"] else "")
-			lines.append(f"| {r['label']} | {due} | {_fmt(r['done_at'])} | {STATUS_TEXT[r['status']]} |")
+			due = fmt(_("{0} (estimated)"), _fmt(r["due_at"])) if r["estimated"] else _fmt(r["due_at"])
+			lines.append(f"| {obligation_label(r['id'])} | {due} | {_fmt(r['done_at'])} | {_status_text(r['status'])} |")
 	else:
-		lines.append("No regulatory flag is set on this incident.")
+		lines.append(_("No regulatory flag is set on this incident."))
 	final = next((r for r in rows if r["id"] == "nis2_final_report"), None)
 	if final and incident.get("status") != "Resolved" and not final["done_at"]:
-		lines += ["", "NIS2 Art. 23(4)(e): if the incident is still ongoing when the final report is due, send a progress "
-		          "report then, and the final report within one month of handling the incident."]  # fmt: skip
+		lines += ["", _("NIS2 Art. 23(4)(e): if the incident is still ongoing when the final report is due, send a progress report then, and the final report within one month of handling the incident.")]
 	if incident.get("summary"):
-		lines += ["", "## Summary", "", str(incident["summary"])]
+		lines += ["", "## " + _("Summary"), "", str(incident["summary"])]
 	if postmortem:
-		for key, title in (("summary", "Postmortem summary"), ("impact", "Impact"), ("root_cause", "Root cause"),
-		                   ("lessons_learned", "Lessons learned")):  # fmt: skip
+		titles = {"summary": "## " + _("Postmortem summary"), "impact": "## " + _("Impact"), "root_cause": "## " + _("Root cause"),
+		          "lessons_learned": "## " + _("Lessons learned")}  # fmt: skip
+		for key, title in titles.items():
 			if postmortem.get(key):
-				lines += ["", f"## {title}", "", str(postmortem[key])]
+				lines += ["", title, "", str(postmortem[key])]
 		items = postmortem.get("action_items") or []
 		if items:
-			lines += ["", "## Measures taken or planned", ""]
-			lines += [f"- {i.get('description')} ({i.get('status') or 'Open'}"
-			          + (f", owner {i['assigned_to']}" if i.get("assigned_to") else "") + ")" for i in items]  # fmt: skip
+			lines += ["", "## " + _("Measures taken or planned"), ""]
+			for i in items:
+				status = i18n.translate(i.get("status") or "Open", "Wolf Postmortem Action Item")
+				if i.get("assigned_to"):
+					lines.append("- " + fmt(_("{0} ({1}, owner {2})"), i.get("description"), status, i["assigned_to"]))
+				else:
+					lines.append(f"- {i.get('description')} ({status})")
 	if timeline:
-		lines += ["", "## Timeline", ""]
+		lines += ["", "## " + _("Timeline"), ""]
 		lines += [f"- {_fmt(_dt(at))} {text}" for at, text in timeline]
-	lines += ["", "_Prepared from Dodock Wolf. Check every fact before sending it to an authority._"]
+	lines += ["", "_" + _("Prepared from Dodock Wolf. Check every fact before sending it to an authority.") + "_"]
 	return "\n".join(lines) + "\n"

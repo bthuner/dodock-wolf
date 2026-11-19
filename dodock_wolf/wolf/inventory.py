@@ -11,14 +11,9 @@ A bench is identified by (host, bench): bench names such as `frappe-bench` repea
 import json
 
 from dodock_wolf.wolf import scopes
+from dodock_wolf.wolf.i18n import _
 
 COLUMNS = scopes.COLUMNS["Wolf Event"]  # same scope columns as every Wolf record
-
-NOTE = (
-	"Hosts and benches come from agent registrations and from telemetry in the window. A bench "
-	"or site added after its agent registered appears once it sends events or metrics."
-)
-
 
 def _benches(value):
 	if isinstance(value, list):
@@ -133,5 +128,6 @@ def build(triples):
 	return {
 		"hosts": [finish(h, ("benches", "sites")) for _, h in sorted(hosts.items())],
 		"unplaced_sites": [finish(s) for _, s in sorted(unplaced.items(), key=lambda kv: kv[0] or "")],
-		"note": NOTE,
+		# built per request from the cached triples (api/scope.get_inventory): the reader's language
+		"note": _("Hosts and benches come from agent registrations and from telemetry in the window. A bench or site added after its agent registered appears once it sends events or metrics."),
 	}

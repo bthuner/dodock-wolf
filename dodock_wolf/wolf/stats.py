@@ -5,10 +5,10 @@ MTTR: resolved_at - started_at, over resolved incidents.
 Durations are minutes. Negative durations (clock trouble, hand edits) are ignored.
 """
 
+from dodock_wolf.wolf.i18n import _
 from dodock_wolf.wolf.incident_ops import minutes_between
 
 GROUP_FIELDS = ("site", "bench", "host", "alert_rule", "severity")
-NONE_LABEL = "(none)"
 
 
 def percentile(values, p):
@@ -52,9 +52,9 @@ def group_metrics(rows, group_by="site"):
 	"""
 	if group_by not in GROUP_FIELDS:
 		raise ValueError(f"cannot group by {group_by!r}")
-	groups = {}
+	groups, none = {}, _("(none)")
 	for row in rows:
-		key = row.get(group_by) or NONE_LABEL
+		key = row.get(group_by) or none
 		groups.setdefault(key, []).append(row)
 	out = []
 	for key, items in groups.items():

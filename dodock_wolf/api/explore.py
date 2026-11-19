@@ -13,6 +13,7 @@ from frappe.utils import cint, get_datetime, now_datetime
 from dodock_wolf.api.scope import _scope, _window
 from dodock_wolf.api.ui import READ_ROLES
 from dodock_wolf.wolf import access, events, incidents, schema, timeline, window
+from dodock_wolf.wolf.i18n import fmt
 
 EVENT_FIELDS = """name, title, event_type, category, severity, source, `timestamp`, last_seen, `count`,
 	host, bench, site, incident, fingerprint"""
@@ -32,7 +33,7 @@ def _filters(win, scope, event_type=None, severity=None, category=None, q=None, 
 	):
 		if value:
 			if value not in allowed_values:
-				frappe.throw(_("Unknown {0} {1}").format(field, value), frappe.ValidationError)
+				frappe.throw(fmt(_("Unknown {0} {1}"), field, value), frappe.ValidationError)
 			where.append(f"`{field}` = %({field})s")
 			params[field] = value
 	if category:
@@ -239,7 +240,7 @@ def get_error_group(fingerprint, limit=50):
 		as_dict=True,
 	)
 	if not by_scope:
-		frappe.throw(_("No error group {0} that you can see.").format(fingerprint), frappe.DoesNotExistError)
+		frappe.throw(fmt(_("No error group {0} that you can see."), fingerprint), frappe.DoesNotExistError)
 	rows = frappe.db.sql(
 		# newest = most recently seen, as in the list of groups
 		f"select {EVENT_FIELDS}, payload from `tabWolf Event` where {base} order by last_seen desc, name desc limit %(limit)s",

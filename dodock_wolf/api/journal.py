@@ -20,9 +20,11 @@ the existing chain unverifiable, so back it up with the site config.
 import secrets
 
 import frappe
+from frappe import _
 from frappe.utils import add_days, cint, now_datetime
 
 from dodock_wolf.wolf import journal
+from dodock_wolf.wolf.i18n import fmt
 from dodock_wolf.wolf.spa import MANAGER_ROLES
 
 DOCTYPE = "Wolf Journal Entry"
@@ -249,10 +251,10 @@ def _entries(batch=5000):
 def verify_journal(anchor=None):
 	key = journal_key(create=False)
 	if not key:
-		return {"ok": False, "checked": 0, "problem": {"seq": None, "why": f"no {KEY_CONF} in the site config"}}
+		return {"ok": False, "checked": 0, "problem": {"seq": None, "why": fmt(_("no {0} in the site config"), KEY_CONF)}}
 	parsed = journal.parse_anchor(anchor) if anchor else None
 	if anchor and not parsed:
-		return {"ok": False, "checked": 0, "problem": {"seq": None, "why": "the anchor must be seq:mac"}}
+		return {"ok": False, "checked": 0, "problem": {"seq": None, "why": _("the anchor must be seq:mac")}}
 	result = journal.verify(key, _entries(), parsed)
 	result["pending"] = frappe.db.count(DOCTYPE, {"seq": 0})
 	return result

@@ -14,6 +14,7 @@ from frappe.utils import cint, get_datetime, get_fullname, now_datetime
 
 from dodock_wolf.api.ui import READ_ROLES
 from dodock_wolf.wolf import access, events, incident_ops, incidents, schema, timeline, window, workflow
+from dodock_wolf.wolf.i18n import fmt
 from dodock_wolf.wolf.spa import MANAGER_ROLES
 from dodock_wolf.wolf.workflow import ACTIVITY_LIMITS, activity_filters, get_activity
 
@@ -285,15 +286,15 @@ def act(incident, action):
 	longer applies (resolved by the rule engine or a colleague meanwhile).
 	"""
 	if action not in ACTIONS:
-		frappe.throw(_("Unknown action {0}").format(action), frappe.ValidationError)
+		frappe.throw(fmt(_("Unknown action {0}"), action), frappe.ValidationError)
 	doc = _incident(incident)
 	frappe.only_for(MANAGER_ROLES)
 	doc.check_permission("write")
 	if doc.merged_into:
-		frappe.throw(_("This incident was merged into {0}.").format(doc.merged_into))
+		frappe.throw(fmt(_("This incident was merged into {0}."), doc.merged_into))
 	if not _allowed(doc, action):
 		frappe.throw(
-			_("This incident is {0} now: refresh to see what changed.").format(_(doc.status, context="Wolf Incident").lower()),
+			fmt(_("This incident is {0} now: refresh to see what changed."), _(doc.status, context="Wolf Incident").lower()),
 			frappe.ValidationError,
 		)
 	getattr(doc, action)()
@@ -317,7 +318,7 @@ def list_incidents(status="unresolved", cursor=None, limit=50, site=None, bench=
 		frappe.throw(str(e), frappe.ValidationError)
 	conds = {"unresolved": "status in ('Open', 'Acknowledged')", "resolved": "status = 'Resolved'", "all": "1=1"}
 	if status not in conds:
-		frappe.throw(_("Unknown status filter {0}").format(status), frappe.ValidationError)
+		frappe.throw(fmt(_("Unknown status filter {0}"), status), frappe.ValidationError)
 	allowed, params = access.sql_condition("Wolf Incident")
 	where = [conds[status], *(f"`{k}` = %({k})s" for k in scope)]
 	params.update(scope, limit=limit + 1)
@@ -412,7 +413,7 @@ def merge_preview(source, target=None, with_candidates=1):
 		tgt = _incident(target)
 		error = incident_ops.check_merge(src.as_dict(), tgt.as_dict())
 		if not error and not frappe.has_permission("Wolf Incident", "write", doc=tgt):
-			error = f"You may not change {tgt.name}."
+			error = fmt(_("You may not change {0}."), tgt.name)
 		after = {**tgt.as_dict(), **incident_ops.merged_target_fields(src.as_dict(), tgt.as_dict())}
 		out["preview"] = {
 			"error": error,
@@ -458,7 +459,7 @@ def split_preview(incident, events=None, with_events=1):
 		                      fields=["name", "title", "severity", "timestamp", "last_seen"], limit=workflow.SPLIT_LIMIT)  # fmt: skip
 		error, names = incident_ops.check_split([r.name for r in rows], events)
 		if src.merged_into:
-			error = f"This incident was merged into {src.merged_into}."
+			error = fmt(_("This incident was merged into {0}."), src.merged_into)
 		picked = [r for r in rows if r.name in set(names)] if not error else []
 		fields = incident_ops.split_fields(picked) if picked else {}
 		out["preview"] = {

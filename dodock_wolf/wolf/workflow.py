@@ -6,6 +6,7 @@ from frappe import _
 from frappe.utils import get_fullname
 
 from dodock_wolf.wolf import access, incident_ops, live
+from dodock_wolf.wolf.i18n import fmt
 from dodock_wolf.wolf.incidents import get_timeline, latest_deployment, refresh_event_count
 from dodock_wolf.wolf.spa import MANAGER_ROLES  # the Wolf UI offers what these roles may do
 MOVED_COMMENT_TYPES = ("Comment", "Info")
@@ -138,7 +139,7 @@ def get_activity(inc):
 			e["content"] = clean_html(e["content"])
 		elif e["kind"] == "note":
 			e["content"] = frappe.utils.strip_html(e["content"])
-		e["text"] = incident_ops.describe_activity(e, e["user_name"])
+		e["text"] = incident_ops.describe_activity(e, e["user_name"], translate=True)  # per request: the reader's language
 		e["timestamp"] = str(e["timestamp"]) if e.get("timestamp") else ""
 	return entries
 
@@ -151,7 +152,7 @@ def open_from_event(event):
 	frappe.only_for(MANAGER_ROLES)
 	ev.check_permission("read")
 	if ev.incident:
-		frappe.throw(_("This event already belongs to incident {0}.").format(ev.incident))
+		frappe.throw(fmt(_("This event already belongs to incident {0}."), ev.incident))
 	deploy = latest_deployment(ev.host, ev.bench, ev.site, before=ev.timestamp) if ev.event_type != "deployment" else None
 	doc = frappe.get_doc(
 		{
@@ -164,7 +165,7 @@ def open_from_event(event):
 			"host": ev.host,
 			"bench": ev.bench,
 			"site": ev.site,
-			"summary": _("Opened by hand from event {0}.").format(ev.name),
+			"summary": f"Opened by hand from event {ev.name}.",  # stored: English, as every summary
 			"deployment_event": deploy.name if deploy else None,
 			"deployment_at": deploy.timestamp if deploy else None,
 		}
@@ -195,9 +196,9 @@ def merge(source, target):
 	src = frappe.get_doc("Wolf Incident", source)
 	tgt = frappe.get_doc("Wolf Incident", target)
 	require_manager(src, tgt)
-	error = incident_ops.check_merge(src.as_dict(), tgt.as_dict())
+	error = incident_ops.check_merge(src.as_dict(), tgt.as_dict())  # in the reader's language
 	if error:
-		frappe.throw(_(error))
+		frappe.throw(error)
 
 	moved = frappe.db.count("Wolf Event", {"incident": src.name})
 	frappe.db.sql(
@@ -237,16 +238,16 @@ def split(incident, events, title=None):
 	src = frappe.get_doc("Wolf Incident", incident)
 	require_manager(src)
 	if src.merged_into:
-		frappe.throw(_("This incident was merged into {0}.").format(src.merged_into))
+		frappe.throw(fmt(_("This incident was merged into {0}."), src.merged_into))
 	linked = frappe.get_all(
 		"Wolf Event",
 		filters={"incident": src.name},
 		fields=["name", "title", "severity", "timestamp", "last_seen"],
 		limit=SPLIT_LIMIT,
 	)
-	error, names = incident_ops.check_split([r.name for r in linked], events)
+	error, names = incident_ops.check_split([r.name for r in linked], events)  # in the reader's language
 	if error:
-		frappe.throw(_(error))
+		frappe.throw(error)
 	rows = [r for r in linked if r.name in set(names)]
 	fields = incident_ops.split_fields(rows)
 	resolved = src.status == "Resolved"
@@ -311,7 +312,7 @@ def create_postmortem(incident):
 	if existing and frappe.db.exists("Wolf Postmortem", existing):
 		return existing
 	if inc.merged_into:
-		frappe.throw(_("This incident was merged into {0}: write the postmortem there.").format(inc.merged_into))
+		frappe.throw(fmt(_("This incident was merged into {0}: write the postmortem there."), inc.merged_into))
 	if inc.status != "Resolved":
 		frappe.throw(_("Resolve the incident before writing its postmortem."))
 

@@ -1,2 +1,3 @@
 frontend/tests/**.js,ignore
 frontend/e2e/**.js,ignore
+tests/**.py,ignore

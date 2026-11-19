@@ -21,6 +21,7 @@ from frappe.utils import add_to_date, cint, now_datetime
 from dodock_wolf.api import entities as entities_api
 from dodock_wolf.api import wazuh_ar as wazuh_ar_api
 from dodock_wolf.wolf import events, response, wazuh_ar
+from dodock_wolf.wolf.i18n import fmt
 from dodock_wolf.wolf.spa import MANAGER_ROLES
 
 EVENT_LIMIT = 500
@@ -101,10 +102,11 @@ def _key(action, target, host, executor=None, aliases=None):
 	return (action, str(target), canonical, executor or "wolf_agent")
 
 
-def _proposals(doc):
+def _proposals(doc, translate=False):
 	"""What Wolf proposes for this incident now (approve() only accepts one of these). A block is
 	proposed for the executors that have not applied it yet: a failed Wazuh half can be retried
-	while the Wolf Agent's half waits."""
+	while the Wolf Agent's half waits. Labels are English (notification links) unless `translate`
+	(the Response panel, in the reader's language)."""
 	aliases = entities_api.aliases()
 	taken = {_key(a.action, a.target, a.host, a.executor, aliases) for a in _actions(doc.name)
 	         if a.status in ("Approved", "Applied")}  # fmt: skip
@@ -122,7 +124,7 @@ def _proposals(doc):
 		if p["action"] in response.USER_ACTIONS and not frappe.db.exists("User", p["target"]):
 			continue  # a failed login for an unknown name: nothing to disable
 		p["label"] = response.label(p["action"], p["target"], _hours(p, settings), p["host"], p.get("executors"),
-		                            wazuh_hours=_wazuh_hours(settings))  # fmt: skip
+		                            wazuh_hours=_wazuh_hours(settings), translate=translate)  # fmt: skip
 		proposals.append(p)
 	return proposals
 
@@ -164,7 +166,7 @@ def get_response(incident):
 			a[field] = window.to_utc(a[field], tz) if a[field] else None  # the UI reads UTC ISO strings
 		actions.append(a)
 	return {
-		"proposals": _proposals(doc),
+		"proposals": _proposals(doc, translate=True),
 		# addresses that reached the attacked host through a proxy: block them there, not on it
 		"held": response.held_blocks(_events(doc.name)),
 		"actions": actions,
@@ -216,10 +218,10 @@ def approve(incident, action, target, agent=None, duration_hours=None, reason=No
 		frappe.throw(_("Wolf did not propose this action for this incident (or it was already approved)."),
 		             frappe.ValidationError)  # fmt: skip
 	if action in response.USER_ACTIONS and _protected_user(target):
-		frappe.throw(_("{0} is a System Manager: only a System Manager can approve this.").format(target),
+		frappe.throw(fmt(_("{0} is a System Manager: only a System Manager can approve this."), target),
 		             frappe.PermissionError)  # fmt: skip
 	if action in response.USER_ACTIONS and not frappe.db.exists("User", target):
-		frappe.throw(_("User {0} does not exist on this site.").format(target), frappe.ValidationError)
+		frappe.throw(fmt(_("User {0} does not exist on this site."), target), frappe.ValidationError)
 	now = now_datetime()
 	common = {"doctype": "Wolf Response Action", "incident": doc.name, "action": action, "target": target,
 	          "host": doc.host, "bench": doc.bench, "site": doc.site, "status": "Approved",

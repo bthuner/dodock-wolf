@@ -18,6 +18,8 @@ The same IP or host then finds every source's events (api/entities.py).
 
 import ipaddress
 
+from dodock_wolf.wolf.i18n import _, fmt
+
 KINDS = ("ip", "host", "site", "user")
 MAX_PER_KIND = 10
 # `remote_ip`: a destination the host connected to (agent outbound.py). It is searchable, but only
@@ -114,10 +116,10 @@ def parse_filter(text):
 	kind, sep, value = str(text or "").partition(":")
 	kind = kind.strip().lower()
 	if not sep or kind not in KINDS or not value.strip():
-		raise ValueError("entity filter must be ip:, host:, site: or user: followed by a value")
+		raise ValueError(_("entity filter must be ip:, host:, site: or user: followed by a value"))
 	if kind == "ip":
 		ip = normal_ip(value)
 		if not ip:
-			raise ValueError(f"{value!r} is not an IP address")
+			raise ValueError(fmt(_("{0} is not an IP address"), repr(value)))
 		return kind, ip
 	return kind, normal_name(value)

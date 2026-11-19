@@ -5,6 +5,9 @@ Order is (time, family rank, id) on the stored times, which are naive and in the
 zone. Two rows at the same time are ordered by kind and id only: that order says nothing
 about which happened first. Times leave as UTC (window.to_utc).
 
+Rows are built per request: the text computed here is in the reader's language; what was stored
+(event titles, comments) stays as written.
+
 Rows keep what was recorded and nothing more: a deduplicated event is one row with its first
 and last time and reported count, never one row per occurrence; a delivery is what the
 channel endpoint answered, not a person having read it.
@@ -15,6 +18,7 @@ import json
 from datetime import datetime
 
 from dodock_wolf.wolf import detectors, window
+from dodock_wolf.wolf.i18n import _, fmt
 
 FAMILIES = ("evidence", "context", "activity", "delivery")
 RANK = {"event": 0, "activity": 1, "delivery": 2}  # tie-break between record families
@@ -110,6 +114,12 @@ def _key(at, family, row_id):
 	return (at, RANK[family], row_id)
 
 
+def source_label(source):
+	"""detectors.source_label in the reader's language (Suricata and Wazuh are names)."""
+	label = detectors.source_label(source)
+	return {"Wolf agent": _("Wolf agent"), "Wolf site": _("Wolf site")}.get(label, label)
+
+
 def event_row(ev, incident, tz, deployment_event=None):
 	"""A Wolf Event as a timeline row. `ev` has the get_timeline columns plus a parsed `payload`."""
 	linked = ev.get("incident") == incident
@@ -126,7 +136,7 @@ def event_row(ev, incident, tz, deployment_event=None):
 		"event_type": ev.get("event_type"),
 		"category": ev.get("category"),
 		"source": ev.get("source"),
-		"source_label": detectors.source_label(ev.get("source")),  # Wolf agent, Wolf site, Suricata, Wazuh
+		"source_label": source_label(ev.get("source")),  # Wolf agent, Wolf site, Suricata, Wazuh
 		"duplicate_of": ev.get("duplicate_of"),  # the same finding, seen first by another source
 		"scope": {k: ev.get(k) for k in ("site", "bench", "host")},
 		# what the record holds: first and last time it was seen, and how many repeats it absorbed
@@ -149,7 +159,7 @@ def deployment_unavailable_row(incident, deployment_at, tz):
 		"family": "context",
 		"relation": "preceding_change",
 		"at": window.to_utc(deployment_at, tz),
-		"summary": "Deployment (details no longer available)",
+		"summary": _("Deployment (details no longer available)"),
 		"unavailable": True,
 		"details": {},
 	}
@@ -191,6 +201,17 @@ def activity_row(entry, incident, tz):
 	return _key(entry["timestamp"], "activity", row_id), row
 
 
+def _delivery_summary(channel, action, ok, http_status):
+	"""'slack opened accepted (200)': the channel and action are codes, the rest is the reader's."""
+	if not action:
+		if http_status:
+			return fmt(_("{0} notification accepted ({1})") if ok else _("{0} notification failed ({1})"), channel, http_status)
+		return fmt(_("{0} notification accepted") if ok else _("{0} notification failed"), channel)
+	if http_status:
+		return fmt(_("{0} {1} accepted ({2})") if ok else _("{0} {1} failed ({2})"), channel, action, http_status)
+	return fmt(_("{0} {1} accepted") if ok else _("{0} {1} failed"), channel, action)
+
+
 def delivery_row(d, tz):
 	"""A notification attempt (Wolf Delivery). `ok` means the endpoint accepted it, nothing more."""
 	row_id = f"delivery:{d['name']}"
@@ -202,8 +223,7 @@ def delivery_row(d, tz):
 		"kind": "delivery",
 		"family": "delivery",
 		"at": window.to_utc(d["at"], tz),
-		"summary": f"{channel} {d.get('action') or 'notification'} {result}"
-		+ (f" ({d['http_status']})" if d.get("http_status") else ""),
+		"summary": _delivery_summary(channel, d.get("action"), d.get("ok"), d.get("http_status")),
 		"channel": channel,
 		"action": d.get("action"),
 		"target": d.get("target"),

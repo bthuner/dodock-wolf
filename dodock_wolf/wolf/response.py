@@ -19,16 +19,13 @@ Wolf proposes; a Wolf Manager confirms each action; nothing runs on its own.
 
 import ipaddress
 
+from dodock_wolf.wolf import i18n
+from dodock_wolf.wolf.i18n import _, fmt
+
 ACTIONS = ("block_ip", "disable_user", "logout_sessions", "revoke_api_keys")
 USER_ACTIONS = ("disable_user", "logout_sessions", "revoke_api_keys")
 EXECUTORS = ("wolf_agent", "wazuh")
 BLOCK_WITH = {"wolf_agent": ("wolf_agent",), "wazuh": ("wazuh",), "both": ("wolf_agent", "wazuh")}
-LABELS = {
-	"block_ip": "Block {target} for {hours} h on {host}",
-	"disable_user": "Disable user {target}",
-	"logout_sessions": "Log out every session of {target}",
-	"revoke_api_keys": "Revoke the API keys of {target}",
-}
 DEFAULT_HOURS = 24
 MAX_HOURS = 168
 PROTECTED_USERS = {"administrator", "guest"}
@@ -39,40 +36,46 @@ MAX_PROPOSALS = 20
 
 
 def blockable(address):
-	"""(True, None) for a public unicast address, else (False, why)."""
+	"""(True, None) for a public unicast address, else (False, why): why is "invalid", "loopback",
+	"private" or "reserved" (check() says it in a sentence)."""
 	try:
 		ip = ipaddress.ip_address(str(address).strip())
 	except ValueError:
-		return False, "not an IP address"
+		return False, "invalid"
 	if getattr(ip, "ipv4_mapped", None):
 		ip = ip.ipv4_mapped
 	if ip.is_loopback or ip.is_unspecified:
-		return False, "a loopback or unspecified address"
+		return False, "loopback"
 	if ip.is_private or ip.is_link_local:
-		return False, "a private or link-local address: block it on your own network instead"
+		return False, "private"
 	if ip.is_multicast or ip.is_reserved or not ip.is_global:
-		return False, "a reserved or non-global address"
+		return False, "reserved"
 	return True, None
 
 
 def check(action, target, approver=None, hours=None):
-	"""None when the action may run, else the reason it is refused."""
+	"""None when the action may run, else the reason it is refused (in the reader's language)."""
 	if action not in ACTIONS:
-		return f"unknown action {action!r}"
+		return fmt(_("unknown action {0}"), repr(action))
 	if not target:
-		return "no target"
+		return _("no target")
 	if action == "block_ip":
 		ok, why = blockable(target)
 		if not ok:
-			return f"{target} is {why}"
+			return fmt({
+				"invalid": _("{0} is not an IP address"),
+				"loopback": _("{0} is a loopback or unspecified address"),
+				"private": _("{0} is a private or link-local address: block it on your own network instead"),
+				"reserved": _("{0} is a reserved or non-global address"),
+			}[why], target)  # fmt: skip
 		if hours is not None and not (1 <= int(hours) <= MAX_HOURS):
-			return f"duration must be 1 to {MAX_HOURS} hours"
+			return fmt(_("duration must be 1 to {0} hours"), MAX_HOURS)
 		return None
 	user = str(target).strip().lower()
 	if user in PROTECTED_USERS:
-		return f"{target} is protected"
+		return fmt(_("{0} is protected"), target)
 	if approver and user == str(approver).lower():
-		return "you cannot apply this to your own account"
+		return _("you cannot apply this to your own account")
 	return None
 
 
@@ -164,11 +167,27 @@ def held_blocks(events):
 	return out
 
 
-def label(action, target, hours=None, host=None, executors=None, wazuh_hours=None):
-	text = LABELS[action].format(target=target, hours=hours or DEFAULT_HOURS, host=host or "its host")
-	if action == "block_ip" and executors and "wazuh" in executors:
-		if list(executors) == ["wazuh"]:
-			text += " with Wazuh"
-		else:  # each applies its own duration: the hours asked, and Wazuh's command timeout
-			text += f" with the Wolf Agent, and for {wazuh_hours or hours or DEFAULT_HOURS} h with Wazuh"
+def _english(text):
 	return text
+
+
+def label(action, target, hours=None, host=None, executors=None, wazuh_hours=None, translate=False):
+	"""The action in a sentence. English by default: the incident comment and the notification
+	links keep it; `translate` gives the reader's language (the Response panel)."""
+	_ = i18n._ if translate else _english
+	hours = hours or DEFAULT_HOURS
+	host = host or _("its host")
+	if action == "block_ip":
+		if executors and "wazuh" in executors:
+			if list(executors) == ["wazuh"]:
+				return fmt(_("Block {0} for {1} h on {2} with Wazuh"), target, hours, host)
+			# each applies its own duration: the hours asked, and Wazuh's command timeout
+			return fmt(_("Block {0} for {1} h on {2} with the Wolf Agent, and for {3} h with Wazuh"), target, hours, host, wazuh_hours or hours)
+		return fmt(_("Block {0} for {1} h on {2}"), target, hours, host)
+	if action == "disable_user":
+		return fmt(_("Disable user {0}"), target)
+	if action == "logout_sessions":
+		return fmt(_("Log out every session of {0}"), target)
+	if action == "revoke_api_keys":
+		return fmt(_("Revoke the API keys of {0}"), target)
+	raise KeyError(action)

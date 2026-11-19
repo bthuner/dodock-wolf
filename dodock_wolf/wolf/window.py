@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+from dodock_wolf.wolf.i18n import _, fmt
 from dodock_wolf.wolf.schema import PayloadError, parse_timestamp
 
 UNITS = {"m": "minutes", "h": "hours", "d": "days"}
@@ -28,7 +29,7 @@ def parse_range(value):
 	"""'15m', '24h', '7d' -> timedelta."""
 	match = re.fullmatch(r"\s*(\d{1,4})\s*([mhd])\s*", str(value or ""))
 	if not match or int(match.group(1)) == 0:
-		raise PayloadError(f"invalid range {value!r}: use a number and m, h or d, such as 24h")
+		raise PayloadError(fmt(_("invalid range {0}: use a number and m, h or d, such as 24h"), repr(value)))
 	return timedelta(**{UNITS[match.group(2)]: int(match.group(1))})
 
 
@@ -44,15 +45,15 @@ def parse(now, time_zone, range=None, since=None, until=None):
 		relative = None
 	else:
 		if until:
-			raise PayloadError("until needs since")
+			raise PayloadError(_("until needs since"))
 		relative = str(range or DEFAULT_RANGE).strip()
 		# subtract in UTC: across a DST change, 24h of wall clock is 23 or 25 real hours
 		end = now
 		start = from_utc(as_utc(now, time_zone) - parse_range(relative), time_zone)
 	if start >= end:
-		raise PayloadError("since must be before until")
+		raise PayloadError(_("since must be before until"))
 	if end - start > MAX_SPAN:
-		raise PayloadError(f"window longer than {MAX_SPAN.days} days")
+		raise PayloadError(fmt(_("window longer than {0} days"), MAX_SPAN.days))
 	return Window(start, end, relative, time_zone)
 
 
@@ -84,7 +85,7 @@ def scope_filters(site=None, bench=None, host=None):
 	"""{column: value} for the scope arguments. A bench is named per host, so it needs one."""
 	scope = {k: str(v).strip() for k, v in (("site", site), ("bench", bench), ("host", host)) if v and str(v).strip()}
 	if "bench" in scope and "host" not in scope:
-		raise PayloadError("bench needs host: bench names repeat across hosts")
+		raise PayloadError(_("bench needs host: bench names repeat across hosts"))
 	return scope
 
 

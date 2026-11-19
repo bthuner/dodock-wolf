@@ -16,6 +16,7 @@ from frappe.utils import now_datetime
 from dodock_wolf.api.scope import _scope, _window
 from dodock_wolf.api.ui import READ_ROLES
 from dodock_wolf.wolf import access, catalog, conditions, events, rollups, storage, window
+from dodock_wolf.wolf.i18n import fmt
 
 MAX_GROUPS = 20
 MAX_LABELS = 100
@@ -114,6 +115,7 @@ def query_metric(metric, aggregation=None, group_by=None, label=None, range=None
 		for group, part in merged.items()
 	]  # fmt: skip
 	reverse = aggregation != "min"  # the highest values first, the lowest for min
+	ranked_by = _("{0} over the window, highest first") if reverse else _("{0} over the window, lowest first")
 	missing = float("-inf") if reverse else float("inf")
 	totals.sort(key=lambda r: (r.value if r.value is not None else missing, str([r.get(c) for c in group_cols])), reverse=reverse)
 	shown = totals[:MAX_GROUPS]
@@ -157,7 +159,7 @@ def query_metric(metric, aggregation=None, group_by=None, label=None, range=None
 		"resolution": storage.LABELS[resolution],
 		"bucket_seconds": bucket,
 		"series": series,
-		"groups": {"shown": len(shown), "total": len(totals), "ranked_by": f"{aggregation} over the window, {'highest' if reverse else 'lowest'} first"},
+		"groups": {"shown": len(shown), "total": len(totals), "ranked_by": fmt(ranked_by, aggregation)},
 		# data older than this is deleted at this resolution (rollups.purge): those buckets are gaps
 		"retention": {"kept_from": window.to_utc(kept[resolution], tz), "clipped": first < kept[resolution]},
 		"live": live,

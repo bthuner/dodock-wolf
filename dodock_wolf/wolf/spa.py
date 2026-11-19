@@ -5,6 +5,8 @@ action. `capabilities` says which views have a backend behind them, so the UI ex
 missing feature instead of showing an empty page.
 """
 
+from dodock_wolf.wolf.i18n import _
+
 READ_ROLES = ("System Manager", "Wolf Manager", "Wolf User")
 # who may act on incidents and configure Wolf; wolf/workflow.py enforces it with this tuple
 MANAGER_ROLES = ("System Manager", "Wolf Manager")
@@ -49,7 +51,7 @@ def realtime(socketio):
 	fails to connect is handled by the UI, which falls back to polling.
 	"""
 	if not socketio or not socketio.get("site"):
-		return {"available": False, "reason": "Live updates need Frappe's socket.io server; views refresh on demand."}
+		return {"available": False, "reason": _("Live updates need Frappe's socket.io server; views refresh on demand.")}
 	return {
 		"available": True,
 		# behind nginx /socket.io is proxied on the site's own origin; `bench start` serves it on its port
@@ -65,7 +67,7 @@ def capabilities(is_satellite, restricted, socketio=None):
 	return {
 		"logs": {
 			"available": False,
-			"reason": "Wolf stores parsed events and metrics, not raw log lines, so there is nothing to search yet.",
+			"reason": _("Wolf stores parsed events and metrics, not raw log lines, so there is nothing to search yet."),
 		},
 		"metrics": {"available": True, "resolutions": ["raw", "1m", "1h"]},
 		"incidents": {"available": not is_satellite},

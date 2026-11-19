@@ -10,6 +10,7 @@ from collections import defaultdict
 from datetime import timedelta
 
 import frappe
+from frappe import _
 from frappe.utils import cint, get_datetime, now_datetime
 
 from dodock_wolf import satellite
@@ -73,16 +74,16 @@ def get_signals(site=None, bench=None, host=None):
 	rules = _rules(metrics, restricted)
 	incidents = frappe.get_list(
 		"Wolf Incident",
-		filters={"status": ("in", ("Open", "Acknowledged")), "alert_rule": ("in", [r["name"] for r, _ in rules] or [""])},
+		filters={"status": ("in", ("Open", "Acknowledged")), "alert_rule": ("in", [r["name"] for r, _shown in rules] or [""])},
 		fields=["name", "alert_rule", "host", "bench", "site", "severity", "group_key"],
 		limit_page_length=0,
 	)
 	out, counts = [], defaultdict(lambda: defaultdict(int))
 	for s in series.values():
-		spec = catalog.CATALOG[s["metric_name"]]
-		st = catalog.state(s, now, [r for r, _ in rules], incidents)
+		spec = catalog.shown(catalog.CATALOG[s["metric_name"]])  # translated here, never in the cached series
+		st = catalog.state(s, now, [r for r, _shown in rules], incidents)
 		counts[spec["group"]][st] += 1
-		names = {r["name"] for r, _ in rules if catalog.rule_applies(r, s)}
+		names = {r["name"] for r, _shown in rules if catalog.rule_applies(r, s)}
 		out.append({
 			**{k: s[k] for k in SERIES_KEY},
 			"group": spec["group"], "label": spec["label"], "unit": spec["unit"], "kind": spec["kind"],
@@ -103,8 +104,8 @@ def get_signals(site=None, bench=None, host=None):
 		"counts": {g: dict(c) for g, c in counts.items()},
 		# signals without any series in the lookback: not collected for this scope, not set up,
 		# or not supported here. Never shown as zero.
-		"missing": [catalog.CATALOG[m] for m in metrics if m not in seen],
-		"caveats": catalog.CAVEATS,
+		"missing": [catalog.shown(catalog.CATALOG[m]) for m in metrics if m not in seen],
+		"caveats": catalog.caveats(),
 		"email": _email(scope, now, tz),
 		"lookback_days": LOOKBACK_DAYS,
 		"as_of": window.to_utc(as_of, tz),  # when the series were read (read_cache)
@@ -234,7 +235,7 @@ def get_http(range=None, since=None, until=None, site=None, bench=None, host=Non
 			 "site": d.site, "incident": d.incident}  # fmt: skip
 			for d in deployments
 		],
-		"notes": ["502 responses are part of the 5xx count, not in addition to it."],
+		"notes": [_("502 responses are part of the 5xx count, not in addition to it.")],
 		"time_zone": tz,
 	}
 
@@ -270,7 +271,7 @@ def get_monitoring():
 	)
 	marks = rollups.watermarks()
 	return {
-		"health": health.safe_health(),
+		"health": health.for_display(health.safe_health()),
 		"rollups": {storage.LABELS[res]: window.to_utc(at, tz) for res, at in marks.items()},
 		"agents": [
 			{
@@ -285,5 +286,5 @@ def get_monitoring():
 		"mode": satellite.status(),
 		"time_zone": tz,
 		"checked_at": window.to_utc(now_datetime(), tz),
-		"note": "An online agent does not mean its watchdog has a fallback channel configured.",
+		"note": _("An online agent does not mean its watchdog has a fallback channel configured."),
 	}
