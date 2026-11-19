@@ -83,6 +83,12 @@ REMOVED_METRICS = frozenset({
 })  # fmt: skip
 
 
+def watches_removed_metric(signal_type, enabled, metric_name):
+	"""Whether an enabled metric rule watches a removed metric: refused when saved. A disabled one
+	stays (the upgrade disabled it, its history is kept)."""
+	return signal_type == "metric" and bool(int(enabled or 0)) and metric_name in REMOVED_METRICS
+
+
 def role(metric):
 	"""`security` for a metric security reads, else `operations` (frozen: #136)."""
 	return "security" if metric in SECURITY_METRICS else "operations"

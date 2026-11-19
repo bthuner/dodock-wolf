@@ -59,6 +59,15 @@ class TestRemovedMetrics(unittest.TestCase):
 		store = src.split("def store_batch(", 1)[1].split("events.insert_metrics(", 1)[0]
 		self.assertIn('metrics = [m for m in metrics if m["metric_name"] not in catalog.REMOVED_METRICS]', store)
 
+	def test_an_enabled_rule_cannot_watch_them(self):
+		self.assertTrue(catalog.watches_removed_metric("metric", 1, "cpu_usage"))
+		self.assertTrue(catalog.watches_removed_metric("metric", "1", "load_per_core"))
+		self.assertFalse(catalog.watches_removed_metric("metric", 0, "cpu_usage"))  # the upgrade disabled it: kept
+		self.assertFalse(catalog.watches_removed_metric("metric", None, "cpu_usage"))
+		self.assertFalse(catalog.watches_removed_metric("metric", 1, "queue_length"))
+		self.assertFalse(catalog.watches_removed_metric("event", 1, "cpu_usage"))  # a leftover field an event rule ignores
+		self.assertFalse(catalog.watches_removed_metric("metric", 1, None))
+
 	def test_the_upgrade_patch_runs(self):
 		import pathlib
 
