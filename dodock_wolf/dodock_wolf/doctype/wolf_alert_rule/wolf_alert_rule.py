@@ -6,7 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, now_datetime
 
-from dodock_wolf.wolf import conditions, sequences
+from dodock_wolf.wolf import catalog, conditions, sequences
 
 
 class WolfAlertRule(Document):
@@ -16,6 +16,8 @@ class WolfAlertRule(Document):
 		if self.operator not in conditions.OPERATORS:
 			frappe.throw(_("Unknown operator {0}").format(self.operator))
 		conditions.group_columns(self.group_by)
+		if catalog.watches_removed_metric(self.signal_type, self.enabled, self.metric_name):
+			frappe.throw(_("{0} was removed in Dodock Wolf 0.2: Frappe Cloud v2 and Pilot report host resources. Disable this rule or choose another metric.").format(self.metric_name))
 		if self.signal_type == "metric":
 			if self.aggregation not in conditions.AGGREGATIONS:
 				frappe.throw(_("Unknown aggregation {0}").format(self.aggregation))

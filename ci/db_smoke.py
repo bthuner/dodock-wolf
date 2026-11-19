@@ -53,8 +53,8 @@ def main():
 	def ingest():
 		metrics = [
 			schema.normalize_metric(
-				{"metric_name": "disk_used_percent", "value": 95, "host": HOST,
-				 "timestamp": None, "labels": {"mount": "/"}}, tz, now - timedelta(minutes=m))
+				{"metric_name": "queue_length", "value": 950, "host": HOST,
+				 "timestamp": None, "labels": {"queue": "default"}}, tz, now - timedelta(minutes=m))
 			for m in range(4)
 		] + [
 			schema.normalize_metric({"metric_name": "http_502", "value": 7, "host": HOST, "bench": "b1",
@@ -84,12 +84,12 @@ def main():
 	def evaluate():
 		out = {}
 		for doc in (
-			rule("smoke disk", signal_type="metric", metric_name="disk_used_percent", aggregation="min",
-			     operator=">", threshold=90, window_minutes=5, min_samples=3, group_by="host_label", filter_host=HOST),
+			rule("smoke queue", signal_type="metric", metric_name="queue_length", aggregation="min",
+			     operator=">", threshold=900, window_minutes=5, min_samples=3, group_by="host_label", filter_host=HOST),
 			rule("smoke 502", signal_type="metric", metric_name="http_502", aggregation="sum", operator=">=",
 			     threshold=10, window_minutes=5, group_by="site", require_recent_deployment=1, filter_host=HOST),
-			rule("smoke last", signal_type="metric", metric_name="disk_used_percent", aggregation="last",
-			     operator=">", threshold=90, window_minutes=5, group_by="none", filter_host=HOST),
+			rule("smoke last", signal_type="metric", metric_name="queue_length", aggregation="last",
+			     operator=">", threshold=900, window_minutes=5, group_by="none", filter_host=HOST),
 			rule("smoke cron", signal_type="event", event_type="cron_failure", min_severity="warning",
 			     operator=">=", threshold=1, window_minutes=10, group_by="bench", filter_host=HOST),
 		):
@@ -190,8 +190,7 @@ def main():
 
 	def overview():
 		data = ui.get_overview(range="1h", host=HOST)
-		series = ui.get_metric_series(HOST, metrics=json.dumps(["disk_used_percent", "http_502"]), range="1h")["series"]
-		return f"{len(data['open_incidents'])} open, {len(data['events'])} events, series={sorted(series)}"
+		return f"{len(data['open_incidents'])} open, {len(data['events'])} events"
 
 	def presets_and_signal_rules():
 		from dodock_wolf.wolf.presets import PRESETS, install_presets
@@ -296,9 +295,6 @@ def main():
 			assert all(i.site == "smoke.localhost" for i in data["open_incidents"] + data["incidents"])
 			assert data["scopes"]["site"] == ["smoke.localhost"], data["scopes"]
 			assert not data["agents"] or all(a.hostname == "smoke.localhost" for a in data["agents"])
-			series = ui.get_metric_series(HOST, metrics=json.dumps(["disk_used_percent", "http_502"]), range="1h")
-			names = {key.split(" [")[0] for key in series["series"]}
-			assert names == {"http_502"}, f"metric series leaked {sorted(names)}"  # disk_used_percent has no site
 			rows = ui.get_incident_timeline(inc)["events"]
 			assert rows and all(r.site == "smoke.localhost" for r in rows), "timeline leaked"
 		finally:
@@ -482,7 +478,7 @@ def main():
 
 	def resolve():
 		frappe.db.delete("Wolf Metric Sample", {"host": HOST})
-		res = rules.evaluate(frappe.get_doc("Wolf Alert Rule", "smoke disk"))
+		res = rules.evaluate(frappe.get_doc("Wolf Alert Rule", "smoke queue"))
 		assert res["resolved"], res
 		return f"resolved {res['resolved']}"
 
@@ -622,15 +618,19 @@ def main():
 		raw_rows = frappe.db.sql(
 			"""select metric_name, label_key, `timestamp`, `value` from `tabWolf Metric Sample`
 			where host = %(rhost)s and metric_name = 'smoke_roll'""", roll_params, as_dict=True)
-		for range_key, label in (("24h", "1m"), ("7d", "1h")):
-			chart = ui.get_metric_series(ROLL_HOST, metrics=json.dumps(["smoke_roll"]), range=range_key)
-			assert chart["resolution"] == label, chart["resolution"]
-			expected = bucket_series(raw_rows, chart["bucket_seconds"])
+		for minutes, label in ((1440, "1m"), (10080, "1h")):
+			res = rollups.resolution_for(minutes * 60)
+			assert storage.LABELS[res] == label, storage.LABELS[res]
+			bucket = storage.chart_bucket(minutes * 60, res)
+			rows = rollups.series_rows(["host = %(rhost)s", "metric_name in %(metrics)s"], {"rhost": ROLL_HOST, "metrics": ("smoke_roll",)},
+			                           res, now_datetime() - timedelta(minutes=minutes), now_datetime() + timedelta(minutes=1))  # fmt: skip
+			chart = bucket_series(rows, bucket)
+			expected = bucket_series(raw_rows, bucket)
 			for key, points in expected.items():
-				got = dict(map(tuple, chart["series"][key]))
+				got = dict(map(tuple, chart[key]))
 				for ts, value in points:
-					assert abs(got[ts] - value) <= 0.011, f"chart {range_key} {key} {ts}: {got.get(ts)} != {value}"
-			out.append(f"chart {range_key}={label}/{chart['bucket_seconds']}s")
+					assert abs(got[ts] - value) <= 0.011, f"chart {minutes} min {key} {ts}: {got.get(ts)} != {value}"
+			out.append(f"chart {minutes} min={label}/{bucket}s")
 		return ", ".join(out)
 
 	def ingest_modes():
@@ -697,6 +697,140 @@ def main():
 		count, incident = stored("async")
 		assert count == 1 and incident == target.name, f"queued push not stored/correlated: {count}, {incident}"
 		return f"sync stored inline, async queued {len(jobs)} job(s) then stored, both attached to {incident}"
+
+	def host_metrics_removed():
+		"""0.2 removed the host resource metrics (#136): a v0.1 agent's are dropped on ingest, and the
+		upgrade patch disables the rules on them and deletes their stored rows."""
+		from dodock_wolf.patches import remove_host_metrics
+		from dodock_wolf.wolf.catalog import REMOVED_METRICS
+
+		gone_host = "smoke-host-metrics"
+		agent = frappe.db.get_value("Wolf Agent", {"hostname": "smoke-ingest"})  # ingest modes registered it
+		def set_mode(mode):  # saved, so the cached Wolf Settings ingest reads follow
+			settings = frappe.get_single("Wolf Settings")
+			settings.ingest_mode = mode
+			settings.flags.ignore_permissions = True
+			settings.save()
+			frappe.db.commit()
+
+		saved_mode = frappe.db.get_single_value("Wolf Settings", "ingest_mode") or "async"
+		set_mode("sync")
+		frappe.local.request_ip = "127.0.0.1"
+		try:
+			res = ingest_api.accept(agent, {"hostname": gone_host, "metrics": [
+				{"metric_name": "cpu_usage", "value": 50}, {"metric_name": "disk_used_percent", "value": 90, "labels": {"mount": "/"}},
+				{"metric_name": "smoke_kept", "value": 1}]})  # fmt: skip
+		finally:
+			set_mode(saved_mode)
+		assert res["metrics"] == 1 and not res["rejected"], res  # dropped, not an error
+		stored = set(frappe.get_all("Wolf Metric Sample", filters={"host": gone_host}, pluck="metric_name"))
+		assert stored == {"smoke_kept"}, stored
+
+		# what a v0.1 site holds: samples, 1m and 1h rollups, a rule on a removed metric, a removed preset
+		events.insert_metrics([schema.normalize_metric({"metric_name": m, "value": 1, "host": gone_host}, tz,
+		                                               now - timedelta(minutes=i)) for i, m in enumerate(sorted(REMOVED_METRICS))])
+		part = storage.new_partial(1.0, now)
+		# far back (within retention), so replacing these buckets touches no other check's rollups
+		for res_, step, back_days in ((MINUTE, timedelta(minutes=1), 25), (HOUR, timedelta(hours=1), 300)):
+			start = storage.floor(now - timedelta(days=back_days), res_)
+			for back in range(3):  # buckets apart: the patch walks them in bounded steps
+				at = start - back * 30 * step
+				rollups.replace_buckets(res_, at, at + step, {("load_1m", gone_host, None, None, None, at): part,
+				                                              ("smoke_kept", gone_host, None, None, None, at): part})
+		pd = [{"channel_type": "PagerDuty", "enabled": 1, "pagerduty_url": "https://events.pagerduty.com/v2/enqueue",
+		       "pagerduty_routing_key": "smoke-routing-key"}]  # fmt: skip
+		rules_ = (("smoke host cpu", 1, {"metric_name": "cpu_usage", "is_preset": 0}),
+		          ("High CPU", 1, {"metric_name": "cpu_usage", "is_preset": 1, "notify_on_resolve": 1, "channels": pd}),
+		          ("High load", 1, {"metric_name": "load_per_core", "is_preset": 1}),
+		          ("smoke host disk off", 0, {"metric_name": "disk_used_percent", "is_preset": 0}))  # its user disabled it
+		for name, enabled, kw in rules_:
+			if frappe.db.exists("Wolf Alert Rule", name):
+				frappe.delete_doc("Wolf Alert Rule", name, force=True)
+			frappe.get_doc({"doctype": "Wolf Alert Rule", "rule_name": name, "enabled": 0, "signal_type": "metric",
+			                "aggregation": "min", "operator": ">", "threshold": 90, "window_minutes": 10,
+			                "group_by": "host", "severity": "warning", **kw}).insert(ignore_permissions=True)
+			# enabled as a v0.1 site has them: 0.2 refuses to save an enabled rule on a removed metric
+			frappe.db.set_value("Wolf Alert Rule", name, "enabled", enabled, update_modified=False)
+		def incident(title, rule_name):
+			return frappe.get_doc({"doctype": "Wolf Incident", "title": title, "status": "Open", "severity": "warning",
+			                       "alert_rule": rule_name, "host": gone_host, "started_at": now_datetime()}).insert(ignore_permissions=True).name
+		open_incident, off_incident = incident("smoke CPU high", "High CPU"), incident("smoke disk full", "smoke host disk off")
+		frappe.db.commit()
+
+		def comments(name):
+			return frappe.get_all("Comment", filters={"reference_doctype": "Wolf Alert Rule", "reference_name": name,
+			                                          "comment_type": "Comment"}, pluck="content")  # fmt: skip
+
+		from dodock_wolf.wolf import notify
+		sent, real_enqueue = [], notify.enqueue
+		notify.enqueue = lambda name, kind, only_stateful=False: sent.append((name, kind, only_stateful)) or True
+		frappe.flags.in_migrate = True  # as bench migrate runs it
+		try:
+			remove_host_metrics.execute()
+			frappe.flags.in_migrate = False
+			for name in (open_incident, off_incident):  # the user-disabled rule's too: nothing evaluates it
+				assert frappe.db.get_value("Wolf Incident", name, "status") == "Resolved", f"{name} stayed open"
+				assert "rule was disabled" in (frappe.db.get_value("Wolf Incident", name, "summary") or "")
+				# journal.capture skips during migrate: the patch's resolutions are recorded all the same
+				assert frappe.db.exists("Wolf Journal Entry", {"kind": "incident", "ref_name": name,
+				                                               "summary": f"{name} resolved automatically"}), f"{name}: no journal entry"
+			# PagerDuty hears it (its alert closes); notify_on_resolve does not: an upgrade pages nobody
+			assert sent == [(open_incident, "resolved", True)], sent
+			for name in ("smoke host cpu", "High CPU", "High load"):
+				assert not frappe.db.get_value("Wolf Alert Rule", name, "enabled"), f"{name} still enabled"
+				assert len([c for c in comments(name) if "removed in 0.2" in c and "#136" in c]) == 1, comments(name)
+			assert not comments("smoke host disk off"), "a rule its user disabled got the upgrade's comment"
+			assert frappe.db.get_value("Wolf Alert Rule", "smoke queue", "enabled"), "a rule on a kept metric was disabled"
+			left = frappe.db.sql("""select count(*) from `tabWolf Metric Sample` where metric_name in %(m)s""",
+			                     {"m": tuple(REMOVED_METRICS)})[0][0]
+			rolled = frappe.db.sql("""select count(*) from `tabWolf Metric Rollup` where metric_name in %(m)s""",
+			                       {"m": tuple(REMOVED_METRICS)})[0][0]
+			assert (left, rolled) == (0, 0), (left, rolled)
+			kept = frappe.db.count("Wolf Metric Rollup", {"metric_name": "smoke_kept", "host": gone_host})
+			assert kept == 6, f"rollups of other metrics deleted: {kept} left"
+			log = frappe.get_all("Error Log", filters={"method": "Dodock Wolf 0.2: host resource metrics removed"},
+			                     fields=["error"], order_by="creation desc", limit=1)
+			assert log and "High CPU" in log[0].error and "smoke host cpu" in log[0].error, log
+			assert "smoke host disk off" not in log[0].error.split("were disabled", 1)[1].split(")", 1)[0], log
+
+			# again: every rule is disabled already, nothing is open or stored: no second comment, no error
+			remove_host_metrics.execute()
+			for name in ("smoke host cpu", "High CPU", "High load"):
+				assert len(comments(name)) == 1, f"{name}: the re-run commented again: {comments(name)}"
+			assert len(sent) == 1, sent
+
+			# 0.2 refuses an enabled rule on a removed metric, saved or imported; a disabled one stays editable
+			doc = frappe.get_doc("Wolf Alert Rule", "smoke host cpu")
+			doc.threshold = 95
+			doc.save(ignore_permissions=True)
+			doc.enabled = 1
+			try:
+				doc.save(ignore_permissions=True)
+				raise AssertionError("an enabled rule on cpu_usage was saved")
+			except frappe.ValidationError as e:
+				assert "was removed in Dodock Wolf 0.2" in str(e), e
+			frappe.local.message_log = []
+			from dodock_wolf.api import rules_io as rules_yaml_api
+			plan = rules_yaml_api.import_document({"version": 1, "rules": [
+				# a YAML rule is the whole rule: a field left out takes its default, so the metric is named
+				{"rule_name": "smoke host cpu", "enabled": 1, "metric_name": "cpu_usage", "threshold": 90},
+				{"rule_name": "smoke yaml load", "enabled": 1, "metric_name": "load_1m", "threshold": 4}]}, apply=True)  # fmt: skip
+			assert not plan["applied"] and plan["counts"]["invalid"] == 2, plan
+			assert all("was removed in Dodock Wolf 0.2" in r["errors"][0] for r in plan["rules"]), plan["rules"]
+			assert not frappe.db.exists("Wolf Alert Rule", "smoke yaml load")
+			assert not frappe.db.get_value("Wolf Alert Rule", "smoke host cpu", "enabled")
+		finally:
+			notify.enqueue = real_enqueue
+			frappe.flags.in_migrate = False
+			for name in (open_incident, off_incident):
+				frappe.delete_doc("Wolf Incident", name, force=True, ignore_permissions=True)
+			for name, _enabled, _kw in rules_:
+				frappe.delete_doc("Wolf Alert Rule", name, force=True, ignore_missing=True)
+			frappe.db.delete("Wolf Metric Sample", {"host": gone_host})
+			frappe.db.delete("Wolf Metric Rollup", {"host": gone_host})
+			frappe.db.commit()
+		return ("a v0.1 agent's host metrics dropped on ingest; the patch disabled 3 enabled rules with one comment each, "
+		        "resolved 2 open incidents (journaled, PagerDuty told), deleted their rows; enabled rules on them refused")
 
 	def purge_metrics():
 		raw_hours, minute_days, hour_days = rollups.retention()
@@ -1079,20 +1213,20 @@ def main():
 			                               now - timedelta(minutes=minutes_ago))
 
 		events.insert_metrics([
-			sample("disk_used_percent", 93, 0.2, labels={"mount": "/"}),
-			sample("disk_used_percent", 40, 0.2, labels={"mount": "/data"}),
-			sample("cpu_usage", 12, 20),  # stopped 20 min ago: stale
+			sample("queue_length", 930, 0.2, bench="b1", labels={"queue": "default"}),
+			sample("queue_length", 40, 0.2, bench="b1", labels={"queue": "long"}),
+			sample("db_connections_used_percent", 12, 20, bench="b1"),  # stopped 20 min ago: stale
 			sample("tls_days_left", 40, 30, site=dsite, bench="b1", labels={"domain": dsite}),  # hourly: fresh
 			*[sample("http_requests", 100, m, site=dsite, bench="b1") for m in (50, 49, 5)],
 			*[sample("http_5xx", 6, m, site=dsite, bench="b1") for m in (50, 5)],
 			sample("http_502", 4, 5, site=dsite, bench="b1"),
 		])
-		rule = frappe.get_doc({"doctype": "Wolf Alert Rule", "rule_name": "smoke dash disk", "enabled": 1,
-		                       "signal_type": "metric", "metric_name": "disk_used_percent", "aggregation": "max",
-		                       "operator": ">", "threshold": 90, "window_minutes": 5, "group_by": "host_label",
+		rule = frappe.get_doc({"doctype": "Wolf Alert Rule", "rule_name": "smoke dash queue", "enabled": 1,
+		                       "signal_type": "metric", "metric_name": "queue_length", "aggregation": "max",
+		                       "operator": ">", "threshold": 500, "window_minutes": 5, "group_by": "host_label",
 		                       "filter_host": dash, "severity": "warning"}).insert(ignore_permissions=True)
-		inc = frappe.get_doc({"doctype": "Wolf Incident", "title": "smoke dash disk", "alert_rule": rule.name, "host": dash,
-		                      "group_key": f"host={dash},label_key=mount=/", "severity": "warning", "status": "Open",
+		inc = frappe.get_doc({"doctype": "Wolf Incident", "title": "smoke dash queue", "alert_rule": rule.name, "host": dash,
+		                      "group_key": f"host={dash},label_key=queue=default", "severity": "warning", "status": "Open",
 		                      "started_at": now}).insert(ignore_permissions=True)
 		deploy = events.insert_event(schema.normalize_event(
 			{"type": "deployment", "host": dash, "bench": "b1", "site": dsite, "title": "smoke dash deploy"}, tz,
@@ -1104,18 +1238,18 @@ def main():
 		frappe.db.commit()
 
 		sig = dashboard.get_signals(host=dash)
-		by_metric = {s["metric_name"]: s for s in sig["series"] if s["label_key"] != "mount=/data"}
-		data_disk = next(s for s in sig["series"] if s["label_key"] == "mount=/data")
-		assert data_disk["state"] == "watched" and not data_disk["incidents"], data_disk  # / is full, /data is not
-		assert by_metric["disk_used_percent"]["state"] == "firing", by_metric["disk_used_percent"]
-		assert by_metric["disk_used_percent"]["incidents"] == [inc.name], by_metric["disk_used_percent"]
-		assert by_metric["disk_used_percent"]["value"] == 93, by_metric["disk_used_percent"]
-		assert by_metric["cpu_usage"]["state"] == "stale", by_metric["cpu_usage"]
+		by_metric = {s["metric_name"]: s for s in sig["series"] if s["label_key"] != "queue=long"}
+		long_queue = next(s for s in sig["series"] if s["label_key"] == "queue=long")
+		assert long_queue["state"] == "watched" and not long_queue["incidents"], long_queue  # default is backed up, long is not
+		assert by_metric["queue_length"]["state"] == "firing", by_metric["queue_length"]
+		assert by_metric["queue_length"]["incidents"] == [inc.name], by_metric["queue_length"]
+		assert by_metric["queue_length"]["value"] == 930, by_metric["queue_length"]
+		assert by_metric["db_connections_used_percent"]["state"] == "stale", by_metric["db_connections_used_percent"]
 		assert by_metric["tls_days_left"]["state"] in ("watched", "unwatched"), by_metric["tls_days_left"]  # not stale
 		missing = {m["metric"] for m in sig["missing"]}
 		assert "backup_age_hours" in missing and "redis_used_memory_percent" in missing, missing
 		assert "http_5xx" not in by_metric, "HTTP belongs to the HTTP chart"
-		assert sig["counts"]["host"]["firing"] == 1 and sig["counts"]["host"]["stale"] == 1, sig["counts"]
+		assert sig["counts"]["workers"]["firing"] == 1 and sig["counts"]["database"]["stale"] == 1, sig["counts"]
 
 		http = dashboard.get_http(range="1h", host=dash, site=dsite)
 		points = {m: [v for _, v in http["series"][m]] for m in http["series"]}
@@ -1154,7 +1288,7 @@ def main():
 		frappe.delete_doc("Wolf Alert Rule", rule.name, force=True)
 		frappe.db.delete("Wolf Event", {"name": ("in", [deploy, bench_deploy])})
 		frappe.db.commit()
-		return (f"disk / firing ({inc.name}), /data not, cpu stale, tls fresh at 30 min, {len(missing)} signals missing; "
+		return (f"queue default firing ({inc.name}), long not, db connections stale, tls fresh at 30 min, {len(missing)} signals missing; "
 		        f"site dashboard has the bench-wide deployment; "
 		        f"5xx 12 with 502 4 inside it, gaps kept; restricted user sees no rule filters")
 
@@ -1167,7 +1301,7 @@ def main():
 		mine, theirs, late = "smoke-cache-mine", "smoke-cache-theirs", "smoke-cache-late"
 
 		def sample(host):
-			return schema.normalize_metric({"metric_name": "cpu_usage", "value": 5, "host": host}, tz,
+			return schema.normalize_metric({"metric_name": "exposed_services", "value": 5, "host": host}, tz,
 			                               now_datetime() - timedelta(seconds=10))
 
 		def hosts(sig):
@@ -3358,23 +3492,23 @@ def main():
 		doc = rules_yaml_api.load(rules_yaml_api.dump(rules_yaml_api.export_document()))
 		plan = rules_yaml_api.import_document(doc)
 		assert plan["valid"] and plan["counts"]["unchanged"] == len(doc["rules"]), plan["counts"]
-		original = frappe.db.get_value("Wolf Alert Rule", "smoke disk", "threshold")
-		next(r for r in doc["rules"] if r["rule_name"] == "smoke disk")["threshold"] = 77
-		doc["rules"].append({"rule_name": "smoke yaml", "enabled": 0, "metric_name": "cpu_usage", "threshold": 50,
+		original = frappe.db.get_value("Wolf Alert Rule", "smoke queue", "threshold")
+		next(r for r in doc["rules"] if r["rule_name"] == "smoke queue")["threshold"] = 77
+		doc["rules"].append({"rule_name": "smoke yaml", "enabled": 0, "metric_name": "queue_length", "threshold": 50,
 		                     "channels": [{"channel_type": "ntfy", "ntfy_server": "https://ntfy.example.com", "ntfy_topic": "x"}]})  # fmt: skip
 		try:
 			result = rules_yaml_api.import_document(doc, apply=True)
 			assert result["applied"] and (result["counts"]["create"], result["counts"]["update"]) == (1, 1), result["counts"]
-			assert float(frappe.db.get_value("Wolf Alert Rule", "smoke disk", "threshold")) == 77
+			assert float(frappe.db.get_value("Wolf Alert Rule", "smoke queue", "threshold")) == 77
 			assert frappe.get_doc("Wolf Alert Rule", "smoke yaml").channels[0].enabled == 0  # no ntfy_token in a file
-			bad = {"version": 1, "rules": [{"rule_name": "smoke disk", "treshold": 1}]}
+			bad = {"version": 1, "rules": [{"rule_name": "smoke queue", "treshold": 1}]}
 			assert not rules_yaml_api.import_document(bad, apply=True)["applied"]
-			severity = {"version": 1, "rules": [{"rule_name": "smoke disk", "severity": "high"}]}  # not an option
+			severity = {"version": 1, "rules": [{"rule_name": "smoke queue", "severity": "high"}]}  # not an option
 			assert not rules_yaml_api.import_document(severity, apply=True)["applied"]
 		finally:
 			if frappe.db.exists("Wolf Alert Rule", "smoke yaml"):
 				frappe.delete_doc("Wolf Alert Rule", "smoke yaml", force=True)
-			frappe.db.set_value("Wolf Alert Rule", "smoke disk", "threshold", original)
+			frappe.db.set_value("Wolf Alert Rule", "smoke queue", "threshold", original)
 		return result["counts"]
 
 	for name, fn in [("ingest", ingest), ("evaluate", evaluate), ("correlate", correlate), ("timeline", timeline),
@@ -3387,6 +3521,7 @@ def main():
 	                 ("assign+comment+activity", workflow), ("merge+split", merge_split), ("postmortem", postmortem),
 	                 ("metrics report", metrics),
 	                 ("rollup", rollup), ("legacy names", legacy_names), ("resolution", resolution), ("ingest modes", ingest_modes),
+	                 ("host metrics removed", host_metrics_removed),
 	                 ("purge metrics", purge_metrics), ("ui counts+inventory", ui_counts),
 	                 ("incident view", incident_view), ("dashboards", dashboards), ("read cache", read_cache_check),
 	                 ("explorers", explorers),
@@ -3414,7 +3549,7 @@ def main():
 	                 ("security overview", security_overview_check), ("rules YAML", rules_yaml)]:
 		check(name, fn)
 
-	for name in ("smoke disk", "smoke 502", "smoke last", "smoke cron"):
+	for name in ("smoke queue", "smoke 502", "smoke last", "smoke cron"):
 		frappe.db.set_value("Wolf Alert Rule", name, "enabled", 0)
 	frappe.db.commit()
 	print("all checks passed")

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Dodock Wolf VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/bthuner/dodock-wolf/issues\n"
-"POT-Creation-Date: 2026-11-19 15:21+0000\n"
-"PO-Revision-Date: 2026-11-19 15:21+0000\n"
+"POT-Creation-Date: 2026-11-19 16:44+0000\n"
+"PO-Revision-Date: 2026-11-19 16:44+0000\n"
 "Last-Translator: Dodock Wolf contributors\n"
 "Language-Team: Dodock Wolf contributors\n"
 "MIME-Version: 1.0\n"
@@ -257,7 +257,7 @@ msgstr ""
 msgid ">="
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:81
+#: dodock_wolf/wolf/catalog.py:103
 msgid "A System Settings value as stored in the site's database (unset: 0); system_manager_2fa is the System Manager role's two-factor flag."
 msgstr ""
 
@@ -291,7 +291,7 @@ msgstr ""
 msgid "A draft to start the authority's form from. Wolf sends nothing: check every fact first."
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:82
+#: dodock_wolf/wolf/catalog.py:104
 msgid "A listening socket, not proof of reachability: a firewall may still block it."
 msgstr ""
 
@@ -422,7 +422,7 @@ msgstr ""
 msgid "Active From"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:29
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:31
 msgid "Active From and Active To are the same time: the rule would never run"
 msgstr ""
 
@@ -472,7 +472,7 @@ msgstr ""
 msgid "After an incident is resolved, re-fire into the same incident instead of opening a new one during this period."
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:76
+#: dodock_wolf/wolf/catalog.py:98
 msgid "Age of the newest backup file; it does not prove the backup restores."
 msgstr ""
 
@@ -523,7 +523,7 @@ msgstr ""
 #. Label of a shortcut in the Dodock Wolf Workspace
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:206
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:24
-#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:124
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:123
 #: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:177
 #: frontend/src/components/dash/MonitoringPanel.vue:94
 #: frontend/src/pages/SecurityOverviewPage.vue:206
@@ -540,7 +540,7 @@ msgstr ""
 msgid "Agents check their host every hour; none has reported yet."
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:104
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:103
 msgid "Agents online"
 msgstr ""
 
@@ -661,7 +661,7 @@ msgstr ""
 msgid "Any type"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:66
+#: dodock_wolf/wolf/catalog.py:58
 msgid "App version"
 msgstr ""
 
@@ -889,7 +889,7 @@ msgstr ""
 msgid "Bench processes down"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:57
+#: dodock_wolf/wolf/catalog.py:49
 msgid "Bench services listening beyond loopback"
 msgstr ""
 
@@ -980,10 +980,6 @@ msgstr ""
 #. Rollup State'
 #: dodock_wolf/dodock_wolf/doctype/wolf_rollup_state/wolf_rollup_state.json:31
 msgid "Buckets before this time are rolled up. Late samples move it back."
-msgstr ""
-
-#: dodock_wolf/wolf/catalog.py:49
-msgid "CPU"
 msgstr ""
 
 #: frontend/src/components/MergeDialog.vue:128
@@ -1245,7 +1241,7 @@ msgstr ""
 msgid "Critical"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:101
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:100
 msgid "Critical events"
 msgstr ""
 
@@ -1257,7 +1253,7 @@ msgstr ""
 msgid "Cron failure"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:102
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:101
 msgid "Cron failures"
 msgstr ""
 
@@ -1313,7 +1309,7 @@ msgstr ""
 msgid "Database connections used"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:78
+#: dodock_wolf/wolf/catalog.py:100
 msgid "Days until the certificate served on port 443 expires; not a full validity check."
 msgstr ""
 
@@ -1458,10 +1454,6 @@ msgstr ""
 #. Label of the benches_section (Section Break) field in DocType 'Wolf Agent'
 #: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:139
 msgid "Discovered benches"
-msgstr ""
-
-#: dodock_wolf/wolf/catalog.py:51
-msgid "Disk used"
 msgstr ""
 
 #. Name of a Workspace
@@ -1630,7 +1622,7 @@ msgstr ""
 msgid "Escalate After Minutes"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:38
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:40
 msgid "Escalate After Minutes cannot be negative"
 msgstr ""
 
@@ -1701,7 +1693,7 @@ msgstr ""
 msgid "Event records active in the window, newest first; times in {0}. A record's count is every repeat it absorbed, inside the window or not."
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:25
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:27
 msgid "Event rules need an event type"
 msgstr ""
 
@@ -1789,7 +1781,7 @@ msgstr ""
 msgid "Executor"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:133
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:135
 msgid "Expected the rule's fields"
 msgstr ""
 
@@ -1846,15 +1838,15 @@ msgstr ""
 msgid "Failed jobs added"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:60
+#: dodock_wolf/wolf/catalog.py:52
 msgid "Files the integrity check cannot read"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:59
+#: dodock_wolf/wolf/catalog.py:51
 msgid "Files under integrity watch"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:83
+#: dodock_wolf/wolf/catalog.py:105
 msgid "Files whose content the agent checks: app code, site configs, nginx and supervisor config."
 msgstr ""
 
@@ -2035,7 +2027,7 @@ msgstr ""
 msgid "From `cscli machines add dodock-wolf --password ...`: lets Wolf send alerts and decisions."
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:77
+#: dodock_wolf/wolf/catalog.py:99
 msgid "From the agent's hourly wolf-agent doctor run; Monitoring lists what failed and the fix."
 msgstr ""
 
@@ -2185,19 +2177,12 @@ msgstr ""
 msgid "Host Logins and Accounts"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:133
-msgid "Host metrics"
-msgstr ""
-
 #: frontend/src/components/dash/MonitoringPanel.vue:120
 msgid "Host or site"
 msgstr ""
 
-#: frontend/src/components/dash/SignalsPanel.vue:32
-msgid "Host resources"
-msgstr ""
-
 #: frontend/src/components/dash/MonitoringPanel.vue:98
+#: frontend/src/components/dash/SignalsPanel.vue:32
 #: frontend/src/pages/SecurityOverviewPage.vue:225
 msgid "Host setup"
 msgstr ""
@@ -2772,26 +2757,10 @@ msgstr ""
 msgid "Live updates need Frappe's socket.io server; views refresh on demand."
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:53
-msgid "Load (1 min)"
-msgstr ""
-
-#: dodock_wolf/wolf/catalog.py:55
-msgid "Load (15 min)"
-msgstr ""
-
-#: dodock_wolf/wolf/catalog.py:54
-msgid "Load (5 min)"
-msgstr ""
-
 #: frontend/src/pages/ErrorsPage.vue:86 frontend/src/pages/EventsPage.vue:98
 #: frontend/src/pages/IncidentPage.vue:459
 #: frontend/src/pages/IncidentsPage.vue:117
 msgid "Load more"
-msgstr ""
-
-#: dodock_wolf/wolf/catalog.py:52
-msgid "Load per core"
 msgstr ""
 
 #: frontend/src/pages/DashboardPage.vue:167
@@ -3004,10 +2973,6 @@ msgstr ""
 msgid "Measures taken or planned"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:50
-msgid "Memory used"
-msgstr ""
-
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:205
 #: frontend/src/components/MergeDialog.vue:132
 msgid "Merge"
@@ -3163,7 +3128,7 @@ msgstr ""
 msgid "New incident title"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:62
+#: dodock_wolf/wolf/catalog.py:54
 msgid "New outbound destinations on usual ports"
 msgstr ""
 
@@ -3255,10 +3220,6 @@ msgstr ""
 msgid "No host agent has registered with this site yet."
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:217
-msgid "No host metrics yet."
-msgstr ""
-
 #: frontend/src/components/dash/InventoryPanel.vue:188
 #, python-brace-format
 msgid "No host, bench or site contains “{0}”."
@@ -3299,11 +3260,6 @@ msgstr ""
 
 #: frontend/src/components/dash/SignalsPanel.vue:21
 msgid "No rule watches this"
-msgstr ""
-
-#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:232
-#, python-brace-format
-msgid "No samples for {0} in this range."
 msgstr ""
 
 #: frontend/src/pages/SecurityOverviewPage.vue:149
@@ -3498,7 +3454,7 @@ msgstr ""
 
 #. Description of the 'Group By' (Select) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:273
-msgid "One incident per group. host_label = per host and per label (e.g. disk mount)."
+msgid "One incident per group. host_label = per host and per label (e.g. an RQ queue, a TLS domain)."
 msgstr ""
 
 #. Description of the 'IP reputation lists' (Small Text) field in DocType 'Wolf
@@ -3608,8 +3564,8 @@ msgstr ""
 msgid "Open incident from this event"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:100
-#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:120
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:99
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:119
 msgid "Open incidents"
 msgstr ""
 
@@ -3659,7 +3615,7 @@ msgstr ""
 msgid "Optional, with {to}, {text} and {secret}, e.g. {\"to\": \"{to}\", \"message\": \"{text}\"}. Empty: to=…&text=… (form) or {\"to\": …, \"text\": …} (json)."
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:61
+#: dodock_wolf/wolf/catalog.py:53
 msgid "Outbound destinations of the bench user"
 msgstr ""
 
@@ -4231,7 +4187,7 @@ msgstr ""
 msgid "Revoke the API keys of {0} on {1}"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:58
+#: dodock_wolf/wolf/catalog.py:50
 msgid "Risky site_config settings"
 msgstr ""
 
@@ -4268,12 +4224,12 @@ msgstr ""
 msgid "Routing Key"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:67
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:69
 #, python-brace-format
 msgid "Row {0} ({1}): set {2}"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:72
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:74
 #, python-brace-format
 msgid "Row {0} ({1}): {2} must start with http:// or https://"
 msgstr ""
@@ -4346,7 +4302,7 @@ msgstr ""
 msgid "Same Finding As"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:49
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:51
 #, python-brace-format
 msgid "Same must be one of {0}"
 msgstr ""
@@ -4463,7 +4419,7 @@ msgstr ""
 msgid "Security"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:103
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:102
 #: frontend/src/components/dash/WindowTiles.vue:62
 msgid "Security events"
 msgstr ""
@@ -4478,7 +4434,7 @@ msgstr ""
 msgid "Security exposure"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:63 frontend/src/pages/SecurityPage.vue:158
+#: dodock_wolf/wolf/catalog.py:55 frontend/src/pages/SecurityPage.vue:158
 msgid "Security score"
 msgstr ""
 
@@ -4555,7 +4511,7 @@ msgstr ""
 msgid "Sequence condition"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:47
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:49
 msgid "Sequence rules need first and then event categories"
 msgstr ""
 
@@ -4565,7 +4521,7 @@ msgstr ""
 msgid "Server and Client Scripts that can run new code, System Console runs, permission rule and Role Profile changes, weakened System Settings (2FA, password policy, lockout, sessions), API keys generated and Webhooks to a new host."
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:27
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:29
 msgid "Set both Active From and Active To, or neither"
 msgstr ""
 
@@ -4666,7 +4622,7 @@ msgstr ""
 msgid "Severity: {0}; status: {1}"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:84
+#: dodock_wolf/wolf/catalog.py:106
 msgid "Share of the checks Wolf could prove passed; a check it cannot read counts as not passed."
 msgstr ""
 
@@ -4867,7 +4823,7 @@ msgstr ""
 
 #. Description of the 'Label Key' (Data) field in DocType 'Wolf Metric Sample'
 #: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:65
-msgid "Stable string form of labels, e.g. mount=/"
+msgid "Stable string form of labels, e.g. queue=default"
 msgstr ""
 
 #: frontend/src/pages/IncidentPage.vue:310
@@ -4920,7 +4876,7 @@ msgstr ""
 msgid "Still Open"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:80
+#: dodock_wolf/wolf/catalog.py:102
 msgid "Strict-Transport-Security max-age of the first response to HEAD / (0: no header); redirects are not followed."
 msgstr ""
 
@@ -4937,10 +4893,6 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:135
 #: dodock_wolf/wolf/compliance.py:210
 msgid "Summary"
-msgstr ""
-
-#: dodock_wolf/wolf/catalog.py:56
-msgid "Swap used"
 msgstr ""
 
 #. Name of a role
@@ -4969,7 +4921,7 @@ msgstr ""
 msgid "System Settings of this site are read by the agent from its database, hourly."
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:64
+#: dodock_wolf/wolf/catalog.py:56
 msgid "System Settings value"
 msgstr ""
 
@@ -5288,7 +5240,7 @@ msgstr ""
 #. Incident'
 #. Label of the timeline_html (HTML) field in DocType 'Wolf Incident'
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.json:258
-#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:129
+#: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:128
 #: dodock_wolf/wolf/compliance.py:227 frontend/src/pages/IncidentPage.vue:408
 #: frontend/src/pages/IncidentPage.vue:410
 msgid "Timeline"
@@ -5417,7 +5369,7 @@ msgstr ""
 msgid "Unknown action {0}"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:21
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:23
 #, python-brace-format
 msgid "Unknown aggregation {0}"
 msgstr ""
@@ -5552,7 +5504,7 @@ msgstr ""
 msgid "Version"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:79
+#: dodock_wolf/wolf/catalog.py:101
 msgid "Version of each app in the bench (apps/<app>/<app>/__init__.py) as major * 1e6 + minor * 1e3 + patch: 15100000 is 15.100.0; development versions are not sent."
 msgstr ""
 
@@ -5695,7 +5647,7 @@ msgstr ""
 msgid "Within Minutes"
 msgstr ""
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:51
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:53
 msgid "Within Minutes must be at least one minute"
 msgstr ""
 
@@ -6243,11 +6195,6 @@ msgstr ""
 msgid "count"
 msgstr ""
 
-#. Description of the 'Metric Name' (Data) field in DocType 'Wolf Alert Rule'
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:138
-msgid "cpu_usage, memory_used_percent, disk_used_percent, load_per_core, http_5xx, http_502, queue_length ..."
-msgstr ""
-
 #. Option for the 'Severity' (Select) field in DocType 'Wolf Alert Rule'
 #. Option for the 'Min Severity' (Select) field in DocType 'Wolf Alert Rule'
 #. Option for the 'First Event Min Severity' (Select) field in DocType 'Wolf
@@ -6295,7 +6242,7 @@ msgstr ""
 msgid "deployment"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:61 dodock_wolf/wolf/catalog.py:62
+#: dodock_wolf/wolf/catalog.py:53 dodock_wolf/wolf/catalog.py:54
 msgid "destinations"
 msgstr ""
 
@@ -6447,6 +6394,11 @@ msgstr ""
 msgid "exactly"
 msgstr ""
 
+#. Description of the 'Metric Name' (Data) field in DocType 'Wolf Alert Rule'
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:138
+msgid "exposed_services, tls_days_left, backup_age_hours, http_5xx, http_502, queue_length ..."
+msgstr ""
+
 #. Option for the 'Web Attacks' (Select) field in DocType 'Wolf Settings'
 #. Option for the 'Host Logins and Accounts' (Select) field in DocType 'Wolf
 #. Settings'
@@ -6465,7 +6417,7 @@ msgstr ""
 msgid "failed: {0}"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:59 dodock_wolf/wolf/catalog.py:60
+#: dodock_wolf/wolf/catalog.py:51 dodock_wolf/wolf/catalog.py:52
 msgid "files"
 msgstr ""
 
@@ -6813,7 +6765,7 @@ msgstr ""
 msgid "no target"
 msgstr ""
 
-#: dodock_wolf/api/journal.py:254
+#: dodock_wolf/api/journal.py:279
 #, python-brace-format
 msgid "no {0} in the site config"
 msgstr ""
@@ -6959,16 +6911,12 @@ msgstr ""
 msgid "per bench"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:52
-msgid "per core"
-msgstr ""
-
 #: dodock_wolf/wolf/rule_sentence.py:35
 msgid "per host"
 msgstr ""
 
 #: dodock_wolf/wolf/rule_sentence.py:36
-msgid "per host and series (a disk, a queue...)"
+msgid "per host and series (a queue, a domain...)"
 msgstr ""
 
 #: dodock_wolf/wolf/rule_sentence.py:36
@@ -7102,11 +7050,11 @@ msgstr ""
 msgid "sequence"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:57
+#: dodock_wolf/wolf/catalog.py:49
 msgid "services"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:58
+#: dodock_wolf/wolf/catalog.py:50
 msgid "settings"
 msgstr ""
 
@@ -7178,7 +7126,7 @@ msgstr ""
 msgid "the agent found no risky setting"
 msgstr ""
 
-#: dodock_wolf/api/journal.py:257
+#: dodock_wolf/api/journal.py:282
 msgid "the anchor must be seq:mac"
 msgstr ""
 
@@ -7351,7 +7299,7 @@ msgstr ""
 msgid "user"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:66
+#: dodock_wolf/wolf/catalog.py:58
 msgid "version"
 msgstr ""
 
@@ -7949,6 +7897,11 @@ msgstr ""
 #: dodock_wolf/wolf/incident_ops.py:65
 #, python-brace-format
 msgid "{0} was merged into {1}: merge into that incident instead."
+msgstr ""
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:20
+#, python-brace-format
+msgid "{0} was removed in Dodock Wolf 0.2: Frappe Cloud v2 and Pilot report host resources. Disable this rule or choose another metric."
 msgstr ""
 
 #: frontend/src/pages/IncidentPage.vue:435

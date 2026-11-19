@@ -75,7 +75,6 @@ class WolfOverview {
 			}
 			this.update_scope_options(message.scopes);
 			this.render();
-			this.render_metrics();
 		} finally {
 			this.loading = false;
 		}
@@ -129,11 +128,12 @@ class WolfOverview {
 				<h4>${__("Timeline")} <span class="text-muted small">${esc(this.state.range)}</span></h4>
 				${frappe.wolf.render_timeline(d.events)}
 			</section>
-			<section class="wolf-card wolf-metrics">
-				<h4>${__("Host metrics")} <span class="text-muted small wolf-metrics-host"></span></h4>
-				<div class="wolf-charts"></div>
-			</section>
 		`);
+		// an agent's host filters the page
+		this.$body.find(".wolf-host").on("click", (e) => {
+			e.preventDefault();
+			this.fields.host.set_value($(e.currentTarget).data("host"));
+		});
 	}
 
 	render_satellite(w) {
@@ -203,49 +203,5 @@ class WolfOverview {
 			</li>`
 			)
 			.join("")}</ul>`;
-	}
-
-	async render_metrics() {
-		const $wrap = this.$body.find(".wolf-charts");
-		this.$body.find(".wolf-host").on("click", (e) => {
-			e.preventDefault();
-			this.fields.host.set_value($(e.currentTarget).data("host"));
-		});
-		const first = this.data.agents.find((a) => a.kind !== "satellite");
-		const host = this.state.host || (first && first.hostname);
-		if (!host) {
-			$wrap.html(`<p class="text-muted">${__("No host metrics yet.")}</p>`);
-			return;
-		}
-		this.$body.find(".wolf-metrics-host").text(host);
-		const range = this.state.range === "7d" ? "7d" : this.state.range === "24h" ? "24h" : "6h";
-		const { message } = await frappe.call({
-			method: "dodock_wolf.api.ui.get_metric_series",
-			args: { host, range },
-		});
-		const groups = {};
-		for (const [key, points] of Object.entries(message.series)) {
-			const metric = key.split(" [")[0];
-			(groups[metric] = groups[metric] || []).push([key, points]);
-		}
-		if (!Object.keys(groups).length) {
-			$wrap.html(`<p class="text-muted">${__("No samples for {0} in this range.", [esc(host)])}</p>`);
-			return;
-		}
-		$wrap.empty();
-		for (const [metric, series] of Object.entries(groups)) {
-			const $c = $(`<div class="wolf-chart"><div class="wolf-chart-title">${esc(metric)}</div><div></div></div>`).appendTo($wrap);
-			const labels = series[0][1].map(([t]) => (range === "7d" ? t.slice(5, 16) : t.slice(11, 16)));
-			new frappe.Chart($c.children().get(1), {
-				type: "line",
-				height: 160,
-				data: {
-					labels,
-					datasets: series.map(([name, points]) => ({ name, values: points.map(([, v]) => v) })),
-				},
-				lineOptions: { hideDots: 1, regionFill: 1 },
-				axisOptions: { xIsSeries: 1, xAxisMode: "tick" },
-			});
-		}
 	}
 }

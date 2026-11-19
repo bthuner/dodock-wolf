@@ -135,7 +135,7 @@
    "label": "Metric condition"
   },
   {
-   "description": "cpu_usage, memory_used_percent, disk_used_percent, load_per_core, http_5xx, http_502, queue_length ...",
+   "description": "exposed_services, tls_days_left, backup_age_hours, http_5xx, http_502, queue_length ...",
    "fieldname": "metric_name",
    "fieldtype": "Data",
    "label": "Metric Name",
@@ -270,7 +270,7 @@
   },
   {
    "default": "host",
-   "description": "One incident per group. host_label = per host and per label (e.g. disk mount).",
+   "description": "One incident per group. host_label = per host and per label (e.g. an RQ queue, a TLS domain).",
    "fieldname": "group_by",
    "fieldtype": "Select",
    "label": "Group By",
@@ -469,7 +469,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-18 12:00:00.000000",
+ "modified": "2026-11-19 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Alert Rule",

@@ -209,7 +209,7 @@ class TestCollectorScrubs(unittest.TestCase):
 			with open(path, "w") as f:
 				f.write("\n".join(FRAPPE_WEB_LOG) + "\n2026-10-29 02:00:14,000 INFO next\n")
 			cfg = {
-				"hostname": "bench-01", "benches": [], "auth_log": False, "collect_host_metrics": False,
+				"hostname": "bench-01", "benches": [], "auth_log": False,
 				"extra_logs": [{"path": path, "parser": "traceback"}],
 				# the exposure check reads this machine's real listening sockets: not what is tested here
 				"exposure": {"enabled": False},

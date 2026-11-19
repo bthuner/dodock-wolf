@@ -145,7 +145,7 @@ What it catches
   Workers and hosts
 
   #description
-  Worker crashes, OOM kills, processes down, CPU, memory, disk, load, TLS expiry and database replication.
+  Worker crashes, OOM kills, processes down, TLS expiry and database replication.
   :::
 
   :::u-page-feature

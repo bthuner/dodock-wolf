@@ -29,7 +29,7 @@ const GROUPS = {
   backups: () => __('Backups'),
   tls: () => __('TLS certificates'),
   security: () => __('Security exposure'),
-  host: () => __('Host resources'),
+  host: () => __('Host setup'),
 }
 
 // Each group draws its first rows; the rest on demand. The server sorts problems first, so the

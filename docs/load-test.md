@@ -11,7 +11,7 @@ The target is #10's "done when": a synthetic load of 100 hosts for 7 days keeps 
 | Target | Before (#55) | Row order (#56) | SQL reads (#57) |
 |---|---|---|---|
 | `push` p95 under 200 ms | **Met.** 115 ms over HTTP | **Met.** 108 ms over HTTP | **Met.** 20.7 ms server side (HTTP not run again) |
-| Desk overview under 1 s | Met, except its 24 h chart: 2.1 s | Met, except its 24 h chart: 1.8 s | **Met.** 0.56 s at most (24 h) |
+| Desk overview under 1 s (its host chart was removed in 0.2) | Met, except its 24 h chart: 2.1 s | Met, except its 24 h chart: 1.8 s | **Met.** 0.56 s at most (24 h) |
 | Wolf UI overview under 1 s | **Not met: 13.8 to 23.8 s** | **Not met: 1.5 s** | **Met per read: 0.73 s for the slowest** |
 | Wolf UI overview page in a browser | | | Without cache: p50 0.82 to 0.97 s, p95 1.00 to 1.26 s. **With the cache, met: p95 0.61 s; after 45 s or 150 s idle, max 0.65 s** |
 
@@ -79,8 +79,8 @@ The names are now 33 characters for rollups and 28 for samples, against 32 and 1
    series, each walking all of its metric's minute rollups: `get_signals` took **194 to 233 s**
    (two runs). `row_number()` over each series reads the rows once: 0.62 s.
 4. **Host chart index.** `(resolution, host, metric_name, bucket_start)` replaces
-   `(resolution, host, bucket_start)`: Desk's host chart reads four metrics of one host, no longer
-   all fifteen.
+   `(resolution, host, bucket_start)`: Desk's host chart (removed in 0.2, with the host resource
+   metrics) read four metrics of one host, no longer all fifteen.
 
 The 194 s were missed at first. #56's "after" reads ran on data 40 to 45 min old, and a later
 run on data 85 to 103 min old: `get_signals` reads the last 2 h, so it saw part of its window.
@@ -154,7 +154,8 @@ In milliseconds. Reads: p95 of 10 runs. Pushes: over every timed push.
 100 hosts every 30 s need 3.3 pushes/s. #57 does not touch the push path; HTTP was not timed
 again.
 
-**Desk overview** (`ui.get_overview` plus one host chart):
+**Desk overview** (`ui.get_overview` plus one host chart; the chart and its CPU, memory, disk
+and load metrics were removed in 0.2, so these numbers are historical):
 
 | Range | 1 h | 6 h | 24 h | 7 d |
 |---|---|---|---|---|
@@ -360,6 +361,9 @@ reads grow with the rows of their window, and so does a visit that reads.
 ```
 
 `load_test.py` deletes and rewrites the site's metric tables: never point it at a real site.
+- Since 0.2 it loads queue, Redis and database gauges where it loaded the host resource metrics,
+  and it no longer times Desk's host chart (both removed in 0.2): a new run is not comparable,
+  row for row, with the Desk overview numbers above.
 - To time the reads again on the data already loaded, for instance after an index change, add
   `--reads-only`.
 - On a site loaded before, empty the three tables first (`truncate`). The script deletes its own

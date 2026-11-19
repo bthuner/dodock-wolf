@@ -62,7 +62,7 @@
    "label": "Site"
   },
   {
-   "description": "Stable string form of labels, e.g. mount=/",
+   "description": "Stable string form of labels, e.g. queue=default",
    "fieldname": "label_key",
    "fieldtype": "Data",
    "label": "Label Key"
@@ -77,7 +77,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-30 12:00:00.000000",
+ "modified": "2026-11-19 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Metric Sample",

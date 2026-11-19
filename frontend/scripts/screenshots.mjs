@@ -92,12 +92,11 @@ const SIGNALS = {
       rules: [{ name: 'R1', rule_name: 'Security score low', aggregation: 'last', operator: '<', threshold: 60, window_minutes: 180 }] }),
     signal('workers', 'queue_length', 'Queue length', 0, 'jobs', 'watched', { label_key: 'queue=default',
       rules: [{ name: 'R2', rule_name: 'Worker queue backlog', aggregation: 'max', operator: '>', threshold: 100, window_minutes: 10 }] }),
-    signal('host', 'disk_used_percent', 'Disk used', 61, '%', 'watched', { bench: null, label_key: 'mount=/',
-      rules: [{ name: 'R3', rule_name: 'Disk almost full', aggregation: 'max', operator: '>', threshold: 90, window_minutes: 5 }] }),
-    signal('host', 'load_1m', 'Load (1 min)', 0.42, '', 'unwatched', { bench: null }),
+    signal('host', 'agent_setup_failed', 'Agent setup checks failed', 0, '', 'watched', { bench: null,
+      rules: [{ name: 'R3', rule_name: 'Host setup problem', aggregation: 'last', operator: '>=', threshold: 1, window_minutes: 120 }] }),
   ],
-  counts: { security: { firing: 1 }, workers: { watched: 1 }, host: { watched: 1, unwatched: 1 } },
-  missing: [], caveats: {}, email: {}, lookback_days: 7, truncated: false, total_series: 4,
+  counts: { security: { firing: 1 }, workers: { watched: 1 }, host: { watched: 1 } },
+  missing: [], caveats: {}, email: {}, lookback_days: 7, truncated: false, total_series: 3,
 }  // prettier-ignore
 
 const MONITORING = {

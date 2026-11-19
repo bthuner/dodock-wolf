@@ -24,11 +24,11 @@ const HTTP = {
 }
 const SIGNALS = {
   series: [
-    { metric_name: 'disk_used_percent', group: 'host', label: 'Disk used', unit: '%', host: 'h1', label_key: 'mount=/', value: 93, last_at: NOW, state: 'firing',
-      rules: [{ name: 'R1', rule_name: 'Disk almost full', aggregation: 'max', operator: '>', threshold: 90, window_minutes: 5 }], incidents: ['WINC-00009'] },
-    { metric_name: 'cpu_usage', group: 'host', label: 'CPU', unit: '%', host: 'h1', value: 12, last_at: OLD, state: 'stale', rules: [], incidents: [] },
+    { metric_name: 'queue_length', group: 'workers', label: 'Queue length', unit: 'jobs', host: 'h1', bench: 'b1', label_key: 'queue=default', value: 930, last_at: NOW, state: 'firing',
+      rules: [{ name: 'R1', rule_name: 'Worker queue backlog', aggregation: 'min', operator: '>', threshold: 500, window_minutes: 10 }], incidents: ['WINC-00009'] },
+    { metric_name: 'redis_used_memory_percent', group: 'redis', label: 'Redis memory used', unit: '%', host: 'h1', bench: 'b1', value: 12, last_at: OLD, state: 'stale', rules: [], incidents: [] },
   ],
-  counts: { host: { firing: 1, stale: 1 } },
+  counts: { workers: { firing: 1 }, redis: { stale: 1 } },
   missing: [{ metric: 'backup_age_hours', label: 'Newest backup age' }],
   caveats: {}, email: {}, lookback_days: 7, truncated: false, total_series: 2,
 }
@@ -103,10 +103,10 @@ describe('DashboardPage', () => {
     const { page } = await open()
     const text = page.text()
     expect(text).toContain('Rule firing')
-    expect(text).toContain('Disk almost full: max > 90 over 5 min') // the rule's threshold, not the UI's
+    expect(text).toContain('Worker queue backlog: min > 500 over 10 min') // the rule's threshold, not the UI's
     expect(text).toContain('No new data')
     expect(text).toContain('last sample 40 min ago')
-    expect(text).not.toMatch(/CPU\s+12 %/) // a stale value is not shown as current
+    expect(text).not.toMatch(/Redis memory used\s+12 %/) // a stale value is not shown as current
     expect(text).toContain('1 signals without data in the last 7 days')
     expect(text).toContain('They are not zero')
   })
@@ -127,12 +127,12 @@ describe('DashboardPage', () => {
   })
 
   it('draws the first 10 rows of a group and the rest on demand, problems first', async () => {
-    const row = (i, state) => ({ metric_name: 'cpu_usage', group: 'host', label: 'CPU', unit: '%', host: `h${String(i).padStart(2, '0')}`,
+    const row = (i, state) => ({ metric_name: 'queue_length', group: 'workers', label: 'Queue length', unit: 'jobs', host: `h${String(i).padStart(2, '0')}`,
       value: i, last_at: state === 'stale' ? OLD : NOW, state, rules: [], incidents: [] })
     // the server's order: firing, then stale, then the others
     const series = [...Array.from({ length: 9 }, (_, i) => row(i, 'firing')), ...Array.from({ length: 3 }, (_, i) => row(9 + i, 'stale')),
       ...Array.from({ length: 13 }, (_, i) => row(12 + i, 'unwatched'))]
-    server({ 'dodock_wolf.api.dashboard.get_signals': () => ({ ...SIGNALS, series, counts: { host: { firing: 9, stale: 3, unwatched: 13 } }, total_series: 25 }) })
+    server({ 'dodock_wolf.api.dashboard.get_signals': () => ({ ...SIGNALS, series, counts: { workers: { firing: 9, stale: 3, unwatched: 13 } }, total_series: 25 }) })
     const { page } = await open()
     const rows = () => page.findAll('[aria-label="Signals"] li')
     expect(rows()).toHaveLength(10)

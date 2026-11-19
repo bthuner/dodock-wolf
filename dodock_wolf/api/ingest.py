@@ -5,7 +5,7 @@ from frappe.utils import cint, now_datetime
 from dodock_wolf import satellite
 from dodock_wolf.api import detectors
 from dodock_wolf.api.agent import _request_json, authenticate_agent, push_interval
-from dodock_wolf.wolf import events, health, rate, schema, silences
+from dodock_wolf.wolf import catalog, events, health, rate, schema, silences
 from dodock_wolf.wolf.incidents import attach_to_open_incident
 
 
@@ -54,6 +54,8 @@ def accept(agent, data, now=None):
 		except schema.PayloadError as e:
 			rejected.append(str(e))
 			continue
+		if metric["metric_name"] in catalog.REMOVED_METRICS:
+			continue  # a v0.1 agent's host resource metrics: removed in 0.2, never stored, not an error
 		metric["timestamp"], was_clamped = schema.clamp_future(metric["timestamp"], now, max_skew)
 		clamped += was_clamped
 		metrics.append(metric)
@@ -156,6 +158,8 @@ def store_batch(agent, metrics, events_in, correlate=None, attempt=None):
 	"""
 	if correlate is None:
 		correlate = not satellite.is_satellite()  # a satellite opens no incidents
+	# a push queued before the upgrade to 0.2 may still hold host resource metrics: never stored
+	metrics = [m for m in metrics if m["metric_name"] not in catalog.REMOVED_METRICS]
 	try:
 		events.insert_metrics(metrics, agent=agent)
 		dropper = detectors.Dropper()  # `external` mode: Wolf's own detector gives way (#72 step 4)

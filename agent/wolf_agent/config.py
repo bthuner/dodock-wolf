@@ -23,7 +23,6 @@ DEFAULTS = {
 	"extra_logs": [],
 	# null = auto-detect, a path, "journal", or false to disable
 	"auth_log": None,
-	"collect_host_metrics": True,
 	# Frappe Pilot benches only (docs/pilot.md). Admin API token: `token`, or one is
 	# minted from `jwt_secret` / the bench.toml [admin] jwt_secret when readable.
 	"pilot": {
@@ -114,6 +113,18 @@ def press_v1(cfg):
 	if cfg.get("platform") == "press" or "press" in cfg:
 		return True
 	return any(isinstance(b, dict) and b.get("platform") == "press" for b in cfg.get("benches") or [])
+
+
+# host resource metrics (CPU, memory, swap, disk, load) were removed in 0.2: Frappe Cloud v2 and
+# Pilot report them (#136). v0.1 wrote the key into every config: it is read and ignored.
+REMOVED_KEYS = {
+	"collect_host_metrics": "host resource metrics (CPU, memory, swap, disk, load) are reported by Frappe Cloud v2 and Pilot",
+}
+
+
+def removed_keys(cfg):
+	"""`(key, why)` for each v0.1 config key this agent ignores."""
+	return [(key, why) for key, why in REMOVED_KEYS.items() if key in cfg]
 
 
 def pilot_settings(cfg):

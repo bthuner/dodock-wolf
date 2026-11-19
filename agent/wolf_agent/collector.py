@@ -10,7 +10,6 @@ from . import app_versions, database, pilot, site_settings, suricata_discovery, 
 from .backups import backup_metrics
 from .config import pilot_settings, resolve_auth_log, section
 from .discovery import read_bench_toml
-from .metrics import HostMetrics
 from .parsers import PARSERS, NginxParser
 from .exposure import ExposureWatcher
 from .integrity import STATE_FILE as INTEGRITY_STATE, IntegrityWatcher
@@ -56,12 +55,11 @@ class Source:
 
 
 class Collector:
-	def __init__(self, cfg, state_path=None, from_start=False, host_metrics=None, clock=time.monotonic, sync_checks=False):
+	def __init__(self, cfg, state_path=None, from_start=False, clock=time.monotonic, sync_checks=False):
 		self.cfg = cfg
 		self.host = cfg["hostname"]
 		self.state = TailState(state_path)
 		self.from_start = from_start
-		self.host_metrics = host_metrics or (HostMetrics(self.host) if cfg.get("collect_host_metrics", True) else None)
 		self.sources = []
 		self.clock = clock
 		self.benches = list(cfg.get("benches") or [])
@@ -241,9 +239,6 @@ class Collector:
 				m, e = parser.drain(now)
 				metrics += m
 				events += e
-
-		if self.host_metrics:
-			metrics += self.host_metrics.collect(now)
 
 		for watcher in self.pilot_tasks:
 			try:

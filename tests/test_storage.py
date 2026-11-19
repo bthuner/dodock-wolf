@@ -34,30 +34,30 @@ class TestBuckets(unittest.TestCase):
 		self.assertEqual(storage.ceil(T0, HOUR), T0)
 
 	def test_rollup_name_is_deterministic(self):
-		key = ("cpu_usage", "h1", None, None, None, T0)
+		key = ("redis_used_memory_percent", "h1", None, None, None, T0)
 		self.assertEqual(storage.rollup_name(MINUTE, key), storage.rollup_name(MINUTE, key))
 		self.assertNotEqual(storage.rollup_name(MINUTE, key), storage.rollup_name(HOUR, key))
 		# NULL and empty bench are different groups in SQL, so they need different names
-		self.assertNotEqual(storage.rollup_name(MINUTE, key), storage.rollup_name(MINUTE, ("cpu_usage", "h1", "", None, None, T0)))
+		self.assertNotEqual(storage.rollup_name(MINUTE, key), storage.rollup_name(MINUTE, ("redis_used_memory_percent", "h1", "", None, None, T0)))
 		# every secondary index entry repeats the name: no longer than the hash it replaced
 		self.assertEqual(len(storage.rollup_name(MINUTE, key)), 33)
-		self.assertEqual(len(storage.sample_name("cpu_usage", T0, "x" * 10)), 28)
+		self.assertEqual(len(storage.sample_name("redis_used_memory_percent", T0, "x" * 10)), 28)
 		# no silent fallback: an unknown resolution or a time without a datetime fails
 		with self.assertRaises(KeyError):
 			storage.rollup_name(86400, key)
 		with self.assertRaises(TypeError):
-			storage.sample_name("cpu_usage", 1767225600, "x")
+			storage.sample_name("redis_used_memory_percent", 1767225600, "x")
 
 	def test_name_range_holds_exactly_a_metric_window(self):
 		start, end = T0 + timedelta(minutes=10, seconds=30), T0 + timedelta(hours=2, seconds=1)
 		for res in (MINUTE, HOUR):
-			low, high = storage.rollup_name_range(res, "cpu_usage", start, end)
+			low, high = storage.rollup_name_range(res, "redis_used_memory_percent", start, end)
 			for m in range(-120, 300):
 				bucket = storage.floor(T0 + timedelta(minutes=m), res)
-				for metric in ("cpu_usage", "cpu_usage_x"):
+				for metric in ("redis_used_memory_percent", "redis_used_memory_percent_x"):
 					name = storage.rollup_name(res, (metric, "h1", None, None, None, bucket))
 					inside = low <= name < high
-					if metric == "cpu_usage":
+					if metric == "redis_used_memory_percent":
 						# every row of the window is in the range (the SQL keeps the exact bucket
 						# condition), and nothing outside the whole minutes around it
 						if start <= bucket < end:
@@ -70,14 +70,14 @@ class TestBuckets(unittest.TestCase):
 
 	def test_name_range_of_a_window_from_before_2000(self):
 		# names carry two-digit years: a range from 1999 must still hold the rows from 2000 on
-		low, high = storage.rollup_name_range(MINUTE, "cpu_usage", datetime(1999, 12, 1), datetime(2000, 1, 10))
-		name = storage.rollup_name(MINUTE, ("cpu_usage", "h1", None, None, None, datetime(2000, 1, 5)))
+		low, high = storage.rollup_name_range(MINUTE, "redis_used_memory_percent", datetime(1999, 12, 1), datetime(2000, 1, 10))
+		name = storage.rollup_name(MINUTE, ("redis_used_memory_percent", "h1", None, None, None, datetime(2000, 1, 5)))
 		self.assertTrue(low <= name < high)
 
 	def test_names_keep_a_metric_in_time_order(self):
 		# InnoDB stores rows in name order: one metric's rows of one resolution must be contiguous
 		# and sorted by time, whatever the hosts and whatever the metric names
-		metrics = ["cpu_usage", "cpu_usage_x", "a" * 140, "load-1", "load-10"]
+		metrics = ["redis_used_memory_percent", "redis_used_memory_percent_x", "a" * 140, "load-1", "load-10"]
 		hosts = ["h2", "h1", None]
 		times = [T0 + timedelta(minutes=m) for m in (0, 1, 59, 600)]
 		rows = [(storage.rollup_name(res, (m, h, None, None, None, t)), res, m, t)
@@ -102,10 +102,10 @@ class TestRollupExactness(unittest.TestCase):
 	def setUp(self):
 		rng = random.Random(7)
 		self.samples = []  # (metric, host, bench, site, label, value, ts)
-		for label in ("mount=/", "mount=/data"):
+		for label in ("queue=default", "queue=long"):
 			for i in range(3 * 120):  # 3 hours, every 30 s, with jitter
 				ts = T0 + timedelta(seconds=30 * i + rng.randint(0, 29))
-				self.samples.append(("disk_used_percent", "h1", None, None, label, round(rng.uniform(0, 100), 3), ts))
+				self.samples.append(("queue_length", "h1", None, None, label, round(rng.uniform(0, 100), 3), ts))
 		rng.shuffle(self.samples)
 
 	def series(self, label, start, end):
@@ -117,7 +117,7 @@ class TestRollupExactness(unittest.TestCase):
 		hours = storage.rollup_rollups(rows, HOUR)
 		self.assertEqual(len(hours), 2 * 3)
 		for agg in ("avg", "min", "max", "sum", "count", "last"):
-			for label in ("mount=/", "mount=/data"):
+			for label in ("queue=default", "queue=long"):
 				expected = raw_aggregate(self.series(label, T0, T0 + timedelta(hours=3)), agg)
 				for rollup in (minutes, hours):
 					partial = None
@@ -129,8 +129,8 @@ class TestRollupExactness(unittest.TestCase):
 	def test_one_bucket(self):
 		minutes = storage.rollup_samples(self.samples, MINUTE)
 		start = T0 + timedelta(minutes=17)
-		p = minutes[("disk_used_percent", "h1", None, None, "mount=/", start)]
-		values = self.series("mount=/", start, start + timedelta(minutes=1))
+		p = minutes[("queue_length", "h1", None, None, "queue=default", start)]
+		values = self.series("queue=default", start, start + timedelta(minutes=1))
 		self.assertEqual(p["count"], len(values))
 		self.assertEqual(p["last_ts"], max(values)[0])
 		self.assertEqual(p["last"], max(values)[1])
@@ -280,22 +280,22 @@ class TestLateRestart(unittest.TestCase):
 
 class TestLastLabel(unittest.TestCase):
 	def test_merge_keeps_the_label_of_the_latest_value(self):
-		a = dict(storage.new_partial(91.0, T0), last_label="mount=/data")
-		b = dict(storage.new_partial(40.0, T0 - timedelta(minutes=1)), last_label="mount=/")
-		self.assertEqual(storage.merge(a, b)["last_label"], "mount=/data")
-		self.assertEqual(storage.merge(b, a)["last_label"], "mount=/data")
+		a = dict(storage.new_partial(91.0, T0), last_label="queue=long")
+		b = dict(storage.new_partial(40.0, T0 - timedelta(minutes=1)), last_label="queue=default")
+		self.assertEqual(storage.merge(a, b)["last_label"], "queue=long")
+		self.assertEqual(storage.merge(b, a)["last_label"], "queue=long")
 		self.assertNotIn("last_label", storage.merge(storage.new_partial(1.0, T0), storage.new_partial(2.0, T0)))
 
 
 class TestWeightedSeries(unittest.TestCase):
 	def test_rollup_rows_average_by_samples(self):
 		rows = [
-			{"metric_name": "cpu_usage", "label_key": None, "timestamp": T0, "value": 30.0, "count": 3},  # 3 samples, avg 10
-			{"metric_name": "cpu_usage", "label_key": None, "timestamp": T0 + timedelta(seconds=30), "value": 50.0},  # 1 raw
+			{"metric_name": "redis_used_memory_percent", "label_key": None, "timestamp": T0, "value": 30.0, "count": 3},  # 3 samples, avg 10
+			{"metric_name": "redis_used_memory_percent", "label_key": None, "timestamp": T0 + timedelta(seconds=30), "value": 50.0},  # 1 raw
 			{"metric_name": "http_502", "label_key": None, "timestamp": T0, "value": 12.0, "count": 4},
 		]
 		out = bucket_series(rows, 60)
-		self.assertEqual(out["cpu_usage"], [["2026-10-29 02:00:00", 20.0]])
+		self.assertEqual(out["redis_used_memory_percent"], [["2026-10-29 02:00:00", 20.0]])
 		self.assertEqual(out["http_502"], [["2026-10-29 02:00:00", 12.0]])
 
 

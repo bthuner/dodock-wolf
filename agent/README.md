@@ -1,7 +1,7 @@
 # Wolf Agent
 
-Host-side daemon for Dodock Wolf. It collects host metrics, tails Frappe bench,
-nginx and sshd logs, reads RQ queue lengths from Redis, and pushes everything to a
+Host-side daemon for Dodock Wolf. It tails Frappe bench, nginx and sshd logs, reads
+RQ queue lengths from Redis, checks the bench's exposure and integrity, and pushes everything to a
 Wolf site over HTTPS (see [`../docs/protocol.md`](../docs/protocol.md)).
 Pure Python ≥ 3.9 standard library, no dependencies.
 
@@ -39,6 +39,9 @@ Deprecated (Press v1, removed in 0.2), still accepted so old scripts keep workin
 A config a v0.1 agent wrote on a Press v1 server (`"platform": "press"`, a `press` key or a Press
 bench) gets a warning at start and a failed `doctor` check: Press v1 is supported by Dodock Wolf
 v0.1.0 only, so reinstall the agent with `WOLF_AGENT_REF=v0.1.0` (see the top-level README).
+The `collect_host_metrics` key of a v0.1 config (host resource metrics, removed in 0.2) is
+ignored: `run` logs `removed in 0.2: ignored` at start, `check` prints it to stderr, `doctor`
+lists it, and `register` drops the key from the config it writes.
 
 ## Pilot benches
 
@@ -61,8 +64,9 @@ and `dev/pilot/` for a Pilot host to test on.
 
 ## What is collected
 
-- **Host**: `cpu_usage`, `memory_used_percent`, `swap_used_percent`, `load_1m/5m/15m`,
-  `load_per_core`, `disk_used_percent` per real mount.
+- **Host**: no resource metrics since 0.2 (CPU, memory, swap, disk and load: Frappe Cloud v2
+  and Pilot report them); `agent_setup_failed` / `agent_setup_warnings` from the hourly
+  `wolf-agent doctor` run.
 - **Per bench** (`<bench>/logs/`): tracebacks from `frappe.web.log`, `web.error.log`,
   `bench.log`; failed scheduled jobs from `scheduler.log`; worker crashes, OOM kills
   and failed jobs from `worker.log` / `worker.error.log`. Site-scoped
@@ -253,7 +257,6 @@ credentials (401/403) the agent exits with status 2 and systemd stops restarting
   "verify_tls": true,
   "behind_proxy": null,
   "auth_log": null,
-  "collect_host_metrics": true,
   "pilot": {"deployments": true, "api_url": null, "token": null, "jwt_secret": null},
   "benches": [
     {"name": "frappe-bench", "path": "/home/frappe/frappe-bench", "sites": ["a.example.com"],
