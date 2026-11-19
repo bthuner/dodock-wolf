@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Dodock Wolf VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/bthuner/dodock-wolf/issues\n"
-"POT-Creation-Date: 2026-11-19 00:04+0000\n"
+"POT-Creation-Date: 2026-11-19 09:10+0000\n"
 "PO-Revision-Date: 2026-11-18 22:37+0000\n"
 "Last-Translator: Dodock Wolf contributors\n"
 "Language: fr\n"
@@ -23,6 +23,10 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:250
 msgid "!="
 msgstr ""
+
+#: frontend/src/components/dash/OnboardingPanel.vue:47
+msgid "(done)"
+msgstr "(fait)"
 
 #: frontend/src/pages/IncidentPage.vue:363
 msgid "(estimated)"
@@ -52,6 +56,10 @@ msgstr "(aucune fenêtre définie)"
 msgid "(none)"
 msgstr "(aucun)"
 
+#: frontend/src/components/dash/OnboardingPanel.vue:47
+msgid "(to do)"
+msgstr "(à faire)"
+
 #: frontend/src/pages/ErrorsPage.vue:73
 #, python-brace-format
 msgid "({0} in window)"
@@ -74,6 +82,10 @@ msgstr "+N est ce que le score gagne si ce contrôle seul réussit."
 msgid "1 = yes"
 msgstr "1 = oui"
 
+#: dodock_wolf/wolf/onboarding.py:37
+msgid "1 agent registered"
+msgstr "1 agent enregistré"
+
 #: frontend/src/components/MergeDialog.vue:65
 msgid "1 comment"
 msgstr "1 commentaire"
@@ -85,6 +97,10 @@ msgstr "1 critique"
 #: dodock_wolf/wolf/posture.py:166
 msgid "1 day"
 msgstr "1 jour"
+
+#: dodock_wolf/wolf/onboarding.py:62
+msgid "1 enabled channel"
+msgstr "1 canal activé"
 
 #: frontend/src/components/MergeDialog.vue:64 frontend/src/components/SplitDialog.vue:72
 msgid "1 event"
@@ -125,6 +141,10 @@ msgstr "1 résolu"
 #: dodock_wolf/wolf/posture.py:119
 msgid "1 risky setting reported by the agent (see the insecure_site_config event)"
 msgstr "1 paramètre à risque signalé par l'agent (voir l'événement insecure_site_config)"
+
+#: dodock_wolf/wolf/onboarding.py:57
+msgid "1 rule enabled"
+msgstr "1 règle activée"
 
 #: frontend/src/components/dash/SignalsPanel.vue:18
 msgid "1 rule firing"
@@ -271,6 +291,10 @@ msgstr ""
 "Un blocage approuvé par un Wolf Manager part aussi vers CrowdSec comme bannissement pour la durée"
 " approuvée, afin que chaque bouncer l'applique."
 
+#: dodock_wolf/wolf/onboarding.py:66
+msgid "A channel accepted a test notification."
+msgstr "Un canal a accepté une notification de test."
+
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:105
 msgid "A draft to start the authority's form from. Wolf sends nothing: check every fact first."
 msgstr ""
@@ -298,6 +322,10 @@ msgstr ""
 "<active-response> pour firewall-drop avec <timeout>86400</timeout> donne firewall-drop86400. "
 "Wazuh lève le blocage quand le délai expire ; c'est la durée du blocage."
 
+#: dodock_wolf/wolf/onboarding.py:60
+msgid "A rule tells someone"
+msgstr "Une règle prévient quelqu'un"
+
 #. Description of the 'Group Incidents by IP or User' (Check) field in DocType
 #. 'Wolf Settings'
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:278
@@ -312,6 +340,10 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_entity_alias/wolf_entity_alias.py:16
 msgid "A site alias is a domain, not an address."
 msgstr "Un alias de site est un domaine, pas une adresse."
+
+#: dodock_wolf/wolf/onboarding.py:65
+msgid "A test notification reached its channel"
+msgstr "Une notification de test a atteint son canal"
 
 #. Label of the api_key (Data) field in DocType 'Wolf API Key IP'
 #: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:19
@@ -544,6 +576,10 @@ msgstr ""
 "Les agents déjà enregistrés continuent de fonctionner. Les nouveaux enregistrements nécessitent "
 "le nouveau jeton. Continuer ?"
 
+#: dodock_wolf/wolf/onboarding.py:47
+msgid "Agents check their host every hour; none has reported yet."
+msgstr "Les agents vérifient leur hôte toutes les heures ; aucun n'a encore remonté sa configuration."
+
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:104
 msgid "Agents online"
 msgstr "Agents en ligne"
@@ -578,6 +614,7 @@ msgstr "Règle d'alerte"
 msgid "Alert Rules"
 msgstr "Règles d'alerte"
 
+#: dodock_wolf/wolf/onboarding.py:58 dodock_wolf/wolf/onboarding.py:68
 #: frontend/src/components/dash/MonitoringPanel.vue:65
 msgid "Alert rules"
 msgstr "Règles d'alerte"
@@ -589,6 +626,10 @@ msgstr "Règles d'alerte (Desk)"
 #: frontend/src/components/dash/MonitoringPanel.vue:77
 msgid "Alert rules are evaluated at that pace, not every minute."
 msgstr "Les règles d'alerte sont évaluées à ce rythme, pas toutes les minutes."
+
+#: dodock_wolf/wolf/onboarding.py:56
+msgid "Alert rules are on"
+msgstr "Les règles d'alerte sont activées"
 
 #. Label of a Card Break in the Dodock Wolf Workspace
 #: dodock_wolf/dodock_wolf/workspace/dodock_wolf/dodock_wolf.json:56
@@ -604,7 +645,7 @@ msgstr "Alias"
 msgid "All"
 msgstr "Tous"
 
-#: frontend/src/pages/DashboardPage.vue:140
+#: frontend/src/pages/DashboardPage.vue:142
 msgid "All incidents"
 msgstr "Tous les incidents"
 
@@ -920,7 +961,7 @@ msgstr "Services du bench en écoute au-delà de la boucle locale"
 msgid "Bench services not listening beyond loopback"
 msgstr "Aucun service du bench en écoute au-delà de la boucle locale"
 
-#: frontend/src/pages/DashboardPage.vue:37
+#: frontend/src/pages/DashboardPage.vue:38
 #, python-brace-format
 msgid "Bench {0} on {1}"
 msgstr "Bench {0} sur {1}"
@@ -1126,6 +1167,7 @@ msgstr "Type de canal"
 
 #. Label of the channels (Table) field in DocType 'Wolf Alert Rule'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.json:402
+#: dodock_wolf/wolf/onboarding.py:63
 msgid "Channels"
 msgstr "Canaux"
 
@@ -1286,7 +1328,7 @@ msgstr "Impossible de joindre {0} : {1}"
 msgid "Count"
 msgstr ""
 
-#: frontend/src/pages/DashboardPage.vue:135
+#: frontend/src/pages/DashboardPage.vue:137
 #, python-brace-format
 msgid "Counts: {0}"
 msgstr "Compteurs : {0}"
@@ -1482,7 +1524,7 @@ msgstr "Fenêtre de déploiement (minutes)"
 msgid "Deployment before it"
 msgstr "Déploiement précédent"
 
-#: frontend/src/pages/DashboardPage.vue:167
+#: frontend/src/pages/DashboardPage.vue:169
 msgid "Deployments in this window"
 msgstr "Déploiements dans cette fenêtre"
 
@@ -1641,6 +1683,10 @@ msgstr "Durée (heures)"
 #: dodock_wolf/dodock_wolf/doctype/wolf_postmortem/wolf_postmortem.json:88
 msgid "Duration (minutes)"
 msgstr "Durée (minutes)"
+
+#: dodock_wolf/wolf/onboarding.py:44
+msgid "Each host gives the agent what it needs"
+msgstr "Chaque hôte donne à l'agent ce dont il a besoin"
 
 #. Label of the nis2_early_warning_at (Datetime) field in DocType 'Wolf
 #. Incident'
@@ -1899,6 +1945,10 @@ msgstr ""
 msgid "Every record of this group you may see, whatever its age."
 msgstr "Tous les enregistrements de ce groupe que vous pouvez voir, quel que soit leur âge."
 
+#: dodock_wolf/wolf/onboarding.py:46
+msgid "Every reporting agent has what it needs."
+msgstr "Chaque agent qui remonte des données a ce dont il a besoin."
+
 #: frontend/src/components/TimelineRow.vue:21 frontend/src/pages/IncidentPage.vue:29
 msgid "Evidence"
 msgstr "Éléments de preuve"
@@ -2146,6 +2196,11 @@ msgstr "Transmission : {0}"
 msgid "Framing"
 msgstr "Délimitation"
 
+#: dodock_wolf/wolf/onboarding.py:52
+#, python-brace-format
+msgid "Frappe's scheduler ticks every {0} s: set scheduler_tick_interval to 60."
+msgstr "Le planificateur de Frappe tourne toutes les {0} s : réglez scheduler_tick_interval sur 60."
+
 #: dodock_wolf/dodock_wolf/report/wolf_incident_metrics/wolf_incident_metrics.js:8
 msgid "From Date"
 msgstr "Date de début"
@@ -2283,7 +2338,7 @@ msgstr "Méthode HTTP"
 msgid "HTTP Status"
 msgstr "Statut HTTP"
 
-#: frontend/src/pages/DashboardPage.vue:54
+#: frontend/src/pages/DashboardPage.vue:55
 msgid "HTTP activity"
 msgstr "Activité HTTP"
 
@@ -2291,7 +2346,7 @@ msgstr "Activité HTTP"
 msgid "HTTP responses"
 msgstr "Réponses HTTP"
 
-#: frontend/src/pages/DashboardPage.vue:163
+#: frontend/src/pages/DashboardPage.vue:165
 #, python-brace-format
 msgid "HTTP: {0}"
 msgstr "HTTP : {0}"
@@ -2351,7 +2406,7 @@ msgstr "Ressources de l'hôte"
 msgid "Host setup"
 msgstr "Configuration de l'hôte"
 
-#: frontend/src/pages/DashboardPage.vue:38
+#: frontend/src/pages/DashboardPage.vue:39
 #, python-brace-format
 msgid "Host {0}"
 msgstr "Hôte {0}"
@@ -2397,6 +2452,10 @@ msgstr ""
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.json:286
 msgid "How recent that event must be."
 msgstr "Ancienneté maximale de cet événement."
+
+#: dodock_wolf/wolf/onboarding.py:38
+msgid "How to install it"
+msgstr "Comment l'installer"
 
 #. Label of the ip (Data) field in DocType 'Wolf API Key IP'
 #: dodock_wolf/dodock_wolf/doctype/wolf_api_key_ip/wolf_api_key_ip.json:36
@@ -2580,6 +2639,10 @@ msgstr "Notification initiale envoyée le"
 msgid "Install the Wolf agent"
 msgstr "Installer le Wolf Agent"
 
+#: dodock_wolf/wolf/onboarding.py:36
+msgid "Install the agent on a host"
+msgstr "Installer l'agent sur un hôte"
+
 #. Description of the 'Routing Key' (Password) field in DocType 'Wolf Alert
 #. Channel'
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_channel/wolf_alert_channel.json:223
@@ -2634,7 +2697,7 @@ msgstr "Lien invalide"
 msgid "Invalid registration token"
 msgstr "Jeton d'enregistrement invalide"
 
-#: frontend/src/pages/DashboardPage.vue:180
+#: frontend/src/pages/DashboardPage.vue:182
 #, python-brace-format
 msgid "Inventory: {0}"
 msgstr "Inventaire : {0}"
@@ -2967,7 +3030,7 @@ msgstr "Charger plus"
 msgid "Load per core"
 msgstr "Charge par cœur"
 
-#: frontend/src/pages/DashboardPage.vue:164
+#: frontend/src/pages/DashboardPage.vue:166
 msgid "Loading HTTP activity…"
 msgstr "Chargement de l'activité HTTP…"
 
@@ -2983,7 +3046,7 @@ msgstr "Chargement des événements…"
 msgid "Loading incidents…"
 msgstr "Chargement des incidents…"
 
-#: frontend/src/pages/DashboardPage.vue:133
+#: frontend/src/pages/DashboardPage.vue:135
 msgid "Loading the counts…"
 msgstr "Chargement des décomptes…"
 
@@ -3007,7 +3070,7 @@ msgstr "Chargement des échantillons…"
 msgid "Loading the security score…"
 msgstr "Chargement du score de sécurité…"
 
-#: frontend/src/pages/DashboardPage.vue:179
+#: frontend/src/pages/DashboardPage.vue:181
 msgid "Loading the signals…"
 msgstr "Chargement des signaux…"
 
@@ -3293,12 +3356,13 @@ msgstr "Gravité minimale envoyée"
 msgid "Mode"
 msgstr ""
 
+#: dodock_wolf/wolf/onboarding.py:42 dodock_wolf/wolf/onboarding.py:48
 #: frontend/src/components/WolfSidebar.vue:52 frontend/src/components/dash/MonitoringPanel.vue:62
-#: frontend/src/pages/MonitoringPage.vue:32 frontend/src/router.js:26
+#: frontend/src/pages/MonitoringPage.vue:35 frontend/src/router.js:26
 msgid "Monitoring"
 msgstr "Supervision"
 
-#: frontend/src/pages/DashboardPage.vue:185
+#: frontend/src/pages/DashboardPage.vue:187
 #, python-brace-format
 msgid "Monitoring: {0}"
 msgstr "Supervision : {0}"
@@ -3384,6 +3448,10 @@ msgstr "Aucun agent enregistré"
 msgid "No agent registered yet. Get the install command from Wolf Settings."
 msgstr "Aucun agent enregistré pour l'instant. Récupérez la commande d'installation dans Wolf Settings."
 
+#: dodock_wolf/wolf/onboarding.py:57
+msgid "No alert rule is enabled."
+msgstr "Aucune règle d'alerte n'est activée."
+
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:58
 msgid "No data in the window."
 msgstr "Aucune donnée dans la fenêtre."
@@ -3395,6 +3463,10 @@ msgstr "Aucun paramètre de développement dans site_config.json"
 #: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.js:80
 msgid "No enabled channel to test."
 msgstr "Aucun canal activé à tester."
+
+#: dodock_wolf/wolf/onboarding.py:62
+msgid "No enabled rule has an enabled channel: incidents show in Wolf only."
+msgstr "Aucune règle activée n'a de canal activé : les incidents n'apparaissent que dans Wolf."
 
 #: frontend/src/pages/ErrorGroupPage.vue:26
 msgid "No error group with this fingerprint that you can see."
@@ -3416,6 +3488,10 @@ msgstr "Aucun enregistrement d'événement ne correspond."
 #: dodock_wolf/public/js/wolf.js:82
 msgid "No events in this range."
 msgstr "Aucun événement sur cette période."
+
+#: dodock_wolf/wolf/onboarding.py:37
+msgid "No host agent has registered with this site yet."
+msgstr "Aucun agent d'hôte ne s'est encore enregistré auprès de ce site."
 
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:217
 msgid "No host metrics yet."
@@ -3489,7 +3565,7 @@ msgstr "Aucun incident non résolu visible pour vous."
 msgid "Nobody yet"
 msgstr "Personne pour l'instant"
 
-#: frontend/src/pages/DashboardPage.vue:154
+#: frontend/src/pages/DashboardPage.vue:156
 msgid "None open that you can see."
 msgstr "Aucun ouvert visible pour vous."
 
@@ -3807,6 +3883,10 @@ msgstr "Incidents ouverts"
 msgid "Open Wolf UI (preview)"
 msgstr "Ouvrir Wolf UI (aperçu)"
 
+#: dodock_wolf/wolf/onboarding.py:67
+msgid "Open a rule with a channel and use Send test notification."
+msgstr "Ouvrez une règle qui a un canal et utilisez Envoyer une notification de test."
+
 #: dodock_wolf/dodock_wolf/doctype/wolf_event/wolf_event.js:12
 msgid "Open incident from this event"
 msgstr "Ouvrir un incident à partir de cet événement"
@@ -3888,7 +3968,7 @@ msgid "Overlapping detectors"
 msgstr "Détecteurs qui se recoupent"
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:42
-#: frontend/src/components/WolfSidebar.vue:38 frontend/src/pages/DashboardPage.vue:40
+#: frontend/src/components/WolfSidebar.vue:38 frontend/src/pages/DashboardPage.vue:41
 #: frontend/src/router.js:11
 msgid "Overview"
 msgstr ""
@@ -4245,7 +4325,7 @@ msgstr ""
 "Reçoit un corps JSON générique ({text, incident}). Utilisez les types Slack ou Mattermost pour "
 "leurs formats natifs."
 
-#: frontend/src/pages/DashboardPage.vue:166
+#: frontend/src/pages/DashboardPage.vue:168
 msgid "Recent changes"
 msgstr "Changements récents"
 
@@ -4290,10 +4370,10 @@ msgid "Redis memory used"
 msgstr "Mémoire Redis utilisée"
 
 #: dodock_wolf/dodock_wolf/page/wolf_overview/wolf_overview.js:22
-#: frontend/src/pages/DashboardPage.vue:124 frontend/src/pages/ErrorsPage.vue:38
+#: frontend/src/pages/DashboardPage.vue:125 frontend/src/pages/ErrorsPage.vue:38
 #: frontend/src/pages/EventsPage.vue:61 frontend/src/pages/IncidentPage.vue:290
 #: frontend/src/pages/IncidentsPage.vue:84 frontend/src/pages/MetricsPage.vue:179
-#: frontend/src/pages/MonitoringPage.vue:33 frontend/src/pages/SecurityPage.vue:146
+#: frontend/src/pages/MonitoringPage.vue:36 frontend/src/pages/SecurityPage.vue:146
 msgid "Refresh"
 msgstr "Actualiser"
 
@@ -4612,6 +4692,10 @@ msgstr ""
 msgid "Rules imported"
 msgstr "Règles importées"
 
+#: dodock_wolf/wolf/onboarding.py:50
+msgid "Rules run every minute"
+msgstr "Les règles tournent chaque minute"
+
 #: dodock_wolf/dodock_wolf/doctype/wolf_settings/wolf_settings.js:33
 msgid "Run on each host, as root:"
 msgstr "À exécuter sur chaque hôte, en root :"
@@ -4711,6 +4795,10 @@ msgstr ""
 "Les échecs du planificateur, les erreurs, les connexions, les attributions de rôles privilégiés "
 "et les migrations de ce site sont transmis au site Wolf central. Les incidents, les règles et la "
 "chronologie s'y trouvent."
+
+#: dodock_wolf/wolf/onboarding.py:54
+msgid "Scheduler pace"
+msgstr "Rythme du planificateur"
 
 #. Label of the scope_section (Section Break) field in DocType 'Wolf Event'
 #. Label of the scope_section (Section Break) field in DocType 'Wolf Incident'
@@ -4932,6 +5020,11 @@ msgstr ""
 "Mis à l'heure actuelle quand la case est cochée. La notification initiale est due 4 h après la "
 "classification (et dans les 24 h suivant la prise de connaissance)."
 
+#: frontend/src/components/dash/OnboardingPanel.vue:36
+#: frontend/src/components/dash/OnboardingPanel.vue:38
+msgid "Set up Wolf"
+msgstr "Configurer Wolf"
+
 #: frontend/src/components/dash/MonitoringPanel.vue:78
 #, python-brace-format
 msgid "Set {0} to 60 in {1} for one-minute evaluations."
@@ -5076,7 +5169,7 @@ msgstr "Type de signal"
 msgid "Signals"
 msgstr "Signaux"
 
-#: frontend/src/pages/DashboardPage.vue:178
+#: frontend/src/pages/DashboardPage.vue:180
 #, python-brace-format
 msgid "Signals: {0}"
 msgstr "Signaux : {0}"
@@ -5132,7 +5225,7 @@ msgstr "Depuis"
 msgid "Site"
 msgstr "Site"
 
-#: frontend/src/pages/DashboardPage.vue:39
+#: frontend/src/pages/DashboardPage.vue:40
 #, python-brace-format
 msgid "Site {0}"
 msgstr ""
@@ -5423,7 +5516,7 @@ msgstr ""
 msgid "Test notification"
 msgstr "Notification de test"
 
-#: frontend/src/pages/DashboardPage.vue:156
+#: frontend/src/pages/DashboardPage.vue:158
 #, python-brace-format
 msgid "The 10 newest of {0}."
 msgstr "Les 10 plus récents sur {0}."
@@ -5446,6 +5539,10 @@ msgstr ""
 "L'agent lit les journaux du bench, de nginx et d'authentification, et en enregistre l'essentiel "
 "sous forme d'événements : réponses 5xx et 502, tâches en échec, plantages de workers, échecs de "
 "connexion."
+
+#: dodock_wolf/wolf/onboarding.py:40
+msgid "The agent reports"
+msgstr "L'agent remonte des données"
 
 #. Description of the 'Setup Checks' (Code) field in DocType 'Wolf Agent'
 #: dodock_wolf/dodock_wolf/doctype/wolf_agent/wolf_agent.json:184
@@ -5549,6 +5646,14 @@ msgstr ""
 "Le proxy par lequel passe le trafic web de cet hôte (le proxy_ip d'un serveur d'applications "
 "Press), tel que son agent le signale. Les attaquants web sont bloqués sur le proxy, pas ici."
 
+#: dodock_wolf/wolf/onboarding.py:51
+msgid "The scheduler is disabled: no rule runs."
+msgstr "Le planificateur est désactivé : aucune règle ne tourne."
+
+#: dodock_wolf/wolf/onboarding.py:53
+msgid "The scheduler runs every minute."
+msgstr "Le planificateur tourne chaque minute."
+
 #: frontend/src/pages/SecurityPage.vue:255
 #, python-brace-format
 msgid "The score gains {0} if this check passes"
@@ -5614,6 +5719,10 @@ msgstr "Ce lien a expiré. Ouvrez plutôt l'incident dans Wolf."
 #: dodock_wolf/api/actions.py:32 dodock_wolf/api/actions.py:96
 msgid "This link is not valid."
 msgstr "Ce lien n'est pas valide."
+
+#: frontend/src/components/dash/OnboardingPanel.vue:62
+msgid "This list goes away once every step is done; Monitoring keeps it."
+msgstr "Cette liste disparaît une fois toutes les étapes faites ; Supervision la garde."
 
 #: dodock_wolf/www/wolf_status.html:73
 msgid "This page refreshes every minute."
@@ -5839,8 +5948,8 @@ msgstr "Inconnu : le site n'a pas pu calculer son état de santé."
 msgid "Unresolved"
 msgstr "Non résolus"
 
-#: frontend/src/components/dash/CountTiles.vue:22 frontend/src/pages/DashboardPage.vue:137
-#: frontend/src/pages/DashboardPage.vue:139
+#: frontend/src/components/dash/CountTiles.vue:22 frontend/src/pages/DashboardPage.vue:139
+#: frontend/src/pages/DashboardPage.vue:141
 msgid "Unresolved incidents"
 msgstr "Incidents non résolus"
 
@@ -5961,6 +6070,10 @@ msgstr ""
 "Version de chaque app du bench (apps/<app>/<app>/__init__.py) sous la forme major * 1e6 + minor *"
 " 1e3 + patch : 15100000 correspond à 15.100.0 ; les versions de développement ne sont pas "
 "envoyées."
+
+#: dodock_wolf/wolf/onboarding.py:41
+msgid "Waiting for a first agent."
+msgstr "En attente d'un premier agent."
 
 #: frontend/src/components/SeverityGlyph.vue:10 frontend/src/components/dash/MonitoringPanel.vue:156
 msgid "Warning"
@@ -6341,6 +6454,10 @@ msgstr "Wolf a pu lire {0} % du poids"
 msgid "Wolf did not propose this action for this incident (or it was already approved)."
 msgstr "Wolf n'a pas proposé cette action pour cet incident (ou elle a déjà été approuvée)."
 
+#: frontend/src/components/dash/OnboardingPanel.vue:41
+msgid "Wolf has what it needs to wake someone up."
+msgstr "Wolf a ce qu'il faut pour réveiller quelqu'un."
+
 #: dodock_wolf/wolf/compliance.py:181
 #, python-brace-format
 msgid "Wolf incident: {0}"
@@ -6374,7 +6491,7 @@ msgstr ""
 "Wolf suit les échéances ; il ne décide pas si l'incident doit être déclaré et n'envoie rien à "
 "aucune autorité."
 
-#: frontend/src/pages/DashboardPage.vue:58 frontend/src/pages/MonitoringPage.vue:22
+#: frontend/src/pages/DashboardPage.vue:59 frontend/src/pages/MonitoringPage.vue:25
 msgid "Wolf's own monitoring"
 msgstr "Surveillance de Wolf lui-même"
 
@@ -6424,7 +6541,7 @@ msgstr "Vous ne pouvez pas voir {0}."
 msgid "You need the Wolf User or Wolf Manager role to open Dodock Wolf."
 msgstr "Vous devez avoir le rôle Wolf User ou Wolf Manager pour ouvrir Dodock Wolf."
 
-#: frontend/src/pages/DashboardPage.vue:129
+#: frontend/src/pages/DashboardPage.vue:131
 msgid "You see the sites, benches and hosts you were granted."
 msgstr "Vous voyez les sites, benches et hôtes qui vous ont été attribués."
 
@@ -7599,7 +7716,7 @@ msgstr "depuis"
 msgid "since must be before until"
 msgstr "since doit être antérieur à until"
 
-#: frontend/src/pages/DashboardPage.vue:149
+#: frontend/src/pages/DashboardPage.vue:151
 #, python-brace-format
 msgid "since {0}"
 msgstr "depuis {0}"
@@ -7676,7 +7793,7 @@ msgstr "la première entrée ne part pas de la valeur initiale (genesis)"
 msgid "the highest {0}"
 msgstr "le maximum de {0}"
 
-#: frontend/src/pages/DashboardPage.vue:57
+#: frontend/src/pages/DashboardPage.vue:58
 msgid "the inventory"
 msgstr "l'inventaire"
 
@@ -7729,11 +7846,11 @@ msgstr "les sites"
 msgid "the sum of {0}"
 msgstr "la somme de {0}"
 
-#: frontend/src/pages/DashboardPage.vue:53
+#: frontend/src/pages/DashboardPage.vue:54
 msgid "these counts"
 msgstr "ces décomptes"
 
-#: frontend/src/pages/DashboardPage.vue:56 frontend/src/pages/IncidentsPage.vue:55
+#: frontend/src/pages/DashboardPage.vue:57 frontend/src/pages/IncidentsPage.vue:55
 msgid "these incidents"
 msgstr "ces incidents"
 
@@ -7741,7 +7858,7 @@ msgstr "ces incidents"
 msgid "these records"
 msgstr "ces enregistrements"
 
-#: frontend/src/pages/DashboardPage.vue:55
+#: frontend/src/pages/DashboardPage.vue:56
 msgid "these signals"
 msgstr "ces signaux"
 
@@ -7926,6 +8043,11 @@ msgstr "{0} enregistrements SPF : les serveurs destinataires considèrent cela 
 msgid "{0} acknowledged"
 msgstr "{0} a acquitté"
 
+#: dodock_wolf/wolf/onboarding.py:37
+#, python-brace-format
+msgid "{0} agents registered"
+msgstr "{0} agents enregistrés"
+
 #: dodock_wolf/dodock_wolf/doctype/wolf_user_scope/wolf_user_scope.py:21
 #, python-brace-format
 msgid "{0} already has {1} {2}"
@@ -8021,6 +8143,11 @@ msgstr "{0} jour"
 msgid "{0} days"
 msgstr "{0} jours"
 
+#: dodock_wolf/wolf/onboarding.py:61
+#, python-brace-format
+msgid "{0} enabled channels"
+msgstr "{0} canaux activés"
+
 #: dodock_wolf/wolf/rule_sentence.py:230 dodock_wolf/wolf/rule_sentence.py:243
 #, python-brace-format
 msgid "{0} evaluations"
@@ -8066,7 +8193,12 @@ msgstr "il y a {0} h {1} min"
 msgid "{0} high"
 msgstr "{0} élevés"
 
-#: frontend/src/components/dash/MonitoringPanel.vue:101
+#: dodock_wolf/wolf/onboarding.py:45
+#, python-brace-format
+msgid "{0} host to fix"
+msgstr "{0} hôte à corriger"
+
+#: dodock_wolf/wolf/onboarding.py:45 frontend/src/components/dash/MonitoringPanel.vue:101
 #, python-brace-format
 msgid "{0} hosts to fix"
 msgstr "{0} hôtes à corriger"
@@ -8191,6 +8323,11 @@ msgstr "{0} occurrences"
 msgid "{0} of category {1}"
 msgstr "{0} de catégorie {1}"
 
+#: frontend/src/components/dash/OnboardingPanel.vue:39
+#, python-brace-format
+msgid "{0} of {1} done"
+msgstr "{0} sur {1} faites"
+
 #: frontend/src/components/dash/MonitoringPanel.vue:109
 #, python-brace-format
 msgid "{0} of {1} forwarding"
@@ -8215,6 +8352,11 @@ msgstr "{0} lignes chargées sur {1} correspondent."
 #, python-brace-format
 msgid "{0} of {1} loaded rows match; more rows are not loaded yet."
 msgstr "{0} lignes chargées sur {1} correspondent ; d'autres lignes ne sont pas encore chargées."
+
+#: dodock_wolf/wolf/onboarding.py:41
+#, python-brace-format
+msgid "{0} of {1} reporting"
+msgstr "{0} sur {1} remontent des données"
 
 #: frontend/src/components/dash/MonitoringPanel.vue:96
 #, python-brace-format
@@ -8296,6 +8438,11 @@ msgstr "{0} résolus"
 #, python-brace-format
 msgid "{0} risky settings reported by the agent (see the insecure_site_config event)"
 msgstr "{0} paramètres à risque signalés par l'agent (voir l'événement insecure_site_config)"
+
+#: dodock_wolf/wolf/onboarding.py:57
+#, python-brace-format
+msgid "{0} rules enabled"
+msgstr "{0} règles activées"
 
 #: frontend/src/components/dash/SignalsPanel.vue:18
 #, python-brace-format

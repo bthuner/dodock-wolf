@@ -13,6 +13,7 @@ import CountTiles from '@/components/dash/CountTiles.vue'
 import HttpChart from '@/components/dash/HttpChart.vue'
 import InventoryPanel from '@/components/dash/InventoryPanel.vue'
 import MonitoringPanel from '@/components/dash/MonitoringPanel.vue'
+import OnboardingPanel from '@/components/dash/OnboardingPanel.vue'
 import SignalsPanel from '@/components/dash/SignalsPanel.vue'
 import WindowTiles from '@/components/dash/WindowTiles.vue'
 import WindowNote from '@/components/WindowNote.vue'
@@ -126,6 +127,7 @@ const live = useLive(hub, {
   </PageHeader>
 
   <div class="wolf-page space-y-5">
+    <OnboardingPanel v-if="isOverview && boot.can?.configure && !boot.satellite" compact />
     <p v-if="data.counts?.restricted" class="text-sm text-ink-gray-6">{{ __('You see the sites, benches and hosts you were granted.') }}</p>
 
     <WindowNote v-if="win.explicit.value" v-bind="win.explicit.value" :time-zone="tz" @reset="win.reset" />
