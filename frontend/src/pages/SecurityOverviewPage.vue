@@ -61,11 +61,12 @@ const scope = (r) => [r.site, r.bench, r.host].filter(Boolean).join(' · ')
 const signed = (n) => (n > 0 ? `+${n}` : String(n).replace('-', '−'))
 const shownMore = (shown, total) => total > shown
 
-// scores, journal and agents change without a message: poll while live, as the dashboards do
+// an incident's change reloads the page; scores, journal, agents and the events (which would
+// reload every panel at each one) change without a message: poll while live, as the dashboards do
 const hub = inject('live', null)
 const live = useLive(hub, {
-  room: () => [{ doctype: 'Wolf Incident' }, { doctype: 'Wolf Event' }],
-  matches: (m) => m.kind === 'incidents' || m.kind === 'events',
+  room: () => ({ doctype: 'Wolf Incident' }),
+  matches: (m) => m.kind === 'incidents',
   refresh: async () => {
     await load()
     return true

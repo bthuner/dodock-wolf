@@ -1,5 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { ref } from 'vue'
 import { createMemoryHistory } from 'vue-router'
 
 import SecurityOverviewPage from '@/pages/SecurityOverviewPage.vue'
@@ -50,11 +51,11 @@ function server(answer) {
   return fetchFn
 }
 
-async function open(boot = MANAGER) {
+async function open(boot = MANAGER, live = null) {
   const router = makeRouter(createMemoryHistory('/wolf'), boot)
   await router.push('/')
   await router.isReady()
-  const page = mount(SecurityOverviewPage, { global: { plugins: [router], provide: { boot } } })
+  const page = mount(SecurityOverviewPage, { global: { plugins: [router], provide: { boot, ...(live && { live }) } } })
   await flushPromises()
   return page
 }
@@ -149,6 +150,15 @@ describe('SecurityOverviewPage', () => {
     server(() => ({ ...OVERVIEW, incidents: null, responses: null }))
     const page = await open({ ...MANAGER, capabilities: { incidents: { available: false } } })
     expect(section(page, 'Open security incidents').exists()).toBe(false)
+  })
+
+  it('listens to incidents only: an event does not reload every panel, the poll covers the rest', async () => {
+    const rooms = []
+    const hub = { state: ref('live'), pollSeconds: 60, subscribe: (room) => (rooms.push(room), () => {}) }
+    server(() => OVERVIEW)
+    const page = await open(MANAGER, hub)
+    expect(rooms).toEqual([{ doctype: 'Wolf Incident' }])
+    page.unmount()
   })
 
   it('says a refusal in words, and claims nothing', async () => {
