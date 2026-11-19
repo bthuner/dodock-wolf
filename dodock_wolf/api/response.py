@@ -4,7 +4,8 @@
   actions already taken (Wolf Response Action rows).
 - `approve(...)` (POST, Wolf Manager / System Manager): the confirmation. It records a Wolf
   Response Action per executor and a comment on the incident. User actions apply at once on
-  this site. A `block_ip` for the Wolf Agent waits for its next push (`pending_for_agent`),
+  this site; on a satellite's user, the satellite takes it with the answer to its next push
+  (`pending_for_agent`), applies it and reports back (satellite.apply_actions, `record_results`). A `block_ip` for the Wolf Agent waits for its next push (`pending_for_agent`),
   which applies it on its host and reports back (`record_results`); agents only act when their
   own config allows it (`response.enabled`, off by default). One for Wazuh runs at once through
   the manager's API (api/wazuh_ar.py).
@@ -26,6 +27,8 @@ from dodock_wolf.wolf.spa import MANAGER_ROLES
 
 EVENT_LIMIT = 500
 RESULT_LENGTH = 500
+# a satellite's user action waits this long for the site to take it, then expires (expire_actions)
+REMOTE_USER_ACTION_HOURS = 24
 
 
 def _incident(name):
@@ -57,6 +60,8 @@ def _events(incident):
 		# for a Suricata or Wazuh alert the host it names, else the sending agent's own
 		# (response.attacked_host); and the Wolf Agent running there
 		sender = senders.get(r.agent) or frappe._dict()
+		r["sender_kind"] = sender.kind or ("agent" if r.agent else None)  # a satellite applies user actions itself
+		r["sender_hostname"] = sender.hostname  # a satellite registers under its site's name
 		r["block_host"] = aliases.host(response.attacked_host(r, sender.kind or ("agent" if r.agent else None), sender.hostname))
 		r["block_agent"] = agents.get(r["block_host"])
 		r["block_proxy"] = proxies.get(r["block_host"])
@@ -94,10 +99,11 @@ def _is_manager():
 	return frappe.session.user == "Administrator" or bool(set(frappe.get_roles()) & set(MANAGER_ROLES))
 
 
-def _key(action, target, host, executor=None, aliases=None):
-	"""A block is one address on one host by one executor; a user action, one user."""
+def _key(action, target, host, executor=None, aliases=None, agent=None):
+	"""A block is one address on one host by one executor; a user action, one user on one site (the
+	Wolf site's own, or a satellite's: its agent)."""
 	if action != "block_ip":
-		return (action, str(target), None, None)
+		return (action, str(target), agent or None, None)
 	canonical = (aliases or entities_api.aliases()).host(host)  # rows before #72 step 6 kept the agent's hostname
 	return (action, str(target), canonical, executor or "wolf_agent")
 
@@ -108,7 +114,7 @@ def _proposals(doc, translate=False):
 	while the Wolf Agent's half waits. Labels are English (notification links) unless `translate`
 	(the Response panel, in the reader's language)."""
 	aliases = entities_api.aliases()
-	taken = {_key(a.action, a.target, a.host, a.executor, aliases) for a in _actions(doc.name)
+	taken = {_key(a.action, a.target, a.host, a.executor, aliases, agent=a.agent) for a in _actions(doc.name)
 	         if a.status in ("Approved", "Applied")}  # fmt: skip
 	settings = frappe.get_cached_doc("Wolf Settings")
 	proposals = []
@@ -119,12 +125,13 @@ def _proposals(doc, translate=False):
 				continue
 			if "wolf_agent" not in p["executors"]:
 				p["agent"] = None
-		elif _key(p["action"], p["target"], None) in taken:
+		elif _key(p["action"], p["target"], None, agent=p.get("agent")) in taken:
 			continue
-		if p["action"] in response.USER_ACTIONS and not frappe.db.exists("User", p["target"]):
-			continue  # a failed login for an unknown name: nothing to disable
+		remote = p["action"] in response.USER_ACTIONS and p.get("agent")
+		if p["action"] in response.USER_ACTIONS and not remote and not frappe.db.exists("User", p["target"]):
+			continue  # a failed login for an unknown name: nothing to disable (a satellite checks its own)
 		p["label"] = response.label(p["action"], p["target"], _hours(p, settings), p["host"], p.get("executors"),
-		                            wazuh_hours=_wazuh_hours(settings), translate=translate)  # fmt: skip
+		                            wazuh_hours=_wazuh_hours(settings), translate=translate, site=p["site"] if remote else None)  # fmt: skip
 		proposals.append(p)
 	return proposals
 
@@ -208,8 +215,9 @@ def approve(incident, action, target, agent=None, duration_hours=None, reason=No
 	settings = frappe.get_cached_doc("Wolf Settings")
 	# only what Wolf proposed from this incident's own events: no free-form action on any user or host
 	proposal = next((p for p in _proposals(doc) if p["action"] == action and p["target"] == target and (
-		action != "block_ip" or (host and _key(action, target, host) == _key(action, target, p["host"]))
-		or (not host and agent and p.get("agent") == agent))), None)  # fmt: skip
+		(action != "block_ip" and (p.get("agent") or None) == (agent or None))  # a user of this site, or of that satellite
+		or (action == "block_ip" and host and _key(action, target, host) == _key(action, target, p["host"]))
+		or (action == "block_ip" and not host and agent and p.get("agent") == agent))), None)  # fmt: skip
 	hours = _hours(proposal, settings, duration_hours) if proposal else None
 	refused = response.check(action, target, frappe.session.user, hours)
 	if refused:
@@ -217,10 +225,12 @@ def approve(incident, action, target, agent=None, duration_hours=None, reason=No
 	if not proposal:
 		frappe.throw(_("Wolf did not propose this action for this incident (or it was already approved)."),
 		             frappe.ValidationError)  # fmt: skip
-	if action in response.USER_ACTIONS and _protected_user(target):
+	# a satellite's user is checked there, when it applies it (System Managers, existence): satellite.apply_actions
+	remote = action in response.USER_ACTIONS and proposal.get("agent")
+	if action in response.USER_ACTIONS and not remote and _protected_user(target):
 		frappe.throw(fmt(_("{0} is a System Manager: only a System Manager can approve this."), target),
 		             frappe.PermissionError)  # fmt: skip
-	if action in response.USER_ACTIONS and not frappe.db.exists("User", target):
+	if action in response.USER_ACTIONS and not remote and not frappe.db.exists("User", target):
 		frappe.throw(fmt(_("User {0} does not exist on this site."), target), frappe.ValidationError)
 	now = now_datetime()
 	common = {"doctype": "Wolf Response Action", "incident": doc.name, "action": action, "target": target,
@@ -245,6 +255,12 @@ def approve(incident, action, target, agent=None, duration_hours=None, reason=No
 				if row.executor == "wazuh":
 					wazuh_ar_api.apply_block(row)  # Applied or Failed at once
 					frappe.db.commit()
+	elif remote:
+		# the satellite takes it with the answer to its next push, applies it and reports back
+		row = frappe.get_doc({**common, "agent": proposal["agent"], "site": proposal.get("site") or doc.site,
+		                      "expires_at": add_to_date(now, hours=REMOTE_USER_ACTION_HOURS)})  # fmt: skip
+		row.insert(ignore_permissions=True)
+		rows.append(row)
 	else:
 		row = frappe.get_doc(common).insert(ignore_permissions=True)
 		try:
@@ -254,12 +270,14 @@ def approve(incident, action, target, agent=None, duration_hours=None, reason=No
 			row.status, row.result = "Failed", str(e)[:RESULT_LENGTH]
 		row.save(ignore_permissions=True)
 		rows.append(row)
-	what = response.label(action, target, hours, proposal["host"], proposal.get("executors"), wazuh_hours=_wazuh_hours(settings))
+	what = response.label(action, target, hours, proposal["host"], proposal.get("executors"), wazuh_hours=_wazuh_hours(settings),
+	                      site=proposal.get("site") if remote else None)  # fmt: skip
 	notes = []
 	for row in rows:
 		by = {"wazuh": "Wazuh", "wolf_agent": "the Wolf Agent"}.get(row.get("executor")) if action == "block_ip" else None
 		by = f"{by}, {row.duration_hours} h" if by else None
-		state = {"Approved": "approved, waiting for the agent", "Applied": f"applied: {row.result}",
+		state = {"Approved": "approved, waiting for the site" if remote else "approved, waiting for the agent",
+		         "Applied": f"applied: {row.result}",
 		         "Failed": f"failed: {row.result}"}[row.status]  # fmt: skip
 		notes.append(f"{row.name}{f' ({by})' if by else ''} {state}")
 	if action == "block_ip":
@@ -275,16 +293,24 @@ def approve(incident, action, target, agent=None, duration_hours=None, reason=No
 
 
 def pending_for_agent(agent, now=None):
-	"""Approved, unexpired blocks for this agent: what the push response hands it."""
+	"""Approved, unexpired actions for this sender: what the push response hands it. A Wolf Agent
+	gets blocks; a satellite gets the actions on its own users (protocol §2)."""
 	now = now or now_datetime()
 	rows = frappe.get_all(
 		"Wolf Response Action",
-		filters={"agent": agent, "action": "block_ip", "status": "Approved", "expires_at": (">", now)},
-		fields=["name", "target", "expires_at"],
+		filters={"agent": agent, "action": ("in", response.ACTIONS), "status": "Approved", "expires_at": (">", now)},
+		fields=["name", "action", "target", "expires_at"],
+		order_by="creation asc",
 		limit=100,
 	)
-	return [{"id": r.name, "action": "block_ip", "ip": r.target,
-	         "seconds": max(int((r.expires_at - now).total_seconds()), 60)} for r in rows]  # fmt: skip
+	out = []
+	for r in rows:
+		if r.action == "block_ip":
+			out.append({"id": r.name, "action": "block_ip", "ip": r.target,
+			            "seconds": max(int((r.expires_at - now).total_seconds()), 60)})  # fmt: skip
+		else:
+			out.append({"id": r.name, "action": r.action, "user": r.target})
+	return out
 
 
 def record_results(agent, results):
@@ -292,7 +318,7 @@ def record_results(agent, results):
 	for item in results or []:
 		if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not item["id"]:
 			continue  # a string id only: anything else would act as a filter
-		row = frappe.db.get_value("Wolf Response Action", item["id"], ["agent", "status", "incident"], as_dict=True)
+		row = frappe.db.get_value("Wolf Response Action", item["id"], ["agent", "status", "incident", "action"], as_dict=True)
 		if not row or row.agent != agent or row.status != "Approved":
 			continue  # only the agent it was given to, once
 		ok = bool(item.get("ok"))
@@ -306,8 +332,9 @@ def record_results(agent, results):
 		                {"status": "Applied" if ok else "Failed", "result": detail, "agent": agent},
 		                f"{item['id']} reported by {agent}: {'applied' if ok else 'failed'}")  # fmt: skip
 		if row.incident:
+			where = "on the host" if row.action == "block_ip" else "on the site"  # a satellite's user
 			frappe.get_doc("Wolf Incident", row.incident).add_comment(
-				"Comment", f"Response action {item['id']} {'applied' if ok else 'failed'} on the host: {detail}"
+				"Comment", f"Response action {item['id']} {'applied' if ok else 'failed'} {where}: {detail}"
 			)
 
 
@@ -324,4 +351,13 @@ def expire_actions(now=None):
 	for name in names:
 		frappe.db.set_value("Wolf Response Action", name, "status", "Expired")
 		journal.capture("response_action", "Wolf Response Action", name, {"status": "Expired"}, f"{name} expired")
-	return names
+	# a satellite's user action it never took (the site stopped pushing): not done, and said so
+	missed = frappe.get_all(
+		"Wolf Response Action",
+		filters={"action": ("in", response.USER_ACTIONS), "status": "Approved", "expires_at": ("<=", now)},
+		pluck="name",
+	)
+	for name in missed:
+		frappe.db.set_value("Wolf Response Action", name, {"status": "Expired", "result": "the site did not take it in time"})
+		journal.capture("response_action", "Wolf Response Action", name, {"status": "Expired"}, f"{name} expired: not taken by the site")
+	return names + missed

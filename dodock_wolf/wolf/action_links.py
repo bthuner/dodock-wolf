@@ -60,7 +60,7 @@ def response_links(incident, status, actor=None):
 		duration = response.DEFAULT_HOURS if p["action"] == "block_ip" else None
 		params = links.build_response_params(
 			link_secret(), incident, p["action"], p["target"], hours * 3600,
-			agent=p["agent"] if p["action"] == "block_ip" else None, hours=duration, actor=actor,
+			agent=p["agent"], hours=duration, actor=actor,  # a satellite's user action names it too
 			host=p["host"] if p["action"] == "block_ip" else None,
 		)  # fmt: skip
 		out.append({"label": p.get("label") or response.label(p["action"], p["target"], duration, p.get("host")),

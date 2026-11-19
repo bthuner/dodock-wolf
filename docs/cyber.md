@@ -402,7 +402,10 @@ result; read-only for everyone) and a comment on the incident.
   transient systemd timer that sweeps at the expiry, and `--sweep` from cron for what a reboot
   loses; a ban again keeps the later expiry. Both helpers checked against nftables 1.0.6 and
   fail2ban 1.0.2 on Debian 12. See agent/README.md.
-- Not built: user actions on other sites than the Wolf site.
+- **Users of a satellite**: the same three actions, proposed from the satellite's events and named
+  with its site; the satellite takes them with the answer to its next push, applies them when its
+  Wolf Settings allow it (never on Administrator, Guest or a System Manager) and reports back. One
+  it has not taken after 24 h expires.
 
 ### Step 6: compliance and evidence
 

@@ -99,16 +99,21 @@ def response_action(incident=None, action=None, target=None, agent=None, hours=N
 		return _page(_("Not found"), _("This incident no longer exists."), "red", 404)
 
 	what = response.label(action, target, cint(hours) or None, inc.host if action != "block_ip" else
-	                      (host or (frappe.db.get_value("Wolf Agent", agent, "hostname") if agent else inc.host)))  # fmt: skip
+	                      (host or (frappe.db.get_value("Wolf Agent", agent, "hostname") if agent else inc.host)),
+	                      site=frappe.db.get_value("Wolf Agent", agent, "hostname") if agent and action != "block_ip" else None)  # fmt: skip
 	summary = (f"<p><strong>{escape_html(inc.name)}</strong> · {escape_html(inc.severity)} · {escape_html(inc.title)}</p>"
 	           f"<p>{escape_html(_('Proposed response'))}: <strong>{escape_html(what)}</strong></p>")  # fmt: skip
 	# what is left to approve: the proposal itself (a block is per host and executor, and a failed half
 	# can be approved again); nothing when it was already taken
-	proposed = any(p["action"] == action and p["target"] == target and (action != "block_ip" or (host and p["host"] == host)
-	               or (not host and agent and p.get("agent") == agent)) for p in response_api._proposals(frappe.get_doc("Wolf Incident", incident)))  # fmt: skip
+	proposed = any(p["action"] == action and p["target"] == target and (
+		(action != "block_ip" and (p.get("agent") or None) == (agent or None))  # a user of this site, or of that satellite
+		or (action == "block_ip" and host and p["host"] == host) or (action == "block_ip" and not host and agent and p.get("agent") == agent))
+		for p in response_api._proposals(frappe.get_doc("Wolf Incident", incident)))  # fmt: skip
 	taken = None if proposed else frappe.db.get_value(
 		"Wolf Response Action", {"incident": incident, "action": action, "target": target, "status": ("in", ("Approved", "Applied")),
-		                         **({"host": host} if host else {})},
+		                         **({"host": host} if host else {}),
+		                         # a user action: of this site (no agent) or of that satellite
+		                         **({"agent": agent or ("is", "not set")} if action != "block_ip" else {})},
 		["name", "status", "approved_by"], as_dict=True, order_by="creation desc")  # fmt: skip
 	if taken:
 		return _page(what, summary + "<p>" + _("Nothing to do: {0} is already {1} (approved by {2}).").format(
@@ -133,7 +138,9 @@ def response_action(incident=None, action=None, target=None, agent=None, hours=N
 		return _page(what, summary + "<p>" + escape_html(str(e)) + "</p>", "red", 409)
 	frappe.db.commit()
 	def note(r):
-		return {"Approved": _("approved: the agent applies it at its next push"), "Applied": _("applied: {0}").format(r.get("result")),
+		waiting = _("approved: the site applies it at its next push") if r.get("action") != "block_ip" and r.get("agent") \
+			else _("approved: the agent applies it at its next push")  # fmt: skip
+		return {"Approved": waiting, "Applied": _("applied: {0}").format(r.get("result")),
 		        "Failed": _("failed: {0}").format(r.get("result"))}[r["status"]]  # fmt: skip
 
 	lines = "".join(f"<p>{escape_html(r['name'] + ' ' + note(r))}.</p>" for r in [row, *(row.get("also") or [])])

@@ -74,9 +74,12 @@ Response: `{"message": {"metrics": <accepted>, "events": <accepted>, "rejected":
 `health` is Wolf's own heartbeat (§4); it is `null` if the site could not compute it, and absent
 on older servers.
 
-**Response actions.** The response also carries `actions`: the blocks a Wolf Manager approved for
-this agent and not yet reported, `[{"id": "WRA-00001", "action": "block_ip", "ip": "45.33.32.156",
-"seconds": 86400}]` (empty when there are none). The agent sends each result with a later push
+**Response actions.** The response also carries `actions`: what a Wolf Manager approved for this
+sender and is not reported yet (empty when there is none). A Wolf Agent gets blocks,
+`[{"id": "WRA-00001", "action": "block_ip", "ip": "45.33.32.156", "seconds": 86400}]`; a satellite
+gets the actions on its own users, `{"id": "WRA-00002", "action": "disable_user" | "logout_sessions" |
+"revoke_api_keys", "user": "intruder@example.com"}`, applied only with Wolf Settings → Apply Response
+Actions From the Central Site, never on Administrator, Guest or a System Manager. The agent sends each result with a later push
 as `"action_results": [{"id": "WRA-00001", "ok": true, "detail": "..."}]`; an id is accepted once,
 and only from the agent it was given to. See [cyber.md](cyber.md#step-5-human-validated-response-built-except-signed-links).
 

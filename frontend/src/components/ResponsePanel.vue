@@ -20,11 +20,12 @@ const confirming = ref(null) // key of the proposal waiting for its confirmation
 const hours = ref(24)
 const busy = ref(false)
 
-const key = (p) => `${p.action}|${p.target}|${p.host || p.agent || ''}` // a block is one address on one host
-// a Wolf Response Action status, as the reader sees it
-function status(s) {
-  if (s === 'Approved') return __('Approved, waiting for the agent')
-  return __(s, null, 'Wolf Response Action')
+// a block is one address on one host; a user action, one user on one site (this one, or a satellite: its agent)
+const key = (p) => `${p.action}|${p.target}|${p.action === 'block_ip' ? p.host || p.agent || '' : p.agent || ''}`
+// a Wolf Response Action status, as the reader sees it: a satellite's user action waits for the site
+function status(a) {
+  if (a.status === 'Approved') return a.action !== 'block_ip' && a.agent ? __('Approved, waiting for the site') : __('Approved, waiting for the agent')
+  return __(a.status, null, 'Wolf Response Action')
 }
 
 async function load() {
@@ -117,7 +118,7 @@ defineExpose({ load })
             {{ a.action }} {{ a.target }}<span v-if="a.host" class="text-ink-gray-6">{{ ' ' + __('on {0}', [a.host]) }}</span>
             <span v-if="a.executor === 'wazuh'" class="text-ink-gray-6">{{ ' ' + __('with Wazuh') }}</span>
           </td>
-          <td class="py-1 pr-3" :style="a.status === 'Failed' ? { color: 'var(--wolf-critical)' } : null">{{ status(a.status) }}</td>
+          <td class="py-1 pr-3" :style="a.status === 'Failed' ? { color: 'var(--wolf-critical)' } : null">{{ status(a) }}</td>
           <td class="wolf-data py-1 pr-3">{{ a.approved_by }}, {{ full(a.approved_at, timeZone) }}</td>
           <td class="py-1 text-ink-gray-7">
             {{ a.result || '—' }}<span v-if="a.expires_at"> · {{ __('until {0}', [full(a.expires_at, timeZone)]) }}</span>
