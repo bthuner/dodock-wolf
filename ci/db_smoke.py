@@ -3287,7 +3287,7 @@ def main():
 		assert result["incidents"]["by_severity"]["total"] == before + 2, (before, result["incidents"])
 		journal = result["journal"]
 		assert journal["last_seq"] and journal["pending"] >= 1 and not journal["behind"], journal
-		frappe.db.sql("update `tabWolf Journal Entry` set `at` = %s where coalesce(seq, 0) = 0", (at - timedelta(minutes=10),))
+		frappe.db.sql("update `tabWolf Journal Entry` set `at` = %s where seq = 0", (at - timedelta(minutes=10),))
 		assert security_overview.get_overview()["journal"]["behind"], "signing not said to be behind"
 		while journal_api.chain_journal():
 			pass
