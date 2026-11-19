@@ -21,7 +21,7 @@ RUN env/bin/pip install --no-cache-dir -e apps/dodock_wolf \
 # The demo MariaDB has no TLS; newer mariadb clients require it by default.
 RUN printf '[client]\nskip-ssl\n' > /home/frappe/.my.cnf
 # Owned by frappe so a named volume mounted here inherits the ownership.
-RUN mkdir -p /home/frappe/wolf-agent/spool /home/frappe/demo-press /home/frappe/demo-multi /home/frappe/demo-single
+RUN mkdir -p /home/frappe/wolf-agent/spool
 
 # Optional: Raven (backend only, no frontend build) to exercise the Raven alert channel.
 # blurhash-python (image previews) has no wheel for Python 3.14, so Raven goes in without it.

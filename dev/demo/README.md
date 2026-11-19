@@ -12,7 +12,7 @@ Everything runs locally; nothing leaves your machine.
 cd dev/demo
 # Any Dokos image works as base; reusing a local one avoids a multi-GB pull.
 WOLF_DEMO_BASE=registry.gitlab.com/dokos/dokos:latest docker compose up -d --build
-docker compose logs -f agent          # wait for "wolf-agent 0.1.0 started"
+docker compose logs -f agent          # wait for "wolf-agent 0.2.0.dev0 started"
 python3 scenario.py                   # ~5 minutes
 docker compose logs catcher           # the alerts Wolf sent
 ```
@@ -58,38 +58,6 @@ running Docker. **Security score low** (a fresh site without two-factor authenti
 in the old time zone, so the agent looks hours stale for one check.
 
 ![Incident timeline after the scenario](incident-timeline.jpg)
-
-## Live demos
-
-Three profiles add a simulated server each, watched by an agent of its own through the real code
-path for its platform. They can run together, next to the 2AM scenario:
-
-```bash
-WOLF_DEMO_BASE=registry.gitlab.com/dokos/dokos:latest docker compose --profile press --profile multi --profile single up -d --build
-docker compose --profile multi logs -f multi-demo   # "history written up to ...", then live
-docker compose logs catcher                         # the alerts
-```
-
-| Profile | Host | Server | Deployments |
-|---|---|---|---|
-| `press` | `f1-demo-press` | Press app server: 3 benches, 8 sites, `jobs.sqlite3`, nginx `main` format | Press jobs |
-| `multi` | `dokos-multi-1` | plain benches: 2 benches, 6 sites, nginx with `$host` first | deployment endpoint |
-| `single` | `dokos-single-1` | one bench, one site | deployment endpoint |
-
-- `<kind>-agent` runs `demo-agent-init.sh <kind> <host>`: it registers the host without benches
-  (`--bench` names the empty demo root), then `wolf-agent demo <kind> --configure` points it at the
-  `demo-<kind>` volume with the checks that have nothing behind them off (TLS, MariaDB, backups...).
-- `<kind>-demo` runs `bench --site wolf.localhost generate-demo-<kind> --webhook http://catcher:9999/`.
-  It lays out the server with empty logs, waits until the agent tracks them, writes 7 days of
-  history (the agent reads it from the start; past host metrics go through its spool), then live
-  traffic with an incident cycle every 30 minutes: a deployment and 4 minutes of 502s, a traceback,
-  a failed scheduled job, a killed worker, an SSH brute force, a web attack scan and, every other
-  cycle, a failed bench operation. The code is in `agent/wolf_agent/demo/`.
-- Incidents open for live cycles only: rules look at the last minutes. Restarting `<kind>-demo`
-  fills the gap since it stopped, then goes live again.
-- Reset one demo: `docker compose --profile <kind> rm -sf <kind>-agent <kind>-demo &&
-  docker volume rm wolfdemo_demo-<kind>`. Its host and data stay on the site until the full reset,
-  which needs every profile: `docker compose --profile press --profile multi --profile single down -v`.
 
 ## Suricata and Wazuh
 
@@ -183,4 +151,4 @@ docker compose exec backend bench new-site pg.localhost --db-type postgres --db-
 docker compose exec backend bash -c 'cd sites && ../env/bin/python /etc/wolf/db_smoke.py pg.localhost'
 ```
 
-Reset: `docker compose --profile press --profile multi --profile single down -v` (the profiles you used, so their containers and volumes go too).
+Reset: `docker compose --profile ids --profile postgres down -v` (the profiles you used, so their containers and volumes go too).
