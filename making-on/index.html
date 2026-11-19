@@ -575,7 +575,7 @@ h3 { font: 600 1.05rem/1.3 var(--sans); margin: 0 0 8px; letter-spacing: -0.005e
         <img src="../making-of/assets/logo-192.png" width="30" height="30" alt="">
         <span>Dodock Wolf</span>
       </a>
-      <span class="label">Making-on · Edition 0.1</span>
+      <span class="label">Making-on · Edition 0.2</span>
     </div>
     <div class="wrap hero-main">
       <p class="label">Making-on · Frappe Cloud v2 · read from its code</p>
@@ -640,7 +640,7 @@ h3 { font: 600 1.05rem/1.3 var(--sans); margin: 0 0 8px; letter-spacing: -0.005e
           </ul>
         </div>
         <blockquote class="pull wide" data-reveal>“Where Frappe or an existing tool already does something, Wolf connects to it rather than rebuilding it.”</blockquote>
-        <p class="aside" data-reveal>From #136. The catch: Frappe's stack cannot be run outside Frappe Cloud today. Datum has no license, and Beacon needs a Datum, a ClickHouse and an Atlas per region. Operators who host themselves keep what Wolf already has.</p>
+        <p class="aside" data-reveal>From #136. Dokos will run this whole stack itself, with dokopilot, its fork of Pilot, in the servers. Operators who run Pilot alone have no Datum and no Beacon: they keep what Wolf already has. One catch for everyone: Datum has no license yet.</p>
       </div>
     </div>
   </section>
@@ -1084,7 +1084,7 @@ h3 { font: 600 1.05rem/1.3 var(--sans); margin: 0 0 8px; letter-spacing: -0.005e
           </table>
         </div>
         <div class="principles wide" data-reveal>
-          <div><h3>The platform can <em>look in</em>.</h3><p>Staff with access to a host can snapshot a server's disk or mount it in rescue mode, and the serial console's last 128 KiB are kept. A guest agent in every image answers the host over vsock, which a firewall in the machine cannot block. None of that reads a log, but a tenant's risk register should say it.</p></div>
+          <div><h3>The platform can <em>look in</em>.</h3><p>Staff with access to a host can snapshot a server's disk or mount it in rescue mode, and the serial console's last 128 KiB are kept. A guest agent in every image answers the host over vsock, which a firewall in the machine cannot block. None of that reads a log, but an operator should tell its customers.</p></div>
           <div><h3>The server holds <em>keys</em>.</h3><p>Any process outside the bench's sandbox can ask <code>169.254.169.254</code> for the server's <code>X-Pilot-Token</code>, and with it reach the team's billing methods at Central. The Datum token, the backup bucket's keys and the mailbox password sit in files the bench user reads.<span class="formula">A process that is not Pilot reads the metadata → an alert</span></p></div>
         </div>
       </div>
@@ -1100,7 +1100,7 @@ h3 { font: 600 1.05rem/1.3 var(--sans); margin: 0 0 8px; letter-spacing: -0.005e
       </header>
       <div class="ch-body">
         <div class="prose" data-reveal>
-          <p class="lede">The reading turned three vague bridges into a list with costs. Planned, cheapest first. None is built yet.</p>
+          <p class="lede">Wolf stands on two grounds. On Dokos' own platform, Dokos holds Central, Beacon and the script that builds the images. With Pilot alone, only what is on the server counts. Planned, cheapest first. None is built yet.</p>
         </div>
         <ol class="decisions" data-reveal>
           <li><div><b>Recognise the ground.</b><p><code>[central] enabled</code> in <code>common_config.toml</code> and <code>fc_team</code> in <code>common_site_config.json</code> say “Frappe Cloud v2” and name the team. Not <code>pilot_endpoint</code>: a self-hosted Pilot writes it too.</p></div></li>
@@ -1108,16 +1108,18 @@ h3 { font: 600 1.05rem/1.3 var(--sans); margin: 0 0 8px; letter-spacing: -0.005e
           <li><div><b>Take Pilot's events from Pilot.</b><p>Pilot posts every bench event to any <code>[[webhook_endpoints]]</code>, signed with HMAC. A Wolf endpoint for them gives deployments and failed backups with nothing from Frappe, on a self-hosted Pilot too.</p></div></li>
           <li><div><b>Register without a shared secret.</b><p>A site can ask its own Pilot for a team identity token: 5 minutes, signed by Central, for any audience. A hosted Wolf checks it against Central's public keys and knows which team is calling.</p></div></li>
           <li><div><b>Show the platform's incidents as context.</b><p>The status page's <code>get_status</code> is open. A Wolf incident can say that the region reports trouble since 01:52, without opening anything.</p></div></li>
-          <li><div><b>A Beacon channel, with two guards.</b><p><code>page_on_call</code> pages at any severity, and a Responder key can probably publish. So: never page below critical, never set the visibility.</p></div></li>
+          <li><div><b>Put Wolf in the image.</b><p>Dokos' Cargo builds the Pilot images with a script. The agent, its webhook entry and the Wolf App can be in it with no secret: the site registers at first boot with the team identity token.</p></div></li>
+          <li><div><b>A Beacon channel, with two guards.</b><p>A critical security incident creates a Beacon incident, so the same people are called and the incident is one. But <code>page_on_call</code> pages at any severity, and a Responder key can probably publish. So: never page below critical, never set the visibility.</p></div></li>
+          <li><div><b>Receive Central's events.</b><p>On Dokos' own Central, a standard Frappe Webhook on <code>Activity Event</code> puts a resize, a restart or a console session on the timeline. No change of code.</p></div></li>
         </ol>
         <div data-reveal>
-          <h3 class="sub">Closed, for now</h3>
+          <h3 class="sub">It depends on who runs the platform</h3>
           <ul class="turns" style="margin-top:24px">
-            <li><b>Write Wolf's findings to Datum</b><p>Datum accepts three issuers, and a customer holds none of them. And the repository has no license.</p></li>
-            <li><b>Read Datum</b><p>The ClickHouse passwords are staff's, and a reader sees the whole region.</p></li>
-            <li><b>Read a server's events from Central</b><p>No customer token, no outbound webhook. The activity feed is in the console only.</p></li>
-            <li><b>Report an alert through Pilot's token</b><p>It is Pilot's credential, with a fixed list of event types. Using it from Wolf would be impersonation.</p></li>
-            <li><b>Install the agent at creation</b><p><code>user_data</code> is stored in clear on the action's record. Only a short-lived, single-use token could go there.</p></li>
+            <li><b>Write Wolf's findings to Datum</b><p>A customer holds none of Datum's three issuers. An operator can add a sender in its Central, as Frappe did for Grove. Only useful if Beacon should read them as rows.</p></li>
+            <li><b>Read Datum</b><p>The ClickHouse passwords are the operator's, and a reader sees the whole region. So only from Dokos' own Wolf site.</p></li>
+            <li><b>A server's events</b><p>No customer token and no customer webhook. For the operator, a Frappe Webhook on its Central.</p></li>
+            <li><b>Report an alert through Pilot's token</b><p>It is Pilot's credential, with a fixed list of event types. Using it from Wolf would be impersonation, on either ground.</p></li>
+            <li><b>Changes in Pilot</b><p>Asks to Frappe for most operators. For Dokos, changes in dokopilot, kept small so the fork can still take Frappe's releases.</p></li>
           </ul>
         </div>
       </div>
@@ -1167,7 +1169,7 @@ h3 { font: 600 1.05rem/1.3 var(--sans); margin: 0 0 8px; letter-spacing: -0.005e
       </header>
       <div class="ch-body">
         <div class="prose" data-reveal>
-          <p class="lede">Everything above was read, not run. Dokos is moving its hosted customers to its own Frappe Cloud v2 tenant. The first server there has questions to answer before any of the bridges is built.</p>
+          <p class="lede">Everything above was read, not run. Dokos will run its own Frappe Cloud v2. The first server of its first region has questions to answer before any of the bridges is built.</p>
         </div>
         <ul class="checks wide" data-reveal>
           <li><b>The paths</b><p><code>default-bench</code>, <code>logs/</code> or <code>logs/workload/</code>, and what the nginx log holds as the client for a region name and for a custom domain.</p></li>
@@ -1183,7 +1185,7 @@ h3 { font: 600 1.05rem/1.3 var(--sans); margin: 0 0 8px; letter-spacing: -0.005e
           <li><b>The team identity token</b><p>From a site, for a test audience, checked against Central's keys.</p></li>
           <li><b>The status page</b><p>The shape of <code>get_status</code>, and whether one region can be told from another.</p></li>
         </ul>
-        <p class="aside" data-reveal>What we noticed about the platform itself is in the analysis, as notes for a tenant's risk register: an unsigned self-update at 00:00 UTC, a registry that merges by itself, tokens of 365 days, no key rotation yet. They are read from code, not reported and not tested.</p>
+        <p class="aside" data-reveal>Whoever runs the platform inherits what we noticed in it: a telemetry service without a license, an unsigned self-update at 00:00 UTC, a registry that merges by itself, tokens of 365 days, no key rotation yet. They are in the analysis, for Dokos' own risk register. Read from code, not reported and not tested.</p>
       </div>
     </div>
   </section>
@@ -1202,7 +1204,7 @@ h3 { font: 600 1.05rem/1.3 var(--sans); margin: 0 0 8px; letter-spacing: -0.005e
         <li><a href="../making-of/"><span>The making-of</span><span>how Wolf itself was shaped</span></a></li>
       </ul>
       <footer class="colophon">
-        <span>Dodock Wolf · MIT · Making-on, edition 0.1 · 19.11.2026</span>
+        <span>Dodock Wolf · MIT · Making-on, edition 0.2 · 19.11.2026</span>
         <span>Read: central 5027a0c · atlas 31aa231 · cargo 0f18a8a · pilot 77acd72 · datum a08c555 · beacon d83a532 · Frappe Cloud, Pilot, Atlas, Cargo, Datum and Beacon are Frappe's</span>
       </footer>
     </div>
