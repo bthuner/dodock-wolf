@@ -3241,6 +3241,82 @@ def main():
 			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
 		return f"purged up to the SIEM cursor, then to the cut, then all but the newest; journal from {first}, deletion caught"
 
+	def security_overview_check():
+		from dodock_wolf.api import journal as journal_api
+		from dodock_wolf.api import security_overview
+		from dodock_wolf.wolf import access
+
+		at = now_datetime()
+		mine, other, unscored = "so-mine.smoke.localhost", "so-other.smoke.localhost", "so-new.smoke.localhost"
+		# the hourly scores: one a day ago and one now for `mine`, one now for `other`
+		events.insert_metrics([
+			schema.normalize_metric({"metric_name": "security_score", "value": value, "host": "so-host", "site": site}, tz, when)
+			for site, value, when in ((mine, 55, at - timedelta(hours=24)), (mine, 40, at - timedelta(minutes=10)),
+			                          (other, 90, at - timedelta(minutes=10)))
+		])  # fmt: skip
+		# a site the security page knows from the agent, with no score yet
+		events.insert_metrics([schema.normalize_metric({"metric_name": "backup_age_hours", "value": 2, "host": "so-host",
+		                                                "site": unscored}, tz, at)])  # fmt: skip
+		before = security_overview.get_overview()["incidents"]["by_severity"]["total"]
+
+		def incident(site, title, event_type="security"):
+			doc = frappe.get_doc({"doctype": "Wolf Incident", "title": title, "severity": "critical", "status": "Open",
+			                      "started_at": at - timedelta(minutes=5), "site": site}).insert(ignore_permissions=True)  # fmt: skip
+			raw = {"type": event_type, "host": "so-host", "site": site, "severity": "critical", "title": title}
+			if event_type == "security":
+				raw.update(category="web_attack_probe", payload={"ip": "45.33.32.201"})
+			frappe.db.set_value("Wolf Event", events.insert_event(schema.normalize_event(raw, tz, at)), "incident", doc.name)
+			return doc.name
+
+		ours, _theirs, _plain = incident(mine, "so mine"), incident(other, "so other"), incident(mine, "so not security", "error")
+		while journal_api.chain_journal():
+			pass
+		events.insert_event(schema.normalize_event({"type": "security", "category": "ssh_failed_login", "host": "so-host",
+		                                            "payload": {"ip": "45.33.32.202"}}, tz, at))  # fmt: skip
+
+		result = security_overview.get_overview()
+		for panel in ("scores", "incidents", "responses", "journal", "agents"):
+			assert result[panel] and not ({"error", "forbidden"} & set(result[panel])), (panel, result[panel])
+		scores = {r["site"]: r for r in result["scores"]["sites"]}
+		assert (scores[mine]["score"], scores[mine]["change"]) == (40, -15), scores[mine]
+		assert (scores[other]["score"], scores[other]["change"]) == (90, None), scores[other]
+		assert scores[unscored]["score"] is None and scores[unscored]["at"] is None, scores[unscored]  # never 0
+		order = [r["site"] for r in result["scores"]["sites"]]
+		assert order.index(mine) < order.index(other) < order.index(unscored), order
+		# the two holding a security event, not the one holding an error
+		assert result["incidents"]["by_severity"]["total"] == before + 2, (before, result["incidents"])
+		journal = result["journal"]
+		assert journal["last_seq"] and journal["pending"] >= 1 and not journal["behind"], journal
+		frappe.db.sql("update `tabWolf Journal Entry` set `at` = %s where coalesce(seq, 0) = 0", (at - timedelta(minutes=10),))
+		assert security_overview.get_overview()["journal"]["behind"], "signing not said to be behind"
+		while journal_api.chain_journal():
+			pass
+		assert isinstance(result["responses"]["waiting"], int) and isinstance(result["responses"]["failed"], int), result["responses"]
+		assert result["agents"]["agents"]["total"] >= 1, result["agents"]
+
+		# a user granted `mine` sees its score and its incident only, and no manager panel
+		user = "smoke-overview@example.com"
+		if not frappe.db.exists("User", user):
+			frappe.get_doc({"doctype": "User", "email": user, "first_name": "Overview", "send_welcome_email": 0,
+			                "roles": [{"role": "Wolf User"}]}).insert(ignore_permissions=True)  # fmt: skip
+		frappe.db.delete("Wolf User Scope", {"user": user})
+		frappe.get_doc({"doctype": "Wolf User Scope", "user": user, "scope_type": "site", "value": mine}).insert()
+		access.clear_cache()
+		frappe.set_user(user)
+		try:
+			seen = security_overview.get_overview()
+		finally:
+			frappe.set_user("Administrator")
+			frappe.db.delete("Wolf User Scope", {"user": user})
+			access.clear_cache()
+		assert seen["restricted"], seen
+		assert [r["site"] for r in seen["scores"]["sites"]] == [mine], seen["scores"]
+		assert seen["incidents"]["by_severity"]["total"] == 1, seen["incidents"]
+		assert [i["name"] for i in seen["incidents"]["newest"]] == [ours], seen["incidents"]
+		assert seen["responses"] is None and seen["journal"] is None, seen  # managers only
+		assert not ({"error", "forbidden"} & set(seen["agents"])), seen["agents"]
+		return "scores worst first with their change, unscored not 0, security incidents only, signing behind, scoped user"
+
 	def rules_yaml():
 		# alert rules as YAML (api/rules_io.py): a round trip, an applied change, a typo applying nothing
 		from dodock_wolf.api import rules_io as rules_yaml_api
@@ -3300,7 +3376,8 @@ def main():
 	                 ("posture score", posture_score),
 	                 ("regulatory deadlines", regulatory_deadlines), ("threat intel", threat_intel),
 	                 ("response actions", response_actions), ("satellite response", satellite_response), ("response links", response_links), ("journal", journal_chain),
-	                 ("siem export", siem_export), ("journal retention", journal_retention), ("rules YAML", rules_yaml)]:
+	                 ("siem export", siem_export), ("journal retention", journal_retention),
+	                 ("security overview", security_overview_check), ("rules YAML", rules_yaml)]:
 		check(name, fn)
 
 	for name in ("smoke disk", "smoke 502", "smoke last", "smoke cron"):

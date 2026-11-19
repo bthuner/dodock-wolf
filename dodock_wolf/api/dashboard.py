@@ -256,12 +256,9 @@ def _setup(agent, tz):
 	}
 
 
-@frappe.whitelist()
-def get_monitoring():
-	"""Is Wolf itself working: rules and scheduler, ingest queue, rollups, agents, satellites."""
-	frappe.only_for(READ_ROLES)
-	tz = events.system_tz()
-	silence, cutoff = agent_cutoff()
+def monitored_agents(tz, cutoff):
+	"""Every Wolf Agent the caller may see (agent_query), with its state against `cutoff` and
+	its last setup checks: Monitoring's agents, and the home page's agent counts."""
 	agents = frappe.get_list(
 		"Wolf Agent",
 		fields=["name", "hostname", "kind", "status", "last_seen", "clock_skew_seconds", "agent_version",
@@ -269,19 +266,28 @@ def get_monitoring():
 		order_by="hostname asc",
 		limit_page_length=0,
 	)
+	return [
+		{
+			"name": a.name, "hostname": a.hostname, "kind": a.kind or "agent", "status": a.status,
+			"state": inventory.agent_state(a.status, a.last_seen, cutoff),
+			"last_seen": window.to_utc(a.last_seen, tz), "clock_skew_seconds": a.clock_skew_seconds,
+			"agent_version": a.agent_version, "setup": _setup(a, tz),
+		}  # fmt: skip
+		for a in agents
+	]
+
+
+@frappe.whitelist()
+def get_monitoring():
+	"""Is Wolf itself working: rules and scheduler, ingest queue, rollups, agents, satellites."""
+	frappe.only_for(READ_ROLES)
+	tz = events.system_tz()
+	silence, cutoff = agent_cutoff()
 	marks = rollups.watermarks()
 	return {
 		"health": health.for_display(health.safe_health()),
 		"rollups": {storage.LABELS[res]: window.to_utc(at, tz) for res, at in marks.items()},
-		"agents": [
-			{
-				"name": a.name, "hostname": a.hostname, "kind": a.kind or "agent", "status": a.status,
-				"state": inventory.agent_state(a.status, a.last_seen, cutoff),
-				"last_seen": window.to_utc(a.last_seen, tz), "clock_skew_seconds": a.clock_skew_seconds,
-				"agent_version": a.agent_version, "setup": _setup(a, tz),
-			}  # fmt: skip
-			for a in agents
-		],
+		"agents": monitored_agents(tz, cutoff),
 		"silence_minutes": silence,
 		"mode": satellite.status(),
 		"time_zone": tz,

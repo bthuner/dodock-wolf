@@ -267,6 +267,20 @@ def _last_purge():
 	return {**record, "at": rows[0].at} if record else None
 
 
+def signing():
+	"""The newest signed entry (seq, at), the entries waiting to be signed and when the oldest of
+	them was written: whether chain_journal keeps up (the home page's journal panel)."""
+	newest = frappe.db.sql(f"select seq, `at` from `tab{DOCTYPE}` where seq > 0 order by seq desc limit 1", as_dict=True)
+	waiting = frappe.db.sql(f"select count(*), min(`at`) from `tab{DOCTYPE}` where coalesce(seq, 0) = 0")[0]
+	return {
+		"last_seq": newest[0].seq if newest else 0,
+		"last_at": newest[0].at if newest else None,
+		"pending": cint(waiting[0]),
+		"oldest_pending_at": waiting[1],
+		"key": bool(journal_key(create=False)),
+	}
+
+
 @frappe.whitelist()
 def get_status():
 	frappe.only_for(MANAGER_ROLES)
