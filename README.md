@@ -17,8 +17,10 @@ before customers notice, and keeps all data on your own Frappe site.
   event, and a roadmap towards a Frappe-native SOC layer: [`docs/cyber.md`](docs/cyber.md).
 - **Direction** ([#136](https://github.com/bthuner/dodock-wolf/issues/136)): new work goes to the
   security and compliance of the bench. Dashboards and metrics stay as they are for
-  operators who run their own benches, and Wolf connects to existing tools (Wazuh, Suricata,
-  CrowdSec, a SIEM, PagerDuty, Frappe Cloud's Datum and Beacon) instead of rebuilding them.
+  operators who run their own benches. Since 0.2, `main` no longer has the Press v1 integration,
+  the live demos, status pages, the metrics explorer or digests: release v0.1.0 keeps them. Wolf
+  connects to existing tools (Wazuh, Suricata, CrowdSec, a SIEM, PagerDuty, Frappe Cloud's Datum
+  and Beacon) instead of rebuilding them.
 - **Documentation**: [bthuner.github.io/dodock-wolf](https://bthuner.github.io/dodock-wolf/), in English
   and French (source in [`docs-site/`](docs-site/)).
 - Wire protocol: [`docs/protocol.md`](docs/protocol.md). The design story is in the [making-of](https://bthuner.github.io/dodock-wolf/making-of/).
@@ -74,7 +76,7 @@ Wolf Alert Rule list's menu.
 | Cooldown | re-fire into the just-resolved incident instead of opening a new one. An event rule reopens it only for an event newer than the resolution; a metric rule, while its window still breaches |
 | Fire / resolve after evaluations | consecutive breached (or clear) evaluations, one per scheduler tick, before an incident opens (or auto-resolves). Default 1 |
 | Separate resolve threshold | hysteresis: e.g. fire above 90, resolve only once at or below 80 |
-| Channels | Email, Webhook, Raven, Slack, Mattermost, Matrix, ntfy, Gotify, SMS, PagerDuty (see [Channels](#channels)). Each channel can use an **hourly digest**: info/warning alerts are batched into one message per destination; critical alerts are always immediate |
+| Channels | Email, Webhook, Raven, Slack, Mattermost, Matrix, ntfy, Gotify, SMS, PagerDuty (see [Channels](#channels)) |
 | Notify on resolve | also tell the channels when the incident resolves, automatically or by hand (default on). PagerDuty channels always hear it |
 | Escalate after minutes | if still Open (not acknowledged) this long after the first alert, notify the escalation channels once |
 
@@ -226,7 +228,7 @@ Setup notes:
 - **PagerDuty**: add an *Events API v2* integration to a service and paste its integration key as
   the Routing Key. Change the Events API URL for the EU region
   (`https://events.eu.pagerduty.com/v2/enqueue`) or for an Events-v2 compatible receiver (Grafana
-  OnCall, Opsgenie and others accept the same body). PagerDuty channels are never digested.
+  OnCall, Opsgenie and others accept the same body).
 
 ## Incident workflow
 

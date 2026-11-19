@@ -278,6 +278,7 @@ they are grouped by day.
 
 ## Next
 
+- **A leaner main** (0.2): the Press v1 integration, the live demos, status pages, the metrics explorer and digests are gone; release v0.1.0 keeps them. Dashboards and metric collection come next.
 - **Packages:** `.deb`, `.rpm` and PyPI for the agent, with auto-update, then the Frappe Marketplace.
 - **Next to Frappe Cloud v2:** v2 servers as Pilot hosts, a Beacon channel, a Datum sink once it opens up (#133–#135).
 - **Deeper in the bench's security:** the work #136 points to.

@@ -78,10 +78,8 @@ class TestRuleSentence(unittest.TestCase):
 		# a pager closes its own alert even when resolutions are not sent
 		self.assertIn("It notifies PagerDuty (PagerDuty still hears when it is acknowledged or resolved).",
 		              text({"channels": [{"channel_type": "PagerDuty", "enabled": 1}], "notify_on_resolve": 0}))  # fmt: skip
-		# below critical, an hourly digest batches the messages
-		rows = [{"channel_type": "Email", "digest": "hourly"}, {"channel_type": "ntfy"}]
-		self.assertIn("It notifies Email (in the hourly digest) and ntfy", text({"channels": rows}))
-		self.assertIn("It notifies Email and ntfy", text({"channels": rows, "severity": "critical"}))
+		rows = [{"channel_type": "Email"}, {"channel_type": "ntfy"}, {"channel_type": "Email"}]
+		self.assertIn("It notifies 2 Email and ntfy", text({"channels": rows}))
 		# Min Samples counts events for an event rule, its field hidden or not
 		self.assertIn("at least 4 distinct events", text({"signal_type": "event", "event_type": "error", "min_samples": 4}))
 		self.assertIn("over the last (no window set)", text({"window_minutes": 0}))

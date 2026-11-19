@@ -118,7 +118,6 @@ scheduler_events = {
 			"dodock_wolf.wolf.read_cache.refresh_active",
 		],
 		"0 * * * *": [
-			"dodock_wolf.tasks.send_digests",
 			"dodock_wolf.api.security.record_security_scores",
 			"dodock_wolf.api.response.expire_actions",
 			"dodock_wolf.api.exfiltration.flush_volumes",

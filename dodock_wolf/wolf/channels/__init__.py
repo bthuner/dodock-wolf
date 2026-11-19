@@ -20,7 +20,7 @@ NATIVE = ("Slack", "Mattermost", "Matrix", "ntfy", "Gotify", "SMS", "PagerDuty")
 TYPES = LEGACY + NATIVE
 
 # Channels that track the incident state on their side (trigger / acknowledge / resolve).
-# They hear about acknowledgements and every resolution, and are never digested.
+# They hear about acknowledgements and every resolution.
 STATEFUL = ("PagerDuty",)
 
 # Wolf Alert Channel fields per native type. Secrets are Password fields: decrypted
@@ -132,7 +132,7 @@ def worst_severity(severities):
 
 
 def identity(channel_type, cfg):
-	"""Stable, secret-free key for a native channel: merges digests across rules.
+	"""Stable, secret-free key for a native channel, so a destination listed twice hears once.
 
 	The hash covers the secrets too (two Slack webhooks are two destinations), but a
 	SHA-256 of a high-entropy token reveals nothing about it.

@@ -332,8 +332,7 @@ acknowledges or resolves, so link scanners cannot act on an incident. The incide
 `acknowledged_by` / `resolved_by` as the logged-in user, else the `actor`, else `link`.
 
 Webhook bodies expose the same URLs as `incident.actions = {"ack": "...", "resolve": "..."}`
-(empty once resolved). Hourly digests are posted as
-`{"text": "...", "digest": [{"incident", "kind", "severity", "title", "at", "url"}]}`.
+(empty once resolved).
 
 Slack (Block Kit buttons), Mattermost (attachment links), ntfy (`Actions` header) carry the same
 links. Matrix, Gotify and SMS carry the incident URL only.
@@ -372,7 +371,6 @@ PagerDuty event actions: `fired`, `reopened`, `escalated` → `trigger`; acknowl
 `acknowledge`; resolution → `resolve`; a test sends `trigger` then `resolve`.
 
 Every request is recorded as a **Wolf Delivery** `{incident, alert_rule, at, channel_type, target,
-kind, action, digest, ok, http_status, error}`. `target` names the destination without secrets
-(host, room, masked phone numbers); `error` has secrets and URL paths/queries removed. Digests of
-native channels are merged on a SHA-256 of the channel settings, and the digest item keeps a
-reference to the channel row rather than any secret.
+kind, action, ok, http_status, error}` (`digest` is set on the deliveries of an hourly digest,
+before 0.2). `target` names the destination without secrets (host, room, masked phone numbers);
+`error` has secrets and URL paths/queries removed.

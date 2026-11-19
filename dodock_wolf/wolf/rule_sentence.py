@@ -170,19 +170,14 @@ def _rows(value):
 
 
 def _channels(rows, severity, _):
-	"""'ntfy and 2 Email' style: the enabled channels by type, those batched into the hourly digest
-	(below critical, conditions.should_digest) apart."""
+	"""'ntfy and 2 Email' style: the enabled channels by type."""
 	counts = {}
 	for row in rows:
 		if _int(row.get("enabled"), 1) and row.get("channel_type"):
-			hourly = row.get("digest") == "hourly" and severity != "critical"
-			key = (str(row["channel_type"]), hourly)
-			counts[key] = counts.get(key, 0) + 1
-	names = []
-	for (kind, hourly), n in counts.items():
-		name = f"{n} {kind}" if n > 1 else kind
-		names.append(_text(_("{0} (in the hourly digest)"), name) if hourly else name)
-	stateful = sorted({kind for kind, _hourly in counts if kind in STATEFUL})
+			kind = str(row["channel_type"])
+			counts[kind] = counts.get(kind, 0) + 1
+	names = [f"{n} {kind}" if n > 1 else kind for kind, n in counts.items()]
+	stateful = sorted(kind for kind in counts if kind in STATEFUL)
 	return names, sum(counts.values()), stateful
 
 

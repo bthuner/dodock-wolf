@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 // The rule in words (wolf/rule_sentence.py), redrawn as its fields change: each sentence is a
-// list of [text, is_value] parts, a value in bold. Channel rows go as the three fields it reads:
+// list of [text, is_value] parts, a value in bold. Channel rows go as the two fields it reads:
 // never a secret typed in a row and not saved yet.
 function draw_sentence(frm) {
 	const field = frm.fields_dict.rule_sentence;
@@ -12,7 +12,6 @@ function draw_sentence(frm) {
 		doc[listname] = (frm.doc[listname] || []).map((r) => ({
 			channel_type: r.channel_type,
 			enabled: r.enabled,
-			digest: r.digest,
 		}));
 	}
 	const seq = (frm.wolf_sentence_seq = (frm.wolf_sentence_seq || 0) + 1);

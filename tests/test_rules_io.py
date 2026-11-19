@@ -13,7 +13,7 @@ FIELDS = {
 	"evaluation_state": ("Long Text", None),
 }  # fmt: skip
 CHANNEL = {
-	"channel_type": ("Select", None), "enabled": ("Check", "1"), "digest": ("Select", "none"),
+	"channel_type": ("Select", None), "enabled": ("Check", "1"),
 	"recipients": ("Small Text", None), "webhook_url": ("Data", None), "ntfy_server": ("Data", None),
 	"ntfy_topic": ("Data", None), "ntfy_token": ("Password", None), "chat_webhook_url": ("Password", None),
 }  # fmt: skip
@@ -25,7 +25,7 @@ def stored(**over):
 	        "metric_name": "disk_used_percent", "aggregation": "max", "operator": ">", "threshold": 90.0,
 	        "window_minutes": 10, "group_by": "host", "active_from": None, "active_to": None,
 	        "last_fired": "2026-11-18 20:00:00", "evaluation_state": '{"x": 1}',
-	        "channels": [{"name": "c1", "channel_type": "ntfy", "enabled": 1, "digest": "none", "ntfy_server": "https://ntfy.sh",
+	        "channels": [{"name": "c1", "channel_type": "ntfy", "enabled": 1, "ntfy_server": "https://ntfy.sh",
 	                      "ntfy_topic": "ops", "ntfy_token": "*****"}],
 	        "escalation_channels": []}  # fmt: skip
 	rule.update(over)

@@ -19,7 +19,6 @@ KIND_LABEL = {
 	"escalated": "ESCALATED",
 	"acknowledged": "ACKNOWLEDGED",
 	"test": "TEST",
-	"digest": "DIGEST",
 }
 FIRING = ("fired", "reopened")
 SILENCEABLE = ("fired", "reopened", "resolved")
@@ -277,8 +276,6 @@ def _sensitive(ch, cfg):
 
 def send(incident, kind, channels=None, only_stateful=False):
 	"""Deliver one notification. Returns one result per attempt (for the test button)."""
-	from dodock_wolf.wolf import digest
-
 	inc = frappe.get_doc("Wolf Incident", incident)
 	if channels is None:
 		if not inc.alert_rule:
@@ -297,14 +294,6 @@ def send(incident, kind, channels=None, only_stateful=False):
 	rendered = render(inc, kind)
 	results = []
 	for ch in channels:
-		stateful = ch.channel_type in wolf_channels.STATEFUL
-		try:
-			if not stateful and conditions.should_digest(ch.get("digest"), inc.severity, kind):
-				digest.queue(ch, inc, kind)
-				continue
-		except Exception:
-			_log_failure(ch, _safe_config(ch), f"[Wolf] {ch.channel_type} digest queueing failed for {inc.name}")
-			continue
 		try:
 			results += attempt(ch, inc, kind, rendered)
 		except Exception:
@@ -388,7 +377,7 @@ def _log_failure(ch, cfg, title, error=None):
 	frappe.log_error(title=title, message=wolf_channels.redact(text, secrets, urls))
 
 
-def record(incident, alert_rule, out, digest=False):
+def record(incident, alert_rule, out):
 	"""One Wolf Delivery row. ``out`` carries no secret (errors are redacted)."""
 	if not incident:
 		return
@@ -406,7 +395,6 @@ def record(incident, alert_rule, out, digest=False):
 				"ok": 1 if out.get("ok") else 0,
 				"http_status": out.get("http_status"),
 				"error": out.get("error"),
-				"digest": 1 if digest else 0,
 			}
 		).insert(ignore_permissions=True)
 	except Exception:
