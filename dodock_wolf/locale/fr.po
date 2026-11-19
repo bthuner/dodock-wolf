@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Dodock Wolf VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/bthuner/dodock-wolf/issues\n"
-"POT-Creation-Date: 2026-11-19 16:32+0000\n"
+"POT-Creation-Date: 2026-11-19 16:44+0000\n"
 "PO-Revision-Date: 2026-11-18 22:37+0000\n"
 "Last-Translator: Dodock Wolf contributors\n"
 "Language: fr\n"
@@ -265,7 +265,7 @@ msgstr ""
 msgid ">="
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:97
+#: dodock_wolf/wolf/catalog.py:103
 msgid ""
 "A System Settings value as stored in the site's database (unset: 0); system_manager_2fa is the "
 "System Manager role's two-factor flag."
@@ -319,7 +319,7 @@ msgstr ""
 "Un brouillon pour commencer le formulaire de l'autorité. Wolf n'envoie rien : vérifiez d'abord "
 "chaque fait."
 
-#: dodock_wolf/wolf/catalog.py:98
+#: dodock_wolf/wolf/catalog.py:104
 msgid "A listening socket, not proof of reachability: a firewall may still block it."
 msgstr "Un socket en écoute, pas une preuve d'accessibilité : un pare-feu peut encore le bloquer."
 
@@ -463,7 +463,7 @@ msgstr ""
 msgid "Active From"
 msgstr "Début de la plage active"
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:29
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:31
 msgid "Active From and Active To are the same time: the rule would never run"
 msgstr "Le début et la fin de la plage active sont à la même heure : la règle ne serait jamais évaluée"
 
@@ -529,7 +529,7 @@ msgstr ""
 "Après la résolution d'un incident, redéclencher dans le même incident au lieu d'en ouvrir un "
 "nouveau pendant cette période."
 
-#: dodock_wolf/wolf/catalog.py:92
+#: dodock_wolf/wolf/catalog.py:98
 msgid "Age of the newest backup file; it does not prove the backup restores."
 msgstr "Âge du fichier de sauvegarde le plus récent ; il ne prouve pas que la sauvegarde se restaure."
 
@@ -1400,7 +1400,7 @@ msgstr "Connexions à la base de données"
 msgid "Database connections used"
 msgstr "Connexions à la base de données utilisées"
 
-#: dodock_wolf/wolf/catalog.py:94
+#: dodock_wolf/wolf/catalog.py:100
 msgid "Days until the certificate served on port 443 expires; not a full validity check."
 msgstr ""
 "Jours avant l'expiration du certificat servi sur le port 443 ; pas une vérification complète de "
@@ -1740,7 +1740,7 @@ msgstr "Erreurs"
 msgid "Escalate After Minutes"
 msgstr "Escalade après (minutes)"
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:38
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:40
 msgid "Escalate After Minutes cannot be negative"
 msgstr "Le délai d'escalade ne peut pas être négatif"
 
@@ -1816,7 +1816,7 @@ msgstr ""
 "{0}. Le nombre d'un enregistrement compte chaque répétition qu'il a absorbée, dans la fenêtre ou "
 "non."
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:25
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:27
 msgid "Event rules need an event type"
 msgstr "Les règles sur événements nécessitent un type d'événement"
 
@@ -1918,7 +1918,7 @@ msgstr ""
 msgid "Executor"
 msgstr "Exécutant"
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:133
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:135
 msgid "Expected the rule's fields"
 msgstr "Les champs de la règle étaient attendus"
 
@@ -1983,7 +1983,7 @@ msgstr "Fichiers que le contrôle d'intégrité ne peut pas lire"
 msgid "Files under integrity watch"
 msgstr "Fichiers sous surveillance d'intégrité"
 
-#: dodock_wolf/wolf/catalog.py:99
+#: dodock_wolf/wolf/catalog.py:105
 msgid "Files whose content the agent checks: app code, site configs, nginx and supervisor config."
 msgstr ""
 "Fichiers dont l'agent vérifie le contenu : code des apps, configurations des sites, configuration"
@@ -2179,7 +2179,7 @@ msgstr ""
 "Issu de `cscli machines add dodock-wolf --password ...` : permet à Wolf d'envoyer des alertes et "
 "des décisions."
 
-#: dodock_wolf/wolf/catalog.py:93
+#: dodock_wolf/wolf/catalog.py:99
 msgid "From the agent's hourly wolf-agent doctor run; Monitoring lists what failed and the fix."
 msgstr ""
 "Issu de l'exécution horaire de wolf-agent doctor par l'agent ; Supervision liste ce qui a échoué "
@@ -4495,12 +4495,12 @@ msgstr "Renouveler le secret"
 msgid "Routing Key"
 msgstr "Clé de routage"
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:67
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:69
 #, python-brace-format
 msgid "Row {0} ({1}): set {2}"
 msgstr "Ligne {0} ({1}) : renseignez {2}"
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:72
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:74
 #, python-brace-format
 msgid "Row {0} ({1}): {2} must start with http:// or https://"
 msgstr "Ligne {0} ({1}) : {2} doit commencer par http:// ou https://"
@@ -4582,7 +4582,7 @@ msgstr "Même entité"
 msgid "Same Finding As"
 msgstr "Même constat que"
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:49
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:51
 #, python-brace-format
 msgid "Same must be one of {0}"
 msgstr "« Même entité » doit valoir l'une des valeurs suivantes : {0}"
@@ -4806,7 +4806,7 @@ msgstr "N° de séquence"
 msgid "Sequence condition"
 msgstr "Condition de séquence"
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:47
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:49
 msgid "Sequence rules need first and then event categories"
 msgstr "Les règles de séquence ont besoin des catégories du premier événement et de l'événement suivant"
 
@@ -4823,7 +4823,7 @@ msgstr ""
 "(2FA, politique de mots de passe, verrouillage, sessions), clés d'API générées et Webhooks vers "
 "un nouvel hôte."
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:27
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:29
 msgid "Set both Active From and Active To, or neither"
 msgstr "Renseignez à la fois le début et la fin de la plage active, ou aucun des deux"
 
@@ -4934,7 +4934,7 @@ msgstr "Gravité"
 msgid "Severity: {0}; status: {1}"
 msgstr "Gravité : {0} ; statut : {1}"
 
-#: dodock_wolf/wolf/catalog.py:100
+#: dodock_wolf/wolf/catalog.py:106
 msgid "Share of the checks Wolf could prove passed; a check it cannot read counts as not passed."
 msgstr ""
 "Part des contrôles dont Wolf a pu prouver la réussite ; un contrôle qu'il ne peut pas lire compte"
@@ -5147,8 +5147,8 @@ msgstr "Scinder…"
 
 #. Description of the 'Label Key' (Data) field in DocType 'Wolf Metric Sample'
 #: dodock_wolf/dodock_wolf/doctype/wolf_metric_sample/wolf_metric_sample.json:65
-msgid "Stable string form of labels, e.g. mount=/"
-msgstr "Forme texte stable des libellés, par exemple mount=/"
+msgid "Stable string form of labels, e.g. queue=default"
+msgstr "Forme texte stable des libellés, par exemple queue=default"
 
 #: frontend/src/pages/IncidentPage.vue:310
 msgid "Started"
@@ -5198,7 +5198,7 @@ msgstr "Statut"
 msgid "Still Open"
 msgstr "Toujours ouverts"
 
-#: dodock_wolf/wolf/catalog.py:96
+#: dodock_wolf/wolf/catalog.py:102
 msgid ""
 "Strict-Transport-Security max-age of the first response to HEAD / (0: no header); redirects are "
 "not followed."
@@ -5750,7 +5750,7 @@ msgstr "Inconnu"
 msgid "Unknown action {0}"
 msgstr "Action inconnue {0}"
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:21
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:23
 #, python-brace-format
 msgid "Unknown aggregation {0}"
 msgstr "Agrégation inconnue {0}"
@@ -5896,7 +5896,7 @@ msgstr "Vérifier le journal"
 msgid "Version"
 msgstr ""
 
-#: dodock_wolf/wolf/catalog.py:95
+#: dodock_wolf/wolf/catalog.py:101
 msgid ""
 "Version of each app in the bench (apps/<app>/<app>/__init__.py) as major * 1e6 + minor * 1e3 + "
 "patch: 15100000 is 15.100.0; development versions are not sent."
@@ -6072,7 +6072,7 @@ msgstr ""
 msgid "Within Minutes"
 msgstr "Écart max. (minutes)"
 
-#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:51
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:53
 msgid "Within Minutes must be at least one minute"
 msgstr "L'écart max. doit être d'au moins une minute"
 
@@ -8350,6 +8350,15 @@ msgstr "{0} a déjà été fusionné dans {1}."
 #, python-brace-format
 msgid "{0} was merged into {1}: merge into that incident instead."
 msgstr "{0} a été fusionné dans {1} : fusionnez plutôt dans cet incident."
+
+#: dodock_wolf/dodock_wolf/doctype/wolf_alert_rule/wolf_alert_rule.py:20
+#, python-brace-format
+msgid ""
+"{0} was removed in Dodock Wolf 0.2: Frappe Cloud v2 and Pilot report host resources. Disable this"
+" rule or choose another metric."
+msgstr ""
+"{0} a été retirée dans Dodock Wolf 0.2 : Frappe Cloud v2 et Pilot remontent les ressources de "
+"l'hôte. Désactivez cette règle ou choisissez une autre métrique."
 
 #: frontend/src/pages/IncidentPage.vue:435
 #, python-brace-format
