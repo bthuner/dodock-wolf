@@ -52,18 +52,30 @@ class TestPresets(unittest.TestCase):
 		for category in ("ssh_login_after_failures", "sudo_failure", "account_created", "admin_group_change",
 		                 "web_attack_probe", "web_sensitive_file_exposed", "server_script_change",
 		                 "console_execution", "security_settings_weakened", "permission_change",
-		                 "api_key_generated", "webhook_external", "data_exfiltration"):  # fmt: skip
+		                 "api_key_generated", "webhook_external", "data_exfiltration", "user_impersonated",
+		                 "credentials_reset_by_other", "password_reset_requested"):  # fmt: skip
 			self.assertTrue(any(p.get("event_category") == category for p in security), category)
 
 	def test_sequence_presets_name_known_categories(self):
 		from dodock_wolf.wolf import attack
 
 		seq = [p for p in PRESETS if p["signal_type"] == "sequence"]
-		self.assertEqual(sorted(p["sequence_entity"] for p in seq), ["host", "ip", "user"])
+		self.assertEqual(sorted(p["sequence_entity"] for p in seq), ["host", "ip", "ip", "user"])
 		for p in seq:
 			with self.subTest(p["rule_name"]):
 				for category in sequences.categories(p["first_categories"]) + sequences.categories(p["then_categories"]):
 					self.assertIn(category, attack.CATEGORIES)
+
+	def test_password_reset_presets(self):
+		# one event per address and account: a sequence on the address counts its other accounts,
+		# the site-wide rule needs as many events (min_samples) as accounts or addresses
+		by_name = {p["rule_name"]: p for p in PRESETS}
+		burst = by_name["Password reset burst from one IP"]
+		self.assertEqual((burst["sequence_entity"], burst["first_categories"], burst["then_categories"]),
+		                 ("ip", "password_reset_requested", "password_reset_requested"))  # fmt: skip
+		self.assertEqual(burst["threshold"], 4)
+		spray = by_name["Password resets for many accounts"]
+		self.assertEqual((spray["group_by"], spray["threshold"], spray["min_samples"]), ("site", 10, 10))
 
 	def test_low_is_bad_presets_breach_when_value_drops(self):
 		workers = next(p for p in PRESETS if p.get("metric_name") == "rq_workers")

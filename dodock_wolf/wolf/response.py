@@ -13,7 +13,8 @@ Wolf proposes; a Wolf Manager confirms each action; nothing runs on its own.
   its address would stop nothing. `held_blocks` lists those, for the Response panel to say where to
   block instead.
 - `disable_user`, `logout_sessions`, `revoke_api_keys`: proposed for the users named by the
-  site's own security events, applied on the Wolf site itself; and for a satellite's users that
+  site's own security events (and, for an impersonation, logging out or disabling the
+  impersonator), applied on the Wolf site itself; and for a satellite's users that
   it says exist and are within reach, applied by the satellite. Administrator, Guest and the
   approver are refused, so a click cannot lock everyone out.
 """
@@ -32,7 +33,11 @@ MAX_HOURS = 168
 PROTECTED_USERS = {"administrator", "guest"}
 # categories whose payload `user` is the account at risk or misused (not the one who acted)
 USER_CATEGORIES = {"frappe_failed_login", "new_admin_ip", "admin_login_new_country", "privileged_user", "api_key_generated",
-                   "api_key_new_ip"}
+                   "api_key_new_ip", "user_impersonated", "credentials_reset_by_other"}
+# categories whose payload `by` (who acted) is a suspect too: an impersonator's own sessions
+# are ended, or their account disabled (logging out the impersonated user ends the session
+# opened as them)
+ACTOR_CATEGORIES = {"user_impersonated": ("logout_sessions", "disable_user")}
 MAX_PROPOSALS = 20
 
 
@@ -140,6 +145,10 @@ def suggest(events, block_with="wolf_agent", wazuh=False):
 			for action in USER_ACTIONS:
 				add(action, str(user), ev, f"{ev.get('category')}: {ev.get('title') or user}",
 				    **({"site": ev.get("sender_hostname") or ev.get("site")} if remote else {}))  # fmt: skip
+		actor = payload.get("by")
+		if actor and ev.get("category") in ACTOR_CATEGORIES and not ev.get("agent") and not remote:
+			for action in ACTOR_CATEGORIES[ev["category"]]:
+				add(action, str(actor), ev, f"{ev.get('category')}: {ev.get('title') or actor}")
 	return out
 
 
