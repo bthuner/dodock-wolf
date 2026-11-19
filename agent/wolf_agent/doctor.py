@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from . import pilot
-from .config import PRESS_V1_MESSAGE, press_v1, resolve_auth_log, section
+from .config import PRESS_V1_MESSAGE, press_v1, removed_keys, resolve_auth_log, section
 from .parsers.nginx import parse_line as parse_nginx_line
 from .redis_queue import RedisClient
 from .tailer import JournalTailer
@@ -148,6 +148,8 @@ def _identity(cfg, config_path, euid):
 		out.append(item("agent", OK, f"registered as {cfg['agent_id']} with {cfg['url']}, host {cfg.get('hostname')}"))
 	else:
 		out.append(item("agent", FAIL, "not registered", "sudo wolf-agent register --url https://<wolf-site> --token <token>"))
+	for key, why in removed_keys(cfg):
+		out.append(item("agent", INFO, f"{key} in {config_path} was removed in 0.2 and is ignored: {why}"))
 	try:
 		st = os.stat(config_path)
 	except OSError:
@@ -221,7 +223,7 @@ def _short(path):
 
 def _benches(cfg, benches):
 	if not benches:
-		return [item("benches", WARN, "no bench in the config: only host metrics and the auth log are collected",
+		return [item("benches", WARN, "no bench in the config: only host-wide signals (auth log, listening services) are collected",
 		             "sudo wolf-agent register ... --bench /path/to/bench, or wolf-agent discover")]  # fmt: skip
 	out = []
 	for bench in benches:
@@ -452,7 +454,7 @@ class SetupWatcher:
 
 	In a thread, so a slow check (a Redis or journal timeout) never delays a push. Its result goes
 	once, with the next push, as `setup` (the Wolf site keeps it on the Wolf Agent and shows it on
-	the Monitoring page), plus the host metrics `agent_setup_failed` and `agent_setup_warnings` a
+	the Monitoring page), plus the host-level metrics `agent_setup_failed` and `agent_setup_warnings` a
 	rule can alert on. The daemon's own sources and benches are checked, and the Wolf site is not
 	called: the push itself says whether it answers.
 	"""

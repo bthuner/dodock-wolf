@@ -76,7 +76,7 @@ class TestWazuhParser(unittest.TestCase):
 		with open(alerts, "w") as f:
 			f.write("\n".join(lines()) + "\n")
 		cfg = {"hostname": "wazuh-manager", "benches": [{"name": "b", "path": path, "sites": ["a.example.com"]}],
-		       "auth_log": False, "collect_host_metrics": False, "wazuh": {"alerts_log": alerts}, "suricata": False,
+		       "auth_log": False, "wazuh": {"alerts_log": alerts}, "suricata": False,
 		       "mariadb": False, "processes": False, "exposure": False, "backups": False, "tls": False, "rq": {},
 		       "versions": False, "site_settings": False, "pilot": {"enabled": False}}  # fmt: skip
 		c = collector.Collector(cfg, state_path=os.path.join(tmp.name, "state.json"), from_start=True)
@@ -92,7 +92,7 @@ class TestWazuhParser(unittest.TestCase):
 		tmp = tempfile.TemporaryDirectory()
 		self.addCleanup(tmp.cleanup)
 		alerts = os.path.join(tmp.name, "alerts", "alerts.json")
-		cfg = {"hostname": "wazuh-manager", "benches": [], "auth_log": False, "collect_host_metrics": False, "suricata": False,
+		cfg = {"hostname": "wazuh-manager", "benches": [], "auth_log": False, "suricata": False,
 		       "mariadb": False, "processes": False, "exposure": False, "backups": False, "tls": False, "rq": {},
 		       "versions": False, "site_settings": False, "pilot": {"enabled": False}}  # fmt: skip
 		now = [0.0]

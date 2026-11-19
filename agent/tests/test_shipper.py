@@ -119,7 +119,7 @@ class TestShipper(unittest.TestCase):
 
 	def test_push_format_and_headers(self):
 		self.server.push_interval = 15
-		self.assertTrue(self.shipper.send([{"metric_name": "cpu_usage", "value": 1}], [{"type": "error"}]))
+		self.assertTrue(self.shipper.send([{"metric_name": "queue_length", "value": 1}], [{"type": "error"}]))
 		req = self.server.requests[0]
 		self.assertEqual(req["path"], "/api/method/dodock_wolf.api.ingest.push")
 		self.assertEqual(req["headers"]["X-Wolf-Agent-Id"], "WAG-0001")

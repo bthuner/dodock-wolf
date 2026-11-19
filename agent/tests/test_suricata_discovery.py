@@ -167,7 +167,7 @@ class TestCollector(unittest.TestCase):
 		self.tmp = tempfile.TemporaryDirectory()
 		self.addCleanup(self.tmp.cleanup)
 		self.now = [0.0]
-		self.cfg = {"hostname": "h", "benches": [], "auth_log": False, "collect_host_metrics": False, "wazuh": False,
+		self.cfg = {"hostname": "h", "benches": [], "auth_log": False, "wazuh": False,
 		            "mariadb": False, "processes": False, "exposure": False, "backups": False, "tls": False, "rq": {},
 		            "versions": False, "site_settings": False, "pilot": {"enabled": False}}  # fmt: skip
 

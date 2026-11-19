@@ -268,7 +268,7 @@ class TestPilotCollector(unittest.TestCase):
 			path = make_pilot_bench(tmp)
 			bench = discovery.describe_bench(path, nginx_default=None)
 			bench["pilot_api_url"] = None  # no Admin API in the test: task files are read
-			cfg = {"hostname": "h", "collect_host_metrics": False, "auth_log": False, "benches": [bench],
+			cfg = {"hostname": "h", "auth_log": False, "benches": [bench],
 				"tls": False, "mariadb": False, "processes": False}  # fmt: skip
 			c = Collector(cfg, state_path=os.path.join(tmp, "spool", "tail-state.json"))
 			self.assertTrue(any(s.tailer.path.endswith("worker_default_short_long_0.log") for s in c.sources))

@@ -403,7 +403,7 @@ class TestCli(unittest.TestCase):
 	def write(self, watchdog):
 		cfg = {"url": "http://127.0.0.1:9", "agent_id": "WAG-1", "agent_secret": "s", "hostname": "h",
 			"spool_dir": os.path.join(self.tmp.name, "spool"), "benches": [], "auth_log": False,
-			"collect_host_metrics": False, "watchdog": watchdog}  # fmt: skip
+			"watchdog": watchdog}  # fmt: skip
 		with open(self.config, "w") as f:
 			json.dump(cfg, f)
 

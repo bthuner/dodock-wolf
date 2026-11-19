@@ -196,6 +196,15 @@ class TestDoctor(DoctorCase):
 	def test_no_bench(self):
 		self.assertEqual(self.find(self.run_doctor(benches=[]), "no bench in the config")[0]["status"], doctor.WARN)
 
+	def test_a_v01_host_metrics_key(self):
+		# every v0.1 config holds collect_host_metrics: said, never counted as a problem
+		self.assertEqual(self.find(self.run_doctor(), "collect_host_metrics"), [])
+		checks = self.run_doctor({**self.cfg, "collect_host_metrics": True})
+		found = self.find(checks, "collect_host_metrics")
+		self.assertEqual([(c["area"], c["status"]) for c in found], [("agent", doctor.INFO)])
+		self.assertIn("removed in 0.2", found[0]["title"])
+		self.assertEqual(doctor.exit_code(checks), 0)
+
 	def test_response_and_daemon(self):
 		cfg = {**self.cfg, "response": {"enabled": True, "command": ["sudo", "-n", "/nonexistent/wolf-block", "{ip}", "{seconds}"]}}
 		check = self.find(self.run_doctor(cfg), "is not installed")[0]

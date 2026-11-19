@@ -9,81 +9,16 @@ from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from wolf_agent import cli, metrics  # noqa: E402
+from wolf_agent import cli  # noqa: E402
 from wolf_agent.collector import Collector  # noqa: E402
 
 from test_discovery_config import make_bench  # noqa: E402
 from test_shipper import FakeWolf  # noqa: E402
 
-PROC_STAT_1 = "cpu  100 0 100 800 0 0 0 0 0 0\ncpu0 100 0 100 800 0 0 0 0 0 0\n"
-PROC_STAT_2 = "cpu  150 0 150 900 0 0 0 0 0 0\ncpu0 150 0 150 900 0 0 0 0 0 0\n"
-MEMINFO = "MemTotal: 1000 kB\nMemFree: 100 kB\nMemAvailable: 250 kB\nSwapTotal: 200 kB\nSwapFree: 150 kB\n"
-MOUNTS = (
-	"/dev/sda1 / ext4 rw 0 0\n"
-	"proc /proc proc rw 0 0\n"
-	"tmpfs /run tmpfs rw 0 0\n"
-	"/dev/sda1 /home ext4 rw 0 0\n"
-	"overlay /var/lib/docker/overlay2/x/merged overlay rw 0 0\n"
-	"/dev/sdb1 /devdata xfs rw 0 0\n"
-)
-
-
 def write(path, text, mode="w"):
 	os.makedirs(os.path.dirname(path), exist_ok=True)
 	with open(path, mode) as f:
 		f.write(text)
-
-
-class TestHostMetrics(unittest.TestCase):
-	def setUp(self):
-		self.tmp = tempfile.TemporaryDirectory()
-		self.proc = self.tmp.name
-		write(os.path.join(self.proc, "stat"), PROC_STAT_1)
-		write(os.path.join(self.proc, "meminfo"), MEMINFO)
-		write(os.path.join(self.proc, "loadavg"), "1.50 1.00 0.50 2/300 4242\n")
-		write(os.path.join(self.proc, "mounts"), MOUNTS)
-
-	def tearDown(self):
-		self.tmp.cleanup()
-
-	def test_pure_helpers(self):
-		self.assertEqual(metrics.read_cpu_times(self.proc), (800, 1000))
-		self.assertEqual(metrics.cpu_usage((800, 1000), (900, 1200)), 50.0)
-		self.assertEqual(metrics.cpu_usage((1, 1), (1, 1)), 0.0)
-		mem = metrics.memory_percentages(metrics.read_meminfo(self.proc))
-		self.assertEqual(mem, {"memory_used_percent": 75.0, "swap_used_percent": 25.0})
-		self.assertEqual(metrics.memory_percentages({"MemTotal": 100, "MemFree": 10, "Buffers": 10, "Cached": 30}), {"memory_used_percent": 50.0})
-		self.assertEqual(metrics.real_mounts(self.proc), ["/", "/devdata"])
-
-	def test_bind_mounted_files_are_skipped(self):
-		bind_file = os.path.join(self.tmp.name, "resolv.conf")
-		bind_dir = os.path.join(self.tmp.name, "data")
-		write(bind_file, "nameserver 127.0.0.11\n")
-		os.makedirs(bind_dir)
-		write(
-			os.path.join(self.proc, "mounts"),
-			f"overlay / overlay rw 0 0\n/dev/nvme0n1p3 {bind_file} ext4 rw 0 0\n/dev/nvme0n1p3 {bind_dir} ext4 rw 0 0\n",
-		)
-		self.assertEqual(metrics.real_mounts(self.proc), [bind_dir])
-
-	def test_collect(self):
-		hm = metrics.HostMetrics("h1", proc=self.proc)
-		with mock.patch.object(metrics, "disk_used_percent", return_value=42.0), mock.patch.object(metrics.time, "sleep"):
-			first = {m["metric_name"]: m for m in hm.collect()}
-			write(os.path.join(self.proc, "stat"), PROC_STAT_2)
-			second = hm.collect()
-		self.assertEqual(first["cpu_usage"]["value"], 0.0)  # identical samples
-		self.assertEqual(first["load_1m"]["value"], 1.5)
-		self.assertIn("load_per_core", first)
-		cpu = next(m for m in second if m["metric_name"] == "cpu_usage")
-		self.assertEqual(cpu["value"], 50.0)
-		disks = [m for m in second if m["metric_name"] == "disk_used_percent"]
-		self.assertEqual([d["labels"]["mount"] for d in disks], ["/", "/devdata"])
-		self.assertEqual(cpu["host"], "h1")
-
-	def test_real_statvfs(self):
-		value = metrics.disk_used_percent("/")
-		self.assertTrue(0 <= value <= 100)
 
 
 TRACEBACK = (
@@ -122,7 +57,6 @@ class TestCollectorEndToEnd(unittest.TestCase):
 			# looks like an exposed gunicorn): not what is tested here, see test_exposure.py
 			"exposure": {"enabled": False},
 			"auth_log": self.auth,
-			"collect_host_metrics": False,
 			"tls": False,
 			"mariadb": False,
 			"processes": False,
@@ -208,7 +142,6 @@ class TestCli(unittest.TestCase):
 
 		# check: no network, prints a payload
 		cfg["auth_log"] = False
-		cfg["collect_host_metrics"] = False
 		with open(self.config, "w") as f:
 			json.dump(cfg, f)
 		before = len(self.server.requests)
@@ -242,7 +175,6 @@ class TestCli(unittest.TestCase):
 		cfg = {
 			"url": self.server.url, "agent_id": "WAG-1", "agent_secret": "s", "hostname": "h",
 			"spool_dir": os.path.join(self.tmp.name, "spool"), "benches": [], "auth_log": False,
-			"collect_host_metrics": False,
 		}
 		os.makedirs(os.path.dirname(self.config), exist_ok=True)
 		with open(self.config, "w") as f:
@@ -275,7 +207,7 @@ class TestCli(unittest.TestCase):
 		with open(self.config) as f:
 			cfg = json.load(f)
 		self.assertNotIn("platform", cfg)
-		cfg.update(auth_log=False, collect_host_metrics=False)
+		cfg.update(auth_log=False)
 		with open(self.config, "w") as f:
 			json.dump(cfg, f)
 
@@ -294,11 +226,49 @@ class TestCli(unittest.TestCase):
 		self.assertIn("removed in 0.2: ignored", err)
 		self.assertEqual(len(self.server.requests), before)
 
+	def test_the_v01_host_metrics_key_is_ignored(self):
+		# v0.1 wrote collect_host_metrics into every config: accepted, warned about, collects nothing
+		code, _, err = self.run_cli_err("register", "--url", self.server.url, "--token", "tok", "--bench", self.bench)
+		self.assertEqual(code, 0)
+		with open(self.config) as f:
+			cfg = json.load(f)
+		self.assertNotIn("collect_host_metrics", cfg)  # a config written by 0.2 does not carry it
+		cfg.update(auth_log=False, collect_host_metrics=True)
+		with open(self.config, "w") as f:
+			json.dump(cfg, f)
+
+		code, out, err = self.run_cli_err("check")
+		self.assertEqual(code, 0)
+		self.assertEqual(err.count("the config key collect_host_metrics"), 1)
+		self.assertIn("was removed in 0.2: ignored", err)
+		names = {m["metric_name"] for m in json.loads(out)["metrics"]}
+		self.assertFalse(names & {"cpu_usage", "memory_used_percent", "swap_used_percent", "disk_used_percent",
+		                          "load_1m", "load_5m", "load_15m", "load_per_core"}, names)  # fmt: skip
+
+		code, _, err = self.run_cli_err("register", "--url", self.server.url, "--token", "tok", "--bench", self.bench)
+		self.assertEqual(code, 0)
+		with open(self.config) as f:
+			self.assertNotIn("collect_host_metrics", json.load(f))  # re-registering drops it
+
+	def test_run_logs_the_v01_host_metrics_key(self):
+		cfg = {
+			"url": self.server.url, "agent_id": "WAG-1", "agent_secret": "s", "hostname": "h",
+			"spool_dir": os.path.join(self.tmp.name, "spool"), "benches": [], "auth_log": False,
+			"collect_host_metrics": False,
+		}
+		os.makedirs(os.path.dirname(self.config), exist_ok=True)
+		with open(self.config, "w") as f:
+			json.dump(cfg, f)
+		self.server.status = 401  # stops the loop after its first push
+		with mock.patch.object(cli.signal, "signal"), self.assertLogs("wolf_agent", "WARNING") as logs:
+			self.run_cli("run")
+		self.assertEqual(sum("collect_host_metrics was removed in 0.2: ignored" in line for line in logs.output), 1)
+
 	def test_run_warns_on_a_press_v1_config(self):
 		cfg = {
 			"url": self.server.url, "agent_id": "WAG-1", "agent_secret": "s", "hostname": "h",
 			"spool_dir": os.path.join(self.tmp.name, "spool"), "benches": [], "auth_log": False,
-			"collect_host_metrics": False, "platform": "press", "press": {"proxy_ip": "10.0.0.3"},
+			"platform": "press", "press": {"proxy_ip": "10.0.0.3"},
 		}
 		os.makedirs(os.path.dirname(self.config), exist_ok=True)
 		with open(self.config, "w") as f:

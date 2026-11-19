@@ -14,7 +14,7 @@ import threading
 
 from . import __version__
 from .collector import Collector
-from .config import DEFAULTS, PRESS_V1_MESSAGE, config_path, load_config, press_v1, save_config, section
+from .config import DEFAULTS, PRESS_V1_MESSAGE, config_path, load_config, press_v1, removed_keys, save_config, section
 from .discovery import discover_benches
 from .fallback import FallbackError
 from .responder import Responder
@@ -52,6 +52,15 @@ def _removed(what):
 	print(f"wolf-agent: {what} was removed in 0.2: ignored", file=sys.stderr)
 
 
+def _warn_removed_keys(cfg, daemon=False):
+	"""A v0.1 config key 0.2 no longer reads: said once per command, in the daemon's log for `run`."""
+	for key, why in removed_keys(cfg):
+		if daemon:
+			log.warning("the config key %s was removed in 0.2: ignored (%s)", key, why)
+		else:
+			_removed(f"the config key {key} ({why})")
+
+
 def _drop_platform(args):
 	if getattr(args, "platform", None) is not None:
 		_removed("--platform")
@@ -78,7 +87,9 @@ def cmd_register(args):
 	cfg["hostname"] = args.hostname or cfg.get("hostname") or socket.getfqdn() or socket.gethostname()
 	cfg["benches"] = _discover(args)
 	if not cfg["benches"]:
-		log.warning("no bench found; only host metrics and auth logs will be collected")
+		log.warning("no bench found; only host-wide signals (auth log, listening services) will be collected")
+	for key, _why in removed_keys(cfg):
+		cfg.pop(key)  # a v0.1 key: the config written now no longer carries it
 
 	try:
 		resp = register(cfg["url"], args.token, cfg["hostname"], cfg["benches"], _os_name(), cfg["verify_tls"])
@@ -121,6 +132,7 @@ def cmd_check(args):
 	cfg = _load(args)[1] if os.path.exists(path) else _ephemeral_config(args)
 	if args.bench:
 		cfg["benches"] = _discover(args)
+	_warn_removed_keys(cfg)
 	collector = Collector(cfg, state_path=None, from_start=args.from_start, sync_checks=True)
 	metrics, events = collector.collect()
 	collector.close()
@@ -211,6 +223,7 @@ def cmd_run(args):
 	_, cfg = _load(args)
 	if press_v1(cfg):
 		log.warning(PRESS_V1_MESSAGE)
+	_warn_removed_keys(cfg, daemon=True)
 	if not (cfg.get("url") and cfg.get("agent_id") and cfg.get("agent_secret")):
 		sys.exit("config is missing url/agent_id/agent_secret; run `wolf-agent register`")
 	state_path = os.path.join(cfg["spool_dir"], "tail-state.json")
