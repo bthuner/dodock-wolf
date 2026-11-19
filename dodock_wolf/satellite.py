@@ -16,6 +16,10 @@ from dodock_wolf import __version__
 from dodock_wolf.wolf import events, forwarding
 
 MANAGER_ROLES = ("System Manager", "Wolf Manager")
+# what this site did with each response action it was handed, kept past the central site's 24 h: a
+# lost report makes the central site hand the action again, and this site answers without redoing it
+_DONE_KEY = "wolf_central_action_done:"
+DONE_SECONDS = 25 * 3600
 
 
 def is_satellite():
@@ -58,12 +62,28 @@ def enqueue(data, dedupe_minutes=None):
 			"timestamp": data["timestamp"],
 			"last_seen": data.get("last_seen") or data["timestamp"],
 			"count": data.get("count") or 1,
-			"event": json.dumps(forwarding.protocol_event(data, events.system_tz()), default=str),
+			"event": json.dumps(_with_user_hints(forwarding.protocol_event(data, events.system_tz())), default=str),
 		}
 	)
 	doc.flags.ignore_permissions = True
 	doc.insert()
 	return doc.name
+
+
+def _with_user_hints(event):
+	"""A security event naming a user says whether that user exists here and is out of reach of the
+	central site (Administrator, Guest, a System Manager): the central site proposes only the user
+	actions this site can apply (wolf/response.suggest)."""
+	payload = event.get("payload")
+	user = payload.get("user") if event.get("type") == "security" and isinstance(payload, dict) else None
+	if user:
+		from dodock_wolf.wolf import response
+
+		known = bool(frappe.db.exists("User", str(user)))
+		payload["user_known"] = known
+		payload["user_protected"] = str(user).strip().lower() in response.PROTECTED_USERS or (
+			known and "System Manager" in frappe.get_roles(str(user)))  # fmt: skip
+	return event
 
 
 def flush(force=False):
@@ -116,10 +136,12 @@ def flush(force=False):
 
 	results = apply_actions(getattr(frappe.local, "wolf_central_actions", None) or [], settings)
 	if results:
-		# reported at once; if that fails, the central site hands them again and they run again (each is
-		# idempotent: a disabled user stays disabled)
+		# reported at once; if that fails, the central site hands them again and this site sends back
+		# what it remembers doing (apply_actions): an action is never applied twice
 		frappe.db.commit()
-		_post(settings, secret, forwarding.push_body([], host, __version__, action_results=results))
+		outcome, detail = _post(settings, secret, forwarding.push_body([], host, __version__, action_results=results))
+		if outcome != "ok":
+			notes.append(f"response action results not reported yet: {detail}")
 	_record(
 		status="ok" if not notes else "ok with rejections",
 		error="\n".join(notes)[:1000] or None,
@@ -168,28 +190,38 @@ def apply_actions(actions, settings=None):
 
 	settings = settings or frappe.get_single("Wolf Settings")
 	allowed = cint(settings.get("accept_response_actions"))
+	# acting on accounts on the word of an answer: only from a central site this site can authenticate
+	trusted = str(settings.get("central_url") or "").lower().startswith("https://") and cint(settings.get("verify_tls"))
 	results = []
 	for item in actions[:100]:
 		if not isinstance(item, dict) or not isinstance(item.get("id"), str) or item.get("action") not in response.USER_ACTIONS:
 			continue  # a block is for a Wolf Agent, not for a site
+		done = frappe.cache.get_value(_DONE_KEY + item["id"], expires=True, use_local_cache=False)
+		if done:
+			results.append(done)  # handed again because its report was lost: say it again, never redo it
+			continue
 		user = str(item.get("user") or "").strip()
 		refused = (
 			"this site does not apply response actions from the central site (Wolf Settings)" if not allowed
+			else "the central site is not reached over verified HTTPS: this site does not act on its answers" if not trusted
 			else response.check(item["action"], user)
 			or (f"{user} does not exist on this site" if not frappe.db.exists("User", user) else None)
 			or (f"{user} is a System Manager on this site: act on it there" if "System Manager" in frappe.get_roles(user) else None)
 		)  # fmt: skip
 		if refused:
-			results.append({"id": item["id"], "ok": False, "detail": refused})
-			continue
-		try:
-			detail = response_api._apply_user_action(item["action"], user)
-			results.append({"id": item["id"], "ok": True, "detail": detail})
-		except Exception as e:
-			results.append({"id": item["id"], "ok": False, "detail": str(e)[:500]})
-			continue
-		journal.capture("response_action", "User", user, {"action": item["action"], "central_action": item["id"]},
-		                f"{item['action']} on {user}, approved on the central site ({item['id']})")  # fmt: skip
+			result = {"id": item["id"], "ok": False, "detail": refused}
+		else:
+			frappe.db.savepoint("wolf_central_action")  # one failing action (Postgres) must not abort the rest
+			try:
+				result = {"id": item["id"], "ok": True, "detail": response_api._apply_user_action(item["action"], user)}
+				journal.capture("response_action", "User", user, {"action": item["action"], "central_action": item["id"]},
+				                f"{item['action']} on {user}, approved on the central site ({item['id']})")  # fmt: skip
+				frappe.db.release_savepoint("wolf_central_action")
+			except Exception as e:
+				frappe.db.rollback(save_point="wolf_central_action")
+				result = {"id": item["id"], "ok": False, "detail": str(e)[:500]}
+		frappe.cache.set_value(_DONE_KEY + item["id"], result, expires_in_sec=DONE_SECONDS)
+		results.append(result)
 	return results
 
 

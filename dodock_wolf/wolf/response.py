@@ -13,7 +13,8 @@ Wolf proposes; a Wolf Manager confirms each action; nothing runs on its own.
   its address would stop nothing. `held_blocks` lists those, for the Response panel to say where to
   block instead.
 - `disable_user`, `logout_sessions`, `revoke_api_keys`: proposed for the users named by the
-  site's own security events, applied on the Wolf site itself. Administrator, Guest and the
+  site's own security events, applied on the Wolf site itself; and for a satellite's users that
+  it says exist and are within reach, applied by the satellite. Administrator, Guest and the
   approver are refused, so a click cannot lock everyone out.
 """
 
@@ -129,10 +130,16 @@ def suggest(events, block_with="wolf_agent", wazuh=False):
 			add("block_ip", str(ip), ev, f"{ev.get('category')}: {ev.get('title') or ip}", host=ev["block_host"],
 			    agent=ev.get("block_agent") if "wolf_agent" in who else None, executors=who)  # fmt: skip
 		user = payload.get("user")
-		# a user of the Wolf site (no sender), or of a satellite: that site applies it at its next push
-		if user and ev.get("category") in USER_CATEGORIES and (not ev.get("agent") or ev.get("sender_kind") == "satellite"):
+		# a user of the Wolf site (no sender), or of a satellite: that site applies it at its next push,
+		# so only one it said exists there and is within reach (satellite._with_user_hints); the site in
+		# the label is the satellite's own registration, not what its event claims
+		remote = ev.get("sender_kind") == "satellite"
+		if remote and (payload.get("user_known") is not True or payload.get("user_protected")):
+			user = None
+		if user and ev.get("category") in USER_CATEGORIES and (not ev.get("agent") or remote):
 			for action in USER_ACTIONS:
-				add(action, str(user), ev, f"{ev.get('category')}: {ev.get('title') or user}")
+				add(action, str(user), ev, f"{ev.get('category')}: {ev.get('title') or user}",
+				    **({"site": ev.get("sender_hostname") or ev.get("site")} if remote else {}))  # fmt: skip
 	return out
 
 

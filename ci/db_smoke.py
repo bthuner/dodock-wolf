@@ -2976,10 +2976,14 @@ def main():
 		return f"{block['name']} blocked then expired, {disabled['name']} {disabled['result']}, refusals ok"
 
 	def satellite_response():
-		"""A user of a satellite: proposed and approved on the central site, applied by the satellite."""
+		"""A user of a satellite: proposed and approved on the central site, applied by the satellite
+		through its real push loop (satellite.flush), with requests routed to this site's ingest."""
+		from unittest import mock
+
 		from dodock_wolf import satellite
 		from dodock_wolf.api import ingest as ingest_api
 		from dodock_wolf.api import response as response_api
+		from dodock_wolf.wolf import forwarding
 
 		sat_site = "sat-response.localhost"
 		sat = frappe.get_doc({"doctype": "Wolf Agent", "hostname": sat_site, "status": "Active", "kind": "satellite"}).insert(ignore_permissions=True).name
@@ -2989,45 +2993,70 @@ def main():
 		                        "send_welcome_email": 0, "roles": [{"role": "System Manager"}]}).insert(ignore_permissions=True).name  # fmt: skip
 		inc = frappe.get_doc({"doctype": "Wolf Incident", "title": "smoke satellite response", "severity": "critical",
 		                      "site": sat_site}).insert(ignore_permissions=True)  # fmt: skip
-		for who in (user, admin):
-			data = {"type": "security", "category": "api_key_new_ip", "site": sat_site, "payload": {"user": who, "ip": "45.33.32.157"}}
+		# what the satellite says of each user it forwards (here both sites are this one)
+		for who, known, protected in ((user, True, False), (admin, True, True), ("nobody-here@example.com", False, False)):
+			ev = satellite._with_user_hints({"type": "security", "payload": {"user": who}})
+			assert (ev["payload"]["user_known"], ev["payload"]["user_protected"]) == (known, protected), (who, ev)
+			data = {"type": "security", "category": "api_key_new_ip", "site": "claimed.example.com", "payload": ev["payload"]}
 			name = events.insert_event(schema.normalize_event(data, tz, now_datetime()), agent=sat)
 			frappe.db.set_value("Wolf Event", name, "incident", inc.name)
 		proposals = {(p["action"], p["target"]): p for p in response_api.get_response(inc.name)["proposals"]}
 		p = proposals.get(("disable_user", user))
-		assert p and p["agent"] == sat and sat_site in p["label"], proposals  # named with its site
+		assert p and p["agent"] == sat and sat_site in p["label"], proposals  # named with its registration, not the event's claim
+		assert not any(t in (admin, "nobody-here@example.com") for _a, t in proposals), proposals  # out of reach there
 
 		approved = response_api.approve(inc.name, "disable_user", user, agent=sat)
 		assert approved["status"] == "Approved" and approved["agent"] == sat, approved
 		assert frappe.db.get_value("User", user, "enabled"), "applied on the central site"
-		for_admin = response_api.approve(inc.name, "disable_user", admin, agent=sat)  # checked there, not here
-		res = ingest_api.accept(sat, {"hostname": sat_site, "metrics": [], "events": []})
-		handed = {a["user"]: a for a in res["actions"]}
-		assert set(handed) == {user, admin} and handed[user]["action"] == "disable_user", res["actions"]
 
-		# the satellite: refused while its setting is off, then applied; never on a System Manager
-		frappe.db.set_single_value("Wolf Settings", "accept_response_actions", 0)
-		results = satellite.apply_actions(res["actions"])
-		assert all(not r["ok"] for r in results) and frappe.db.get_value("User", user, "enabled"), results
-		frappe.db.set_single_value("Wolf Settings", "accept_response_actions", 1)
+		settings_before = frappe.db.get_value("Wolf Settings", None, ["mode", "central_url", "verify_tls", "satellite_id",
+		                                                               "accept_response_actions"], as_dict=True)  # fmt: skip
 		try:
-			results = {r["id"]: r for r in satellite.apply_actions(res["actions"])}
-		finally:
-			frappe.db.set_single_value("Wolf Settings", "accept_response_actions", 0)
-		assert results[approved["name"]]["ok"] and not frappe.db.get_value("User", user, "enabled"), results
-		assert not results[for_admin["name"]]["ok"] and "System Manager" in results[for_admin["name"]]["detail"], results
-		assert frappe.db.get_value("User", admin, "enabled")
+			# crafted or refused: never acted on, each said once
+			frappe.db.set_single_value("Wolf Settings", {"accept_response_actions": 1, "central_url": "http://central.example", "verify_tls": 1})
+			crafted = ["x", {"id": 3}, {"id": "WRA-X1", "action": "block_ip", "ip": "1.2.3.4"},
+			           {"id": "WRA-X2", "action": "disable_user", "user": " ADMINISTRATOR "},
+			           {"id": "WRA-X3", "action": "disable_user", "user": admin}]  # fmt: skip
+			assert [r["id"] for r in satellite.apply_actions(crafted)] == ["WRA-X2", "WRA-X3"]
+			assert all(not r["ok"] and "HTTPS" in r["detail"] for r in satellite.apply_actions(
+				[{"id": "WRA-X4", "action": "disable_user", "user": user}]))  # plain HTTP: no action on its word
+			frappe.db.set_single_value("Wolf Settings", "central_url", "https://central.example")
+			refused = satellite.apply_actions([{"id": "WRA-X5", "action": "disable_user", "user": admin}])
+			assert not refused[0]["ok"] and "System Manager" in refused[0]["detail"] and frappe.db.get_value("User", admin, "enabled")
 
-		res = ingest_api.accept(sat, {"hostname": sat_site, "metrics": [], "events": [], "action_results": list(results.values())})
-		assert res["actions"] == [], res["actions"]  # reported: not handed out again
-		assert frappe.db.get_value("Wolf Response Action", approved["name"], "status") == "Applied"
-		assert frappe.db.get_value("Wolf Response Action", for_admin["name"], "status") == "Failed"
+			# the real loop: this site as a satellite of itself, its pushes routed to the central ingest
+			secret = frappe.generate_hash(length=32)
+			frappe.db.set_single_value("Wolf Settings", {"mode": "satellite", "satellite_id": sat, "forward_retry_at": None})
+			frappe.utils.password.set_encrypted_password("Wolf Settings", "Wolf Settings", secret, "satellite_secret")
+			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+			bodies = []
+
+			def central(url, json=None, **kwargs):  # noqa: A002 (requests' own keyword)
+				assert url.endswith(forwarding.PUSH_METHOD) and kwargs["headers"]["X-Wolf-Agent-Id"] == sat
+				bodies.append(json)
+				return mock.Mock(status_code=200, json=lambda: {"message": ingest_api.accept(sat, json)}, text="")
+
+			with mock.patch.object(satellite.requests, "post", side_effect=central):
+				satellite.flush(force=True)
+			assert not frappe.db.get_value("User", user, "enabled"), "not applied by the satellite"
+			assert any(b.get("action_results") for b in bodies), bodies  # reported in a follow-up push
+			assert frappe.db.get_value("Wolf Response Action", approved["name"], "status") == "Applied"
+			# handed again (a lost report): answered from memory, never redone
+			frappe.db.set_value("User", user, "enabled", 1)
+			again = satellite.apply_actions([{"id": approved["name"], "action": "disable_user", "user": user}])
+			assert again[0]["ok"] and frappe.db.get_value("User", user, "enabled"), again
+		finally:
+			frappe.db.set_single_value("Wolf Settings", {k: v for k, v in settings_before.items()})
+			frappe.db.set_single_value("Wolf Settings", "forward_retry_at", None)
+			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+			frappe.db.set_value("User", admin, "enabled", 0)  # leave no spare System Manager behind
+			frappe.db.set_value("Wolf Agent", sat, "status", "Disabled")
 
 		# one the satellite never takes expires after a day
 		left = response_api.approve(inc.name, "revoke_api_keys", user, agent=sat)
 		assert left["name"] in response_api.expire_actions(now_datetime() + timedelta(hours=25))
 		assert frappe.db.get_value("Wolf Response Action", left["name"], "status") == "Expired"
-		return f"{approved['name']} applied by the satellite, a System Manager refused there, {left['name']} expired untaken"
+		return f"{approved['name']} applied through the satellite's push loop, refusals and repeats ok, {left['name']} expired untaken"
 
 	def response_links():
 		"""Signed links to proposed response actions: in the alert, confirmed only by a logged-in manager."""

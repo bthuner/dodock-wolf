@@ -4,7 +4,8 @@
   actions already taken (Wolf Response Action rows).
 - `approve(...)` (POST, Wolf Manager / System Manager): the confirmation. It records a Wolf
   Response Action per executor and a comment on the incident. User actions apply at once on
-  this site. A `block_ip` for the Wolf Agent waits for its next push (`pending_for_agent`),
+  this site; on a satellite's user, the satellite takes it with the answer to its next push
+  (`pending_for_agent`), applies it and reports back (satellite.apply_actions, `record_results`). A `block_ip` for the Wolf Agent waits for its next push (`pending_for_agent`),
   which applies it on its host and reports back (`record_results`); agents only act when their
   own config allows it (`response.enabled`, off by default). One for Wazuh runs at once through
   the manager's API (api/wazuh_ar.py).
@@ -60,6 +61,7 @@ def _events(incident):
 		# (response.attacked_host); and the Wolf Agent running there
 		sender = senders.get(r.agent) or frappe._dict()
 		r["sender_kind"] = sender.kind or ("agent" if r.agent else None)  # a satellite applies user actions itself
+		r["sender_hostname"] = sender.hostname  # a satellite registers under its site's name
 		r["block_host"] = aliases.host(response.attacked_host(r, sender.kind or ("agent" if r.agent else None), sender.hostname))
 		r["block_agent"] = agents.get(r["block_host"])
 		r["block_proxy"] = proxies.get(r["block_host"])
@@ -316,7 +318,7 @@ def record_results(agent, results):
 	for item in results or []:
 		if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not item["id"]:
 			continue  # a string id only: anything else would act as a filter
-		row = frappe.db.get_value("Wolf Response Action", item["id"], ["agent", "status", "incident"], as_dict=True)
+		row = frappe.db.get_value("Wolf Response Action", item["id"], ["agent", "status", "incident", "action"], as_dict=True)
 		if not row or row.agent != agent or row.status != "Approved":
 			continue  # only the agent it was given to, once
 		ok = bool(item.get("ok"))
@@ -330,8 +332,9 @@ def record_results(agent, results):
 		                {"status": "Applied" if ok else "Failed", "result": detail, "agent": agent},
 		                f"{item['id']} reported by {agent}: {'applied' if ok else 'failed'}")  # fmt: skip
 		if row.incident:
+			where = "on the host" if row.action == "block_ip" else "on the site"  # a satellite's user
 			frappe.get_doc("Wolf Incident", row.incident).add_comment(
-				"Comment", f"Response action {item['id']} {'applied' if ok else 'failed'} on the host: {detail}"
+				"Comment", f"Response action {item['id']} {'applied' if ok else 'failed'} {where}: {detail}"
 			)
 
 

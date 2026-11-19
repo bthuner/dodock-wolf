@@ -108,7 +108,12 @@ class TestSuggest(unittest.TestCase):
 	def test_user_actions_for_a_satellite_s_users(self):
 		# a satellite applies them itself; an agent's event (a host account) never proposes one
 		events = [
-			ev("api_key_new_ip", {"user": "intruder@example.com"}, agent="WAG-SAT", sender_kind="satellite", site="b.example.com"),
+			ev("api_key_new_ip", {"user": "intruder@example.com", "user_known": True}, agent="WAG-SAT", sender_kind="satellite",
+			   site="claimed.example.com", sender_hostname="b.example.com"),  # the label names its registration
+			ev("api_key_new_ip", {"user": "ghost@example.com", "user_known": False}, agent="WAG-SAT", sender_kind="satellite"),
+			ev("new_admin_ip", {"user": "boss@example.com", "user_known": True, "user_protected": True}, agent="WAG-SAT",
+			   sender_kind="satellite"),  # a System Manager there: never proposed from here
+			ev("api_key_new_ip", {"user": "old@example.com"}, agent="WAG-SAT", sender_kind="satellite"),  # an older satellite: no hints
 			ev("api_key_new_ip", {"user": "intruder@example.com"}, agent=None),  # the same address on the Wolf site
 			ev("frappe_failed_login", {"user": "someone@example.com"}, agent="WAG-1", sender_kind="agent"),
 		]

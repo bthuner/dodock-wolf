@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Dodock Wolf VERSION\n"
 "Report-Msgid-Bugs-To: https://github.com/bthuner/dodock-wolf/issues\n"
-"POT-Creation-Date: 2026-11-19 10:18+0000\n"
-"PO-Revision-Date: 2026-11-19 10:18+0000\n"
+"POT-Creation-Date: 2026-11-19 10:26+0000\n"
+"PO-Revision-Date: 2026-11-19 10:26+0000\n"
 "Last-Translator: Dodock Wolf contributors\n"
 "Language-Team: Dodock Wolf contributors\n"
 "MIME-Version: 1.0\n"
@@ -727,6 +727,10 @@ msgstr ""
 msgid "Approved, waiting for the agent"
 msgstr ""
 
+#: frontend/src/components/ResponsePanel.vue:27
+msgid "Approved, waiting for the site"
+msgstr ""
+
 #. Description of the 'Status' (Select) field in DocType 'Wolf Response Action'
 #: dodock_wolf/dodock_wolf/doctype/wolf_response_action/wolf_response_action.json:55
 msgid "Approved: a Wolf Manager confirmed it; block_ip then waits for the agent's next push. Applied / Failed: the result. Expired: the block's time is over."
@@ -922,17 +926,17 @@ msgstr ""
 msgid "Block With"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:190
+#: dodock_wolf/wolf/response.py:197
 #, python-brace-format
 msgid "Block {0} for {1} h on {2}"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:187
+#: dodock_wolf/wolf/response.py:194
 #, python-brace-format
 msgid "Block {0} for {1} h on {2} with Wazuh"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:189
+#: dodock_wolf/wolf/response.py:196
 #, python-brace-format
 msgid "Block {0} for {1} h on {2} with the Wolf Agent, and for {3} h with Wazuh"
 msgstr ""
@@ -1186,7 +1190,7 @@ msgstr ""
 msgid "Confirm"
 msgstr ""
 
-#: dodock_wolf/api/actions.py:127
+#: dodock_wolf/api/actions.py:129
 #, python-brace-format
 msgid "Confirm: {0}"
 msgstr ""
@@ -1244,7 +1248,7 @@ msgstr ""
 msgid "Correlation"
 msgstr ""
 
-#: dodock_wolf/satellite.py:238
+#: dodock_wolf/satellite.py:270
 #, python-brace-format
 msgid "Could not reach {0}: {1}"
 msgstr ""
@@ -1484,12 +1488,12 @@ msgstr ""
 msgid "Digest"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:192
+#: dodock_wolf/wolf/response.py:199
 #, python-brace-format
 msgid "Disable user {0}"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:192
+#: dodock_wolf/wolf/response.py:199
 #, python-brace-format
 msgid "Disable user {0} on {1}"
 msgstr ""
@@ -2947,7 +2951,7 @@ msgstr ""
 msgid "Lockout after failed logins"
 msgstr ""
 
-#: dodock_wolf/api/actions.py:122
+#: dodock_wolf/api/actions.py:124
 msgid "Log in to confirm"
 msgstr ""
 
@@ -2955,12 +2959,12 @@ msgstr ""
 msgid "Log out"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:194
+#: dodock_wolf/wolf/response.py:201
 #, python-brace-format
 msgid "Log out every session of {0}"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:194
+#: dodock_wolf/wolf/response.py:201
 #, python-brace-format
 msgid "Log out every session of {0} on {1}"
 msgstr ""
@@ -3444,7 +3448,7 @@ msgid "Not live: refresh by hand"
 msgstr ""
 
 #: dodock_wolf/api/compliance.py:97 dodock_wolf/api/compliance.py:105
-#: dodock_wolf/api/response.py:36
+#: dodock_wolf/api/response.py:37
 msgid "Not permitted"
 msgstr ""
 
@@ -3482,7 +3486,7 @@ msgstr ""
 msgid "Nothing to do: the incident is already {0}."
 msgstr ""
 
-#: dodock_wolf/api/actions.py:117
+#: dodock_wolf/api/actions.py:119
 #, python-brace-format
 msgid "Nothing to do: {0} is already {1} (approved by {2})."
 msgstr ""
@@ -3608,7 +3612,7 @@ msgstr ""
 msgid "One role per line."
 msgstr ""
 
-#: dodock_wolf/api/response.py:211
+#: dodock_wolf/api/response.py:213
 msgid "Only a Wolf Manager can approve a response action."
 msgstr ""
 
@@ -3616,11 +3620,11 @@ msgstr ""
 msgid "Only a Wolf Manager can approve these."
 msgstr ""
 
-#: dodock_wolf/api/actions.py:121
+#: dodock_wolf/api/actions.py:123
 msgid "Only a Wolf Manager can confirm a response action."
 msgstr ""
 
-#: dodock_wolf/api/actions.py:124
+#: dodock_wolf/api/actions.py:126
 msgid "Only a Wolf Manager or System Manager can confirm a response action."
 msgstr ""
 
@@ -4160,7 +4164,7 @@ msgstr ""
 msgid "Register with central site"
 msgstr ""
 
-#: dodock_wolf/satellite.py:280
+#: dodock_wolf/satellite.py:312
 msgid "Register with the central site first"
 msgstr ""
 
@@ -4353,12 +4357,12 @@ msgstr ""
 msgid "Retention"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:196
+#: dodock_wolf/wolf/response.py:203
 #, python-brace-format
 msgid "Revoke the API keys of {0}"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:196
+#: dodock_wolf/wolf/response.py:203
 #, python-brace-format
 msgid "Revoke the API keys of {0} on {1}"
 msgstr ""
@@ -5228,12 +5232,12 @@ msgstr ""
 msgid "The agent's own `wolf-agent doctor` run, every hour: what this host gives it and what to fix."
 msgstr ""
 
-#: dodock_wolf/satellite.py:241
+#: dodock_wolf/satellite.py:273
 #, python-brace-format
 msgid "The central site refused the registration (HTTP {0}): {1}"
 msgstr ""
 
-#: dodock_wolf/satellite.py:229
+#: dodock_wolf/satellite.py:261
 msgid "The central site's registration token is required"
 msgstr ""
 
@@ -5409,7 +5413,7 @@ msgstr ""
 msgid "This site is a satellite: it forwards its telemetry to a central Wolf site, which opens and keeps the incidents. Look for {0} there."
 msgstr ""
 
-#: dodock_wolf/satellite.py:277
+#: dodock_wolf/satellite.py:309
 msgid "This site is not in satellite mode"
 msgstr ""
 
@@ -5552,7 +5556,7 @@ msgstr ""
 msgid "UDP may drop or cut messages, and Wolf cannot tell: prefer TCP or TLS."
 msgstr ""
 
-#: dodock_wolf/satellite.py:250
+#: dodock_wolf/satellite.py:282
 #, python-brace-format
 msgid "Unexpected answer from {0}: is Dodock Wolf installed there?"
 msgstr ""
@@ -5633,7 +5637,7 @@ msgstr ""
 msgid "User"
 msgstr ""
 
-#: dodock_wolf/api/response.py:232
+#: dodock_wolf/api/response.py:234
 #, python-brace-format
 msgid "User {0} does not exist on this site."
 msgstr ""
@@ -6060,7 +6064,7 @@ msgstr ""
 msgid "Wolf could read {0}% of the weight"
 msgstr ""
 
-#: dodock_wolf/api/response.py:224
+#: dodock_wolf/api/response.py:226
 msgid "Wolf did not propose this action for this incident (or it was already approved)."
 msgstr ""
 
@@ -6246,13 +6250,17 @@ msgstr ""
 msgid "api"
 msgstr ""
 
-#: dodock_wolf/api/actions.py:139
+#: dodock_wolf/api/actions.py:143
 #, python-brace-format
 msgid "applied: {0}"
 msgstr ""
 
-#: dodock_wolf/api/actions.py:139
+#: dodock_wolf/api/actions.py:142
 msgid "approved: the agent applies it at its next push"
+msgstr ""
+
+#: dodock_wolf/api/actions.py:141
+msgid "approved: the site applies it at its next push"
 msgstr ""
 
 #: dodock_wolf/dodock_wolf/doctype/wolf_incident/wolf_incident.js:83
@@ -6501,7 +6509,7 @@ msgstr ""
 msgid "due within 6 h"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:72
+#: dodock_wolf/wolf/response.py:73
 #, python-brace-format
 msgid "duration must be 1 to {0} hours"
 msgstr ""
@@ -6620,7 +6628,7 @@ msgstr ""
 msgid "failed"
 msgstr ""
 
-#: dodock_wolf/api/actions.py:140
+#: dodock_wolf/api/actions.py:144
 #, python-brace-format
 msgid "failed: {0}"
 msgstr ""
@@ -6746,7 +6754,7 @@ msgstr ""
 msgid "ip: the remote address, public only. user: the same user on the same site. host: the same host under any of its names."
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:183
+#: dodock_wolf/wolf/response.py:190
 msgid "its host"
 msgstr ""
 
@@ -6990,7 +6998,7 @@ msgstr ""
 msgid "no site seen"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:61
+#: dodock_wolf/wolf/response.py:62
 msgid "no target"
 msgstr ""
 
@@ -7467,7 +7475,7 @@ msgstr ""
 msgid "unknown"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:59
+#: dodock_wolf/wolf/response.py:60
 #, python-brace-format
 msgid "unknown action {0}"
 msgstr ""
@@ -7560,7 +7568,7 @@ msgstr ""
 msgid "workers"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:78
+#: dodock_wolf/wolf/response.py:79
 msgid "you cannot apply this to your own account"
 msgstr ""
 
@@ -7777,22 +7785,22 @@ msgstr ""
 msgid "{0} hosts to fix"
 msgstr ""
 
-#: dodock_wolf/api/response.py:229
+#: dodock_wolf/api/response.py:231
 #, python-brace-format
 msgid "{0} is a System Manager: only a System Manager can approve this."
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:67
+#: dodock_wolf/wolf/response.py:68
 #, python-brace-format
 msgid "{0} is a loopback or unspecified address"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:68
+#: dodock_wolf/wolf/response.py:69
 #, python-brace-format
 msgid "{0} is a private or link-local address: block it on your own network instead"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:69
+#: dodock_wolf/wolf/response.py:70
 #, python-brace-format
 msgid "{0} is a reserved or non-global address"
 msgstr ""
@@ -7802,7 +7810,7 @@ msgstr ""
 msgid "{0} is already registered as another kind of Wolf Agent"
 msgstr ""
 
-#: dodock_wolf/wolf/entities.py:123 dodock_wolf/wolf/response.py:66
+#: dodock_wolf/wolf/entities.py:123 dodock_wolf/wolf/response.py:67
 #, python-brace-format
 msgid "{0} is not an IP address"
 msgstr ""
@@ -7817,7 +7825,7 @@ msgstr ""
 msgid "{0} is not meaningful for {1} ({2}): use {3}"
 msgstr ""
 
-#: dodock_wolf/wolf/response.py:76
+#: dodock_wolf/wolf/response.py:77
 #, python-brace-format
 msgid "{0} is protected"
 msgstr ""
