@@ -103,7 +103,7 @@ class TestWatcher(unittest.TestCase):
 
 	@unittest.skipIf(os.geteuid() == 0, "root reads a mode 000 file")
 	def test_unreadable_site_config_is_unknown(self):
-		# Press and Pilot keep site configs 0600 for the bench user: no sample, never a "0 risks"
+		# Pilot keeps site configs 0600 for the bench user: no sample, never a "0 risks"
 		os.chmod(self.site_a, 0)
 		self.addCleanup(os.chmod, self.site_a, 0o600)
 		metrics, _ = exposure.ExposureWatcher("h1", proc_root=self.proc).collect(self.benches, NOW)

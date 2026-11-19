@@ -4,7 +4,6 @@ import json
 import os
 import contextlib
 import io
-import sqlite3
 import sys
 import tempfile
 import time
@@ -15,7 +14,7 @@ from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from wolf_agent import doctor, press  # noqa: E402
+from wolf_agent import doctor  # noqa: E402
 
 COMBINED = '203.0.113.9 - - [29/Oct/2026:02:00:13 +0000] "GET /app HTTP/1.1" 200 12 "-" "Mozilla/5.0"\n'
 
@@ -54,8 +53,7 @@ class DoctorCase(unittest.TestCase):
 		self.benches = [{"name": "main", "path": self.bench, "sites": ["a.example.com"], "platform": "generic",
 		                 "nginx_access_log": self.nginx, "redis_queue": "redis://:s3cret@127.0.0.1:1"}]  # fmt: skip
 		self.cfg = {"url": "https://wolf.example", "agent_id": "WAG-1", "agent_secret": "s", "hostname": "h",
-		            "spool_dir": self.spool, "benches": self.benches, "auth_log": False,
-		            "press": {"agent_dir": os.path.join(root, "no-press")}}  # fmt: skip
+		            "spool_dir": self.spool, "benches": self.benches, "auth_log": False}
 		self.paths = [os.path.join(self.logs, "web.log"), os.path.join(self.logs, "worker.log"), self.nginx]
 
 	def run_doctor(self, cfg=None, paths=None, benches=None, euid=None):
@@ -97,8 +95,8 @@ class TestDoctor(DoctorCase):
 		self.assertEqual(self.find(checks, f"cannot read {self.logs}/web.log")[0]["status"], doctor.FAIL)
 		self.assertEqual(self.find(checks, "site config(s) unreadable")[0]["status"], doctor.WARN)  # generic bench
 		self.assertEqual(doctor.exit_code(checks), 1)
-		press_bench = [{**self.benches[0], "platform": "press"}]
-		checks = self.run_doctor({**self.cfg, "benches": press_bench})
+		pilot_bench = [{**self.benches[0], "platform": "pilot"}]
+		checks = self.run_doctor({**self.cfg, "benches": pilot_bench})
 		self.assertEqual(self.find(checks, "site config(s) unreadable")[0]["status"], doctor.INFO)  # 0600 by design
 
 	@unittest.skipIf(os.geteuid() == 0, "root enters mode 000 folders")
@@ -195,12 +193,8 @@ class TestDoctor(DoctorCase):
 		self.assertIn("sudo -u wolf-agent", self.find(checks, "running as root")[0]["fix"])
 		self.assertEqual(self.find(checks, "it holds the agent secret")[0]["status"], doctor.WARN)
 
-	def test_no_bench_and_a_press_proxy(self):
+	def test_no_bench(self):
 		self.assertEqual(self.find(self.run_doctor(benches=[]), "no bench in the config")[0]["status"], doctor.WARN)
-		agent_dir = os.path.join(self.tmp.name, "agent")
-		write(os.path.join(agent_dir, "nginx", "proxy.conf"))
-		cfg = {**self.cfg, "benches": [], "press": {"agent_dir": agent_dir}}
-		self.assertEqual(self.find(self.run_doctor(cfg, benches=[]), "a Press proxy server")[0]["status"], doctor.INFO)
 
 	def test_response_and_daemon(self):
 		cfg = {**self.cfg, "response": {"enabled": True, "command": ["sudo", "-n", "/nonexistent/wolf-block", "{ip}", "{seconds}"]}}
@@ -233,41 +227,6 @@ class TestDoctorPlatforms(DoctorCase):
 				self.assertEqual(self.find(self.run_doctor(cfg), "export fresh (1 tasks, 2 units)")[0]["status"], doctor.OK)
 			with mock.patch.object(doctor.pilot, "read_export", return_value=None):
 				self.assertEqual(self.find(self.run_doctor(cfg), "older than 5 minutes")[0]["status"], doctor.WARN)
-
-	def test_press_job_database_and_its_wal_files(self):
-		agent_dir = os.path.join(self.tmp.name, "agent")
-		write(os.path.join(agent_dir, "config.json"), "{}")
-		db = os.path.join(agent_dir, press.JOBS_DB)
-		conn = sqlite3.connect(db)
-		conn.execute("create table jobmodel (id integer primary key, name text)")
-		conn.commit()
-		conn.close()
-		cfg = {**self.cfg, "platform": "press", "press": {"agent_dir": agent_dir, "proxy_ip": "10.0.0.3"}}
-		checks = self.run_doctor(cfg)
-		self.assertEqual(self.find(checks, "job history readable (0 jobs)")[0]["status"], doctor.OK)
-		self.assertEqual(self.find(checks, "behind the proxy 10.0.0.3")[0]["status"], doctor.INFO)
-		# -wal/-shm the Press agent cannot write: every Press job fails (seen on dev/press)
-		write(db + "-wal")
-		real_stat = os.stat
-
-		def stat(path, *a, **k):
-			st = real_stat(path, *a, **k)
-			if path == db + "-wal":
-				return os.stat_result((st.st_mode, st.st_ino, st.st_dev, st.st_nlink, st.st_uid + 1) + tuple(st)[5:])
-			return st
-
-		with mock.patch.object(doctor.os, "stat", stat):
-			checks = self.run_doctor(cfg)
-		check = self.find(checks, "-wal is not the Press agent's")[0]
-		self.assertEqual(check["status"], doctor.FAIL)
-		self.assertIn("supervisorctl stop", check["fix"])
-
-	def test_a_press_proxy_has_no_benches_folder_to_warn_about(self):
-		agent_dir = os.path.join(self.tmp.name, "agent")
-		with mock.patch.object(press.log, "warning") as warning:
-			self.assertEqual(press.discover_press_benches(agent_dir, benches_dir=os.path.join(self.tmp.name, "none")), [])
-		warning.assert_not_called()
-
 
 
 class TestSetupWatcher(unittest.TestCase):

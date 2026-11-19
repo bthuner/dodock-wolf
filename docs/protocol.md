@@ -55,7 +55,6 @@ X-Wolf-Agent-Secret: <secret>
   "sent_at": "2026-10-29T02:00:30Z",
   "agent_version": "0.1.0",
   "hostname": "bench-01",
-  "behind_proxy": null,
   "metrics": [
     {"metric_name": "cpu_usage", "value": 12.5, "timestamp": "...", "host": "bench-01",
      "bench": null, "site": null, "labels": {}}
@@ -107,8 +106,8 @@ The Wolf site counts the failures and warnings, keeps the checks that are not ok
 (100 at most) and shows them on the Monitoring page. The same run sends the host metrics
 `agent_setup_failed` and `agent_setup_warnings`.
 
-**`behind_proxy`.** The proxy this host's web traffic comes through (a Press app server's
-`proxy_ip`), or `null`; older agents send nothing and the stored value stays. The Wolf site keeps it
+**`behind_proxy`.** Optional. The proxy this host's web traffic comes through, or `null`; when
+absent, the stored value stays. The Wolf site keeps it
 on Wolf Agent and proposes blocks on that host for SSH events only.
 
 **Clock skew.** `sent_at` is stamped when the request is sent (also for replayed spool batches).
@@ -131,12 +130,12 @@ batch is dropped; 5xx or network error → retry after 1, 2, 4, 8, then 15 minut
 
 | type              | typical `category` values                                           |
 |-------------------|---------------------------------------------------------------------|
-| `error`           | `http_5xx`, `http_502`, `traceback`, `press_job_failed`, `pilot_task_failed`, `backup_failed`, `email_queue_backlog`, `email_queue_error` |
+| `error`           | `http_5xx`, `http_502`, `traceback`, `pilot_task_failed`, `backup_failed`, `email_queue_backlog`, `email_queue_error` |
 | `cron_failure`    | `scheduled_job`                                                     |
 | `worker_failure`  | `worker_crash`, `job_failed`, `worker_killed`, `process_down`       |
 | `security`        | `data_exfiltration`, `ssh_failed_login`, `ssh_root_login`, `ssh_login_after_failures`, `sudo_failure`, `account_created`, `service_account_created`, `admin_group_change`, `web_attack_probe`, `web_sensitive_file_exposed`, `server_script_change`, `client_script_change`, `console_execution`, `permission_change`, `security_settings_weakened`, `api_key_generated`, `api_key_new_ip`, `network_ids_alert`, `hids_alert`, `webhook_external`, `service_exposed`, `insecure_site_config`, `frappe_failed_login`, `new_admin_ip`, `admin_login_new_country`, `privileged_user` |
 | `host_metric_alert` | created by the app: metric rule fired, `agent_silent`, `scheduler_stalled` |
-| `deployment`      | `manual`, `pilot` (Pilot tasks, see [pilot.md](pilot.md)), `migrate`, `press` (Press agent jobs, see [press.md](press.md)) |
+| `deployment`      | `manual`, `pilot` (Pilot tasks, see [pilot.md](pilot.md)), `migrate` |
 
 `severity`: `info` | `warning` | `critical`.
 

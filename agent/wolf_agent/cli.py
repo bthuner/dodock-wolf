@@ -10,9 +10,9 @@ import socket
 import sys
 import threading
 
-from . import __version__, press
+from . import __version__
 from .collector import Collector
-from .config import DEFAULTS, config_path, load_config, press_settings, save_config, section
+from .config import DEFAULTS, config_path, load_config, save_config, section
 from .discovery import discover_benches
 from .fallback import FallbackError
 from .responder import Responder
@@ -21,8 +21,7 @@ from .util import parse_duration_minutes
 from .watchdog import STATE_FILE, Watchdog, assess
 
 log = logging.getLogger("wolf_agent")
-EXIT_AUTH = 2
-PLATFORMS = ("auto", "press", "generic")  # systemd unit sets RestartPreventExitStatus=2
+EXIT_AUTH = 2  # systemd unit sets RestartPreventExitStatus=2
 
 
 def _os_name():
@@ -46,58 +45,8 @@ def _load(args):
 		sys.exit(f"invalid config {path}: {e}")
 
 
-def _platform(args, cfg=None):
-	"""--platform wins, then the config's `platform`; None means auto-detect."""
-	value = getattr(args, "platform", None)
-	if value and value != "auto":
-		return value
-	return (cfg or {}).get("platform")
-
-
-def _discover(args, cfg=None):
-	press_cfg = press_settings(cfg or {})
-	return discover_benches(
-		args.bench or None,
-		platform=_platform(args, cfg),
-		press_agent_dir=press_cfg["agent_dir"],
-		press_benches_dir=press_cfg.get("benches_directory"),
-	)
-
-
-def _remember_press(cfg):
-	"""Registration runs as root; the daemon runs as wolf-agent, which cannot read the Press agent's
-	config.json (mode 0600). Keep what root found: that this is Press, the benches folder and the
-	proxy in front of it; on a proxy server, read its nginx log.
-	Returns the server's name in Press (`agent setup config --name`), or None."""
-	press_cfg = press_settings(cfg)
-	if cfg.get("platform") in (None, "auto") and press.detect(press_cfg["agent_dir"]):
-		cfg["platform"] = "press"
-	if cfg.get("platform") != "press":
-		return None
-	agent_cfg = press.read_agent_config(press_cfg["agent_dir"]) or {}
-	if agent_cfg:  # read as root: what it says now, a removed proxy included
-		press_now = dict(cfg.get("press") or {})
-		for key, value in (("benches_directory", agent_cfg.get("benches_directory")), ("proxy_ip", agent_cfg.get("proxy_ip")),
-		                   ("server_name", agent_cfg.get("name"))):  # fmt: skip
-			if value:
-				press_now[key] = value
-			elif key != "benches_directory":
-				press_now.pop(key, None)
-		cfg["press"] = press_now
-	# a Press proxy server (n*): no bench, the sites' traffic in its nginx log, with the real clients
-	if press.is_proxy(press_cfg["agent_dir"]):
-		log_path = press_cfg.get("nginx_access_log") or press.DEFAULT_NGINX_ACCESS_LOG
-		entry = {"path": log_path, "parser": "nginx", "site_from_host": True}
-		extra = [dict(e) for e in cfg.get("extra_logs") or []]
-		same = [e for e in extra if e.get("path") == log_path]
-		if not same:
-			extra.append(entry)
-		for e in same:
-			if e.get("parser", "nginx") == "nginx":
-				e.update(entry)  # one registered before: its sites from $host too
-		cfg["extra_logs"] = extra
-	name = agent_cfg.get("name")
-	return name if isinstance(name, str) and name.strip() else None
+def _discover(args):
+	return discover_benches(args.bench or None)
 
 
 def cmd_discover(args):
@@ -112,12 +61,8 @@ def cmd_register(args):
 		cfg = dict(DEFAULTS)
 	cfg["url"] = args.url.rstrip("/")
 	cfg["verify_tls"] = not args.insecure
-	if args.platform and args.platform != "auto":
-		cfg["platform"] = args.platform
-	# on Press, the server's name in Press: what its benches' sites report as their host
-	press_name = _remember_press(cfg)
-	cfg["hostname"] = args.hostname or cfg.get("hostname") or press_name or socket.getfqdn() or socket.gethostname()
-	cfg["benches"] = _discover(args, cfg)
+	cfg["hostname"] = args.hostname or cfg.get("hostname") or socket.getfqdn() or socket.gethostname()
+	cfg["benches"] = _discover(args)
 	if not cfg["benches"]:
 		log.warning("no bench found; only host metrics and auth logs will be collected")
 
@@ -135,19 +80,6 @@ def cmd_register(args):
 	print(f"registered as {cfg['agent_id']} with {cfg['url']}; config written to {path}")
 	for bench in cfg["benches"]:
 		print(f"  bench {bench['name']} at {bench['path']}: {len(bench['sites'])} site(s)")
-
-
-def cmd_refresh(args):
-	"""As root: read again what the daemon's user cannot (a Press server's benches folder, its proxy;
-	a Press proxy's access log) and save it, without registering again. install.sh runs it."""
-	path, cfg = _load(args)
-	before = json.dumps(cfg, sort_keys=True)
-	_remember_press(cfg)
-	if json.dumps(cfg, sort_keys=True) != before:
-		save_config(path, cfg)
-		print(f"updated {path}")
-	else:
-		print(f"{path} is up to date")
 
 
 def cmd_doctor(args):
@@ -173,9 +105,7 @@ def cmd_check(args):
 	path = config_path(args.config)
 	cfg = _load(args)[1] if os.path.exists(path) else _ephemeral_config(args)
 	if args.bench:
-		cfg["benches"] = _discover(args, cfg)
-	if args.platform and args.platform != "auto":
-		cfg["platform"] = args.platform
+		cfg["benches"] = _discover(args)
 	collector = Collector(cfg, state_path=None, from_start=args.from_start, sync_checks=True)
 	metrics, events = collector.collect()
 	collector.close()
@@ -228,7 +158,7 @@ def cmd_test_fallback(args):
 def _ephemeral_config(args):
 	cfg = dict(DEFAULTS)
 	cfg["hostname"] = socket.gethostname()
-	cfg["benches"] = _discover(args, cfg)
+	cfg["benches"] = _discover(args)
 	return cfg
 
 
@@ -307,18 +237,13 @@ def build_parser():
 	r.add_argument("--bench", action="append", help="bench path (repeatable; default: auto-discover)")
 	r.add_argument("--hostname", help="override the reported hostname")
 	r.add_argument("--insecure", action="store_true", help="do not verify TLS certificates")
-	r.add_argument("--platform", choices=PLATFORMS, default="auto", help="bench layout (default: auto-detect)")
 	r.set_defaults(func=cmd_register)
 
 	sub.add_parser("run", help="run the agent loop").set_defaults(func=cmd_run)
-	sub.add_parser("refresh", help="as root: re-read the Press facts the agent's user cannot, keep the registration").set_defaults(
-		func=cmd_refresh
-	)
 
 	c = sub.add_parser("check", help="collect once and print the payload without sending")
 	c.add_argument("--from-start", action="store_true", help="parse logs from the beginning instead of EOF")
 	c.add_argument("--bench", action="append", help="bench path when no config exists")
-	c.add_argument("--platform", choices=PLATFORMS, default="auto", help="bench layout (default: config or auto)")
 	c.add_argument("--status", action="store_true", help="also ask the Wolf site for its health (read-only)")
 	c.set_defaults(func=cmd_check)
 
@@ -329,14 +254,13 @@ def build_parser():
 
 	d = sub.add_parser("discover", help="print benches found on this host")
 	d.add_argument("--bench", action="append", help="bench path to inspect")
-	d.add_argument("--platform", choices=PLATFORMS, default="auto", help="bench layout (default: auto-detect)")
 	d.set_defaults(func=cmd_discover)
 
 	m = sub.add_parser("mark-deployment", help="record a deployment on the Wolf timeline")
 	m.add_argument("--bench", required=True)
 	m.add_argument("--site")
 	m.add_argument("--note")
-	m.add_argument("--source", default="manual", choices=["manual", "pilot", "press", "migrate"])
+	m.add_argument("--source", default="manual", choices=["manual", "pilot", "migrate"])
 	m.add_argument("--silence", metavar="DURATION", help="mute notifications for this bench/site, e.g. 15m or 1h")
 	m.set_defaults(func=cmd_mark_deployment)
 

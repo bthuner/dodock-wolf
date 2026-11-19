@@ -8,7 +8,7 @@ Wolf proposes; a Wolf Manager confirms each action; nothing runs on its own.
   response on its Wazuh agent (Wolf Settings → Block With; the duration is the Wazuh command's
   timeout).
   Loopback, private, link-local and reserved addresses are never proposed nor accepted. On a host
-  whose web traffic comes through a proxy (`block_proxy`: a Press app server behind its proxy),
+  whose web traffic comes through a proxy (`block_proxy`, as the agent reported it),
   only SSH events propose a block: a web client's packets come from the proxy there, so blocking
   its address would stop nothing. `held_blocks` lists those, for the Response panel to say where to
   block instead.

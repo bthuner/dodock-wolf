@@ -365,9 +365,8 @@ result; read-only for everyone) and a comment on the incident.
 
 - **Block IP for N hours** (1 to 168, default 24): proposed for the public addresses of the
   incident's security events, whatever their source, for the attacked host. A host behind a
-  proxy (`behind_proxy`, a Press app server) gets blocks for SSH events only: a web client's
-  packets come from the proxy there; the Response panel lists those as not proposed, and the
-  Wolf Agent on the proxy proposes them where they take effect. The Wolf Agent on
+  proxy (`behind_proxy`) gets blocks for SSH events only: a web client's packets come from the
+  proxy there; the Response panel lists those as not proposed, to block on the proxy. The Wolf Agent on
   that host receives it with its next push, runs `sudo -n /usr/local/sbin/wolf-block IP SECONDS` (`agent/wolf-block.sh`: an
   nftables `inet wolf` set whose entries expire by themselves; an address already blocked keeps the longer block) and reports the result. The agent
   only does this with `response.enabled` in its own config (off by default) and the helper
@@ -506,7 +505,7 @@ preset alerts on priority 1 rules. Tried against Suricata 7 with ET Open on the 
 sqlmap, Zmap and path traversal probes against nginx came out as events with the client
 address, the site and the rule's ATT&CK technique. The agent finds the EVE log from Suricata
 itself: a running Suricata's flags and `suricata.yaml`, followed through a container's bind mounts,
-re-checked every 5 minutes (Pilot and Press do not manage Suricata).
+re-checked every 5 minutes (Pilot does not manage Suricata).
 
 Built: Wazuh as an optional source. The Wolf agent on the manager's host reads `alerts.json`
 into `hids_alert` events, from level 7, without configuration assessment and without Wazuh's
@@ -616,7 +615,7 @@ bench folder's user to public addresses. After a 7-day learning period, each new
 the preset *Bench connects somewhere new* fires on; new ones on usual ports are counted. The event
 names the destination in `remote_ip`, not `ip`: the IP reputation lists check it, but it never
 groups incidents by IP, feeds sequence rules, goes to CrowdSec as an attacker or gets a block
-proposal. Benches in containers (Docker, Press) are found without root through `/proc`, each
+proposal. Benches in containers (Docker) are found without root through `/proc`, each
 read in its own network; behind an outbound proxy, the proxy's access log (Squid) gives every
 destination by host name. Read from `/proc`, a connection between two samples is missed; the
 optional `wolf-outbound-log` helper (root, one sudoers line) logs every new TCP connection of the

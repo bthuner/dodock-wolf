@@ -103,7 +103,7 @@ Deux moitiés d'un même animal
   Des benches trouvés, pas configurés
 
   #description
-  Découvre les benches à partir de `bench.toml` ou de `sites/`. Lit les arborescences Press et Pilot, et transforme leurs tâches de déploiement et de migration en marqueurs de déploiement.
+  Découvre les benches à partir de `bench.toml` ou de `sites/`. Lit les benches Pilot, et transforme leurs tâches de déploiement et de migration en marqueurs de déploiement.
   :::
 ::
 

@@ -167,7 +167,7 @@ def _email(scope, now, tz):
 def _deployment_scope(scope):
 	"""(" and ..." SQL, params) for deployments that concern the scope.
 
-	A deployment is often recorded for a whole bench (Pilot or Press updating several sites, a
+	A deployment is often recorded for a whole bench (Pilot updating several sites, a
 	bench migrate): no site. On a site's dashboard, those of the benches the site runs on
 	count too, as incidents.latest_deployment links them (events.scope_clause).
 	"""

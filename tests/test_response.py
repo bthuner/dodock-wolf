@@ -43,7 +43,7 @@ class TestSuggest(unittest.TestCase):
 		self.assertEqual(blocks, [("45.33.32.156", "agent-1"), ("45.33.32.156", "agent-2")])
 
 	def test_behind_a_proxy_only_ssh_blocks_on_the_host(self):
-		# a Press app server behind its proxy: a web client's packets come from the proxy there
+		# a host behind a proxy: a web client's packets come from the proxy there
 		def proxied(category, ip):
 			return {**ev(category, {"ip": ip}, host="f1"), "block_proxy": "10.0.0.3"}
 

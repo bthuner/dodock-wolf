@@ -127,7 +127,7 @@ class TestWiring(unittest.TestCase):
 		cfg = {"hostname": "bench-01", "benches": [{"name": "frappe-bench", "path": path, "sites": ["drift.localhost"]}],
 		       "auth_log": False, "collect_host_metrics": False, "suricata": {"eve_log": eve},
 		       "mariadb": False, "processes": False, "exposure": False, "backups": False, "tls": False, "rq": {},
-		       "versions": False, "site_settings": False, "pilot": {"enabled": False}, "platform": "generic"}  # fmt: skip
+		       "versions": False, "site_settings": False, "pilot": {"enabled": False}}  # fmt: skip
 		c = collector.Collector(cfg, state_path=os.path.join(tmp.name, "state.json"), from_start=True)
 		for source in c.sources:
 			for parser_ in source.parsers:

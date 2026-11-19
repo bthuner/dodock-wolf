@@ -5,7 +5,6 @@ group-readable for the bench user's group after `bench setup supervisor`). Other
 `systemctl list-units` is read for service units whose name contains the bench name.
 A process belongs to the bench whose name is its longest matching prefix (supervisor:
 `<bench>-web`, `<bench>-workers:<bench>-frappe-short-worker-0`, ...).
-Press benches run their processes inside containers and are skipped.
 """
 
 import logging
@@ -142,7 +141,7 @@ class ProcessWatcher:
 
 	def collect(self, benches, now=None):
 		ts = utc_iso(now)
-		names = [b["name"] for b in benches if b.get("platform") != "press"]
+		names = [b["name"] for b in benches]
 		if not names:
 			return [], []
 		exported = self.exported(benches)

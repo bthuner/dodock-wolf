@@ -6,10 +6,10 @@ import threading
 import time
 from datetime import datetime, timezone
 
-from . import app_versions, database, pilot, press, site_settings, suricata_discovery, tls_expiry
+from . import app_versions, database, pilot, site_settings, suricata_discovery, tls_expiry
 from .backups import backup_metrics
-from .config import pilot_settings, press_settings, resolve_auth_log, section
-from .discovery import discover_benches, read_bench_toml, resolve_platform
+from .config import pilot_settings, resolve_auth_log, section
+from .discovery import read_bench_toml
 from .metrics import HostMetrics
 from .parsers import PARSERS, NginxParser
 from .exposure import ExposureWatcher
@@ -19,7 +19,6 @@ from .processes import ProcessWatcher
 from .redis_queue import RedisError, RedisProbe
 from .scrub import Scrubber
 from .tailer import FileTailer, JournalTailer, TailState
-from .util import metric, utc_iso
 
 log = logging.getLogger(__name__)
 DEFAULT_EVE_LOG = "/var/log/suricata/eve.json"
@@ -65,9 +64,6 @@ class Collector:
 		self.host_metrics = host_metrics or (HostMetrics(self.host) if cfg.get("collect_host_metrics", True) else None)
 		self.sources = []
 		self.clock = clock
-		self.press = None
-		self.press_jobs = None
-		self.press_fs = None
 		self.benches = list(cfg.get("benches") or [])
 		# slow or periodic infrastructure checks (see InfraChecks)
 		# `wolf-agent check` keeps no state: it must not move the integrity baseline the daemon reports from
@@ -75,11 +71,7 @@ class Collector:
 		                         state_dir=os.path.dirname(state_path) if state_path else None)  # fmt: skip
 		self.scrubber = Scrubber.from_config(cfg)
 
-		press_cfg = press_settings(cfg)
-		if resolve_platform(cfg.get("platform"), press_cfg["agent_dir"]) == "press":
-			self._setup_press(press_cfg, state_path)
 		self.pilot_tasks = self._setup_pilot(state_path)
-		self._proxy_parsers, self._next_proxy_hosts = [], 0.0  # a Press proxy's log, its domain map re-read
 		self._build()
 
 	def _setup_pilot(self, state_path):
@@ -103,35 +95,6 @@ class Collector:
 				)
 			)
 		return watchers
-
-	def _setup_press(self, press_cfg, state_path):
-		"""Press benches come and go with every deploy: rediscover them at runtime."""
-		self.press = press_cfg
-		found = press.keep_registered(self._discover_press(), self.benches)
-		if found or not self.benches:
-			self.benches = found
-		self._next_discovery = self.clock() + float(press_cfg.get("rediscover_interval") or 60)
-		if press_cfg.get("deployments", True):
-			spool = os.path.dirname(state_path) if state_path else None
-			self.press_jobs = press.PressJobWatcher(
-				self.host,
-				agent_dir=press_cfg["agent_dir"],
-				state_path=os.path.join(spool, "press-jobs.json") if spool else None,
-				known_benches=lambda: {b["name"] for b in self.benches},
-				benches_dir=press.benches_directory(press_cfg["agent_dir"], default=press_cfg.get("benches_directory")),
-			)
-			self.press_fs = press.PressBenchWatcher(
-				self.host, state_path=os.path.join(spool, "press-benches.json") if spool else None
-			)
-
-	def _discover_press(self):
-		return discover_benches(
-			platform="press",
-			search_globs=(),
-			nginx_default=self.press.get("nginx_access_log"),
-			press_agent_dir=self.press["agent_dir"],
-			press_benches_dir=self.press.get("benches_directory"),
-		)
 
 	def _suricata_source(self, eve):
 		"""Read `eve` (or nothing) as the Suricata source, replacing the one before."""
@@ -188,50 +151,23 @@ class Collector:
 			(log.info if eve or how == "no Suricata found" else log.warning)("Suricata EVE log is now %s (%s)", eve or "none", how)
 			self._suricata_source(eve)
 
-	def _rediscover(self):
-		if not self.press or self.clock() < self._next_discovery:
-			return
-		self._next_discovery = self.clock() + float(self.press.get("rediscover_interval") or 60)
-		found = press.keep_registered(self._discover_press(), self.benches)
-		if _signature(found) == _signature(self.benches):
-			self.benches = found  # same layout; refresh domains etc. without reopening files
-			return
-		new = {b["name"] for b in found} - {b["name"] for b in self.benches}
-		log.info("Press benches changed (%d now, new: %s); rebuilding log sources", len(found), sorted(new) or "-")
-		self.close()
-		self.sources = []
-		self.benches = found
-		self._build(fresh_benches=new)
-
-	def _refresh_proxy_hosts(self):
-		"""A custom domain added to the proxy since the start maps to its site within a minute."""
-		if not self._proxy_parsers or self.clock() < self._next_proxy_hosts:
-			return
-		self._next_proxy_hosts = self.clock() + 60
-		aliases = press.proxy_hosts(press_settings(self.cfg)["agent_dir"])
-		for parser in self._proxy_parsers:
-			parser.site_aliases = dict(aliases)
-
 	def _file_source(self, path, parser_names, from_start=None, **ctx):
 		parsers = [PARSERS[name](self.host, log_file=path, **ctx) for name in parser_names]
 		start = self.from_start if from_start is None else from_start
 		tailer = FileTailer(path, self.state.data, from_start=start)
 		self.sources.append(Source(tailer, parsers))
 
-	def _build(self, fresh_benches=()):
-		self._proxy_parsers = []  # rebuilt with the sources
+	def _build(self):
 		benches = self.benches
 		nginx_logs = {}  # path -> {site: bench}; one parser per file even if benches share it
 
 		for bench in benches:
 			name = bench["name"]
 			logs_dir = bench.get("logs_dir") or os.path.join(bench["path"], "logs")
-			# a bench created while we run has brand-new logs: read them from the start
-			fresh = True if name in fresh_benches else None
 			files = dict(BENCH_LOGS)
 			files.update(bench.get("log_files") or {})  # e.g. Pilot's per-process logs
 			for filename, parser_names in files.items():
-				self._file_source(os.path.join(logs_dir, filename), parser_names, from_start=fresh, bench=name)
+				self._file_source(os.path.join(logs_dir, filename), parser_names, bench=name)
 			for site in bench.get("sites") or []:
 				site_logs = os.path.join(bench["path"], "sites", site, "logs")
 				for filename, parser_names in SITE_LOGS.items():
@@ -268,14 +204,7 @@ class Collector:
 			ctx = {k: extra.get(k) for k in ("bench", "site")}
 			if parser_name == "nginx":
 				ctx = {"default_site": extra.get("site"), "default_bench": extra.get("bench")}
-				if extra.get("site_from_host"):  # a Press proxy's log: every site its app servers serve
-					settings = press_settings(self.cfg)
-					# the proxy's own names: its Press agent's vhost is no site
-					ignore = tuple(n for n in (self.host, settings.get("server_name")) if n)
-					ctx.update(site_from_host=True, site_aliases=press.proxy_hosts(settings["agent_dir"]), ignore_hosts=ignore)
 			self._file_source(extra["path"], [parser_name], **ctx)
-			if ctx.get("site_from_host"):
-				self._proxy_parsers += self.sources[-1].parsers
 
 		self.eve_path, self.suricata_source = None, None
 		suricata = section(self.cfg, "suricata")
@@ -301,8 +230,6 @@ class Collector:
 	def collect(self, now=None):
 		"""Poll every source once; return `(metrics, events)` for this interval."""
 		now = now or datetime.now(timezone.utc)
-		self._rediscover()
-		self._refresh_proxy_hosts()
 		self._recheck_sources()
 		metrics, events = [], []
 		for source in self.sources:
@@ -318,7 +245,6 @@ class Collector:
 		if self.host_metrics:
 			metrics += self.host_metrics.collect(now)
 
-		events += self._press_deployments(now)
 		for watcher in self.pilot_tasks:
 			try:
 				events += watcher.poll(now) or []
@@ -332,19 +258,6 @@ class Collector:
 		self.state.save()
 		# before anything is spooled or sent; fingerprints were computed from the raw lines
 		return metrics, self.scrubber.events(events)
-
-	def _press_deployments(self, now):
-		if not self.press_jobs:
-			return []
-		try:
-			events = self.press_jobs.poll(now)
-			if events is None:
-				# no readable job history: fall back to bench/site moves on disk
-				events = self.press_fs.poll(self.benches, now)
-			return events
-		except Exception:
-			log.exception("collecting Press deployments")
-			return []
 
 	def close(self):
 		for source in self.sources:
@@ -368,7 +281,6 @@ class InfraChecks:
 		self.sync = sync
 		self.rq = section(cfg, "rq")
 		self.backups = section(cfg, "backups")
-		self.press_agent_dir = press_settings(cfg)["agent_dir"]
 		self.tls = section(cfg, "tls")
 		self.mariadb = section(cfg, "mariadb")
 		self.processes = section(cfg, "processes")
@@ -391,7 +303,7 @@ class InfraChecks:
 			report_usual_ports=bool(self.outbound.get("report_usual_ports")), proxy_logs=self.outbound.get("proxy_logs"),
 			kernel_log=self.outbound.get("kernel_log", "auto"),
 		) if self.outbound.get("enabled", True) else None  # fmt: skip
-		self.redis = {}  # (bench, url) -> RedisProbe, kept so counters survive rediscovery
+		self.redis = {}  # (bench, url) -> RedisProbe
 		self.db_probes = None
 		self.db_key = None
 		self.watcher = ProcessWatcher(host, self.processes.get("manager")) if self.processes.get("enabled", True) else None
@@ -450,28 +362,7 @@ class InfraChecks:
 	def _backups(self, benches, now):
 		if not self.backups.get("enabled", True) or not self._due("backups", self.backups.get("interval")):
 			return [], []
-		from_jobs = []
-		if not self.backups.get("press"):
-			# Press deletes offsite backups from the server after the upload: its job history says
-			from_jobs = self._press_backups([b for b in benches if b.get("platform") == "press"], now)
-			benches = [b for b in benches if b.get("platform") != "press"]
-		return backup_metrics(benches, self.host, now, overrides=self.backups.get("dirs")) + from_jobs, []
-
-	def _press_backups(self, benches, now):
-		"""`backup_age_hours` per Press site, from its newest successful Backup Site job."""
-		if not benches:
-			return []
-		ages = press.last_backups(self.press_agent_dir, sites={s for b in benches for s in b.get("sites") or []})
-		if not ages:
-			return []
-		now = now or datetime.now(timezone.utc)
-		out = []
-		for bench in benches:
-			for site in bench.get("sites") or []:
-				if site in ages:
-					hours = max((now - ages[site].astimezone()).total_seconds(), 0) / 3600.0  # naive: server local time
-					out.append(metric("backup_age_hours", round(hours, 2), utc_iso(now), self.host, bench=bench["name"], site=site))
-		return out
+		return backup_metrics(benches, self.host, now, overrides=self.backups.get("dirs")), []
 
 	def _tls(self, benches, now):
 		if not self.tls.get("enabled", True):

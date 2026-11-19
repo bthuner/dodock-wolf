@@ -103,7 +103,7 @@ Two halves of one animal
   Benches found, not configured
 
   #description
-  Discovers benches from `bench.toml` or `sites/`. Reads Press and Pilot layouts, and turns their deploy and migrate tasks into deployment markers.
+  Discovers benches from `bench.toml` or `sites/`. Reads Pilot benches, and turns their deploy and migrate tasks into deployment markers.
   :::
 ::
 

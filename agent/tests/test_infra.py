@@ -376,7 +376,7 @@ class TestProcesses(unittest.TestCase):
 
 	def test_supervisor(self):
 		w = self.watcher({"supervisorctl": SUPERVISOR_OUT})
-		benches = [{"name": "frappe-bench"}, {"name": "frappe-bench-2"}, {"name": "press-bench", "platform": "press"}]
+		benches = [{"name": "frappe-bench"}, {"name": "frappe-bench-2"}]
 		metrics, events = w.collect(benches, NOW)
 		down = {m["bench"]: m["value"] for m in metrics}
 		# STOPPED counts as down but is not an event; frappe-bench-2-* belongs to the longer name
@@ -524,11 +524,6 @@ class TestInfraChecks(unittest.TestCase):
 		with mock.patch.object(tls_expiry, "tls_metrics", lambda *a, **k: [{"metric_name": "tls_days_left"}]):
 			self.assertEqual(sorted(self.names(self.infra(sync=True))), ["backup_age_hours", "tls_days_left"])
 			self.assertEqual(self.names(self.infra(sync=True, tls=False, backups={"enabled": False})), [])
-
-	def test_press_benches_skip_backups(self):
-		self.benches[0]["platform"] = "press"
-		self.assertEqual(self.names(self.infra(sync=True, tls=False)), [])
-		self.assertEqual(self.names(self.infra(sync=True, tls=False, backups={"press": True})), ["backup_age_hours"])
 
 	def test_one_failing_check_does_not_stop_the_others(self):
 		with mock.patch.object(collector, "backup_metrics", side_effect=RuntimeError("boom")):
