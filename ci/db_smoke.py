@@ -1825,6 +1825,201 @@ def main():
 			frappe.cache.delete_keys(api_keys.CACHE_PREFIX)
 		return f"{len(found())} events: " + "; ".join(r.title for r in found())
 
+	def account_signals():
+		"""Impersonation, a role's 2FA turned off, password reset bursts, and credentials reset by
+		another user (local_signals), each with its preset."""
+		from types import SimpleNamespace
+
+		from frappe.utils.password import get_encryption_key
+
+		from dodock_wolf.wolf import local_signals
+		from dodock_wolf.wolf import app_security as appsec
+		from dodock_wolf.wolf.presets import PRESETS
+
+		categories = ("user_impersonated", "credentials_reset_by_other", "password_reset_requested")
+		# a rerun within the 10 min dedupe window would bump the previous run's rows
+		frappe.db.delete("Wolf Event", {"category": ("in", categories)})
+		frappe.db.delete("Wolf Event", {"category": "security_settings_weakened", "title": ("like", "%for role%")})
+		frappe.db.delete("Wolf Event", {"category": "honeytoken_triggered", "title": ("like", "%decoy-reset@example.com%")})
+		frappe.db.set_single_value("Wolf Settings", {"capture_app_security": 1, "capture_login_failures": 1,
+		                                             "honeytoken_users": "decoy-reset@example.com"})  # fmt: skip
+		frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+		since = now_datetime() - timedelta(seconds=1)
+		password = "Wolf-Smoke-Secret-9!q"
+
+		def found(category, **filters):
+			return frappe.get_all("Wolf Event", filters={"category": category, "creation": (">=", since), **filters},
+			                      fields=["name", "title", "severity", "payload", "count"], order_by="creation")  # fmt: skip
+
+		def fire(preset_name, should=True):
+			spec = next(p for p in PRESETS if p["rule_name"] == preset_name)
+			doc = rule(f"smoke {preset_name}", **{**{k: v for k, v in spec.items() if k != "rule_name"}, "is_preset": 0},
+			           filter_site=SITE)  # fmt: skip
+			res = rules.evaluate(doc)
+			frappe.db.set_value("Wolf Alert Rule", doc.name, "enabled", 0)
+			assert bool(res["fired"] or res["updated"]) == should, (preset_name, res)
+			return res["fired"] or res["updated"]
+
+		def user(email, roles=()):
+			if not frappe.db.exists("User", email):
+				frappe.get_doc({"doctype": "User", "email": email, "first_name": "Smoke", "send_welcome_email": 0,
+				                "roles": [{"role": r} for r in roles]}).insert(ignore_permissions=True)  # fmt: skip
+			cleanup.append(("User", email))
+			return email
+
+		def call(method, args, status=200, ip="45.33.32.240"):
+			frappe.form_dict.clear()
+			frappe.form_dict.update(args)
+			previous_ip, frappe.local.request_ip = getattr(frappe.local, "request_ip", None), ip
+			try:
+				local_signals.after_request(response=SimpleNamespace(status_code=status),
+				                            request=SimpleNamespace(path=f"/api/method/{method}"))  # fmt: skip
+			finally:
+				frappe.local.request_ip = previous_ip
+				frappe.form_dict.clear()
+
+		seen, cleanup = {}, []
+		manager = getattr(frappe.local, "login_manager", None)
+		sm_role = frappe.get_doc("Role", "System Manager")
+		sm_2fa = sm_role.two_factor_auth
+		try:
+			plain = user("wolf-acct-plain@example.com")
+			boss = user("wolf-acct-boss@example.com", roles=("System Manager",))
+
+			# 1. impersonation, through Frappe's own method (only the session switch is left out)
+			from frappe.core.doctype.user import user as user_module
+
+			if hasattr(user_module, "impersonate"):
+				frappe.local.login_manager = SimpleNamespace(impersonate=lambda target: None)
+				reason = "support ticket\n#42 " + "x" * 400
+				developer_mode = frappe.local.conf.get("developer_mode")
+				frappe.local.conf["developer_mode"] = 1  # Frappe's own switch for its e-mail to the user
+				try:
+					for target in (plain, boss):
+						frappe.form_dict.update({"user": target, "reason": reason})
+						user_module.impersonate(target, reason)
+						frappe.form_dict.clear()
+				finally:
+					frappe.local.conf["developer_mode"] = developer_mode
+			else:  # a Frappe without impersonation: the Activity Log it would insert
+				reason = "support ticket\n#42 " + "x" * 400
+				for target in (plain, boss):
+					frappe.form_dict.update({"reason": reason})
+					frappe.get_doc({"doctype": "Activity Log", "user": target, "status": "Success", "operation": "Impersonate",
+					                "subject": "impersonated"}).insert(ignore_permissions=True, ignore_links=True)  # fmt: skip
+					frappe.form_dict.clear()
+			e = found("user_impersonated")
+			assert [r.severity for r in e] == ["warning", "critical"], e
+			payload = json.loads(e[1].payload)
+			assert (payload["user"], payload["by"], payload["privileged"]) == (boss, "Administrator", True), payload
+			assert payload["reason"].startswith("support ticket #42 x") and len(payload["reason"]) == 201, payload["reason"]
+			assert e[1].title == f"Administrator impersonated privileged user {boss}", e[1].title
+			assert [t["id"] for t in payload["mitre_attack"]] == ["T1078"], payload
+			fire("User impersonated")
+			seen["impersonation"] = e[1].title
+
+			# 2. two-factor authentication turned off for a role (critical for a privileged one)
+			if not frappe.db.exists("Role", "Wolf Smoke 2FA"):
+				frappe.get_doc({"doctype": "Role", "role_name": "Wolf Smoke 2FA", "two_factor_auth": 1}).insert(ignore_permissions=True)
+			cleanup.append(("Role", "Wolf Smoke 2FA"))
+			role = frappe.get_doc("Role", "Wolf Smoke 2FA")
+			role.two_factor_auth = 1
+			role.save(ignore_permissions=True)
+			role.two_factor_auth = 0
+			role.save(ignore_permissions=True)
+			role.save(ignore_permissions=True)  # already off: nothing more
+			sm_role.two_factor_auth = 1
+			sm_role.save(ignore_permissions=True)
+			sm_role.two_factor_auth = 0
+			sm_role.save(ignore_permissions=True)
+			e = found("security_settings_weakened", title=("like", "%for role%"))
+			got = [(r.severity, r.title.split("off for role ")[-1]) for r in e]
+			assert got == [("warning", "Wolf Smoke 2FA"), ("critical", "System Manager")], got
+			payload = json.loads(e[0].payload)
+			assert (payload["kind"], payload["role"], payload["changes"][0]["field"]) == ("role_2fa", "Wolf Smoke 2FA", "two_factor_auth"), payload
+			fire("Security settings weakened")
+			seen["role 2fa"] = e[1].title
+
+			# 3. password resets: one event per address and account, the account hashed unless it is a user
+			method = "frappe.core.doctype.user.user.reset_password"
+			unknown = [f"nobody-{i}@example.org" for i in range(3)]
+			for typed in [plain, boss, *unknown]:
+				call(method, {"user": typed}, status=200 if "@example.com" in typed.lower() else 404)
+			call(method, {"user": unknown[0]}, status=429)  # rate limited: still an attempt, same row
+			e = found("password_reset_requested")
+			assert len(e) == 5 and {r.severity for r in e} == {"info"}, e
+			assert sorted(r.count for r in e) == [1, 1, 1, 1, 2], [r.count for r in e]
+			for r in e:
+				payload = json.loads(r.payload)
+				assert payload["ip"] == "45.33.32.240", payload
+				if payload["user_exists"]:
+					assert payload["user"] in (plain, boss), payload
+				else:
+					assert "user" not in payload and "an unknown account" in r.title, (r.title, payload)
+					assert not any(u in r.payload or u in r.title for u in unknown), r
+					assert payload["user_hash"] in {appsec.identity_hash(u, get_encryption_key()) for u in unknown}, payload
+			assert {t["id"] for t in json.loads(e[0].payload)["mitre_attack"]} == {"T1589.002", "T1110"}
+			(incident,) = fire("Password reset burst from one IP")
+			assert frappe.db.get_value("Wolf Incident", incident, "group_key") == "ip=45.33.32.240"
+			fire("Password resets for many accounts", should=False)  # 5 events on the site
+			for i in range(5):  # a spray: one account from each of 5 more addresses
+				call(method, {"user": f"spray-{i}@example.org"}, status=404, ip=f"45.33.32.{241 + i}")
+			fire("Password resets for many accounts")
+			call(method, {"user": "decoy-reset@example.com"}, status=404)
+			decoy = found("honeytoken_triggered", title=("like", "%decoy-reset@example.com%"))
+			assert decoy and json.loads(decoy[0].payload)["via"] == "password reset", "decoy reset not a honeytoken"
+			frappe.db.delete("Wolf Event", {"name": decoy[0].name})  # "threat intel" counts every honeytoken event
+			assert len(found("password_reset_requested")) == 10
+			frappe.db.set_single_value("Wolf Settings", "capture_login_failures", 0)
+			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+			call(method, {"user": "off@example.org"}, status=404)
+			assert len(found("password_reset_requested")) == 10, "recorded while switched off"
+			seen["password resets"] = "5 accounts from one IP, then 10 accounts on the site"
+
+			# 4a. a password set by someone else (not by its owner, not on creation)
+			doc = frappe.get_doc("User", plain)
+			doc.new_password = password
+			doc.save(ignore_permissions=True)
+			doc = frappe.get_doc("User", boss)
+			doc.new_password = password
+			doc.save(ignore_permissions=True)
+			frappe.set_user(plain)
+			try:
+				doc = frappe.get_doc("User", plain)
+				doc.new_password = password + "2"
+				doc.save(ignore_permissions=True)  # their own: no event
+			finally:
+				frappe.set_user("Administrator")
+			# 4b. an OTP secret reset for someone else (and one's own: no event)
+			otp = "frappe.twofactor.reset_otp_secret"
+			call(otp, {"user": plain})
+			call(otp, {"user": "Administrator"})
+			call(otp, {"user": boss}, status=417)  # refused (2FA off on the site): nothing reset
+			e = found("credentials_reset_by_other")
+			got = [(json.loads(r.payload)["kind"], json.loads(r.payload)["user"], r.severity) for r in e]
+			assert got == [("password", plain, "warning"), ("password", boss, "critical"), ("otp_secret", plain, "warning")], got
+			assert e[1].title == f"Password of privileged user {boss} reset by Administrator", e[1].title
+			fire("Credentials reset by someone else")
+			seen["credentials"] = e[1].title
+
+			# never a password in an event
+			leaked = frappe.db.sql("select name from `tabWolf Event` where creation >= %s and (payload like %s or title like %s)",
+			                       (since, f"%{password}%", f"%{password}%"))  # fmt: skip
+			assert not leaked, leaked
+		finally:
+			frappe.local.login_manager = manager
+			frappe.form_dict.clear()
+			frappe.set_user("Administrator")
+			sm_role.reload()
+			if sm_role.two_factor_auth != sm_2fa:
+				frappe.db.set_value("Role", "System Manager", "two_factor_auth", sm_2fa)
+			frappe.db.set_single_value("Wolf Settings", {"capture_login_failures": 1, "honeytoken_users": None})
+			frappe.clear_document_cache("Wolf Settings", "Wolf Settings")
+			for doctype, name in reversed(cleanup):
+				if frappe.db.exists(doctype, name):
+					frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
+		return seen
+
 	def suricata_events():
 		"""A Suricata alert as the agent ships it: ATT&CK from the rule, a block to propose, the preset."""
 		from dodock_wolf.wolf import response
@@ -3528,7 +3723,7 @@ def main():
 	                 ("live updates", live_updates),
 	                 ("app security", app_security), ("permission drift", permission_drift),
 	                 ("exfiltration", exfiltration_check),
-	                 ("api key addresses", api_key_ips),
+	                 ("api key addresses", api_key_ips), ("account signals", account_signals),
 	                 ("crowdsec", crowdsec_check),
 	                 ("suricata events", suricata_events),
 	                 ("wazuh events", wazuh_events),
