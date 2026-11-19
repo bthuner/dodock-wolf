@@ -50,7 +50,8 @@ def ui_messages(lang):
 	try:
 		keys = _catalog_keys()
 	except Exception:  # no template or no babel: the Wolf UI shows its English, it still opens
-		frappe.log_error(title="Dodock Wolf: the Wolf UI's translations could not be read")
+		# read on GET (the boot, the /wolf page), whose transaction is rolled back: insert it after
+		frappe.log_error(title="Dodock Wolf: the Wolf UI's translations could not be read", defer_insert=True)
 		return {}
 	translations = get_all_translations(lang)
 	return {key: translations[key] for key in keys if translations.get(key)}

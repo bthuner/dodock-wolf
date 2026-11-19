@@ -51,7 +51,8 @@ def _panel(read):
 		return {"forbidden": True}
 	except Exception:
 		frappe.db.rollback(save_point=SAVEPOINT)
-		frappe.log_error(title="Wolf security overview")
+		# a GET request's transaction is rolled back: the Error Log is inserted after it
+		frappe.log_error(title="Wolf security overview", defer_insert=True)
 		return {"error": _("Wolf could not read this panel: the reason is in the Error Log.")}
 	frappe.db.release_savepoint(SAVEPOINT)
 	return out
