@@ -18,10 +18,14 @@ if (!page.value) {
   throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 }
 
+// An unlisted page (useUnlisted.ts) is not indexed. Its previous/next links stay inside the
+// section, and no listed page points into it.
+const unlisted = isUnlisted(routePath.value)
+
 const { data: surround } = await useAsyncData(`${routePath.value}-surround`, () => {
   return queryCollectionItemSurroundings(docs.value, routePath.value, {
     fields: ['description']
-  })
+  }).where('path', unlisted ? 'LIKE' : 'NOT LIKE', `%${UNLISTED_SECTION}%`)
 })
 
 const title = page.value.seo?.title || page.value.title
@@ -31,7 +35,8 @@ useSeoMeta({
   title,
   ogTitle: title,
   description,
-  ogDescription: description
+  ogDescription: description,
+  robots: unlisted ? 'noindex, nofollow' : undefined
 })
 
 const headline = computed(() => findPageHeadline(navigation?.value, page.value?.path))
