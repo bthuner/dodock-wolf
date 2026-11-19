@@ -19,6 +19,13 @@ ACTIONS = ("ack", "resolve")
 ACTION_LABEL = {"ack": "Acknowledge", "resolve": "Resolve"}
 
 
+def derive_key(site_key, context):
+	"""A secret for one use, derived from the site's encryption key: HMAC-SHA256(`site_key`,
+	`context`) in hex. Each use has its own `context` (bytes), so one secret never opens another."""
+	key = site_key.encode() if isinstance(site_key, str) else site_key
+	return hmac.new(key, context, hashlib.sha256).hexdigest()
+
+
 def _message(incident, action, expires, actor):
 	return "\n".join(("wolf-incident-action", str(incident), str(action), str(int(expires)), actor or "")).encode()
 

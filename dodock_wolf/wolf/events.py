@@ -46,11 +46,12 @@ def insert_metrics(rows, agent=None):
 	return len(values)
 
 
-def insert_event(data, agent=None, dedupe_minutes=None):
+def insert_event(data, agent=None, dedupe_minutes=None, enrich=True):
 	"""Insert a normalized event dict; returns the Wolf Event name.
 
 	With `dedupe_minutes`, an event with the same fingerprint and site seen within
-	that window is bumped (count/last_seen) instead of creating a new row.
+	that window is bumped (count/last_seen) instead of creating a new row. `enrich=False` skips the
+	IP reputation and CrowdSec tags of a security event (a guest's info event, many of them).
 	"""
 	if dedupe_minutes and data.get("fingerprint"):
 		existing = frappe.db.get_value(
@@ -76,7 +77,7 @@ def insert_event(data, agent=None, dedupe_minutes=None):
 			live.list_changed("events")  # a repeat bumps count / last seen: the lists show both
 			return existing.name
 
-	if data.get("event_type") == "security":
+	if data.get("event_type") == "security" and enrich:
 		from dodock_wolf.api import threat
 
 		data = threat.enrich(data)  # IP reputation lists (off unless enabled)
@@ -130,11 +131,13 @@ def _with_entities(data):
 		return data, None
 
 
-def emit(event_type, title, severity="warning", category=None, source="frappe", payload=None, dedupe_minutes=None, **scope):
+def emit(event_type, title, severity="warning", category=None, source="frappe", payload=None, dedupe_minutes=None,
+         enrich=True, **scope):  # fmt: skip
 	"""Record an event raised by the Wolf app itself (local signals, rule engine).
 
 	On a satellite site the event goes to the outbox for the central site instead, and the
-	return value is a Wolf Outbox name.
+	return value is a Wolf Outbox name. `enrich=False` skips the IP reputation and CrowdSec
+	lookups (insert_event) on this site.
 	"""
 	from dodock_wolf import satellite
 	timestamp = scope.pop("timestamp", None)
@@ -153,7 +156,7 @@ def emit(event_type, title, severity="warning", category=None, source="frappe", 
 	data["timestamp"] = data["last_seen"] = timestamp or now
 	if satellite.is_satellite():
 		return satellite.enqueue(data, dedupe_minutes=dedupe_minutes)
-	return insert_event(data, dedupe_minutes=dedupe_minutes)
+	return insert_event(data, dedupe_minutes=dedupe_minutes, enrich=enrich)
 
 
 def scope_clause(host=None, bench=None, site=None, prefix=""):

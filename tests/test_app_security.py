@@ -126,15 +126,47 @@ class TestAccountSignals(unittest.TestCase):
 		self.assertIsNone(appsec.role_2fa_off(off, off))
 		self.assertIsNone(appsec.role_2fa_off(on, on))
 		self.assertIsNone(appsec.role_2fa_off(None, off))  # a new role lowers nothing
+		# a role deleted with 2FA on: its users lose it too
+		self.assertEqual(appsec.role_2fa_off(on, None), {"field": "two_factor_auth", "label": appsec.ROLE_2FA_LABEL, "old": 1, "new": None})
+		self.assertIsNone(appsec.role_2fa_off(off, None))
 
 	def test_called_method(self):
 		m = "frappe.core.doctype.user.user.reset_password"
 		self.assertEqual(appsec.called_method("/api/method/" + m), m)
-		self.assertEqual(appsec.called_method("/api/v2/method/" + m + "/"), m)
-		self.assertEqual(appsec.called_method("/", cmd=m), m)
+		self.assertEqual(appsec.called_method("/api/v1/method/" + m), m)
+		self.assertEqual(appsec.called_method("/api/v2/method/" + m), m)
+		self.assertEqual(appsec.called_method("/api/v2/method/" + m + "/"), m)  # routes ignore a trailing slash
+		self.assertEqual(appsec.called_method("/", {"cmd": m}), m)
+
+	def test_called_method_follows_frappe_s_order(self):
+		m = "frappe.core.doctype.user.user.reset_password"
+		modules = {"User": "frappe.core.doctype.user.user"}.get
+		# v1 runs the part before the first slash
+		self.assertEqual(appsec.called_method(f"/api/method/{m}/x"), m)
+		self.assertEqual(appsec.called_method(f"/api/v1/method/{m}/x/y"), m)
+		# `cmd` first, whatever the path names (app.py runs it before routing /api/)
+		self.assertEqual(appsec.called_method("/api/method/frappe.ping", {"cmd": m}), m)
+		self.assertEqual(appsec.called_method("/api/v2/method/frappe.ping", {"cmd": f" {m} "}), m)
+		# v2: a DocType's controller method
+		self.assertEqual(appsec.called_method("/api/v2/method/User/reset_password", {}, modules), m)
+		self.assertEqual(appsec.called_method("/api/v2/method/User/reset_password/", {}, modules), m)
+		self.assertIsNone(appsec.called_method("/api/v2/method/Nothing/reset_password", {}, modules))  # unknown DocType
+		self.assertIsNone(appsec.called_method("/api/v2/method/User/reset_password", {}))  # no resolver
+		self.assertIsNone(appsec.called_method("/api/v2/method/User/x/y", {}, modules))  # no such route
+		self.assertIsNone(appsec.called_method("/api/v2/method//reset_password", {}, modules))
+		# not a method call
 		self.assertIsNone(appsec.called_method("/api/resource/User"))
-		self.assertIsNone(appsec.called_method("/app/user", cmd=""))
+		self.assertIsNone(appsec.called_method("/api/method/"))
+		self.assertIsNone(appsec.called_method("/app/user", {"cmd": ""}))
 		self.assertIsNone(appsec.called_method(None))
+
+	def test_doctype_module_path(self):
+		# frappe.modules.utils.get_module_name's naming rule
+		self.assertEqual(appsec.doctype_module_path("frappe", "Core", "User"), "frappe.core.doctype.user.user")
+		self.assertEqual(appsec.doctype_module_path("erpnext", "Selling", "Sales Order"),
+		                 "erpnext.selling.doctype.sales_order.sales_order")  # fmt: skip
+		self.assertEqual(appsec.doctype_module_path("dodock_wolf", "Dodock Wolf", "Wolf Settings"),
+		                 "dodock_wolf.dodock_wolf.doctype.wolf_settings.wolf_settings")  # fmt: skip
 
 	def test_identity_hash(self):
 		h = appsec.identity_hash(" Jane@Example.com ", "site-key")
@@ -144,6 +176,8 @@ class TestAccountSignals(unittest.TestCase):
 		self.assertNotEqual(h, appsec.identity_hash("john@example.com", "site-key"))
 		self.assertNotIn("jane", h)
 		self.assertIsNone(appsec.identity_hash("  ", "site-key"))
+		self.assertIsNone(appsec.identity_hash("jane@example.com", None))  # no key, no hash
+		self.assertIsNone(appsec.identity_hash("jane@example.com", ""))
 
 	def test_reason_text(self):
 		self.assertEqual(appsec.reason_text("  support\nticket\t#42  "), "support ticket #42")

@@ -75,7 +75,10 @@ doc_events = {
 		"on_trash": "dodock_wolf.wolf.local_signals.on_user_permission_trash",
 	},
 	"System Settings": {"on_update": "dodock_wolf.wolf.local_signals.on_system_settings"},
-	"Role": {"on_update": "dodock_wolf.wolf.local_signals.on_role"},
+	"Role": {
+		"on_update": "dodock_wolf.wolf.local_signals.on_role",
+		"on_trash": "dodock_wolf.wolf.local_signals.on_role_trash",
+	},
 	"Webhook": {"on_update": "dodock_wolf.wolf.local_signals.on_webhook"},
 	# live updates for the Wolf UI (wolf/live.py): invalidations only, never telemetry;
 	# tamper-evident journal (api/journal.py): unsigned entries, chained every minute
