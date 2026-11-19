@@ -348,6 +348,15 @@ App translations
     - Check with `python3 -m unittest tests.test_locale` (every template string present, placeholders, tags and code kept, every Select option with its own entry).
     - A new language: add `<lang>.po` (`bench create-po-file`), its `TRANSLATED` and `LABELS` entries, and its docs (docs-site/content/<lang>/).
 
+Repositories: GitHub and GitLab
+
+    The repository lives on GitHub (github.com/bthuner/dodock-wolf) and on GitLab (gitlab.com/dokos/dodock-wolf). For now GitHub is where pull requests are reviewed and merged; GitLab follows. Never merge on GitLab: main would diverge.
+
+    - Push every branch to both. `origin` fetches from GitHub and pushes to both (`git remote set-url --add --push origin …` for each); a clone without that setup pushes with `git push origin <branch> && git push gitlab <branch>`.
+    - After a pull request is merged on GitHub, bring GitLab's main up to it: `git fetch origin && git push gitlab origin/main:refs/heads/main`. Check that both mains name the same commit (`git ls-remote origin main; git ls-remote gitlab main`).
+    - Both sides run the same CI: .github/workflows/ci.yml and .gitlab-ci.yml. A job added or changed on one side is added or changed on the other in the same pull request.
+    - Issues and pull requests stay on GitHub; GitLab holds the imported history.
+
 Commit and PR attribution
 
     Every commit message, pull request description, issue body, and issue, pull request or review comment ends with the single line "Co-authored with AI".
