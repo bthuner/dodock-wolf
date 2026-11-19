@@ -101,7 +101,7 @@ def read_sockets(proc_root="/proc/net"):
 	return read_table(proc_root)[0]
 
 
-# --- benches in containers (Docker, Press, Podman): no root needed --------------------------
+# --- benches in containers (Docker, Podman): no root needed --------------------------------
 
 CGROUP_RE = re.compile(r"(?:docker-|/docker/|cri-containerd-|crio-|libpod-)([0-9a-f]{64})")
 # any other layout naming the container by its id (kubepods with the cgroupfs driver, nerdctl)

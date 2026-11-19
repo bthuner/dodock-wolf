@@ -169,7 +169,7 @@ class TestCollector(unittest.TestCase):
 		self.now = [0.0]
 		self.cfg = {"hostname": "h", "benches": [], "auth_log": False, "collect_host_metrics": False, "wazuh": False,
 		            "mariadb": False, "processes": False, "exposure": False, "backups": False, "tls": False, "rq": {},
-		            "versions": False, "site_settings": False, "pilot": {"enabled": False}, "platform": "generic"}  # fmt: skip
+		            "versions": False, "site_settings": False, "pilot": {"enabled": False}}  # fmt: skip
 
 	def collector(self, cfg, found):
 		with mock.patch.object(d, "discover", side_effect=lambda *a, **k: found[0]):

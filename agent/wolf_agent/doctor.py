@@ -1,13 +1,13 @@
 """`wolf-agent doctor`: what this host gives the agent, and what to fix. Read-only.
 
 Every way the agent can collect less without saying so, checked from where it runs: the config and
-the Wolf site, each bench's logs, Redis and nginx log, the Press job database or the Pilot export,
+the Wolf site, each bench's logs, Redis and nginx log, the Pilot export,
 the auth log or journal, response actions, the daemon's own folders. Run it as the agent's user
 (`sudo -u wolf-agent wolf-agent doctor`): root reads what the daemon cannot.
 
 Each check is `{area, status, title, fix}`, status one of ok / warn / fail / info. A check that
 raises is reported as failed, never stops the others. Nothing is written: no tail state, no spool,
-no SQLite file (the Press job database is opened the way the daemon opens it).
+no SQLite file.
 """
 
 import grp
@@ -22,8 +22,8 @@ import time
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
-from . import pilot, press
-from .config import press_settings, resolve_auth_log, section
+from . import pilot
+from .config import PRESS_V1_MESSAGE, press_v1, resolve_auth_log, section
 from .parsers.nginx import parse_line as parse_nginx_line
 from .redis_queue import RedisClient
 from .tailer import JournalTailer
@@ -49,7 +49,7 @@ def run(cfg, config_path, live=True, collector_factory=None, euid=None, daemon=F
 		def collector_factory(c):
 			return Collector(c, state_path=None, sync_checks=True)
 
-	# what the daemon works from: its log sources and, on Press, the benches it rediscovers
+	# what the daemon works from: its log sources and benches
 	seen = {"paths": [], "benches": list(cfg.get("benches") or []), "error": None}
 	try:
 		collector = collector_factory(cfg)
@@ -220,8 +220,6 @@ def _short(path):
 
 
 def _benches(cfg, benches):
-	if not benches and press.is_proxy(press_settings(cfg)["agent_dir"]):
-		return [item("benches", INFO, "a Press proxy server: no bench here, its access log names the sites")]
 	if not benches:
 		return [item("benches", WARN, "no bench in the config: only host metrics and the auth log are collected",
 		             "sudo wolf-agent register ... --bench /path/to/bench, or wolf-agent discover")]  # fmt: skip
@@ -256,8 +254,8 @@ def _site_configs(bench):
 			unreadable.append(site)
 	if not unreadable:
 		return []
-	# Press and Pilot keep them 0600 for the bench user on purpose: unknown, not broken
-	known = bench.get("platform") in ("press", "pilot")
+	# Pilot keeps them 0600 for the bench user on purpose: unknown, not broken
+	known = bench.get("platform") == "pilot"
 	return [item("benches", INFO if known else WARN,
 	             f"{bench['name']}: {len(unreadable)} site config(s) unreadable: risky settings and MariaDB checks unknown",
 	             None if known else f"add {AGENT_USER} to the bench user's group")]  # fmt: skip
@@ -294,51 +292,21 @@ def _nginx(bench, path):
 	parsed = [p for p in map(parse_nginx_line, lines[-200:]) if p]
 	if not parsed:
 		return item("benches", WARN, f"{bench}: no line of {os.path.basename(path)} is in a format Wolf reads",
-		            "log with nginx's combined format, Press's main or Pilot's pilot_access (docs: agent/collected)")  # fmt: skip
+		            "log with nginx's combined format or Pilot's pilot_access (docs: agent/collected)")  # fmt: skip
 	return item("benches", OK, f"{bench}: {os.path.basename(path)} parsed ({len(parsed)} of its last {len(lines[-200:])} lines)")
 
 
-# --- Press and Pilot ----------------------------------------------------------------------------
+# --- Pilot -------------------------------------------------------------------------------------
 
 
 def _platform(cfg):
 	out = []
-	press_cfg = press_settings(cfg)
-	if cfg.get("platform") == "press" or press.detect(press_cfg["agent_dir"]):
-		out += _press(cfg, press_cfg)
+	if press_v1(cfg):
+		out.append(item("platform", FAIL, "this host was registered as a Press v1 server, which this agent no longer reads",
+		                PRESS_V1_MESSAGE))  # fmt: skip
 	for bench in cfg.get("benches") or []:
 		if bench.get("platform") == "pilot":
 			out += _pilot(bench)
-	return out
-
-
-def _press(cfg, press_cfg):
-	out = []
-	db = os.path.join(press_cfg["agent_dir"], press.JOBS_DB)
-	try:
-		conn = press.open_jobs_db(db)
-	except press.JobsDBError as e:
-		out.append(item("platform", WARN, f"Press: cannot read {db}: {e}",
-		                f"add {AGENT_USER} to the frappe group; deployments fall back to bench changes on disk"))  # fmt: skip
-	else:
-		jobs = conn.execute("select count(*) from jobmodel").fetchone()[0]
-		conn.close()
-		out.append(item("platform", OK, f"Press: job history readable ({jobs} jobs): deployments, backups"))
-	# -wal/-shm the Press agent cannot write stop every Press job (seen on dev/press)
-	try:
-		owner = os.stat(db).st_uid
-		for suffix in ("-wal", "-shm"):
-			if os.path.exists(db + suffix) and os.stat(db + suffix).st_uid != owner:
-				out.append(item("platform", FAIL, f"Press: {db}{suffix} is not the Press agent's: its jobs fail to write",
-				                f"stop the Press agent (supervisorctl stop 'agent:'), delete {db}-wal and -shm, start it"))  # fmt: skip
-	except OSError:
-		pass
-	if press.is_proxy(press_cfg["agent_dir"]):
-		logs = [e for e in cfg.get("extra_logs") or [] if e.get("site_from_host")]
-		out.append(item("platform", OK if logs else FAIL, "Press proxy server: " + ("its access log is read" if logs else "its access log is not read"),
-		                None if logs else "sudo wolf-agent --config <config> refresh"))  # fmt: skip
-	elif press_cfg.get("proxy_ip") and cfg.get("platform") == "press":
-		out.append(item("platform", INFO, f"Press: behind the proxy {press_cfg['proxy_ip']}: web clients are blocked there"))
 	return out
 
 

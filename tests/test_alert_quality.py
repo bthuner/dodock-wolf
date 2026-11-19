@@ -103,7 +103,7 @@ class TestSilence(unittest.TestCase):
 		self.assertFalse(c.silence_matches({"alert_rule": "High CPU"}, self.scope, None))
 
 
-class TestEscalationAndDigest(unittest.TestCase):
+class TestEscalationAndChannels(unittest.TestCase):
 	def test_escalation_due(self):
 		now = datetime(2026, 10, 29, 2, 30)
 		self.assertTrue(c.escalation_due(now - timedelta(minutes=15), 15, now))
@@ -111,28 +111,8 @@ class TestEscalationAndDigest(unittest.TestCase):
 		self.assertFalse(c.escalation_due(now - timedelta(hours=5), 0, now))
 		self.assertFalse(c.escalation_due(None, 15, now))
 
-	def test_should_digest(self):
-		self.assertTrue(c.should_digest("hourly", "warning", "fired"))
-		self.assertTrue(c.should_digest("hourly", "info", "resolved"))
-		self.assertFalse(c.should_digest("hourly", "critical", "fired"))
-		self.assertFalse(c.should_digest("hourly", "warning", "escalated"))
-		self.assertFalse(c.should_digest("hourly", "warning", "test"))
-		self.assertFalse(c.should_digest("none", "warning", "fired"))
-		self.assertFalse(c.should_digest(None, "warning", "fired"))
-
 	def test_channel_destination_normalizes_email(self):
 		a = c.channel_destination({"channel_type": "Email", "recipients": "B@x.org, a@x.org"})
 		b = c.channel_destination({"channel_type": "Email", "recipients": "a@x.org\nb@x.org\n"})
 		self.assertEqual(a, b)
 		self.assertEqual(c.channel_destination({"channel_type": "Webhook", "webhook_url": " https://h/k "}), "https://h/k")
-
-	def test_group_digest(self):
-		items = [
-			{"channel_type": "Email", "destination": "a@x.org", "incident": "1"},
-			{"channel_type": "Webhook", "destination": "https://h", "incident": "2"},
-			{"channel_type": "Email", "destination": "a@x.org", "incident": "3"},
-			{"channel_type": "Email", "destination": "", "incident": "4"},
-		]
-		groups = c.group_digest(items)
-		self.assertEqual(list(groups), [("Email", "a@x.org"), ("Webhook", "https://h")])
-		self.assertEqual([i["incident"] for i in groups[("Email", "a@x.org")]], ["1", "3"])

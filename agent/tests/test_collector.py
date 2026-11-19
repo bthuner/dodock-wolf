@@ -4,7 +4,7 @@ import os
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -255,6 +255,59 @@ class TestCli(unittest.TestCase):
 	def test_discover(self):
 		code, out = self.run_cli("discover", "--bench", self.bench)
 		self.assertEqual(json.loads(out)[0]["name"], "frappe-bench")
+
+	def run_cli_err(self, *argv):
+		err = io.StringIO()
+		with redirect_stderr(err):
+			code, out = self.run_cli(*argv)
+		return code, out, err.getvalue()
+
+	def test_v01_options_warn_and_do_nothing(self):
+		# Press v1's options, still in old scripts and units: accepted, warned about, ignored
+		code, out, err = self.run_cli_err("discover", "--bench", self.bench, "--platform", "press")
+		self.assertEqual((code, json.loads(out)[0]["name"]), (0, "frappe-bench"))
+		self.assertEqual(err.count("--platform was removed in 0.2: ignored"), 1)
+
+		code, out, err = self.run_cli_err("register", "--url", self.server.url, "--token", "tok", "--bench", self.bench,
+		                                  "--platform", "auto")  # fmt: skip
+		self.assertEqual(code, 0)
+		self.assertIn("--platform was removed in 0.2: ignored", err)
+		with open(self.config) as f:
+			cfg = json.load(f)
+		self.assertNotIn("platform", cfg)
+		cfg.update(auth_log=False, collect_host_metrics=False)
+		with open(self.config, "w") as f:
+			json.dump(cfg, f)
+
+		code, out, err = self.run_cli_err("check", "--platform", "generic", "--bench", self.bench)
+		self.assertEqual(code, 0)
+		self.assertEqual(err.count("--platform was removed in 0.2: ignored"), 1)
+
+		code, _, err = self.run_cli_err("mark-deployment", "--bench", "frappe-bench", "--source", "press")
+		self.assertEqual(code, 0)
+		self.assertIn("--source press was removed in 0.2: ignored", err)
+		self.assertEqual(self.server.requests[-1]["body"]["source"], "manual")
+
+		before = len(self.server.requests)
+		code, out, err = self.run_cli_err("refresh")
+		self.assertEqual((code, out), (0, ""))
+		self.assertIn("removed in 0.2: ignored", err)
+		self.assertEqual(len(self.server.requests), before)
+
+	def test_run_warns_on_a_press_v1_config(self):
+		cfg = {
+			"url": self.server.url, "agent_id": "WAG-1", "agent_secret": "s", "hostname": "h",
+			"spool_dir": os.path.join(self.tmp.name, "spool"), "benches": [], "auth_log": False,
+			"collect_host_metrics": False, "platform": "press", "press": {"proxy_ip": "10.0.0.3"},
+		}
+		os.makedirs(os.path.dirname(self.config), exist_ok=True)
+		with open(self.config, "w") as f:
+			json.dump(cfg, f)
+		self.server.status = 401  # stops the loop after its first push
+		with mock.patch.object(cli.signal, "signal"), self.assertLogs("wolf_agent", "WARNING") as logs:
+			self.run_cli("run")
+		self.assertTrue(any("Press v1 is supported by Dodock Wolf v0.1.0 only" in line and "WOLF_AGENT_REF=v0.1.0" in line
+		                    for line in logs.output))  # fmt: skip
 
 
 if __name__ == "__main__":

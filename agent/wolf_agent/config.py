@@ -15,24 +15,15 @@ DEFAULTS = {
 	"push_interval": 30,
 	"spool_dir": "/var/lib/wolf-agent/spool",
 	"verify_tls": True,
+	# the address of a reverse proxy in front of this host's web traffic, or null: web clients are
+	# then blocked on that proxy, not here (response actions propose blocks for SSH events only)
+	"behind_proxy": None,
 	"benches": [],
 	# [{"path": "/var/log/foo.log", "parser": "traceback", "bench": null, "site": null}]
 	"extra_logs": [],
 	# null = auto-detect, a path, "journal", or false to disable
 	"auth_log": None,
 	"collect_host_metrics": True,
-	# null = auto-detect (Press agent config.json present → "press"), "press" or "generic"
-	"platform": None,
-	# Press servers only (docs/press.md)
-	"press": {
-		"agent_dir": "/home/frappe/agent",
-		"benches_directory": None,  # registration saves the Press agent's (its config is 0600)
-		"proxy_ip": None,  # the Press proxy in front of this app server, saved by registration
-		"server_name": None,  # the server's name in Press (its agent's vhost on a proxy is no site)
-		"nginx_access_log": "/var/log/nginx/access.log",
-		"rediscover_interval": 60,
-		"deployments": True,
-	},
 	# Frappe Pilot benches only (docs/pilot.md). Admin API token: `token`, or one is
 	# minted from `jwt_secret` / the bench.toml [admin] jwt_secret when readable.
 	"pilot": {
@@ -43,9 +34,9 @@ DEFAULTS = {
 	},
 	# RQ registries in each bench's queue Redis: a started job older than this is "long running"
 	"rq": {"long_job_minutes": 30},
-	# age of the newest sites/<site>/private/backups/*-database.sql* (Press benches: off,
-	# see docs/press.md); `dirs` maps a site to another backup directory
-	"backups": {"enabled": True, "interval": 600, "press": False, "dirs": {}},
+	# age of the newest sites/<site>/private/backups/*-database.sql*; `dirs` maps a site to another
+	# backup directory
+	"backups": {"enabled": True, "interval": 600, "dirs": {}},
 	# certificate expiry of every public site name and custom domain (SNI handshake)
 	"tls": {
 		"enabled": True, "interval": 3600, "port": 443, "timeout": 5,
@@ -82,7 +73,7 @@ DEFAULTS = {
 	# outbound connections of the bench users to destinations never seen for them (outbound.py):
 	# learned silently for `learn_days`, then each new one on an unusual port is reported once;
 	# `usual_ports` adds ports that are only counted, `report_usual_ports` reports those too (info)
-	# Benches in containers (Docker, Press) are found through /proc without root. `proxy_logs`
+	# Benches in containers (Docker) are found through /proc without root. `proxy_logs`
 	# null reads /var/log/squid/access.log when it exists; a list sets [{"path", "format": "squid"}]
 	# `kernel_log` "auto": when the operator installed wolf-outbound-log (root, sudo), every new
 	# connection comes from the kernel log, not only what a /proc sample sees; false: never
@@ -115,12 +106,18 @@ def section(cfg, name):
 	return merged
 
 
+PRESS_V1_MESSAGE = "Press v1 is supported by Dodock Wolf v0.1.0 only: reinstall the agent with WOLF_AGENT_REF=v0.1.0"
+
+
+def press_v1(cfg):
+	"""A config a v0.1 agent wrote on a Press v1 server, which 0.2 no longer reads."""
+	if cfg.get("platform") == "press" or "press" in cfg:
+		return True
+	return any(isinstance(b, dict) and b.get("platform") == "press" for b in cfg.get("benches") or [])
+
+
 def pilot_settings(cfg):
 	return section(cfg, "pilot")
-
-
-def press_settings(cfg):
-	return section(cfg, "press")
 
 
 def config_path(cli_value=None):

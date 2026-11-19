@@ -137,8 +137,8 @@ class Shipper:
 		self.url = cfg["url"].rstrip("/")
 		self.headers = {"X-Wolf-Agent-Id": cfg["agent_id"], "X-Wolf-Agent-Secret": cfg["agent_secret"]}
 		self.hostname = cfg["hostname"]
-		# a Press app server's proxy: its web clients' addresses are blocked there, not here
-		self.behind_proxy = ((cfg.get("press") or {}).get("proxy_ip") or None) if cfg.get("platform") == "press" else None
+		# sent in every push, null included: a null clears what a v0.1 Press agent stored
+		self.behind_proxy = cfg.get("behind_proxy") or None
 		self.verify_tls = cfg.get("verify_tls", True)
 		self.push_interval = int(cfg.get("push_interval") or 30)
 		self.skew_warned = False
@@ -238,7 +238,7 @@ class Shipper:
 		return True
 
 	def mark_deployment(self, bench, site=None, note=None, source="manual", silence_minutes=None, timestamp=None):
-		"""`timestamp` (UTC ISO) defaults to now; the demos mark past deployments with theirs."""
+		"""`timestamp` (UTC ISO) defaults to now."""
 		body = {"bench": bench, "site": site, "note": note, "source": source, "timestamp": timestamp or utc_iso()}
 		if silence_minutes:
 			body["silence_minutes"] = int(silence_minutes)

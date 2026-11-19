@@ -8,7 +8,7 @@ A firewall may still block it: the agent cannot see that, and says so.
 
 Each site's `site_config.json` (over `common_site_config.json`) is read for settings that
 should never reach production: `developer_mode`, `allow_tests`, a `host_name` over plain HTTP
-and `allow_cors: "*"`. A config the agent cannot read (Press and Pilot keep them 0600 for the
+and `allow_cors: "*"`. A config the agent cannot read (Pilot keeps them 0600 for the
 bench user) gives no `site_config_risks` sample: unknown, never "no risk".
 
 Metrics `exposed_services` (host) and `site_config_risks` (site) carry the counts on every

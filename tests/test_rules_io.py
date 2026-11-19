@@ -13,7 +13,7 @@ FIELDS = {
 	"evaluation_state": ("Long Text", None),
 }  # fmt: skip
 CHANNEL = {
-	"channel_type": ("Select", None), "enabled": ("Check", "1"), "digest": ("Select", "none"),
+	"channel_type": ("Select", None), "enabled": ("Check", "1"),
 	"recipients": ("Small Text", None), "webhook_url": ("Data", None), "ntfy_server": ("Data", None),
 	"ntfy_topic": ("Data", None), "ntfy_token": ("Password", None), "chat_webhook_url": ("Password", None),
 }  # fmt: skip
@@ -25,7 +25,7 @@ def stored(**over):
 	        "metric_name": "disk_used_percent", "aggregation": "max", "operator": ">", "threshold": 90.0,
 	        "window_minutes": 10, "group_by": "host", "active_from": None, "active_to": None,
 	        "last_fired": "2026-11-18 20:00:00", "evaluation_state": '{"x": 1}',
-	        "channels": [{"name": "c1", "channel_type": "ntfy", "enabled": 1, "digest": "none", "ntfy_server": "https://ntfy.sh",
+	        "channels": [{"name": "c1", "channel_type": "ntfy", "enabled": 1, "ntfy_server": "https://ntfy.sh",
 	                      "ntfy_topic": "ops", "ntfy_token": "*****"}],
 	        "escalation_channels": []}  # fmt: skip
 	rule.update(over)
@@ -147,6 +147,15 @@ class TestReviewCases(unittest.TestCase):
 		rows, notes = rules_io.merge_channels([{"channel_type": "Slack"}, {"channel_type": "Slack"}], existing, CHANNEL, SECRETS)
 		self.assertEqual([r["name"] for r in rows], ["s1", "s2"])
 		self.assertEqual(notes, ["Slack: 2 rows kept their stored secrets by position: check their order in the form"])
+
+
+class TestLegacyFiles(unittest.TestCase):
+	def test_a_v0_1_export_with_digests_still_imports(self):
+		doc = {"version": 1, "rules": [{"rule_name": "A", "channels": [{"channel_type": "Email", "recipients": "a@example.com",
+		                                                                "digest": "hourly"}]}]}  # fmt: skip
+		rule, errors = rules_io.parse(doc, FIELDS, CHANNEL)[0]
+		self.assertEqual(errors, [])
+		self.assertNotIn("digest", rule["channels"][0])
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 Run from the bench's sites/ directory:  ../env/bin/python /path/to/ci/db_smoke.py <site>
 Inserts demo rows, runs ingest, rules, correlation, timeline, charts, channels, purge and the
-incident workflow (assignment, comments, merge/split, postmortem, metrics report, public status page),
+incident workflow (assignment, comments, merge/split, postmortem, metrics report),
 and prints one line per check ("ok" or "FAIL"). Exits non-zero on the first failure.
 CI runs it from ci/integration.sh.
 """
@@ -361,6 +361,14 @@ def main():
 			request(agent_id, "legacy-secret-lazy")
 			assert agent_api.authenticate_agent() == agent_id
 			assert legacy_rows() == 0 and frappe.db.get_value("Wolf Agent", agent_id, "secret_hash")
+
+			# behind_proxy: stored when sent, kept when absent (satellites), cleared by an explicit null
+			# (a 0.2 agent, over what a v0.1 Press agent stored)
+			for extra, expected in (({"behind_proxy": "10.0.0.3"}, "10.0.0.3"), ({}, "10.0.0.3"), ({"behind_proxy": None}, None)):
+				request(agent_id, "legacy-secret-lazy", body={"metrics": [], "events": [], "hostname": "smoke-agent", **extra})
+				ingest.push()
+				stored = frappe.db.get_value("Wolf Agent", agent_id, "behind_proxy")
+				assert stored == expected, f"behind_proxy {extra}: {stored!r}"
 
 			settings.max_pushes_per_minute = 1
 			settings.save()
@@ -827,41 +835,6 @@ def main():
 		# the two merged incidents are left out: b and the split c remain
 		assert row["incidents"] == 2 and row["acknowledged"] == 1 and row["resolved"] == 1, row
 		return f"groups {out}, {WF_SITE}: mttr={row['mttr']} mtta={row['mtta']}"
-
-	def status_page():
-		from frappe.utils import set_request
-		from frappe.website.serve import get_response
-
-		from dodock_wolf.wolf.status_page import get_public_status
-
-		slug = "smoke-status"
-		page = frappe.get_doc("Wolf Status Page", slug) if frappe.db.exists("Wolf Status Page", slug) else frappe.new_doc("Wolf Status Page")
-		page.update({"title": "Smoke status", "slug": slug, "site": WF_SITE, "enabled": 1, "min_severity": "info",
-		             "show_history_days": 7})
-		page.save()
-		frappe.db.set_value("Wolf Incident", wf["b"], "public_title", "Checkout <slow>")
-		view = get_public_status(slug)
-		assert [i["title"] for i in view["current"]] == ["Checkout <slow>"], view["current"]
-		assert view["history"], "split incident missing from history"
-		assert HOST not in repr(view) and "b1" not in repr(view), view
-		frappe.db.commit()
-		frappe.set_user("Guest")
-		try:
-			set_request(method="GET", path=f"/wolf-status/{slug}")
-			resp = get_response()
-			html = resp.get_data(as_text=True)
-			assert resp.status_code == 200, resp.status_code
-			assert "Checkout &lt;slow&gt;" in html and "Checkout <slow>" not in html, "title not escaped"
-			assert "<h1>Smoke status</h1>" in html, "page title missing"
-			assert HOST not in html, "host leaked into the page"
-			set_request(method="GET", path="/wolf-status/no-such-page")
-			missing = get_response().status_code
-			assert missing == 404, missing
-		finally:
-			frappe.set_user("Administrator")
-		frappe.db.set_value("Wolf Status Page", slug, "enabled", 0)
-		assert get_public_status(slug) is None, "disabled page still served"
-		return f"/wolf-status/{slug}: 200 for guests, escaped, 404 when unknown or disabled"
 
 	def ui_counts():
 		"""Exact KPI counts past list limits, bench-under-host, and the same access rules for a scoped user."""
@@ -1343,79 +1316,6 @@ def main():
 		frappe.db.commit()
 		return ("group of 9 records (8 in the window) on 2 sites, 48 occurrences, same newest record in list and page, literal % _ search, "
 		        "9 events paged by 2 without repeats, scoped user sees 6 records on 1 site")
-
-	def metrics_explorer():
-		"""Catalog rules, groups by label, interval sums, gaps, clipping and a scoped user."""
-		from dodock_wolf.api import metrics
-		from dodock_wolf.wolf import access
-
-		mhost = "smoke-metrics"
-
-		def sample(name, value, minutes_ago, **kw):
-			return schema.normalize_metric({"metric_name": name, "value": value, "host": mhost, **kw}, tz,
-			                               now - timedelta(minutes=minutes_ago))
-
-		samples = []
-		for m in range(3, 30):  # the last half hour: no data before it, so earlier buckets are gaps
-			for mount, level in (("/", 50), ("/data", 91), ("/boot", 20)):
-				samples.append(sample("disk_used_percent", level + (m % 3), m, labels={"mount": mount}))
-			for site, count in (("ma.localhost", 3), ("mb.localhost", 5)):
-				samples.append(sample("http_5xx", count, m, site=site, bench="b1"))
-		samples.append(sample("smoke_custom_gauge", 7, 40))
-		events.insert_metrics(samples)
-		frappe.db.commit()
-		rollups.run()  # the custom metric's minute is rolled: the catalog lists it as seen
-
-		cat = {m["metric"]: m for m in metrics.get_metric_catalog()["metrics"]}
-		assert cat["smoke_custom_gauge"]["kind"] == "unknown" and cat["smoke_custom_gauge"]["seen"], cat.get("smoke_custom_gauge")
-		assert cat["http_5xx"]["default_aggregation"] == "sum" and "last" not in cat["http_5xx"]["aggregations"]
-
-		disk = metrics.query_metric("disk_used_percent", "max", "host_label", range="1h", host=mhost)
-		names = [s["name"] for s in disk["series"]]
-		assert names == [f"{mhost} · mount=/data", f"{mhost} · mount=/", f"{mhost} · mount=/boot"], names  # highest first
-		points = disk["series"][0]["points"]
-		assert points[0][1] is None and any(v is not None for _, v in points), "early buckets are gaps, not zeros"
-		assert disk["resolution"] == "raw" and disk["bucket_seconds"] == 60 and not disk["retention"]["clipped"], disk
-		one = metrics.query_metric("disk_used_percent", "avg", "host", label="mount=/boot", range="1h", host=mhost)
-		assert len(one["series"]) == 1 and one["series"][0]["value"] < 25, one["series"]
-
-		http = metrics.query_metric("http_5xx", "sum", "site", range="1h", host=mhost)
-		totals = {s["group"]["site"]: s["value"] for s in http["series"]}
-		in_window = sum(1 for _, v in http["series"][0]["points"] if v is not None)
-		assert set(totals) == {"ma.localhost", "mb.localhost"} and totals["mb.localhost"] > totals["ma.localhost"], totals
-		assert sum(v for _, v in next(s for s in http["series"] if s["group"]["site"] == "mb.localhost")["points"] if v) == 5 * in_window
-		for bad in (("disk_used_percent", "sum", None), ("http_5xx", "last", None), ("cpu_usage", "avg", "site")):
-			try:
-				metrics.query_metric(bad[0], bad[1], bad[2], range="1h")
-				raise AssertionError(f"accepted {bad}")
-			except frappe.ValidationError:
-				pass
-		assert metrics.query_metric("disk_used_percent", range="400d", host=mhost)["retention"]["clipped"], "clipping"
-		from dodock_wolf.wolf import window as win_mod
-
-		past = metrics.query_metric("disk_used_percent", host=mhost, since=win_mod.to_utc(now - timedelta(minutes=40), tz),
-		                            until=win_mod.to_utc(now - timedelta(minutes=20), tz))
-		assert not past["live"] and not any(s["stale"] for s in past["series"]), "a past window called stale"
-		# minute rollups of the last hours count: the mounts are listed before any hourly rollup closes
-		labels = metrics.get_labels("disk_used_percent", host=mhost)
-		assert {"mount=/", "mount=/data", "mount=/boot"} <= set(labels["labels"]), labels
-		day = metrics.query_metric("disk_used_percent", "max", "host_label", range="24h", host=mhost)
-		assert day["live"] and not any(s["stale"] for s in day["series"]), "fresh series called stale on a 24h window"
-		assert day["bucket_seconds"] == 720 and day["resolution"] == "1m", day["resolution"]
-
-		user = "smoke-scoped@example.com"
-		frappe.db.delete("Wolf User Scope", {"user": user})
-		frappe.get_doc({"doctype": "Wolf User Scope", "user": user, "scope_type": "host", "value": "smoke-host"}).insert()
-		access.clear_cache()
-		frappe.set_user(user)
-		try:
-			assert not metrics.query_metric("disk_used_percent", range="1h", host=mhost)["series"], "another host leaked"
-		finally:
-			frappe.set_user("Administrator")
-			frappe.db.delete("Wolf User Scope", {"user": user})
-			access.clear_cache()
-		return (f"3 mounts ranked by max with early gaps, mb 5xx summed per bucket, wrong aggregations refused, "
-		        f"custom metric listed, 400d clipped, scoped user sees nothing of {mhost}")
 
 	def live_updates():
 		from dodock_wolf.wolf import live
@@ -3375,11 +3275,11 @@ def main():
 	                 ("scoped user", scoped_user), ("agent secrets", agent_secrets),
 	                 ("channels", channels), ("purge", purge), ("auto-resolve", resolve),
 	                 ("assign+comment+activity", workflow), ("merge+split", merge_split), ("postmortem", postmortem),
-	                 ("metrics report", metrics), ("status page", status_page),
+	                 ("metrics report", metrics),
 	                 ("rollup", rollup), ("legacy names", legacy_names), ("resolution", resolution), ("ingest modes", ingest_modes),
 	                 ("purge metrics", purge_metrics), ("ui counts+inventory", ui_counts),
 	                 ("incident view", incident_view), ("dashboards", dashboards), ("read cache", read_cache_check),
-	                 ("explorers", explorers), ("metrics explorer", metrics_explorer),
+	                 ("explorers", explorers),
 	                 ("live updates", live_updates),
 	                 ("app security", app_security), ("permission drift", permission_drift),
 	                 ("exfiltration", exfiltration_check),

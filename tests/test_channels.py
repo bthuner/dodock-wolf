@@ -481,10 +481,10 @@ class TestPagerDuty(unittest.TestCase):
 		self.assertEqual([r["json"]["event_action"] for r in reqs], ["trigger", "resolve"])
 		self.assertEqual({r["json"]["dedup_key"] for r in reqs}, {"WINC-00012"})
 
-	def test_custom_url_and_digest(self):
+	def test_custom_url_and_unknown_kind(self):
 		(req,) = pagerduty.build_payload(msg(), {**self.CFG, "pagerduty_url": "https://oncall.example.com/integrations/v1/x/"})
 		self.assertEqual(req["url"], "https://oncall.example.com/integrations/v1/x/")
-		self.assertEqual(pagerduty.build_payload(msg(kind="digest"), self.CFG), [])
+		self.assertEqual(pagerduty.build_payload(msg(kind="other"), self.CFG), [])
 
 	def test_summary_limit_and_source_fallback(self):
 		(req,) = pagerduty.build_payload(msg(title="x" * 2000, host=None, site=None, bench=None), self.CFG)

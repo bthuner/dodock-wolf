@@ -95,7 +95,8 @@ def accept(agent, data, now=None):
 			"last_seen": now,
 			"last_ip": frappe.local.request_ip,
 			"agent_version": str(data.get("agent_version") or "")[:140] or None,
-			# the proxy its web traffic comes through; older agents send nothing: keep what is known
+			# the proxy its web traffic comes through (the agent's `behind_proxy` key): a null clears it,
+			# so a 0.2 agent drops what a v0.1 Press agent stored; satellites send nothing: keep what is known
 			**({"behind_proxy": str(data["behind_proxy"] or "")[:140] or None} if "behind_proxy" in data else {}),
 			"silence_reported": 0,
 			# the agent's hourly doctor run, when this push carries one

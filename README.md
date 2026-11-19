@@ -16,9 +16,11 @@ before customers notice, and keeps all data on your own Frappe site.
 - **Security**: web attack and host intrusion detection, MITRE ATT&CK tags on every security
   event, and a roadmap towards a Frappe-native SOC layer: [`docs/cyber.md`](docs/cyber.md).
 - **Direction** ([#136](https://github.com/bthuner/dodock-wolf/issues/136)): new work goes to the
-  security and compliance of the bench. Status pages, dashboards and metrics stay as they are for
-  operators who run their own benches, and Wolf connects to existing tools (Wazuh, Suricata,
-  CrowdSec, a SIEM, PagerDuty, Frappe Cloud's Datum and Beacon) instead of rebuilding them.
+  security and compliance of the bench. Dashboards and metrics stay as they are for
+  operators who run their own benches. Since 0.2, `main` no longer has the Press v1 integration,
+  the live demos, status pages, the metrics explorer or digests: release v0.1.0 keeps them. Wolf
+  connects to existing tools (Wazuh, Suricata, CrowdSec, a SIEM, PagerDuty, Frappe Cloud's Datum
+  and Beacon) instead of rebuilding them.
 - **Documentation**: [bthuner.github.io/dodock-wolf](https://bthuner.github.io/dodock-wolf/), in English
   and French (source in [`docs-site/`](docs-site/)).
 - Wire protocol: [`docs/protocol.md`](docs/protocol.md). The design story is in the [making-of](https://bthuner.github.io/dodock-wolf/making-of/).
@@ -51,11 +53,23 @@ curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/main/agent/inst
 The agent finds benches automatically (via `bench.toml`, or `sites/` + `apps/frappe`).
 Benches managed by [Frappe Pilot](https://github.com/frappe/pilot) are read from their real
 `bench.toml`, and Pilot update/migrate tasks become deployment events. See
-[`docs/pilot.md`](docs/pilot.md). On
-servers managed by a self-hosted Press (Frappe Cloud stack), it reads the Press agent's
-layout, and it turns Press deploy/update/migrate jobs into deployment events. See
-[`docs/press.md`](docs/press.md). See [`agent/README.md`](agent/README.md) for
+[`docs/pilot.md`](docs/pilot.md). See [`agent/README.md`](agent/README.md) for
 configuration, `wolf-agent check` and `wolf-agent mark-deployment`.
+
+### Staying on v0.1.0
+
+Release v0.1.0 keeps what 0.2 removed: the Press v1 integration, the live demos, status pages,
+the metrics explorer and digests. To stay on it, install the app and the agent from that tag:
+
+```bash
+bench get-app https://github.com/bthuner/dodock-wolf --branch v0.1.0
+curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/v0.1.0/agent/install.sh \
+  | sudo WOLF_AGENT_REF=v0.1.0 WOLF_URL=https://wolf.example.com WOLF_TOKEN=<registration token> bash
+```
+
+A 0.2 agent on a host a v0.1 agent registered as a Press v1 server logs a warning at start and
+`wolf-agent doctor` fails with the same fix: Press v1 is supported by Dodock Wolf v0.1.0 only,
+reinstall the agent with `WOLF_AGENT_REF=v0.1.0`.
 
 ## Alert rules
 
@@ -77,7 +91,7 @@ Wolf Alert Rule list's menu.
 | Cooldown | re-fire into the just-resolved incident instead of opening a new one. An event rule reopens it only for an event newer than the resolution; a metric rule, while its window still breaches |
 | Fire / resolve after evaluations | consecutive breached (or clear) evaluations, one per scheduler tick, before an incident opens (or auto-resolves). Default 1 |
 | Separate resolve threshold | hysteresis: e.g. fire above 90, resolve only once at or below 80 |
-| Channels | Email, Webhook, Raven, Slack, Mattermost, Matrix, ntfy, Gotify, SMS, PagerDuty (see [Channels](#channels)). Each channel can use an **hourly digest**: info/warning alerts are batched into one message per destination; critical alerts are always immediate |
+| Channels | Email, Webhook, Raven, Slack, Mattermost, Matrix, ntfy, Gotify, SMS, PagerDuty (see [Channels](#channels)) |
 | Notify on resolve | also tell the channels when the incident resolves, automatically or by hand (default on). PagerDuty channels always hear it |
 | Escalate after minutes | if still Open (not acknowledged) this long after the first alert, notify the escalation channels once |
 
@@ -229,7 +243,7 @@ Setup notes:
 - **PagerDuty**: add an *Events API v2* integration to a service and paste its integration key as
   the Routing Key. Change the Events API URL for the EU region
   (`https://events.eu.pagerduty.com/v2/enqueue`) or for an Events-v2 compatible receiver (Grafana
-  OnCall, Opsgenie and others accept the same body). PagerDuty channels are never digested.
+  OnCall, Opsgenie and others accept the same body).
 
 ## Incident workflow
 
@@ -306,14 +320,6 @@ vs Suricata) and **Host Logins and Accounts** (auth.log signals vs Wazuh):
   Each Wolf Agent counts the events it sent that gave way (**Own Events Given Way**).
 
 Every timeline row says who raised the event: the Wolf agent, the Wolf site, Suricata or Wazuh.
-
-**Public status pages** (opt-in): a **Wolf Status Page** (title, slug, site, optional bench,
-history days, minimum severity) is served to guests at `/wolf-status/<slug>` once **Enabled** is
-ticked; otherwise the address answers 404. It shows an overall banner, open incidents and the
-resolved ones of the last N days, with only a title, severity, public status (Investigating /
-Identified / Resolved) and times. Hosts, rules, summaries and payloads never leave the server.
-Internal titles often name hosts, so an incident is shown as "Degraded performance" or "Service
-disruption" unless you fill its **Public Title**.
 
 ## Metric storage
 

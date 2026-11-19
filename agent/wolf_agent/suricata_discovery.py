@@ -15,8 +15,8 @@ In order:
 `discover()` returns `(path, how)`, or `(None, why)`. The collector runs it at start and every
 RECHECK seconds, so a Suricata started after the agent is picked up. One EVE log is read: the
 first running Suricata that gives one. Not read: `include:` files, flow-style outputs, `threaded`
-outputs (one file per thread). Pilot and Press hosts are
-read the same way: neither knows about Suricata.
+outputs (one file per thread). Pilot hosts are read the same
+way: Pilot does not know about Suricata.
 """
 
 import os

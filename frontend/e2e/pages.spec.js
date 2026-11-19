@@ -13,7 +13,6 @@ const PAGES = [
   ['/wolf/incidents/WINC-00001', 'restarting workers'],
   ['/wolf/events', 'KeyError: customer'],
   ['/wolf/errors', 'KeyError: customer'],
-  ['/wolf/metrics?metric=disk_used_percent', 'bench-01 · mount=/'],
   ['/wolf/logs', 'Log search is not available'],
   ['/wolf/monitoring', 'Unknown: the site could not compute its health.'],
   ['/wolf/security', '71 / 100'],

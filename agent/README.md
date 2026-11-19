@@ -25,31 +25,20 @@ Set `WOLF_BENCHES="/home/frappe/frappe-bench /srv/other-bench"` to skip auto-dis
 |---------|--------------|
 | `wolf-agent register --url URL --token TOKEN [--bench PATH]...` | register the host, discover benches, write the config |
 | `wolf-agent run` | the daemon loop (what systemd runs) |
-| `wolf-agent doctor [--json] [--offline]` | (the daemon also runs it hourly, `setup_checks`, for the Monitoring page) as the agent's user: what this host gives the agent (registration, Wolf site, logs, benches, Redis, nginx, Press/Pilot, auth log, response actions, daemon) and the fix for each problem; read-only, exit 1 on a failure |
-| `wolf-agent refresh` | as root: read again what the agent's user cannot (a Press server's benches folder and proxy, a Press proxy's access log) and save it, keeping the registration; `install.sh` runs it on upgrade |
-| `wolf-agent discover [--bench PATH] [--platform auto\|press\|generic]` | show what bench discovery finds |
-| `wolf-agent check [--from-start] [--status] [--platform …]` | collect once and print the JSON payload, nothing is sent; the watchdog state goes to stderr (`--status` also asks the site for its health) |
+| `wolf-agent doctor [--json] [--offline]` | (the daemon also runs it hourly, `setup_checks`, for the Monitoring page) as the agent's user: what this host gives the agent (registration, Wolf site, logs, benches, Redis, nginx, Pilot, auth log, response actions, daemon) and the fix for each problem; read-only, exit 1 on a failure |
+| `wolf-agent discover [--bench PATH]` | show what bench discovery finds |
+| `wolf-agent check [--from-start] [--status] [--bench PATH]` | collect once and print the JSON payload, nothing is sent; the watchdog state goes to stderr (`--status` also asks the site for its health) |
 | `wolf-agent mark-deployment --bench NAME [--site S] [--note TEXT] [--silence 15m]` | put a deployment marker on the Wolf timeline; `--silence` also opens a maintenance window that mutes notifications for that bench/site |
 | `wolf-agent test-fallback` | send a test message through the watchdog fallback channel(s) |
 
 Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
 
-## Press servers
-
-On a server managed by Press (the Frappe Cloud stack), the agent detects
-`/home/frappe/agent/config.json` and switches to Press mode. It lists benches under
-the Press `benches_directory` and rescans them every minute, since each deploy creates
-a new bench. It maps custom domains in the shared `/var/log/nginx/access.log` to sites,
-and it reads queue lengths on each bench's `rq_port`. It also turns the Press agent's
-deploy/update/migrate jobs (`jobs.sqlite3`, read-only) into `deployment` events, plus an
-`error` event when one fails. The Press agent writes its configs mode 0600: registration (root)
-reads them and saves `"platform": "press"` and `press.benches_directory`; the daemon finds new
-benches from their readable `docker-compose.yml` and `nginx.conf`. Details, source references
-and limitations are in [`../docs/press.md`](../docs/press.md), and `dev/press/` sets up a Press
-app server and proxy server with Press's own roles to test on. On a Press **proxy** server
-(`nginx/proxy.conf`), registration reads its `/var/log/nginx/access.log` with each line's site
-from `$host` (custom domains through its `nginx/hosts/*/map.json`). An app server behind a proxy
-reports it (`behind_proxy`): web clients are blocked on the proxy, where the block takes effect.
+Deprecated (Press v1, removed in 0.2), still accepted so old scripts keep working: `--platform` on
+`register`, `discover` and `check`, `mark-deployment --source press` (recorded as `manual`) and
+`wolf-agent refresh` (exits 0). Each prints `removed in 0.2: ignored` to stderr and does nothing.
+A config a v0.1 agent wrote on a Press v1 server (`"platform": "press"`, a `press` key or a Press
+bench) gets a warning at start and a failed `doctor` check: Press v1 is supported by Dodock Wolf
+v0.1.0 only, so reinstall the agent with `WOLF_AGENT_REF=v0.1.0` (see the top-level README).
 
 ## Pilot benches
 
@@ -119,10 +108,7 @@ and `dev/pilot/` for a Pilot host to test on.
   `redis_cache.conf` sets `maxmemory` with `allkeys-lru`), so a full cache and evictions are normal.
 - **Backups**: `backup_age_hours` per site, from the newest
   `sites/<site>/private/backups/*-database.sql*` (every `backups.interval`, 10 min). A site that
-  never had a backup sends nothing, so "No backup for 26 h" cannot fire for it. On Press benches it
-  comes from the Press agent's newest successful Backup Site job (Press deletes offsite backups from
-  the server; `backups.press: true` reads the folder instead), and a failed Backup Site job is a
-  `backup_failed` event. Other offsite-only setups can point `backups.dirs` at a mounted directory.
+  never had a backup sends nothing, so "No backup for 26 h" cannot fire for it. Offsite-only setups can point `backups.dirs` at a mounted directory.
 - **Suricata** (optional, #72): when Suricata writes an EVE log, the agent tails it like the other
   logs. The path is `suricata.eve_log`, else found from a running Suricata (its `-c`/`-l` flags and
   the `eve-log` output of its `suricata.yaml`, through the bind mounts of a container), else from
@@ -217,8 +203,8 @@ and `dev/pilot/` for a Pilot host to test on.
   a `bench_new_outbound` event (warning), naming it in `remote_ip`/`remote_port`; new ones on usual
   ports (web, mail, DNS, NTP, SSH and git, LDAP, plus `outbound.usual_ports`) are counted in
   `bench_new_outbound_usual`, or reported at info with `outbound.report_usual_ports`. A bench owned
-  by root is skipped. `outbound.include_private` adds LAN peers. Benches in containers (Docker,
-  Press) are found without root through `/proc/<pid>/cgroup` and `mountinfo` and read through
+  by root is skipped. `outbound.include_private` adds LAN peers. Benches in containers (Docker)
+  are found without root through `/proc/<pid>/cgroup` and `mountinfo` and read through
   `/proc/<pid>/net/tcp`. Behind an outbound proxy, the proxy's access log gives every destination
   by host name (`outbound.proxy_logs`, `/var/log/squid/access.log` by default when it exists; Squid's
   native format; the installer adds the agent's user to the `proxy` group to read it). A client of
@@ -244,8 +230,7 @@ and `dev/pilot/` for a Pilot host to test on.
   group after `bench setup supervisor`), else `systemctl list-units` for service units whose name
   contains the bench name. `bench_processes_down` per bench counts processes that are STOPPED,
   EXITED, BACKOFF, FATAL or UNKNOWN (systemd: `failed` or a restart loop). A process that enters
-  FATAL/UNKNOWN (systemd `failed`) also sends one `worker_failure` / `process_down` event. Press
-  benches run their processes inside containers and are skipped.
+  FATAL/UNKNOWN (systemd `failed`) also sends one `worker_failure` / `process_down` event.
 
 Logs are read from the end on first start; offsets are kept in
 `/var/lib/wolf-agent/spool/tail-state.json` so restarts and log rotation lose nothing.
@@ -266,11 +251,9 @@ credentials (401/403) the agent exits with status 2 and systemd stops restarting
   "push_interval": 30,
   "spool_dir": "/var/lib/wolf-agent/spool",
   "verify_tls": true,
+  "behind_proxy": null,
   "auth_log": null,
   "collect_host_metrics": true,
-  "platform": null,
-  "press": {"agent_dir": "/home/frappe/agent", "benches_directory": null, "nginx_access_log": "/var/log/nginx/access.log",
-            "rediscover_interval": 60, "deployments": true},
   "pilot": {"deployments": true, "api_url": null, "token": null, "jwt_secret": null},
   "benches": [
     {"name": "frappe-bench", "path": "/home/frappe/frappe-bench", "sites": ["a.example.com"],
@@ -279,7 +262,7 @@ credentials (401/403) the agent exits with status 2 and systemd stops restarting
   ],
   "extra_logs": [{"path": "/var/log/myapp/error.log", "parser": "traceback", "bench": null, "site": null}],
   "rq": {"long_job_minutes": 30},
-  "backups": {"enabled": true, "interval": 600, "press": false, "dirs": {}},
+  "backups": {"enabled": true, "interval": 600, "dirs": {}},
   "tls": {"enabled": true, "interval": 3600, "port": 443, "timeout": 5, "connect_host": null,
           "domains": ["status.example.com"], "exclude": []},
   "mariadb": {"enabled": true, "cli": null, "host": null, "port": null, "user": null,
@@ -301,8 +284,10 @@ credentials (401/403) the agent exits with status 2 and systemd stops restarting
 }
 ```
 
-`platform`: `null` auto-detects Press, `"press"` forces it, `"generic"` disables it.
-`auth_log`: `null` auto-detects, a path forces a file, `"journal"` forces journalctl,
+`behind_proxy`: the address of a reverse proxy in front of this host's web traffic, or `null`
+(default). It goes with every push: Wolf then proposes blocks on this host for SSH events only,
+and web clients are blocked on the proxy, where the block takes effect; `null` clears what the
+Wolf site had stored. `auth_log`: `null` auto-detects, a path forces a file, `"journal"` forces journalctl,
 `false` disables. `nginx_access_log` may be a list. Parsers for `extra_logs`:
 `traceback`, `scheduler`, `worker`, `nginx`, `auth`.
 `rq`, `backups`, `tls`, `mariadb`, `processes`, `versions`, `site_settings`, `suricata`, `wazuh`: every key is optional (defaults above), and

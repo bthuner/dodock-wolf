@@ -127,16 +127,30 @@ class TestShipper(unittest.TestCase):
 		self.assertEqual(req["headers"]["Content-Type"], "application/json")
 		body = req["body"]
 		self.assertEqual(set(body), {"sent_at", "agent_version", "hostname", "behind_proxy", "metrics", "events"})
+		# an explicit null, so the site clears a proxy a v0.1 Press agent stored
+		self.assertIsNone(body["behind_proxy"])
 		self.assertTrue(body["sent_at"].endswith("Z"))
 		self.assertEqual(body["hostname"], "bench-01")
-		self.assertIsNone(body["behind_proxy"])
 		self.assertEqual(self.shipper.push_interval, 15)
 
-	def test_a_press_app_server_reports_its_proxy(self):
-		cfg = {"url": self.server.url, "agent_id": "WAG-0001", "agent_secret": "s", "hostname": "f1", "spool_dir": self.tmp.name,
-		       "platform": "press", "press": {"proxy_ip": "10.0.0.3"}}  # fmt: skip
-		self.assertEqual(Shipper(cfg, clock=self.clock).behind_proxy, "10.0.0.3")
-		self.assertIsNone(Shipper({**cfg, "platform": "generic"}, clock=self.clock).behind_proxy)
+	def test_behind_proxy_from_the_config(self):
+		cfg = {"url": self.server.url, "agent_id": "WAG-1", "agent_secret": "s", "hostname": "h", "spool_dir": self.tmp.name,
+		       "behind_proxy": "10.0.0.3"}  # fmt: skip
+		self.assertTrue(Shipper(cfg, clock=self.clock).send([], []))
+		self.assertEqual(self.server.requests[-1]["body"]["behind_proxy"], "10.0.0.3")
+		# v0.1's Press keys set it no more
+		cfg = {**cfg, "behind_proxy": None, "platform": "press", "press": {"proxy_ip": "10.0.0.3"}}
+		self.assertTrue(Shipper(cfg, clock=self.clock).send([], []))
+		body = self.server.requests[-1]["body"]
+		self.assertIn("behind_proxy", body)
+		self.assertIsNone(body["behind_proxy"])
+		# a spooled batch replays with the key too
+		self.server.status = 502
+		self.assertFalse(self.shipper.send([{"n": 1}], []))
+		self.server.status = 200
+		self.clock.t += 3600
+		self.assertTrue(self.shipper.send([], []))
+		self.assertTrue(all("behind_proxy" in r["body"] for r in self.server.requests))
 
 	def test_large_batch_is_split(self):
 		self.shipper.send([{"v": i} for i in range(6000)], [{"e": i} for i in range(10)])

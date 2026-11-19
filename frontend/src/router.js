@@ -16,7 +16,6 @@ export const routes = [
   { path: '/events', name: 'events', component: () => import('@/pages/EventsPage.vue'), meta: { title: () => __('Events') } },
   { path: '/errors', name: 'errors', component: () => import('@/pages/ErrorsPage.vue'), meta: { title: () => __('Errors') } },
   { path: '/errors/:fingerprint', name: 'error-group', component: () => import('@/pages/ErrorGroupPage.vue'), meta: { title: () => __('Error group') } },
-  { path: '/metrics', name: 'metrics', component: () => import('@/pages/MetricsPage.vue'), meta: { title: () => __('Metrics') } },
   { path: '/logs', name: 'logs', component: () => import('@/pages/LogsPage.vue'), meta: { title: () => __('Logs') } },
   { path: '/sites/:site', name: 'site', component: () => import('@/pages/DashboardPage.vue'), meta: { title: () => __('Site') } },
   { path: '/hosts/:host', name: 'host', component: () => import('@/pages/DashboardPage.vue'), meta: { title: () => __('Host') } },

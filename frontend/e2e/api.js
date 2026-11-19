@@ -41,9 +41,6 @@ const ROWS = [
     user_name: 'Ops', text: 'restarting workers' },
 ]  // prettier-ignore
 
-const METRIC = { metric: 'disk_used_percent', label: 'Disk used', unit: '%', kind: 'gauge', seen: true, label_key: 'mount',
-  aggregations: ['avg', 'min', 'max', 'last'], default_aggregation: 'avg', group_bys: ['none', 'host', 'host_label'] }  // prettier-ignore
-
 export function fixtures() {
   return {
     'dodock_wolf.api.spa.get_boot': () => BOOT,
@@ -116,13 +113,6 @@ export function fixtures() {
       groups: [{ fingerprint: 'fp1', title: 'KeyError: customer', severity: 'critical', records: 8, records_in_window: 3, occurrences: 47,
         sites: 2, host_wide: false, incidents: 1, first_seen: ago(300), last_seen: ago(5), latest: { site: 'a.example.com' } }],
       paging: { has_more: false },
-    }),
-    'dodock_wolf.api.metrics.get_metric_catalog': () => ({ metrics: [METRIC] }),
-    'dodock_wolf.api.metrics.get_labels': () => ({ labels: ['mount=/'] }),
-    'dodock_wolf.api.metrics.query_metric': () => ({
-      metric: METRIC, aggregation: 'avg', resolution: 'raw', bucket_seconds: 60, window: { since: ago(60), until: NOW.toISOString() },
-      retention: { clipped: false }, groups: { shown: 1, total: 1, ranked_by: 'max over the window, highest first' }, live: true,
-      series: [{ name: 'bench-01 · mount=/', value: 93, samples: 60, last_sample: ago(1), stale: false, points: [[ago(2), 92], [ago(1), 93]] }],
     }),
     'dodock_wolf.api.security.list_sites': () => ['a.example.com'],
     'dodock_wolf.api.security.get_posture': () => ({

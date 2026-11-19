@@ -67,8 +67,7 @@
   "merged_into",
   "split_from",
   "cb_6",
-  "postmortem",
-  "public_title"
+  "postmortem"
  ],
  "fields": [
   {
@@ -433,7 +432,7 @@
   },
   {
    "collapsible": 1,
-   "collapsible_depends_on": "eval:doc.merged_into || doc.split_from || doc.postmortem || doc.public_title",
+   "collapsible_depends_on": "eval:doc.merged_into || doc.split_from || doc.postmortem",
    "fieldname": "related_section",
    "fieldtype": "Section Break",
    "label": "Related"
@@ -463,13 +462,6 @@
    "label": "Postmortem",
    "options": "Wolf Postmortem",
    "read_only": 1
-  },
-  {
-   "description": "Shown on public status pages instead of a generic \"Degraded performance\" / \"Service disruption\". Never put host names or internal details here.",
-   "fieldname": "public_title",
-   "fieldtype": "Data",
-   "label": "Public Title",
-   "length": 140
   }
  ],
  "index_web_pages_for_search": 0,
@@ -479,7 +471,7 @@
    "link_fieldname": "incident"
   }
  ],
- "modified": "2026-11-02 23:30:00.000000",
+ "modified": "2026-11-19 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Dodock Wolf",
  "name": "Wolf Incident",

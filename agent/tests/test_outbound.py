@@ -194,7 +194,7 @@ class TestOutbound(unittest.TestCase):
 		return self.watcher(**kw)
 
 	def test_a_bench_in_a_container(self):
-		# a Press bench: the container mounts the bench's sites/ from the host, and has its own network
+		# a bench in Docker: the container mounts the bench's sites/ from the host, and has its own network
 		self.container(4242, self.bench + "/sites", [line(v4("172.18.0.5", 41000), v4("185.199.110.66", 4444), "01", 1000, 7)])
 		self.container(4300, "/srv/unrelated/data", [line(v4("172.18.0.9", 41000), v4("185.199.110.67", 4444), "01", 1000, 8)],
 		               cid="d" * 64)  # not a bench: left alone

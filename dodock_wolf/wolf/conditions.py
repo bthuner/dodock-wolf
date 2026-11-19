@@ -210,7 +210,7 @@ def resolve_threshold_error(op, threshold, resolve_threshold):
 	return None
 
 
-# Silences, escalation and digests --------------------------------------------
+# Silences, escalation and channels -------------------------------------------
 
 
 def silence_matches(silence, scope, rule=None):
@@ -230,16 +230,8 @@ def escalation_due(notified_at, escalate_after_minutes, now):
 	return now - notified_at >= timedelta(minutes=int(escalate_after_minutes))
 
 
-DIGEST_KINDS = ("fired", "reopened", "resolved")
-
-
-def should_digest(channel_digest, severity, kind):
-	"""Critical alerts, escalations and tests always go out immediately."""
-	return (channel_digest or "none") == "hourly" and severity != "critical" and kind in DIGEST_KINDS
-
-
 def channel_destination(channel):
-	"""Stable identity of a channel's target, used to merge digests across rules."""
+	"""Stable identity of a channel's target, so a destination listed twice hears once."""
 	ctype = channel.get("channel_type")
 	if ctype == "Email":
 		raw = (channel.get("recipients") or "").replace(",", "\n").splitlines()
@@ -249,14 +241,3 @@ def channel_destination(channel):
 	if ctype == "Raven":
 		return (channel.get("raven_channel") or "").strip()
 	return ""
-
-
-def group_digest(items):
-	"""{(channel_type, destination): [items in order]} for queued digest items."""
-	groups = {}
-	for item in items:
-		key = (item.get("channel_type"), item.get("destination") or "")
-		if not key[1]:
-			continue
-		groups.setdefault(key, []).append(item)
-	return groups

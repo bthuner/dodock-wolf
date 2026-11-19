@@ -12,7 +12,6 @@ describe('routes', () => {
     ['/incidents/WINC-00012', 'incident'],
     ['/events', 'events'],
     ['/errors/abc123', 'error-group'],
-    ['/metrics', 'metrics'],
     ['/logs', 'logs'],
     ['/sites/a.example.com', 'site'],
     ['/hosts/bench-01', 'host'],

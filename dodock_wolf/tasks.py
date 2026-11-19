@@ -4,7 +4,7 @@ import frappe
 from frappe.utils import add_days, add_to_date, cint, now_datetime
 
 from dodock_wolf import satellite
-from dodock_wolf.wolf import digest, email_queue, escalation, events, rollups, rules, silences
+from dodock_wolf.wolf import email_queue, escalation, events, rollups, rules, silences
 
 
 def evaluate_rules():
@@ -44,12 +44,6 @@ def flush_live_updates():
 	from dodock_wolf.wolf import live
 
 	live.flush()
-
-
-def send_digests():
-	if satellite.is_satellite():
-		return
-	digest.send_all()
 
 
 def check_email_queue():
