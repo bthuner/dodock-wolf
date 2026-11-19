@@ -1,0 +1,136 @@
+# The same checks as .github/workflows/ci.yml, for gitlab.com/dokos/dodock-wolf. Keep the two
+# in step: a job added or changed on one side is added or changed on the other.
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never # the merge request's pipeline covers it
+    - if: $CI_COMMIT_BRANCH
+
+default:
+  interruptible: true
+
+stages: [check]
+
+.yarn:
+  variables:
+    YARN_CACHE_FOLDER: $CI_PROJECT_DIR/.yarn-cache
+  cache:
+    key:
+      files: [frontend/yarn.lock, docs-site/yarn.lock]
+    paths: [.yarn-cache]
+
+lint:
+  stage: check
+  image: python:3.12
+  timeout: 10m
+  script:
+    - apt-get update -qq && apt-get install -y -qq shellcheck >/dev/null
+    - pip install --quiet ruff==0.17.3
+    - ruff check . agent/wolf-pilot-export # a script without .py
+    - shellcheck agent/install.sh agent/wolf-block.sh agent/wolf-block-fail2ban.sh agent/wolf-outbound-log.sh agent/wazuh/custom-dodock-wolf ci/integration.sh
+
+app-tests:
+  stage: check
+  image: python:3.12
+  timeout: 10m
+  script:
+    - python -m unittest discover -s tests -t . -v
+
+agent-tests:
+  stage: check
+  image: python:$PYTHON
+  timeout: 10m
+  parallel:
+    matrix:
+      - PYTHON: ["3.9", "3.14"]
+  script:
+    - python -m unittest discover -s agent/tests -v
+
+frontend:
+  extends: .yarn
+  stage: check
+  image: node:$NODE
+  timeout: 10m
+  parallel:
+    matrix:
+      # 20.19 is frappe-ui's minimum; benches built from current images run Node 24
+      - NODE: ["20.19", "24"]
+  script:
+    - cd frontend
+    - yarn install --frozen-lockfile --non-interactive
+    - yarn test
+    - yarn build
+    - test -s ../dodock_wolf/www/wolf.html && test -s ../dodock_wolf/public/frontend/index.html
+
+browser:
+  extends: .yarn
+  stage: check
+  image: node:24
+  timeout: 15m
+  variables:
+    CI: "1"
+  script:
+    - cd frontend
+    - yarn install --frozen-lockfile --non-interactive
+    - yarn build
+    - npx playwright install --with-deps chromium
+    # every view on the production build, API mocked in the page: no console error, keyboard,
+    # reduced motion, and no serious/critical WCAG 2 A/AA finding in the light and dark themes
+    - yarn e2e
+  artifacts:
+    when: on_failure
+    expire_in: 7 days
+    paths: [frontend/playwright-report, frontend/test-results]
+
+docs:
+  extends: .yarn
+  stage: check
+  image: node:24
+  timeout: 15m
+  script:
+    - cd docs-site
+    - yarn install --frozen-lockfile --non-interactive
+    - yarn lint
+    # every page in both languages; a page that 404s or a link to a missing page fails here
+    - yarn generate
+    # every internal link and #anchor of the generated HTML
+    - yarn check:links
+
+# The checked-out app installed into a Dokos bench image, a site created on each database,
+# then ci/db_smoke.py (ci/integration.sh). The database answers at "db", Redis at "redis".
+.integration:
+  stage: check
+  image:
+    name: registry.gitlab.com/dokos/dokos:latest
+    entrypoint: [""]
+  timeout: 20m
+  variables:
+    WOLF_SRC: $CI_PROJECT_DIR
+    BENCH_DIR: /home/frappe/frappe-bench
+
+integration-mariadb:
+  extends: .integration
+  services:
+    - name: mariadb:10.6
+      alias: db
+      command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--skip-character-set-client-handshake"]
+      variables:
+        MARIADB_ROOT_PASSWORD: admin
+    - name: redis:6.2-alpine
+      alias: redis
+  script:
+    - bash ci/integration.sh mariadb
+
+integration-postgres:
+  extends: .integration
+  services:
+    - name: postgres:16
+      alias: db
+      variables:
+        POSTGRES_PASSWORD: admin
+    - name: redis:6.2-alpine
+      alias: redis
+  script:
+    - bash ci/integration.sh postgres
