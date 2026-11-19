@@ -14,8 +14,17 @@ The handlers in local_signals.py feed documents in; this module decides what is 
 - `new_api_secret(value)`: a User save that writes a new API secret (Desk shows saved Password
   fields as asterisks, so an unchanged one never looks new). Read it in before_save: Frappe
   masks Password fields right after, so on_update only ever sees asterisks.
+- `role_2fa_off(before, after)`: a Role save that turned its two-factor authentication off.
+- `called_method(path, cmd)`: the whitelisted method a request called (`/api/method/…`,
+  `/api/v2/method/…` or the older `cmd`), for the signals read in after_request.
+- `identity_hash(value, key)`: a keyed hash of an account name a guest typed (a password reset
+  request), so bursts can be counted per account without storing what may not be anyone's address.
+- `reason_text(value)`: free text a user typed (an impersonation reason), on one line and short.
 """
 
+import hashlib
+import hmac
+import re
 from urllib.parse import urlsplit
 
 # field, label, how it gets weaker: "off" (1 -> 0), "on" (0 -> 1), "lower", "higher", "longer" (HH:MM)
@@ -177,3 +186,54 @@ def excerpt(code, limit=300):
 	"""The start of a script, for the event: enough to recognise it, not the whole program."""
 	text = str(code or "")
 	return text if len(text) <= limit else text[:limit] + "…"
+
+
+ROLE_2FA_LABEL = "Two-factor authentication for the role"
+
+
+def role_2fa_off(before, after):
+	"""`{field, label, old, new}` when a Role save turned two-factor authentication off, else None.
+
+	A new role (no `before`) is not compared: creating a role without 2FA lowers nothing.
+	"""
+	if not before:
+		return None
+	old, new = before.get("two_factor_auth"), after.get("two_factor_auth")
+	if _truthy(old) and not _truthy(new):
+		return {"field": "two_factor_auth", "label": ROLE_2FA_LABEL, "old": old, "new": new}
+	return None
+
+
+METHOD_PREFIXES = ("/api/method/", "/api/v2/method/")
+
+
+def called_method(path, cmd=None):
+	"""The dotted method a request called, or None (a page, a resource, a file)."""
+	path = str(path or "")
+	for prefix in METHOD_PREFIXES:
+		if path.startswith(prefix):
+			return path[len(prefix) :].strip("/") or None
+	cmd = str(cmd or "").strip()
+	return cmd or None
+
+
+def identity_hash(value, key):
+	"""16 hex characters of HMAC-SHA256(`key`, the lowercased account name), or None.
+
+	Keyed with the site's secret: a list of known e-mail addresses cannot be hashed to find who was
+	targeted, and the same account gives the same hash on this site, so bursts still add up.
+	"""
+	text = str(value or "").strip().lower()
+	if not text:
+		return None
+	return hmac.new(str(key or "").encode(), text.encode(), hashlib.sha256).hexdigest()[:16]
+
+
+_CONTROL = re.compile(r"[\x00-\x1f\x7f]+")
+
+
+def reason_text(value, limit=200):
+	"""Free text a user typed, for an event: control characters and runs of spaces become one space,
+	cut at `limit` characters (`excerpt`)."""
+	text = " ".join(_CONTROL.sub(" ", str(value or "")).split())
+	return excerpt(text, limit) if text else None

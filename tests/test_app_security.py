@@ -115,3 +115,38 @@ class TestUserPermissionWidens(unittest.TestCase):
 		self.assertTrue(widens(apply_to_all_doctypes=0, applicable_for="Sales Invoice"))
 		self.assertFalse(widens(hide_descendants=1))  # narrows
 		self.assertFalse(widens(is_default=1))  # preselects a value only
+
+
+class TestAccountSignals(unittest.TestCase):
+	def test_role_2fa_off(self):
+		on, off = {"two_factor_auth": 1}, {"two_factor_auth": 0}
+		self.assertEqual(appsec.role_2fa_off(on, off), {"field": "two_factor_auth", "label": appsec.ROLE_2FA_LABEL, "old": 1, "new": 0})
+		self.assertIsNotNone(appsec.role_2fa_off({"two_factor_auth": "1"}, {"two_factor_auth": None}))
+		self.assertIsNone(appsec.role_2fa_off(off, on))  # turned on
+		self.assertIsNone(appsec.role_2fa_off(off, off))
+		self.assertIsNone(appsec.role_2fa_off(on, on))
+		self.assertIsNone(appsec.role_2fa_off(None, off))  # a new role lowers nothing
+
+	def test_called_method(self):
+		m = "frappe.core.doctype.user.user.reset_password"
+		self.assertEqual(appsec.called_method("/api/method/" + m), m)
+		self.assertEqual(appsec.called_method("/api/v2/method/" + m + "/"), m)
+		self.assertEqual(appsec.called_method("/", cmd=m), m)
+		self.assertIsNone(appsec.called_method("/api/resource/User"))
+		self.assertIsNone(appsec.called_method("/app/user", cmd=""))
+		self.assertIsNone(appsec.called_method(None))
+
+	def test_identity_hash(self):
+		h = appsec.identity_hash(" Jane@Example.com ", "site-key")
+		self.assertEqual(len(h), 16)
+		self.assertEqual(h, appsec.identity_hash("jane@example.com", "site-key"))  # the same account adds up
+		self.assertNotEqual(h, appsec.identity_hash("jane@example.com", "other-site"))  # keyed per site
+		self.assertNotEqual(h, appsec.identity_hash("john@example.com", "site-key"))
+		self.assertNotIn("jane", h)
+		self.assertIsNone(appsec.identity_hash("  ", "site-key"))
+
+	def test_reason_text(self):
+		self.assertEqual(appsec.reason_text("  support\nticket\t#42  "), "support ticket #42")
+		self.assertEqual(len(appsec.reason_text("x" * 500)), 201)  # 200 and an ellipsis
+		self.assertIsNone(appsec.reason_text(None))
+		self.assertIsNone(appsec.reason_text("\x00 \n"))

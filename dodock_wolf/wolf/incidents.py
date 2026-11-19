@@ -196,7 +196,7 @@ def out_of_scope(e):
 ENTITY_MINUTES = 60  # Wolf Settings.entity_correlation_minutes when unset
 ENTITY_MAX_HOURS = 24  # an incident older than this takes no more events by entity
 # attempts name the user the attacker chose, not the one who acted
-ATTEMPT_CATEGORIES = ("frappe_failed_login", "ssh_failed_login", "sudo_failure")
+ATTEMPT_CATEGORIES = ("frappe_failed_login", "ssh_failed_login", "sudo_failure", "password_reset_requested")
 
 
 def correlation_keys(event_name, event):
