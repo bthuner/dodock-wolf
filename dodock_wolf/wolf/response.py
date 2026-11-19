@@ -13,8 +13,8 @@ Wolf proposes; a Wolf Manager confirms each action; nothing runs on its own.
   its address would stop nothing. `held_blocks` lists those, for the Response panel to say where to
   block instead.
 - `disable_user`, `logout_sessions`, `revoke_api_keys`: proposed for the users named by the
-  site's own security events (and, for an impersonation, logging out or disabling the
-  impersonator), applied on the Wolf site itself; and for a satellite's users that
+  site's own security events (and, for an impersonation or credentials reset by someone else,
+  logging out or disabling whoever did it), applied on the Wolf site itself; and for a satellite's users that
   it says exist and are within reach, applied by the satellite. Administrator, Guest and the
   approver are refused, so a click cannot lock everyone out.
 """
@@ -36,8 +36,9 @@ USER_CATEGORIES = {"frappe_failed_login", "new_admin_ip", "admin_login_new_count
                    "api_key_new_ip", "user_impersonated", "credentials_reset_by_other"}
 # categories whose payload `by` (who acted) is a suspect too: an impersonator's own sessions
 # are ended, or their account disabled (logging out the impersonated user ends the session
-# opened as them)
-ACTOR_CATEGORIES = {"user_impersonated": ("logout_sessions", "disable_user")}
+# opened as them); the same for whoever reset someone else's credentials (they can log in as them)
+ACTOR_CATEGORIES = {"user_impersonated": ("logout_sessions", "disable_user"),
+                    "credentials_reset_by_other": ("logout_sessions", "disable_user")}  # fmt: skip
 MAX_PROPOSALS = 20
 
 
