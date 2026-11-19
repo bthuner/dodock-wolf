@@ -73,12 +73,14 @@ A 0.2 agent on a host a v0.1 agent registered as a Press v1 server logs a warnin
 `wolf-agent doctor` fails with the same fix: Press v1 is supported by Dodock Wolf v0.1.0 only,
 reinstall the agent with `WOLF_AGENT_REF=v0.1.0`.
 
-Upgrading a site to 0.2 disables the alert rules on the host resource metrics (`cpu_usage`,
+Upgrading a site to 0.2 disables the enabled alert rules on the host resource metrics (`cpu_usage`,
 `memory_used_percent`, `swap_used_percent`, `disk_used_percent`, `load_1m/5m/15m`,
 `load_per_core`) and the presets *Disk almost full*, *High CPU*, *High memory* and *High load*,
-with a comment on each, and deletes their stored samples and rollups. A v0.1 agent's samples of
-these metrics are dropped on ingest, and a 0.2 agent ignores `collect_host_metrics` with a
-warning. Read host resources in Frappe Cloud v2 or Pilot.
+with a comment on each, resolves their open incidents (recorded in the journal; PagerDuty channels
+hear about it, the others stay quiet), and deletes their stored samples and rollups. A rule on one
+of these metrics can no longer be enabled. A v0.1 agent's samples of these metrics are dropped on
+ingest, and a 0.2 agent ignores `collect_host_metrics` with a warning. Read host resources in
+Frappe Cloud v2 or Pilot.
 
 ## Alert rules
 
