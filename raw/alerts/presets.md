@@ -931,6 +931,66 @@ Presets have no channels. They open incidents but notify nobody until you add a
   
   <tr>
     <td>
+      Password reset burst from one IP
+    </td>
+    
+    <td>
+      one of <code>
+        password_reset_requested
+      </code>
+      
+      , then one of <code>
+        password_reset_requested
+      </code>
+      
+       on the same <code>
+        ip
+      </code>
+      
+       within 10 min, >= 4 times in 10 min
+    </td>
+    
+    <td>
+      <code>
+        ip
+      </code>
+    </td>
+    
+    <td>
+      ◐ warning
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Password resets for many accounts
+    </td>
+    
+    <td>
+      <code>
+        security
+      </code>
+      
+       / <code>
+        password_reset_requested
+      </code>
+      
+       events >= 10 in 10 min, 10+ distinct events
+    </td>
+    
+    <td>
+      <code>
+        site
+      </code>
+    </td>
+    
+    <td>
+      ◐ warning
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
       Admin login from new IP
     </td>
     
@@ -1010,6 +1070,62 @@ Presets have no channels. They open incidents but notify nobody until you add a
     
     <td>
       ● critical
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      User impersonated
+    </td>
+    
+    <td>
+      <code>
+        security
+      </code>
+      
+       / <code>
+        user_impersonated
+      </code>
+      
+       events >= 1 in 10 min
+    </td>
+    
+    <td>
+      <code>
+        site
+      </code>
+    </td>
+    
+    <td>
+      ◐ warning
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      Credentials reset by someone else
+    </td>
+    
+    <td>
+      <code>
+        security
+      </code>
+      
+       / <code>
+        credentials_reset_by_other
+      </code>
+      
+       events >= 1 in 10 min
+    </td>
+    
+    <td>
+      <code>
+        site
+      </code>
+    </td>
+    
+    <td>
+      ◐ warning
     </td>
   </tr>
 </tbody>

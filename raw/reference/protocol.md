@@ -1399,6 +1399,18 @@ before forwarding are merged into one event.
       , <code>
         privileged_user
       </code>
+      
+      , <code>
+        user_impersonated
+      </code>
+      
+      , <code>
+        credentials_reset_by_other
+      </code>
+      
+      , <code>
+        password_reset_requested
+      </code>
     </td>
   </tr>
   
@@ -2120,15 +2132,27 @@ the **Wolf Entity Alias** rows. Agents do not send it: the site computes it.
     </td>
     
     <td>
-      site (System Settings)
+      site (System Settings, Role)
     </td>
     
     <td>
-      A save that lowers a defence; <code>
+      A System Settings save that lowers a defence, <code>
         critical
       </code>
       
-      .
+      ; a Role save that turns its two-factor authentication off, or a role deleted with it on (<code>
+        kind
+      </code>
+      
+      : <code>
+        role_2fa
+      </code>
+      
+      ), <code>
+        critical
+      </code>
+      
+       for a privileged role.
     </td>
     
     <td>
@@ -2154,6 +2178,30 @@ the **Wolf Entity Alias** rows. Agents do not send it: the site computes it.
       
       ), <code>
         by
+      </code>
+      
+       / <code>
+        kind
+      </code>
+      
+      , <code>
+        role
+      </code>
+      
+      , <code>
+        privileged_role
+      </code>
+      
+      , <code>
+        deleted
+      </code>
+      
+       (a deleted role), <code>
+        system_2fa
+      </code>
+      
+      , <code>
+        via
       </code>
     </td>
   </tr>
@@ -2830,6 +2878,188 @@ the **Wolf Entity Alias** rows. Agents do not send it: the site computes it.
       
       , <code>
         known_countries
+      </code>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        user_impersonated
+      </code>
+    </td>
+    
+    <td>
+      site (Activity Log hook)
+    </td>
+    
+    <td>
+      User → Impersonate opened a session as another user (only inside a call of Frappe's impersonate method); <code>
+        critical
+      </code>
+      
+       when that user is privileged.
+    </td>
+    
+    <td>
+      <code>
+        user
+      </code>
+      
+       (impersonated), <code>
+        by
+      </code>
+      
+       (impersonator), <code>
+        reason
+      </code>
+      
+       (200 characters at most), <code>
+        ip
+      </code>
+      
+      , <code>
+        privileged
+      </code>
+      
+      , <code>
+        activity_log
+      </code>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        credentials_reset_by_other
+      </code>
+    </td>
+    
+    <td>
+      site (User, <code>
+        after_request
+      </code>
+      
+      )
+    </td>
+    
+    <td>
+      A user's password set on a save, their OTP secret reset, or their LDAP password set (LDAP Settings → Reset Password), by another user; <code>
+        critical
+      </code>
+      
+       for privileged users. Never the password.
+    </td>
+    
+    <td>
+      <code>
+        kind
+      </code>
+      
+       (<code>
+        password
+      </code>
+      
+      , <code>
+        otp_secret
+      </code>
+      
+      , <code>
+        ldap_password
+      </code>
+      
+      ), <code>
+        user
+      </code>
+      
+      , <code>
+        by
+      </code>
+      
+      , <code>
+        ip
+      </code>
+      
+      , <code>
+        privileged
+      </code>
+      
+      , <code>
+        via
+      </code>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        password_reset_requested
+      </code>
+    </td>
+    
+    <td>
+      site (<code>
+        after_request
+      </code>
+      
+      )
+    </td>
+    
+    <td>
+      A call of the "Forgot password" method, answered or refused; <code>
+        info
+      </code>
+      
+      . A guest's: one event per address and account every 10 min (<code>
+        count
+      </code>
+      
+       the repeats), and past 20 accounts from one address in the window, one event for the address (<code>
+        many_accounts
+      </code>
+      
+      ). A signed-in user's: one event per user every 10 min, with <code>
+        by
+      </code>
+      
+      .
+    </td>
+    
+    <td>
+      <code>
+        ip
+      </code>
+      
+      , <code>
+        status
+      </code>
+      
+      , <code>
+        user_hash
+      </code>
+      
+       (keyed hash of the account typed; null without the site's encryption key or with <code>
+        many_accounts
+      </code>
+      
+      ), <code>
+        user_exists
+      </code>
+      
+      , <code>
+        user
+      </code>
+      
+       (only for an existing user), <code>
+        many_accounts
+      </code>
+      
+      ; <code>
+        by
+      </code>
+      
+      , <code>
+        signed_in
       </code>
     </td>
   </tr>

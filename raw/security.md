@@ -599,6 +599,54 @@ The tags travel with the event to the [SIEM export](/security/siem-export): OCSF
   <tr>
     <td>
       <code>
+        user_impersonated
+      </code>
+    </td>
+    
+    <td>
+      site
+    </td>
+    
+    <td>
+      T1078 Valid Accounts
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        credentials_reset_by_other
+      </code>
+    </td>
+    
+    <td>
+      site
+    </td>
+    
+    <td>
+      T1098 Account Manipulation
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
+        password_reset_requested
+      </code>
+    </td>
+    
+    <td>
+      site
+    </td>
+    
+    <td>
+      T1589.002 Email Addresses, T1110
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <code>
         honeytoken_triggered
       </code>
     </td>
