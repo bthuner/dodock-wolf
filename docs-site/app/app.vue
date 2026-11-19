@@ -5,8 +5,13 @@ const head = useLocaleHead()
 const publicPath = usePublicPath()
 const { siteUrl } = useRuntimeConfig().public
 
-const { data: navigation } = await useAsyncData(() => `navigation-${code.value}`, () => queryCollectionNavigation(docs.value).then(unwrapLocaleRoot), { watch: [code] })
-const { data: files } = useLazyAsyncData(() => `search-${code.value}`, () => queryCollectionSearchSections(docs.value), {
+const route = useRoute()
+const { data: fullNavigation } = await useAsyncData(() => `navigation-${code.value}`, () => queryCollectionNavigation(docs.value).then(unwrapLocaleRoot), { watch: [code] })
+// The unlisted section (useUnlisted.ts) shows in the sidebar only to a reader who is already in it.
+const navigation = computed(() => (fullNavigation.value || []).filter(item => isUnlisted(route.path) || !isUnlisted(item.path)))
+const { data: files } = useLazyAsyncData(() => `search-${code.value}`, () => queryCollectionSearchSections(docs.value)
+  // the unlisted section is not searchable (useUnlisted.ts)
+  .where('path', 'NOT LIKE', `%${UNLISTED_SECTION}%`), {
   server: false,
   watch: [code]
 })

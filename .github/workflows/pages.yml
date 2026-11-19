@@ -2,7 +2,9 @@ name: Publish GitHub Pages
 
 # bthuner.github.io/dodock-wolf/          the documentation site (docs-site/), French at /fr/
 # bthuner.github.io/dodock-wolf/making-of/ the making-of page (docs/making-of/)
-# Both go to the gh-pages branch in one commit: publishing one alone would wipe the other.
+# bthuner.github.io/dodock-wolf/making-on/ the making-on page (docs/making-on/): the ground Wolf is
+#                                          built on, Frappe Cloud v2. Not linked, not indexed.
+# All go to the gh-pages branch in one commit: publishing one alone would wipe the others.
 
 on:
   push:
@@ -10,6 +12,7 @@ on:
     paths:
       - "docs-site/**"
       - "docs/making-of/**"
+      - "docs/making-on/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -42,10 +45,12 @@ jobs:
           yarn check:links
       - name: Assemble the site
         run: |
-          mkdir -p _site/making-of
+          mkdir -p _site/making-of _site/making-on
           cp -r docs-site/.output/public/. _site/
           cp docs/making-of/index.html _site/making-of/
           cp -r docs/making-of/assets _site/making-of/
+          # the making-on page borrows the making-of's assets (logo, favicon)
+          cp docs/making-on/index.html _site/making-on/
           # Nuxt writes _nuxt/ and _payload.json: Jekyll would drop anything starting with "_"
           touch _site/.nojekyll
       - uses: peaceiris/actions-gh-pages@v4
@@ -53,4 +58,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: _site
           publish_branch: gh-pages
-          commit_message: "Publish docs and making-of from ${{ github.sha }}"
+          commit_message: "Publish docs, making-of and making-on from ${{ github.sha }}"

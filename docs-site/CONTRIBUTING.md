@@ -14,7 +14,7 @@ yarn check:links   # every internal link and #anchor of that build
 
 `.github/workflows/pages.yml` publishes the site to GitHub Pages on every push to `main` that
 touches `docs-site/`: <https://bthuner.github.io/dodock-wolf/>, with the making-of page at
-`/making-of/`. It builds with `NUXT_APP_BASE_URL=/dodock-wolf/`, so files of `public/` referenced
+`/making-of/` and the making-on page (Frappe Cloud v2, the ground Wolf is built on) at `/making-on/`. It builds with `NUXT_APP_BASE_URL=/dodock-wolf/`, so files of `public/` referenced
 from code go through `usePublicPath()` (router links get the base by themselves). To preview that
 build locally:
 
@@ -49,6 +49,17 @@ twin at the same path, so the language switch lands on the same page.
 | `4.alerts` | `1.rules`, `2.presets`, `3.channels`, `4.incidents` |
 | `5.security` | `1.index` (overview), `2.site-signals`, `3.detection` (web and host), `4.access` (roles, scopes, secrets), `5.journal` (tamper-evident journal, deception, IP reputation), `6.compliance` (NIS2/GDPR), `7.siem-export`, `8.wazuh-suricata` |
 | `6.reference` | `1.protocol`, `2.ui-api`, `3.metric-storage`, `4.performance` (load test), `5.development` |
+| `7.internals` (unlisted) | `1.index` (Frappe Cloud v2, overview), `2.apps`, `3.interop` (calls and trust), `4.flows`, `5.customer-server`, `6.wolf` (notes for Wolf) |
+
+### The unlisted section
+
+`7.internals` is Dokos' working analysis of the platform Wolf runs next to. Its pages have an
+address (`/internals`, `/fr/internals`) and are built and link-checked like the others, but
+`app/composables/useUnlisted.ts` keeps them out of the sidebar (except for a reader already in the
+section), the search and the previous/next links, and marks them `noindex`. `llms.txt` lists sections by
+name, so it leaves them out too. Unlisted is not private: the site and its repository are public,
+so nothing secret goes there. No listed page links to it. The same rules apply: every page in
+English and in French, same file names.
 
 Link between pages with absolute paths without the number prefix and without the locale:
 `/agent/configuration#tls`. In French pages, prefix with `/fr`: `/fr/agent/configuration`.
