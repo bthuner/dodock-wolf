@@ -15,6 +15,9 @@ DEFAULTS = {
 	"push_interval": 30,
 	"spool_dir": "/var/lib/wolf-agent/spool",
 	"verify_tls": True,
+	# the address of a reverse proxy in front of this host's web traffic, or null: web clients are
+	# then blocked on that proxy, not here (response actions propose blocks for SSH events only)
+	"behind_proxy": None,
 	"benches": [],
 	# [{"path": "/var/log/foo.log", "parser": "traceback", "bench": null, "site": null}]
 	"extra_logs": [],

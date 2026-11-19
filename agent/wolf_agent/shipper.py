@@ -137,6 +137,8 @@ class Shipper:
 		self.url = cfg["url"].rstrip("/")
 		self.headers = {"X-Wolf-Agent-Id": cfg["agent_id"], "X-Wolf-Agent-Secret": cfg["agent_secret"]}
 		self.hostname = cfg["hostname"]
+		# sent in every push, null included: a null clears what a v0.1 Press agent stored
+		self.behind_proxy = cfg.get("behind_proxy") or None
 		self.verify_tls = cfg.get("verify_tls", True)
 		self.push_interval = int(cfg.get("push_interval") or 30)
 		self.skew_warned = False
@@ -154,6 +156,7 @@ class Shipper:
 			"sent_at": utc_iso(),
 			"agent_version": __version__,
 			"hostname": self.hostname,
+			"behind_proxy": self.behind_proxy,
 			"metrics": metrics,
 			"events": events,
 		}

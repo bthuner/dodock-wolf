@@ -107,8 +107,9 @@ The Wolf site counts the failures and warnings, keeps the checks that are not ok
 `agent_setup_failed` and `agent_setup_warnings`.
 
 **`behind_proxy`.** Optional. The proxy this host's web traffic comes through, or `null`; when
-absent, the stored value stays. The Wolf site keeps it
-on Wolf Agent and proposes blocks on that host for SSH events only.
+absent, the stored value stays, and an explicit `null` clears it. The agent sends its config's
+`behind_proxy` key with every push (`null` by default, which clears a proxy a v0.1 Press agent
+stored). The Wolf site keeps it on Wolf Agent and proposes blocks on that host for SSH events only.
 
 **Clock skew.** `sent_at` is stamped when the request is sent (also for replayed spool batches).
 The server records `sent_at - server time` as the agent's `clock_skew_seconds` (positive = agent

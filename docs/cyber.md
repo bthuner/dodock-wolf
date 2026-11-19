@@ -365,7 +365,7 @@ result; read-only for everyone) and a comment on the incident.
 
 - **Block IP for N hours** (1 to 168, default 24): proposed for the public addresses of the
   incident's security events, whatever their source, for the attacked host. A host behind a
-  proxy (`behind_proxy`) gets blocks for SSH events only: a web client's packets come from the
+  proxy (`behind_proxy` in its agent config, sent with every push) gets blocks for SSH events only: a web client's packets come from the
   proxy there; the Response panel lists those as not proposed, to block on the proxy. The Wolf Agent on
   that host receives it with its next push, runs `sudo -n /usr/local/sbin/wolf-block IP SECONDS` (`agent/wolf-block.sh`: an
   nftables `inet wolf` set whose entries expire by themselves; an address already blocked keeps the longer block) and reports the result. The agent

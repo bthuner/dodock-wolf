@@ -244,6 +244,7 @@ credentials (401/403) the agent exits with status 2 and systemd stops restarting
   "push_interval": 30,
   "spool_dir": "/var/lib/wolf-agent/spool",
   "verify_tls": true,
+  "behind_proxy": null,
   "auth_log": null,
   "collect_host_metrics": true,
   "pilot": {"deployments": true, "api_url": null, "token": null, "jwt_secret": null},
@@ -276,7 +277,10 @@ credentials (401/403) the agent exits with status 2 and systemd stops restarting
 }
 ```
 
-`auth_log`: `null` auto-detects, a path forces a file, `"journal"` forces journalctl,
+`behind_proxy`: the address of a reverse proxy in front of this host's web traffic, or `null`
+(default). It goes with every push: Wolf then proposes blocks on this host for SSH events only,
+and web clients are blocked on the proxy, where the block takes effect; `null` clears what the
+Wolf site had stored. `auth_log`: `null` auto-detects, a path forces a file, `"journal"` forces journalctl,
 `false` disables. `nginx_access_log` may be a list. Parsers for `extra_logs`:
 `traceback`, `scheduler`, `worker`, `nginx`, `auth`.
 `rq`, `backups`, `tls`, `mariadb`, `processes`, `versions`, `site_settings`, `suricata`, `wazuh`: every key is optional (defaults above), and

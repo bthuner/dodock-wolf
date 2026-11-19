@@ -362,6 +362,14 @@ def main():
 			assert agent_api.authenticate_agent() == agent_id
 			assert legacy_rows() == 0 and frappe.db.get_value("Wolf Agent", agent_id, "secret_hash")
 
+			# behind_proxy: stored when sent, kept when absent (satellites), cleared by an explicit null
+			# (a 0.2 agent, over what a v0.1 Press agent stored)
+			for extra, expected in (({"behind_proxy": "10.0.0.3"}, "10.0.0.3"), ({}, "10.0.0.3"), ({"behind_proxy": None}, None)):
+				request(agent_id, "legacy-secret-lazy", body={"metrics": [], "events": [], "hostname": "smoke-agent", **extra})
+				ingest.push()
+				stored = frappe.db.get_value("Wolf Agent", agent_id, "behind_proxy")
+				assert stored == expected, f"behind_proxy {extra}: {stored!r}"
+
 			settings.max_pushes_per_minute = 1
 			settings.save()
 			limited = 0
