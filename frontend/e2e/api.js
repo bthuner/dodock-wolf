@@ -63,9 +63,9 @@ export function fixtures() {
       has_data: { http_requests: true, http_5xx: true, http_502: true },
     }),
     'dodock_wolf.api.dashboard.get_signals': () => ({
-      series: [{ metric_name: 'disk_used_percent', group: 'host', label: 'Disk used', unit: '%', host: 'bench-01', label_key: 'mount=/',
-        value: 93, last_at: ago(1), state: 'firing', rules: [], incidents: ['WINC-00002'] }],
-      counts: { host: { firing: 1 } }, missing: [], caveats: {}, email: {}, lookback_days: 7, truncated: false, total_series: 1,
+      series: [{ metric_name: 'queue_length', group: 'workers', label: 'Queue length', unit: 'jobs', host: 'bench-01', bench: 'frappe-bench',
+        label_key: 'queue=default', value: 930, last_at: ago(1), state: 'firing', rules: [], incidents: ['WINC-00002'] }],
+      counts: { workers: { firing: 1 } }, missing: [], caveats: {}, email: {}, lookback_days: 7, truncated: false, total_series: 1,
     }),
     'dodock_wolf.api.incident_view.list_incidents': () => ({
       incidents: [{ name: INCIDENT.name, title: INCIDENT.title, status: 'Open', severity: 'critical', site: 'a.example.com',
