@@ -3292,6 +3292,20 @@ def main():
 		while journal_api.chain_journal():
 			pass
 		assert isinstance(result["responses"]["waiting"], int) and isinstance(result["responses"]["failed"], int), result["responses"]
+		# waiting: an expired approval is not (pending_for_agent skips it); a satellite's user is named with its site
+		def approved(target, expires_at, agent=None):
+			return frappe.get_doc({"doctype": "Wolf Response Action", "action": "disable_user", "target": target, "status": "Approved",
+			                       "agent": agent, "site": mine, "expires_at": expires_at}).insert(ignore_permissions=True, ignore_links=True).name  # fmt: skip
+
+		waiting_before = result["responses"]["waiting"]
+		actions = [approved("so-sat@example.com", at + timedelta(hours=1), "so-satellite"), approved("so-old@example.com", at - timedelta(minutes=1))]
+		try:
+			responses = security_overview.get_overview()["responses"]
+		finally:
+			frappe.db.delete("Wolf Response Action", {"name": ("in", actions)})
+		assert responses["waiting"] == waiting_before + 1, (waiting_before, responses)
+		labels = {a["name"]: a["label"] for a in responses["newest"]}
+		assert labels.get(actions[0]) == f"Disable user so-sat@example.com on {mine}" and actions[1] not in labels, labels
 		assert result["agents"]["agents"]["total"] >= 1, result["agents"]
 
 		# a user granted `mine` sees its score and its incident only, and no manager panel

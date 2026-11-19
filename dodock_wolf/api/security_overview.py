@@ -118,27 +118,32 @@ def _incidents(tz):
 
 
 def _label(r):
+	# a user action with an agent waits for a satellite: its user is named with the site (api/response.py)
+	remote = r.action in response.USER_ACTIONS and r.agent
 	try:
-		return response.label(r.action, r.target, r.duration_hours, r.host, [r.executor] if r.executor else None, translate=True)
+		return response.label(r.action, r.target, r.duration_hours, r.host, [r.executor] if r.executor else None, translate=True,
+		                      site=r.site if remote else None)  # fmt: skip
 	except KeyError:
 		return f"{r.action} {r.target}"
 
 
 def _responses(now, tz):
 	allowed, params = access.sql_condition("Wolf Response Action")
-	params["since"] = add_to_date(now, days=-FAILED_DAYS)
+	params.update(since=add_to_date(now, days=-FAILED_DAYS), now=now)
 	# Approved is the state of an action waiting for the agent or satellite that applies it
-	# (api/response.pending_for_agent); one applied on this site or by Wazuh leaves it at once
+	# (api/response.pending_for_agent, which skips an expired one); one applied on this site or by
+	# Wazuh leaves it at once
+	waiting_now = "status = 'Approved' and expires_at > %(now)s"
 	waiting, failed = frappe.db.sql(
-		f"""select sum(case when status = 'Approved' then 1 else 0 end),
+		f"""select sum(case when {waiting_now} then 1 else 0 end),
 			sum(case when status = 'Failed' and modified >= %(since)s then 1 else 0 end)
 		from `tabWolf Response Action` where status in ('Approved', 'Failed'){allowed}""",
 		params,
 	)[0]
 	newest = frappe.db.sql(
-		f"""select name, action, target, status, executor, host, site, duration_hours, incident, result, modified
+		f"""select name, action, target, status, executor, agent, host, site, duration_hours, incident, result, modified
 		from `tabWolf Response Action`
-		where (status = 'Approved' or (status = 'Failed' and modified >= %(since)s)){allowed}
+		where (({waiting_now}) or (status = 'Failed' and modified >= %(since)s)){allowed}
 		order by modified desc, name desc limit {NEWEST}""",
 		params,
 		as_dict=True,
