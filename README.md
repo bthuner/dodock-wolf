@@ -56,6 +56,21 @@ Benches managed by [Frappe Pilot](https://github.com/frappe/pilot) are read from
 [`docs/pilot.md`](docs/pilot.md). See [`agent/README.md`](agent/README.md) for
 configuration, `wolf-agent check` and `wolf-agent mark-deployment`.
 
+### Staying on v0.1.0
+
+Release v0.1.0 keeps what 0.2 removed: the Press v1 integration, the live demos, status pages,
+the metrics explorer and digests. To stay on it, install the app and the agent from that tag:
+
+```bash
+bench get-app https://github.com/bthuner/dodock-wolf --branch v0.1.0
+curl -fsSL https://raw.githubusercontent.com/bthuner/dodock-wolf/v0.1.0/agent/install.sh \
+  | sudo WOLF_AGENT_REF=v0.1.0 WOLF_URL=https://wolf.example.com WOLF_TOKEN=<registration token> bash
+```
+
+A 0.2 agent on a host a v0.1 agent registered as a Press v1 server logs a warning at start and
+`wolf-agent doctor` fails with the same fix: Press v1 is supported by Dodock Wolf v0.1.0 only,
+reinstall the agent with `WOLF_AGENT_REF=v0.1.0`.
+
 ## Alert rules
 
 A rule reads like the brief: *when X > Y for Z minutes, send alert*. The rule form reads it back in plain

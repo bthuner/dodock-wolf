@@ -229,6 +229,17 @@ class TestDoctorPlatforms(DoctorCase):
 				self.assertEqual(self.find(self.run_doctor(cfg), "older than 5 minutes")[0]["status"], doctor.WARN)
 
 
+	def test_a_press_v1_registration(self):
+		self.assertEqual(self.find(self.run_doctor(), "Press v1"), [])
+		for cfg in ({**self.cfg, "platform": "press"}, {**self.cfg, "press": {"benches_directory": "/home/frappe/benches"}},
+		            {**self.cfg, "benches": [{**self.benches[0], "platform": "press"}]}):  # fmt: skip
+			found = self.find(self.run_doctor(cfg), "Press v1")
+			self.assertEqual(len(found), 1)
+			self.assertEqual((found[0]["area"], found[0]["status"]), ("platform", doctor.FAIL))
+			self.assertIn("WOLF_AGENT_REF=v0.1.0", found[0]["fix"])
+			self.assertEqual(doctor.exit_code(self.run_doctor(cfg)), 1)
+
+
 class TestSetupWatcher(unittest.TestCase):
 	"""The daemon's hourly doctor run: in a thread, its result sent once with the next push."""
 

@@ -1,4 +1,6 @@
-"""`wolf-agent` command line: register, run, check, discover, mark-deployment, test-fallback."""
+"""`wolf-agent` command line: register, run, check, discover, mark-deployment, test-fallback.
+
+v0.1's `--platform`, `--source press` and `refresh` (Press v1) are still accepted, warn and do nothing."""
 
 import argparse
 import json
@@ -12,7 +14,7 @@ import threading
 
 from . import __version__
 from .collector import Collector
-from .config import DEFAULTS, config_path, load_config, save_config, section
+from .config import DEFAULTS, PRESS_V1_MESSAGE, config_path, load_config, press_v1, save_config, section
 from .discovery import discover_benches
 from .fallback import FallbackError
 from .responder import Responder
@@ -45,7 +47,19 @@ def _load(args):
 		sys.exit(f"invalid config {path}: {e}")
 
 
+def _removed(what):
+	"""An option v0.1 had, accepted so old scripts and units keep working, and ignored."""
+	print(f"wolf-agent: {what} was removed in 0.2: ignored", file=sys.stderr)
+
+
+def _drop_platform(args):
+	if getattr(args, "platform", None) is not None:
+		_removed("--platform")
+		args.platform = None  # warned once
+
+
 def _discover(args):
+	_drop_platform(args)
 	return discover_benches(args.bench or None)
 
 
@@ -102,6 +116,7 @@ def cmd_doctor(args):
 
 
 def cmd_check(args):
+	_drop_platform(args)
 	path = config_path(args.config)
 	cfg = _load(args)[1] if os.path.exists(path) else _ephemeral_config(args)
 	if args.bench:
@@ -162,7 +177,16 @@ def _ephemeral_config(args):
 	return cfg
 
 
+def cmd_refresh(args):
+	_removed("`wolf-agent refresh` (it re-read Press v1 facts)")
+	return 0
+
+
 def cmd_mark_deployment(args):
+	source = args.source
+	if source == "press":
+		_removed("--source press")
+		source = "manual"
 	silence = None
 	if args.silence:
 		try:
@@ -172,7 +196,7 @@ def cmd_mark_deployment(args):
 	_, cfg = _load(args)
 	shipper = Shipper(cfg)
 	try:
-		resp = shipper.mark_deployment(args.bench, args.site, args.note, args.source, silence_minutes=silence)
+		resp = shipper.mark_deployment(args.bench, args.site, args.note, source, silence_minutes=silence)
 	except (AuthError, RejectedError, TransportError) as e:
 		sys.exit(f"could not record deployment: {e}")
 	print(f"deployment recorded for bench {args.bench}")
@@ -185,6 +209,8 @@ def cmd_mark_deployment(args):
 
 def cmd_run(args):
 	_, cfg = _load(args)
+	if press_v1(cfg):
+		log.warning(PRESS_V1_MESSAGE)
 	if not (cfg.get("url") and cfg.get("agent_id") and cfg.get("agent_secret")):
 		sys.exit("config is missing url/agent_id/agent_secret; run `wolf-agent register`")
 	state_path = os.path.join(cfg["spool_dir"], "tail-state.json")
@@ -224,6 +250,10 @@ def cmd_run(args):
 	return 0
 
 
+def _platform_option(parser):
+	parser.add_argument("--platform", metavar="PLATFORM", help="removed in 0.2: ignored")
+
+
 def build_parser():
 	p = argparse.ArgumentParser(prog="wolf-agent", description="Dodock Wolf host agent")
 	p.add_argument("--config", help="config path (default $WOLF_AGENT_CONFIG or /etc/wolf-agent/config.json)")
@@ -237,14 +267,17 @@ def build_parser():
 	r.add_argument("--bench", action="append", help="bench path (repeatable; default: auto-discover)")
 	r.add_argument("--hostname", help="override the reported hostname")
 	r.add_argument("--insecure", action="store_true", help="do not verify TLS certificates")
+	_platform_option(r)
 	r.set_defaults(func=cmd_register)
 
 	sub.add_parser("run", help="run the agent loop").set_defaults(func=cmd_run)
+	sub.add_parser("refresh", help="removed in 0.2 (Press v1): does nothing").set_defaults(func=cmd_refresh)
 
 	c = sub.add_parser("check", help="collect once and print the payload without sending")
 	c.add_argument("--from-start", action="store_true", help="parse logs from the beginning instead of EOF")
 	c.add_argument("--bench", action="append", help="bench path when no config exists")
 	c.add_argument("--status", action="store_true", help="also ask the Wolf site for its health (read-only)")
+	_platform_option(c)
 	c.set_defaults(func=cmd_check)
 
 	dr = sub.add_parser("doctor", help="check what this host gives the agent and what to fix (read-only)")
@@ -254,13 +287,15 @@ def build_parser():
 
 	d = sub.add_parser("discover", help="print benches found on this host")
 	d.add_argument("--bench", action="append", help="bench path to inspect")
+	_platform_option(d)
 	d.set_defaults(func=cmd_discover)
 
 	m = sub.add_parser("mark-deployment", help="record a deployment on the Wolf timeline")
 	m.add_argument("--bench", required=True)
 	m.add_argument("--site")
 	m.add_argument("--note")
-	m.add_argument("--source", default="manual", choices=["manual", "pilot", "migrate"])
+	m.add_argument("--source", default="manual", choices=["manual", "pilot", "migrate", "press"],
+	               help="manual (default), pilot or migrate; press was removed in 0.2 and is recorded as manual")
 	m.add_argument("--silence", metavar="DURATION", help="mute notifications for this bench/site, e.g. 15m or 1h")
 	m.set_defaults(func=cmd_mark_deployment)
 

@@ -33,6 +33,13 @@ Set `WOLF_BENCHES="/home/frappe/frappe-bench /srv/other-bench"` to skip auto-dis
 
 Global options: `--config PATH` (or `$WOLF_AGENT_CONFIG`), `-v`.
 
+Deprecated (Press v1, removed in 0.2), still accepted so old scripts keep working: `--platform` on
+`register`, `discover` and `check`, `mark-deployment --source press` (recorded as `manual`) and
+`wolf-agent refresh` (exits 0). Each prints `removed in 0.2: ignored` to stderr and does nothing.
+A config a v0.1 agent wrote on a Press v1 server (`"platform": "press"`, a `press` key or a Press
+bench) gets a warning at start and a failed `doctor` check: Press v1 is supported by Dodock Wolf
+v0.1.0 only, so reinstall the agent with `WOLF_AGENT_REF=v0.1.0` (see the top-level README).
+
 ## Pilot benches
 
 Benches created by [Frappe Pilot](https://github.com/frappe/pilot) (`~/pilot/benches/*`,

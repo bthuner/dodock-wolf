@@ -106,6 +106,16 @@ def section(cfg, name):
 	return merged
 
 
+PRESS_V1_MESSAGE = "Press v1 is supported by Dodock Wolf v0.1.0 only: reinstall the agent with WOLF_AGENT_REF=v0.1.0"
+
+
+def press_v1(cfg):
+	"""A config a v0.1 agent wrote on a Press v1 server, which 0.2 no longer reads."""
+	if cfg.get("platform") == "press" or "press" in cfg:
+		return True
+	return any(isinstance(b, dict) and b.get("platform") == "press" for b in cfg.get("benches") or [])
+
+
 def pilot_settings(cfg):
 	return section(cfg, "pilot")
 

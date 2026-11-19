@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 
 from . import pilot
-from .config import resolve_auth_log, section
+from .config import PRESS_V1_MESSAGE, press_v1, resolve_auth_log, section
 from .parsers.nginx import parse_line as parse_nginx_line
 from .redis_queue import RedisClient
 from .tailer import JournalTailer
@@ -301,6 +301,9 @@ def _nginx(bench, path):
 
 def _platform(cfg):
 	out = []
+	if press_v1(cfg):
+		out.append(item("platform", FAIL, "this host was registered as a Press v1 server, which this agent no longer reads",
+		                PRESS_V1_MESSAGE))  # fmt: skip
 	for bench in cfg.get("benches") or []:
 		if bench.get("platform") == "pilot":
 			out += _pilot(bench)
