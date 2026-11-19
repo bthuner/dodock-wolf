@@ -15,11 +15,21 @@ file name (number prefix included) and the same `.navigation.yml` structure.
   (```` ```bash [hôte] ````) only when it is prose.
 - Names: Dodock Wolf, Wolf Agent, Wolf App, Wolf UI, Desk, Press, Pilot, bench, and DocType names
   (**Wolf Alert Rule**, **Wolf Incident**…).
-- UI labels in bold stay in English, as the Wolf UI shows them today (Desk now follows the user's
-  language: the French pages move to Desk's French labels with the Wolf UI's translation): **Wolf Settings →
-  Retention**, **Send test notification**, **Assign to me**. On first use in a page you may add a
-  French gloss in parentheses when the label is not self-explanatory.
 - Every number, threshold, duration and default.
+- Preset rule names (*Repeated failed Frappe logins*): they are rule names stored on the site, in
+  English.
+
+## UI labels
+
+Desk and the Wolf UI follow the user's language, so a French page names a button, field, tab,
+section or status in bold as the French UI shows it, from `dodock_wolf/locale/fr.po`:
+**Envoyer une notification de test**, **Wolf Settings → Conservation**, **Attribuer à moi**. DocType
+names in a path stay English. A label the app leaves to Frappe (an empty `msgstr`, or a Frappe
+DocType's field such as System Settings) reads as Frappe's French. A status reads as its DocType's
+own entry: « Ouvert » for an open incident, never Frappe's verb « Ouvrir ».
+
+When a change renames a label, update the French pages with its new `msgstr` in the same pull
+request.
 
 ## Change
 
